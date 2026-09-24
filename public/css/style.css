@@ -356,3 +356,7 @@ button { cursor: pointer; }
 .screen.jammed .wave { opacity: .25; }
 .screen.jammed .wave path { stroke: #ff7a5c; animation: jitter .12s steps(2) infinite; }
 @keyframes jitter { 50% { transform: translate(3px, -2px); } }
+
+/* confirmed digits locked into the input row */
+.dia.input.locked::before { background: rgba(63,155,74,.28); border-color: #7fd08a; border-style: dashed; }
+.dia.input.locked span { color: #b9f0c0; }

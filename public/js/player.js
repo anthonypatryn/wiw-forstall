@@ -9,7 +9,7 @@ document.querySelectorAll('[data-icon]').forEach((el) => { el.innerHTML = bullet
 $('#wave-holder').innerHTML = WAVE_SVG;
 
 let data = null;
-let input = [];
+let input = Array(6).fill(null); // typed digits per slot; locked slots are filled from confirmed greens
 let busy = false;
 let shownRollAt = null;     // newest roll already drawn in the tray
 let seenGuesses = null;     // guess count already drawn (to animate new rows)
@@ -99,13 +99,24 @@ function buildKeypad() {
   });
 }
 
+// Positions already confirmed (green in any guess, or placed by the Warden's aid) are locked in.
+const lockedDigits = () => data?.active?.positional || Array(6).fill(null);
+const openSlots = () => lockedDigits().map((d, i) => (d === null ? i : -1)).filter((i) => i >= 0);
+const currentGuess = () => lockedDigits().map((d, i) => (d !== null ? d : input[i]));
+
 function press(k) {
   const a = data?.active;
   if (!a || a.solved || data.jammed) return;
-  if (k === 'back') input.pop();
-  else if (k === 'clear') input = [];
+  const open = openSlots();
+  if (k === 'back') {
+    const last = [...open].reverse().find((i) => input[i] !== null);
+    if (last !== undefined) input[last] = null;
+  } else if (k === 'clear') input = Array(6).fill(null);
   else if (k === 'enter') return submitGuess();
-  else if (input.length < 6) input.push(Number(k));
+  else {
+    const next = open.find((i) => input[i] === null);
+    if (next !== undefined) input[next] = Number(k);
+  }
   renderBoard();
 }
 
@@ -119,15 +130,16 @@ document.addEventListener('keydown', (e) => {
 
 async function submitGuess() {
   if (busy) return;
-  if (input.length < 6) {
+  const guess = currentGuess();
+  if (guess.some((d) => d === null)) {
     const row = $('#rows .row.input-row');
     row?.classList.remove('shake'); void row?.offsetWidth; row?.classList.add('shake');
     return toast('A frequency has six digits.');
   }
   busy = true;
   try {
-    const res = await api('POST', { action: 'guess', digits: input });
-    input = [];
+    const res = await api('POST', { action: 'guess', digits: guess });
+    input = Array(6).fill(null);
     poller.push(res.state);
     if (res.result.solved) toast('📡 Frequency locked! It’s in the notebook.');
   } catch (e) { toast(e.message, true); }
@@ -153,7 +165,10 @@ function renderBoard() {
     } else if (jammed) {
       html += '<div class="solved-banner jam">⚡ SIGNAL LOST — FORSTALL JAMMED</div>';
     } else {
-      html += `<div class="row input-row"><span class="n">▶</span>${diamondsHTML(input, [], (i) => ` input${i === input.length ? ' cursor' : ''}`)}</div>`;
+      const locked = lockedDigits();
+      const cursor = openSlots().find((i) => input[i] === null);
+      html += `<div class="row input-row"><span class="n">▶</span>${diamondsHTML(currentGuess(), [], (i) =>
+        locked[i] !== null ? ' input locked' : ` input${i === cursor ? ' cursor' : ''}`)}</div>`;
       if (!a.guesses.length) html = '<div class="empty-msg">Punch in six digits and transmit.</div>' + html;
     }
     rows.innerHTML = html;
@@ -207,7 +222,7 @@ function renderRollArea() {
   const a = data?.active;
   if (shownTarget !== (a?.name ?? null)) {
     shownTarget = a?.name ?? null;
-    input = [];
+    input = Array(6).fill(null);
     seenGuesses = null;
     const last = a?.rolls?.[0];
     shownRollAt = last?.at ?? null;
