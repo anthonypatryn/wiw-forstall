@@ -331,6 +331,7 @@ function wireSheet(p) {
   view.addEventListener('click', async (e) => {
     const b = e.target.closest('[data-start]');
     if (!b) return;
+    b.blur();
     const pc = pcById(p.id), t = meta.trades[pc.trade];
     if (b.dataset.start === 'name') {
       const n = randomName();
@@ -464,29 +465,26 @@ function renderStarter(view, p) {
         ${Array.from({ length: tier.extras }, (_, i) => `<label>EXTRA ITEM ${i + 1}<select data-tl="x${i}">${optList(catalog.filter((it) => it.cat === 'Gear'), '— pick an item —')}</select></label>`).join('')}
       </div>
       <button type="button" class="btn small" data-start="tier">${applied ? 'Re-apply' : 'Apply'} the ${tier.name} loadout</button>
-      <span class="muted">${applied ? `Applied: ${tier.prestige} Prestige to spend (see page two), $${tier.wallet}, ${tier.scrap} Scrap.` : `Sets ${tier.prestige} unclaimed Prestige, $${tier.wallet} Wallet and ${tier.scrap} Scrap, and swaps out the Used Pistol and Pocket Knife.`}</span>` : '<span class="muted">Tenderfoots start with the basics below.</span>'}</div>` : ''}`;
+      <span class="muted">${applied ? `Applied: ${tier.prestige} Prestige to spend (see page two), $${tier.wallet}, ${tier.scrap} Scrap.` : `Sets ${tier.prestige} unclaimed Prestige, $${tier.wallet} Wallet and ${tier.scrap} Scrap, and swaps out the Used Pistol and Pocket Knife.`}</span>` : `<div class="sb">${hasStart ? '✓ Used Pistol and Pocket Knife are in Weapons.' : '<button type="button" class="btn small secondary" data-start="weapons">Add Used Pistol + Pocket Knife</button>'}
+        ${wallet ? `✓ $${esc(wallet)} in the Wallet.` : '<button type="button" class="btn small secondary" data-start="wallet">Set the Wallet to $5</button>'}</div>`}</div>` : ''}`;
   const packs = tier?.packs || 1;
   const steps = [
-    [!!tier && (!high || applied), 'Step 0 · Starting Prestige tier (p. 33)', tierBody],
-    [true, 'Step 1 · Pick a Trade', `The ${esc(p.trade)}. Starting Ability <b>${esc(t.abilities[0].name)}</b> and Ace-in-the-Hole <b>${esc(t.aces[0].name)}</b> are already marked.`],
-    [named && story === 3, 'Step 2 · Get to know yourself', `${named ? `Name: <b>${esc(p.name)}</b>. ` : ''}<button type="button" class="btn small secondary" data-start="name">🎲 Random name (p. 204)</button>
+    [true, 'Pick a Trade', `The ${esc(p.trade)}. Starting Ability <b>${esc(t.abilities[0].name)}</b> and Ace-in-the-Hole <b>${esc(t.aces[0].name)}</b> are already marked.`],
+    [!!tier && (high ? applied : hasStart && wallet !== ''), 'Starting Prestige tier &amp; loadout (p. 33)', tierBody],
+    [named && story === 3, 'Get to know yourself', `${named ? `Name: <b>${esc(p.name)}</b>. ` : ''}<button type="button" class="btn small secondary" data-start="name">🎲 Random name (p. 204)</button>
       <span class="muted">Then fill in Appearance, Disposition &amp; History on page two (${story}/3 done).</span>`],
-    [skillsOk, 'Step 3 · Assign your Skills', `<b>${dice}/12</b> Black dice assigned, 1–6 per Skill. ${skillsOk ? '' : `<button type="button" class="btn small secondary" data-start="quick">Use quick build (${Object.values(t.quickBuild).join(' · ')})</button>`}`],
-    high ? [applied, 'Step 4 · Starting weapons', applied ? `Your ${tier.name} weapons are on the sheet.` : 'Comes from your tier loadout in Step 0.']
-      : [hasStart, 'Step 4 · Starting weapons', hasStart ? 'Used Pistol and Pocket Knife are in Weapons.' : '<button type="button" class="btn small secondary" data-start="weapons">Add Used Pistol + Pocket Knife</button>'],
-    [!!p.pack && (packs < 2 || !!p.pack2), `Step 4 · Equipment Pack${packs > 1 ? 's (2)' : ''}`, `<span class="muted">${packs > 1 ? 'Your tier gets two, so tap two packs.' : 'Tap one.'} Its gear goes into Inventory, plus 1 Supplies slot.</span>
+    [skillsOk, 'Assign your Skills', `<b>${dice}/12</b> Black dice assigned, 1–6 per Skill. ${skillsOk ? '' : `<button type="button" class="btn small secondary" data-start="quick">Use quick build (${Object.values(t.quickBuild).join(' · ')})</button>`}`],
+    [!!p.pack && (packs < 2 || !!p.pack2), `Equipment Pack${packs > 1 ? 's (2)' : ''}`, `<span class="muted">${packs > 1 ? 'Your tier gets two, so tap two packs.' : 'Tap one.'} Its gear goes into Inventory, plus 1 Supplies slot.</span>
       <div class="pack-cards">${Object.entries(meta.packs).map(([n, items]) => { const on = n === p.pack || n === p.pack2;
         return `<button type="button" class="pack-card${on ? ' on' : ''}" data-start="pack" data-pack-name="${esc(n)}" aria-pressed="${on}"><b>${on ? '✓ ' : ''}${esc(n)}</b><ul>${items.map((it) => `<li>${esc(it)}</li>`).join('')}</ul></button>`; }).join('')}</div>`],
-    high ? [applied, 'Step 5 · Wallet', applied ? `<b>$${esc(wallet)}</b> in the Wallet (${tier.name}).` : `Your tier starts with $${tier.wallet}.`]
-      : [wallet !== '', 'Step 5 · Wallet', wallet ? `<b>$${esc(wallet)}</b> in the Wallet.` : '<button type="button" class="btn small" data-start="wallet">Set the Wallet to $5</button> <span class="muted">A Tenderfoot starts with $5 (p. 33).</span>'],
-    [p.maxHealth >= 10 && String(p.supplies || '').trim() !== '', 'Step 5 · Health, Prestige &amp; Supplies', `Max Health <b>${p.maxHealth}</b> · Prestige <b>${p.prestige.total}</b> (${high ? `a ${tier.name} starts at ${tier.prestige}` : 'a Tenderfoot starts at 0'}) · Supplies <b>${esc(p.supplies || '—')}</b>
+    [p.maxHealth >= 10 && String(p.supplies || '').trim() !== '', 'Health, Prestige &amp; Supplies', `Max Health <b>${p.maxHealth}</b> · Prestige <b>${p.prestige.total}</b> (${high ? `a ${tier.name} starts at ${tier.prestige}` : 'a Tenderfoot starts at 0'}) · Supplies <b>${esc(p.supplies || '—')}</b>
       ${p.maxHealth < 10 || !String(p.supplies || '').trim() ? '<button type="button" class="btn small secondary" data-start="basics">Set the starting values</button>' : ''}`],
-    [keepsakes > 0, 'Step 5 · Keepsakes', `<span class="muted">${keepsakes ? `${keepsakes} carried.` : 'Check one or two, or write your own.'}</span>
+    [keepsakes > 0, 'Keepsakes', `<span class="muted">${keepsakes ? `${keepsakes} carried.` : 'Check one or two, or write your own.'}</span>
       <div class="ks-grid">${ksList.map((k) => `<label><input type="checkbox" data-ks value="${esc(k)}"${ks.includes(k) ? ' checked' : ''}><span>${esc(k)}</span></label>`).join('')}</div>
       <div class="ks-other"><input data-ks-other maxlength="120" placeholder="Other keepsake…" aria-label="Other keepsake"><button type="button" class="btn small secondary" data-start="ks-other">Add</button></div>`],
   ];
   const done = steps.filter((st) => st[0]).length;
-  box.innerHTML = `<ol>${steps.map(([ok, title, body]) => `<li class="${ok ? 'ok' : ''}"><span class="tick">${ok ? '✓' : ''}</span><div><b>${title}</b><div class="sb">${body}</div></div></li>`).join('')}</ol>`;
+  box.innerHTML = `<ol>${steps.map(([ok, title, body], n) => `<li class="${ok ? 'ok' : ''}"><span class="tick">${ok ? '✓' : ''}</span><div><b>Step ${n + 1} · ${title}</b><div class="sb">${body}</div></div></li>`).join('')}</ol>`;
   box.querySelectorAll('[data-pack]').forEach((el) => { el.value = (el.dataset.pack === '2' ? p.pack2 : p.pack) || ''; });
   box.querySelectorAll('[data-tl]').forEach((el) => { const k = el.dataset.tl; el.value = (k.startsWith('x') ? lo.extras[Number(k.slice(1))] : lo[k]) || ''; });
   view.querySelector('[data-dyn="starter-prog"]').textContent = done === steps.length ? 'All set ✓' : `${done}/${steps.length} done`;
