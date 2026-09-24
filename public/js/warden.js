@@ -134,13 +134,13 @@ function renderFeed() {
       const r = it.r;
       const pool = `${r.pool.black ? r.pool.black + 'B' : ''}${r.pool.gold ? r.pool.gold + 'G' : ''}`;
       return `<div class="item roll"><span class="when">${timeAgo(r.at)}</span>
-        <span class="what">${esc(r.operator || 'Someone')} scanned · ${pool}${r.halved ? ' (halved)' : ''} · ${r.hits} hit${r.hits === 1 ? '' : 's'}</span>
+        <span class="what">Scan · ${pool}${r.halved ? ' (halved)' : ''} · ${r.hits} hit${r.hits === 1 ? '' : 's'}</span>
         <span class="dice-mini" data-dice='${esc(JSON.stringify(r.dice))}'></span>
         ${r.newDigits.length ? `<span>gave ${chipsHTML(r.newDigits)}</span>` : ''}</div>`;
     }
     const g = it.g;
     return `<div class="item guess"><span class="when">${timeAgo(g.at)}</span>
-      <span class="what">#${it.n} ${esc(g.operator || '')}</span>${diamondsHTML(g.digits, g.result)}</div>`;
+      <span class="what">Guess #${it.n}</span>${diamondsHTML(g.digits, g.result)}</div>`;
   }).join('');
   feed.querySelectorAll('[data-dice]').forEach((el) => staticDice(el, JSON.parse(el.dataset.dice)));
 }

@@ -16,11 +16,7 @@ let seenGuesses = null;     // guess count already drawn (to animate new rows)
 let shownTarget = undefined;
 const pool = { B: store.get('wiw.poolB', 2), G: store.get('wiw.poolG', 0) };
 
-// ---------- operator & pool controls ----------
-const opInput = $('#operator');
-opInput.value = store.get('wiw.operator', '');
-opInput.addEventListener('input', () => store.set('wiw.operator', opInput.value));
-
+// ---------- pool controls ----------
 const spur = $('#spur-talent');
 spur.checked = store.get('wiw.spur', false);
 spur.addEventListener('change', () => store.set('wiw.spur', spur.checked));
@@ -56,7 +52,7 @@ $('#roll-btn').addEventListener('click', async () => {
   if (busy) return;
   busy = true; renderPool();
   try {
-    const res = await api('POST', { action: 'roll', black: pool.B, gold: pool.G, spurTalent: spur.checked, operator: opInput.value });
+    const res = await api('POST', { action: 'roll', black: pool.B, gold: pool.G, spurTalent: spur.checked });
     shownRollAt = res.result.at;
     poller.push(res.state);
     await showRoll(res.result, true);
@@ -68,10 +64,9 @@ async function showRoll(roll, animate) {
   const tray = $('#tray');
   $('#tally').innerHTML = '';
   if (animate) await animateRoll(tray, roll.dice); else staticDice(tray, roll.dice);
-  const who = roll.operator ? `${esc(roll.operator)} rolled ` : '';
   const pool = `${roll.pool.black ? roll.pool.black + 'B' : ''}${roll.pool.gold ? roll.pool.gold + 'G' : ''}`;
   $('#tally').innerHTML = `
-    <span class="muted">${who}${pool}${roll.halved ? ' (halved)' : ''}</span>
+    <span class="muted">Rolled ${pool}${roll.halved ? ' (halved)' : ''}</span>
     <span class="hits">${roll.hits} HIT${roll.hits === 1 ? '' : 'S'}</span>
     ${roll.newDigits.length
       ? `<span>Digits recovered: ${chipsHTML(roll.newDigits, roll.newDigits)}</span>`
@@ -129,7 +124,7 @@ async function submitGuess() {
   }
   busy = true;
   try {
-    const res = await api('POST', { action: 'guess', digits: input, operator: opInput.value });
+    const res = await api('POST', { action: 'guess', digits: input });
     input = [];
     poller.push(res.state);
     if (res.result.solved) toast('📡 Frequency locked! It’s in the notebook.');
@@ -148,11 +143,11 @@ function renderBoard() {
   } else {
     const fresh = seenGuesses !== null && a.guesses.length > seenGuesses ? seenGuesses : a.guesses.length;
     let html = a.guesses.map((g, i) => `
-      <div class="row${i >= fresh ? ' fresh' : ''}"><span class="n">${i + 1}</span>${diamondsHTML(g.digits, g.result)}<span class="who">${esc(g.operator || '')}</span></div>`).join('');
+      <div class="row${i >= fresh ? ' fresh' : ''}"><span class="n">${i + 1}</span>${diamondsHTML(g.digits, g.result)}</div>`).join('');
     if (a.solved) {
       html += `<div class="solved-banner">FREQUENCY LOCKED · ${esc(a.kz)}</div>`;
     } else {
-      html += `<div class="row input-row"><span class="n">▶</span>${diamondsHTML(input, [], (i) => ` input${i === input.length ? ' cursor' : ''}`)}<span class="who"></span></div>`;
+      html += `<div class="row input-row"><span class="n">▶</span>${diamondsHTML(input, [], (i) => ` input${i === input.length ? ' cursor' : ''}`)}</div>`;
       if (!a.guesses.length) html = '<div class="empty-msg">Punch in six digits and transmit.</div>' + html;
     }
     rows.innerHTML = html;

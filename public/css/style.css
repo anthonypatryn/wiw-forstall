@@ -56,18 +56,15 @@ button { cursor: pointer; }
 .brand-title .kicker { font: 15px var(--display); letter-spacing: .24em; color: var(--brass); }
 .brand-title h1 { margin: 4px 0 0; font: 400 clamp(32px, 4.6vw, 52px)/.95 var(--display); letter-spacing: .04em; text-shadow: 0 2px 0 rgba(0,0,0,.5); }
 .brand-title .sub { font: italic 15px var(--body); color: #e8d9bd; margin-top: 6px; }
-.operator {
-  display: flex; align-items: center; gap: 8px; color: #f6ecd9; font: 15px var(--display); letter-spacing: .12em; margin-left: auto;
+.btn.warden-link {
+  margin-left: auto; text-decoration: none; color: #f6ecd9; background: rgba(0,0,0,.4); border-color: rgba(246,236,217,.55);
 }
-.operator input {
-  width: 170px; padding: 7px 10px; border: 1px solid rgba(246,236,217,.5); background: rgba(0,0,0,.4);
-  color: #fff; border-radius: var(--radius); font: 16px var(--type); letter-spacing: 0;
-}
+.btn.warden-link:hover { background: var(--rust); border-color: var(--rust); }
 @media (max-width: 700px) {
   .brand-logo { height: 84px; }
-  .masthead { background-position: 30% 82%; }
+  .masthead { background-position: 30% 64%; }
   .brand-title { border-left: 0; padding-left: 0; flex-basis: 100%; }
-  .operator { margin-left: 0; }
+  .btn.warden-link { position: absolute; top: 14px; right: 12px; }
 }
 
 /* ---------- layout ---------- */
@@ -246,7 +243,6 @@ button { cursor: pointer; }
 .rows { display: flex; flex-direction: column; gap: 8px; max-height: 360px; overflow-y: auto; padding: 2px 2px 4px; }
 .row { display: flex; align-items: center; gap: 10px; justify-content: center; }
 .row .n { width: 28px; font: 14px var(--display); color: #6f675e; text-align: right; letter-spacing: .08em; }
-.row .who { width: 76px; font: 13px var(--type); color: #6f675e; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .diamonds { display: flex; gap: 8px; align-items: center; }
 .diamonds .gap { width: 4px; }
 .dia {
@@ -347,7 +343,6 @@ button { cursor: pointer; }
   .dia { width: 34px; height: 34px; font-size: 20px; }
   .dia::before { width: 23px; height: 23px; }
   .diamonds { gap: 4px; }
-  .row .who { display: none; }
   .row .n { width: 18px; }
   .die { width: 104px; }
   .readout { font-size: 30px; gap: 4px; }
