@@ -64,3 +64,12 @@
 .create input, .create select, .create textarea { padding: 6px 8px; border: 1px solid var(--ink-faint); border-radius: 3px; background: #fffdf7; font: 15px var(--body); letter-spacing: 0; color: var(--ink); }
 .create textarea { min-height: 60px; resize: vertical; }
 .create .dp input { width: 44px; }
+
+/* make an item: dice boxes sit inline (the form's column labels were stacking them) */
+.create [hidden] { display: none !important; }
+.create .dp label { flex-direction: row; align-items: center; gap: 4px; }
+.create .dice-set { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 14px; padding: 8px 0 4px; border-top: 1px dotted rgba(34,31,31,.3); border-bottom: 1px dotted rgba(34,31,31,.3); }
+.create .ds-title { grid-column: 1 / -1; font: 12px var(--display); letter-spacing: .12em; color: var(--ink-soft); }
+.create .ds-title small { font: italic 12px var(--body); letter-spacing: 0; }
+.create .ds-row { display: flex; flex-direction: column; gap: 3px; font: 12px var(--display); letter-spacing: .1em; color: var(--rust); }
+@media (max-width: 380px) { .create .dice-set { grid-template-columns: 1fr; } }

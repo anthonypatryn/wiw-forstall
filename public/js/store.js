@@ -140,20 +140,36 @@ function buildCreate() {
   const f = $('#create');
   f.innerHTML = `
     <label>CATEGORY<select name="cat">${categories.map((c) => `<option>${esc(c)}</option>`).join('')}</select></label>
-    <label>SECTION<input name="sub" maxlength="40" placeholder="e.g. Rifles, Tools"></label>
+    <label>SECTION<input name="sub" maxlength="40" list="sub-list" placeholder="Pick or type a new one"></label><datalist id="sub-list"></datalist>
     <label class="full">NAME<input name="name" maxlength="80" required></label>
     <label>COST ($)<input name="cost" type="number" min="0" step="0.01" placeholder="blank = not sold"></label>
-    <label>QUALITY<select name="quality"><option value="">—</option><option>Used</option><option>Basic</option><option>Premium</option><option>Elite</option></select></label>
-    <label>GRIT<input name="grit" maxlength="10"></label>
-    <label>UPGRADE SLOTS<input name="slots" type="number" min="0" max="4"></label>
-    <label>ARM’S REACH${poolHTML('data-f="arms"', "Arm's Reach")}</label>
-    <label>SHORT RANGE${poolHTML('data-f="short"', 'Short Range')}</label>
-    <label>LONG RANGE${poolHTML('data-f="long"', 'Long Range')}</label>
-    <label>DISTANT${poolHTML('data-f="distant"', 'Distant')}</label>
-    <label class="full">EFFECT<input name="effect" maxlength="200" placeholder="e.g. Trapped [2B] + Damage [1]"></label>
+    <label data-for="quality">QUALITY<select name="quality"><option value="">—</option><option>Used</option><option>Basic</option><option>Premium</option><option>Elite</option></select></label>
+    <label data-for="grit">GRIT<input name="grit" maxlength="10"></label>
+    <label data-for="slots">UPGRADE SLOTS<input name="slots" type="number" min="0" max="4"></label>
+    <div class="full dice-set" data-for="dice"><span class="ds-title">DICE <small>Black · Gold</small></span>
+      ${[['arms', 'Arm’s Reach'], ['short', 'Short Range'], ['long', 'Long Range'], ['distant', 'Distant']].map(([k, l]) =>
+        `<div class="ds-row" data-for="${k}"><span>${l}</span>${poolHTML(`data-f="${k}"`, l)}</div>`).join('')}</div>
+    <label class="full" data-for="effect">EFFECT<input name="effect" maxlength="200" placeholder="e.g. Trapped [2B] + Damage [1]"></label>
     <label class="full">DESCRIPTION<textarea name="desc" maxlength="600"></textarea></label>
     <input type="hidden" name="id">
     <div class="full" style="display:flex;gap:8px"><button class="btn small" type="submit" id="create-go">Add to the store</button><button class="btn small secondary" type="reset" id="create-reset">Clear</button></div>`;
+  // show only the fields that kind of item uses (the book's price list as the guide)
+  const USES = {
+    Weapons: ['quality', 'grit', 'slots', 'dice', 'arms', 'short', 'long', 'distant'],
+    Traps: ['quality', 'grit', 'slots', 'dice', 'arms', 'short', 'effect'],
+    Gear: ['quality', 'grit', 'dice', 'arms', 'short', 'effect'],
+    Forstalls: ['grit', 'slots', 'effect'],
+    Mechs: ['slots', 'effect'],
+    Upgrades: ['effect'],
+  };
+  const sync = () => {
+    const use = USES[f.cat.value] || ['effect'];
+    f.querySelectorAll('[data-for]').forEach((el) => { el.hidden = !use.includes(el.dataset.for); });
+    const subs = [...new Set(catalog.filter((i) => i.cat === f.cat.value).map((i) => i.sub).filter(Boolean))];
+    $('#sub-list').innerHTML = subs.map((s) => `<option value="${esc(s)}">`).join('');
+  };
+  f.cat.addEventListener('change', sync);
+  sync();
   f.addEventListener('submit', async (e) => {
     e.preventDefault();
     const fd = Object.fromEntries(new FormData(f));
@@ -162,7 +178,8 @@ function buildCreate() {
     const r = await act({ action: editing ? 'editCustom' : 'addCustom', ...fd }, editing ? 'Item updated.' : 'Item added to the store.');
     if (r) { f.reset(); f.id.value = ''; $('#create-go').textContent = 'Add to the store'; cat = r.cat; renderTabs(); renderSubs(); renderItems(); }
   });
-  f.addEventListener('reset', () => { setTimeout(() => { f.id.value = ''; $('#create-go').textContent = 'Add to the store'; }); });
+  f.addEventListener('reset', () => { setTimeout(() => { f.id.value = ''; $('#create-go').textContent = 'Add to the store'; sync(); }); });
+  f.syncFields = sync;
 }
 function fillCreate(i) {
   const f = $('#create');
@@ -171,6 +188,7 @@ function fillCreate(i) {
     const m = String(i[dp.dataset.f] || '').match(/^(?:(\d+)B)?(?:(\d+)G)?$/) || [];
     dp.querySelector('[data-c="B"]').value = m[1] || ''; dp.querySelector('[data-c="G"]').value = m[2] || '';
   });
+  f.syncFields?.();
   $('#create-go').textContent = 'Save changes';
   f.scrollIntoView({ behavior: 'smooth' });
 }
