@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Rye&family=Special+Elite&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css?v=11">
-  <link rel="stylesheet" href="/css/names.css?v=7">
+  <link rel="stylesheet" href="/css/names.css?v=8">
 </head>
 <body>
   <header class="masthead">
@@ -52,6 +52,10 @@
 
     <section class="card corner result-card" id="result" hidden>
       <div class="npc-line" id="npc-line"></div>
+      <div class="npc-extra">
+        <label>YOUR OWN PERSONALITY <small>(optional — added to the card)</small><input id="x-pers" maxlength="70" list="dl-pers" placeholder="e.g. hums hymns when nervous"></label>
+        <label>YOUR OWN PHYSICAL TRAIT <small>(optional — added to the card)</small><input id="x-phys" maxlength="90" list="dl-phys" placeholder="e.g. gold tooth, missing ear"></label>
+      </div>
       <div class="npc-actions">
         <button class="btn small" id="save" type="button">Add to the NPC ledger</button>
         <label class="check" id="known-wrap" hidden><input type="checkbox" id="save-known" checked> Posse has met them</label>
@@ -64,8 +68,8 @@
       <form class="manual" id="manual">
         <label>FIRST NAME<input name="first" maxlength="30" required></label>
         <label>LAST NAME<input name="last" maxlength="30"></label>
-        <label>PERSONALITY<input name="personality" maxlength="60" list="dl-pers"></label>
-        <label>PHYSICAL TRAIT<input name="physical" maxlength="80" list="dl-phys"></label>
+        <label>PERSONALITY<input name="personality" maxlength="140" list="dl-pers" placeholder="Type your own or pick a suggestion"></label>
+        <label>PHYSICAL TRAIT<input name="physical" maxlength="180" list="dl-phys" placeholder="Type your own or pick a suggestion"></label>
         <div class="manual-go"><label class="check"><input type="checkbox" name="known" checked> Posse has met them</label>
           <button class="btn small" type="submit">Add to the NPC ledger</button></div>
       </form>
@@ -97,6 +101,6 @@
     </section>
   </main>
 
-  <script type="module" src="/js/names.js?v=15"></script>
+  <script type="module" src="/js/names.js?v=16"></script>
 </body>
 </html>

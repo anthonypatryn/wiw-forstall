@@ -179,3 +179,10 @@ details.fac[open] > summary { margin-bottom: 8px; }
 .fac-members .mem button { border: 0; background: rgba(255,255,255,.18); color: inherit; width: 20px; height: 20px; border-radius: 50%; line-height: 1; cursor: pointer; }
 .fac-add select, .npc select[data-faction] { width: 100%; max-width: 420px; padding: 6px 8px; border: 1px solid var(--ink-faint); border-radius: 3px; background: #fffdf7; font-size: 15px; }
 .npc-faction { display: inline-block; margin: 4px 0 2px; padding: 3px 8px 1px; border-radius: 2px; background: var(--ink); color: var(--paper); font: 12px var(--display); letter-spacing: .12em; }
+
+/* custom traits on a dealt stranger */
+.npc-extra { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; max-width: 760px; margin: 14px auto 4px; text-align: left; }
+.npc-extra label { display: flex; flex-direction: column; gap: 3px; font: 13px var(--display); letter-spacing: .12em; color: var(--ink-soft); }
+.npc-extra label small { font: italic 12px var(--body); letter-spacing: 0; }
+.npc-extra input { padding: 7px 9px; border: 1px solid var(--ink-faint); border-radius: 3px; background: #fffdf7; font: 16px var(--body); color: var(--ink); }
+@media (max-width: 600px) { .npc-extra { grid-template-columns: 1fr; } }

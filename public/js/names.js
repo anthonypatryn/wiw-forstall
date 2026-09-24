@@ -147,10 +147,11 @@ async function swap(col) {
 function npcFromHand() {
   if (!COLS.every((c) => hand[c])) return null;
   const f = hand.first;
+  const add = (base, id) => { const x = ($(id)?.value || '').trim(); return x ? `${base}, ${x}` : base; };
   return {
     name: `${NPC[f.pick][f.card]} ${NPC.last[hand.last.card]}`,
-    personality: NPC.personality[hand.personality.card],
-    physical: NPC.physical[hand.physical.card],
+    personality: add(NPC.personality[hand.personality.card], '#x-pers'),
+    physical: add(NPC.physical[hand.physical.card], '#x-phys'),
   };
 }
 function showResult() {
@@ -251,11 +252,12 @@ function renderLedger() {
 $('#ledger').addEventListener('focusout', () => setTimeout(() => { if (pendingLedger) renderLedger(); }, 60));
 $('#npc-search').addEventListener('input', renderLedger);
 
+['#x-pers', '#x-phys'].forEach((id) => $(id).addEventListener('input', showResult));
 $('#save').addEventListener('click', async () => {
   const npc = npcFromHand();
   if (!npc) return;
   const r = await npcAct({ action: 'add', ...npc, known: $('#save-known').checked });
-  if (r) toast(`${npc.name} is in the NPC ledger.`);
+  if (r) { toast(`${npc.name} is in the NPC ledger.`); $('#x-pers').value = ''; $('#x-phys').value = ''; }
 });
 $('#copy').addEventListener('click', async () => {
   const npc = npcFromHand();
@@ -406,7 +408,7 @@ document.querySelectorAll('.seg [data-style]').forEach((b) => {
     }
   });
 });
-$('#deal').addEventListener('click', deal);
+$('#deal').addEventListener('click', () => { $('#x-pers').value = ''; $('#x-phys').value = ''; deal(); });
 $('#shuffle').addEventListener('click', async () => { if (busy) return; busy = true; shuffleDeck(); await animateShuffle(); busy = false; toast('Fresh deck — all 52 cards.'); });
 
 shuffleDeck();
