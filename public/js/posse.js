@@ -147,7 +147,7 @@ const inp = (path, label, opts = {}) => `<label class="f${opts.cls ? ' ' + opts.
       ? `<option value="${esc(o[0])}">${esc(o[1])}</option>` : `<option>${esc(o)}</option>`)).join('')}</select>`
     : opts.type === 'textarea' ? `<textarea data-path="${path}" maxlength="${opts.max || 3000}" placeholder="${esc(opts.ph || '')}"></textarea>`
     : `<input data-path="${path}" type="${opts.type || 'text'}" maxlength="${opts.max || 60}" placeholder="${esc(opts.ph || '')}"${opts.list ? ` list="${opts.list}"` : ''}>`}</label>`;
-const box = (title, sub, body, cls = '') => `<section class="sbox ${cls}"><h3><span>${title}</span></h3>${sub ? `<div class="sbox-sub">${sub}</div>` : ''}<div class="sbox-in">${body}</div></section>`;
+const box = (title, sub, body, cls = '') => `<section class="sbox ${cls}"${cls ? ` id="sec-${cls}"` : ''}><h3><span>${title}</span></h3>${sub ? `<div class="sbox-sub">${sub}</div>` : ''}<div class="sbox-in">${body}</div></section>`;
 const pick = (kind, i, groups, placeholder) => `<select class="pick" data-pick="${kind}" data-i="${i}" aria-label="${placeholder}">
   <option value="">${placeholder}</option>${groups.map(([g, list]) => `<optgroup label="${esc(g)}">${list.map((it) => `<option value="${esc(it.id)}">${esc(it.name)}${it.cost != null ? ` — $${it.cost.toFixed(2)}` : ''}</option>`).join('')}</optgroup>`).join('')}</select>`;
 const groupBy = (items, key = 'sub') => Object.entries(items.reduce((m, i) => ((m[i[key]] ||= []).push(i), m), {}));
@@ -197,6 +197,7 @@ function buildSheet(p) {
       <a class="btn small secondary" href="#">← All characters</a>
       <span class="save-state" data-save-state>✓ Changes save automatically</span>
       <button class="btn small secondary danger" id="delete-pc" type="button">Delete character</button>
+      <nav class="sheet-toc" aria-label="Jump to">${[['starter', 'Checklist'], ['skills', 'Skills'], ['health', 'Health'], ['statuses', 'Statuses'], ['weapons', 'Weapons'], ['abilities', 'Abilities'], ['prestige', 'Prestige'], ['talents', 'Talents'], ['disposition', 'Story'], ['reputation', 'Reputation'], ['gear', 'Gear'], ['inventory', 'Inventory'], ['forstall', 'Forstall'], ['horse', 'Horse'], ['mech', 'Mech']].map(([id, label]) => `<a href="#${p.id}" data-jump="${id}">${label}</a>`).join('')}</nav>
     </div>
     <div class="sheet-head">
       <div class="sh-trade"><small>THE</small>${esc(p.trade.toUpperCase())}</div>
@@ -205,7 +206,7 @@ function buildSheet(p) {
       <img class="sh-art" src="/img/trades/${p.trade.toLowerCase()}.webp" alt="The ${esc(p.trade)}">
     </div>
 
-    <details class="starter" data-starter><summary><b>NEW CHARACTER CHECKLIST</b><small>Guidebook pp. 6–8</small><span class="st-prog" data-dyn="starter-prog"></span></summary>
+    <details class="starter" data-starter id="sec-starter"><summary><b>NEW CHARACTER CHECKLIST</b><small>Guidebook pp. 6–8</small><span class="st-prog" data-dyn="starter-prog"></span></summary>
       <div class="starter-in" data-dyn="starter"></div></details>
 
     <div class="sheet page1">
@@ -266,6 +267,19 @@ function buildSheet(p) {
     <div class="danger-zone"><a class="btn small secondary" href="#">← All characters</a></div>`;
 
   wireSheet(p);
+  packSheet();
+}
+
+// Page two packs like a masonry wall: each box spans as many 4px rows as it is tall,
+// so short boxes slide up instead of leaving gaps (reading order stays left→right).
+let packObs = null;
+function packSheet() {
+  packObs?.disconnect();
+  const grid = document.querySelector('#sheet-view .page2');
+  if (!grid) return;
+  const fit = (el) => { el.style.gridRowEnd = `span ${Math.ceil((el.getBoundingClientRect().height + 16) / 4)}`; };
+  packObs = new ResizeObserver((entries) => entries.forEach((e) => fit(e.target)));
+  grid.querySelectorAll(':scope > .sbox').forEach((el) => { fit(el); packObs.observe(el); });
 }
 
 let sheetWires = null;
@@ -294,6 +308,14 @@ function wireSheet(p) {
     if (!f || e.target.type === 'checkbox' || e.target.tagName === 'SELECT') return;
     clearTimeout(timers.get(f.path));
     timers.set(f.path, setTimeout(() => saveField(f.path, fieldValue(e.target).value, e.target), 600));
+  });
+  on('click', (e) => {
+    const j = e.target.closest('[data-jump]');
+    if (!j) return;
+    e.preventDefault();
+    const el = document.getElementById(`sec-${j.dataset.jump}`);
+    if (el?.tagName === 'DETAILS') el.open = true;
+    el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
   on('keydown', (e) => {
     if (e.key === 'Enter' && e.target.matches('[data-ks-other]')) { e.preventDefault(); view.querySelector('[data-start="ks-other"]').click(); }
