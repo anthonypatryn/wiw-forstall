@@ -4,7 +4,14 @@ A table companion for the **Scanning** rules of the *Wild Imaginary West* RPG (O
 roll Intuition with bullet dice to recover digits of a monster's Kurtz Frequency, then guess it Mastermind-style.
 
 - `/` — player page: dice pool, animated bullet dice, Forstall display with green/yellow/red lights, posse notebook.
-- `/warden` — Warden's Station (PIN): pick the target from all 59 Guidebook monsters, live feed, hand out digits, house rules, homebrew monsters.
+- `/warden` — Warden's Station (PIN): pick the target from all 59 Guidebook monsters, live feed, hand out digits, house rules, homebrew monsters with Forstall traits.
+- `/combat` — Combat & Dice: Finesse turn order, Grit, Statuses, Ace-in-the-Hole, Bleeding Out; Warden adds monsters (full profiles, attack rolls, Frenzy triggers).
+- `/posse` — shared, editable two-page character sheets for all seven Trades.
+- `/names` — NPC name generator: deal from the p. 204 card table.
+- `/map` — the Uncivilized West: town write-ups, Warden notes & pins, draggable character tokens.
+- Every page has the shared Table Log (all rolls, from any page).
+
+Data lives in three Redis documents: `wiw-forstall:state` (scanner), `wiw-forstall:combat` (posse sheets, combat, table log), `wiw-forstall:map`.
 
 ## Run locally
 

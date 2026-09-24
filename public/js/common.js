@@ -6,23 +6,24 @@ export const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&a
 // ---------- API ----------
 let wardenPin = null;
 export function setPin(p) { wardenPin = p; }
+export const getPin = () => wardenPin;
 
-export async function api(method, body, query = '') {
+export async function api(method, body, query = '', endpoint = '/api/scan') {
   const headers = { 'Content-Type': 'application/json' };
   if (wardenPin) headers['x-warden-pin'] = wardenPin;
-  const r = await fetch('/api/scan' + query, { method, headers, body: body ? JSON.stringify(body) : undefined });
+  const r = await fetch(endpoint + query, { method, headers, body: body ? JSON.stringify(body) : undefined });
   const data = await r.json().catch(() => ({ error: 'Bad response from server.' }));
   if (!r.ok) { const e = new Error(data.error || r.statusText); e.status = r.status; throw e; }
   return data;
 }
 
 // Poll for shared state; onState only fires when something changed.
-export function startPolling(view, onState, onConn) {
+export function startPolling(view, onState, onConn, endpoint = '/api/scan') {
   let v = null, timer = null, stopped = false;
   async function tick() {
     try {
       const q = `?view=${view}` + (v !== null ? `&since=${v}` : '');
-      const data = await api('GET', null, q);
+      const data = await api('GET', null, q, endpoint);
       onConn?.(true);
       if (!data.unchanged) { v = data.v; onState(data); }
     } catch (e) {
@@ -156,4 +157,72 @@ export function timeAgo(t) {
   if (s < 3600) return `${Math.floor(s / 60)}m ago`;
   if (s < 86400) return `${Math.floor(s / 3600)}h ago`;
   return new Date(t).toLocaleDateString();
+}
+
+// ---------- site nav ----------
+const NAV = [
+  ['/', 'Forstall Scanner'],
+  ['/combat', 'Combat & Dice'],
+  ['/posse', 'Posse Sheets'],
+  ['/names', 'NPC Names'],
+  ['/map', 'Map'],
+];
+export function mountNav(active) {
+  const el = document.querySelector('[data-nav]');
+  if (!el) return;
+  el.innerHTML = `<div class="sitenav-inner">${NAV.map(([href, label]) =>
+    `<a href="${href}"${href === active ? ' aria-current="page"' : ''}>${label}</a>`).join('')}</div>`;
+}
+
+// ---------- Warden PIN (shared across pages) ----------
+export async function tryWarden(pin, endpoint) {
+  setPin(pin);
+  try { await api('POST', { action: 'auth' }, '', endpoint); store.set('wiw.pin', pin); return true; }
+  catch { setPin(null); return false; }
+}
+export function forgetWarden() { setPin(null); store.set('wiw.pin', null); }
+export const savedPin = () => store.get('wiw.pin');
+
+// ---------- dice-pool inputs: two numbers, never typed letters ----------
+export function parsePoolStr(s) {
+  const out = { B: 0, G: 0 };
+  for (const [, n, c] of String(s || '').toUpperCase().matchAll(/(\d+)\s*([BG])/g)) out[c] += Number(n);
+  return out;
+}
+export const composePool = (b, g) => `${b > 0 ? b + 'B' : ''}${g > 0 ? g + 'G' : ''}`;
+export function poolHTML(attrs = '', label = '') {
+  const one = (c, name) => `<label class="dp-${c.toLowerCase()}" title="${name} dice"><span class="dp-chip ${c.toLowerCase()}" aria-hidden="true">${c}</span><input type="number" min="0" max="12" step="1" inputmode="numeric" data-c="${c}" placeholder="0" aria-label="${label ? label + ' — ' : ''}${name} dice"></label>`;
+  return `<span class="dp" ${attrs}>${one('B', 'Black')}${one('G', 'Gold')}</span>`;
+}
+export function readPool(dp) {
+  const n = (c) => Math.max(0, Math.min(12, Math.round(Number(dp.querySelector(`[data-c="${c}"]`).value) || 0)));
+  return composePool(n('B'), n('G'));
+}
+export function fillPool(dp, value) {
+  if (dp.contains(document.activeElement)) return;
+  const p = parsePoolStr(value);
+  dp.querySelector('[data-c="B"]').value = p.B || '';
+  dp.querySelector('[data-c="G"]').value = p.G || '';
+}
+
+// PIN prompt shared by pages that unlock Warden tools in place.
+export function wardenModal(endpoint) {
+  return new Promise((resolve) => {
+    const back = document.createElement('div');
+    back.className = 'modal-back';
+    back.innerHTML = `<div class="modal" role="dialog" aria-label="Warden PIN"><h2>Warden PIN</h2>
+      <form><input type="password" inputmode="numeric" autocomplete="current-password" placeholder="PIN" aria-label="PIN"><button class="btn" type="submit">Unlock</button></form>
+      <p class="muted" data-msg></p></div>`;
+    document.body.appendChild(back);
+    const input = back.querySelector('input');
+    input.focus();
+    const close = (ok) => { back.remove(); resolve(ok); };
+    back.addEventListener('click', (e) => { if (e.target === back) close(false); });
+    back.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(false); });
+    back.querySelector('form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (await tryWarden(input.value.trim(), endpoint)) close(true);
+      else back.querySelector('[data-msg]').textContent = 'Wrong PIN, partner.';
+    });
+  });
 }

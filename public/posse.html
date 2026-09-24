@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Posse Sheets · Wild Imaginary West</title>
+  <meta name="description" content="Shared, editable character sheets for the Wild Imaginary West RPG.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🤠</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Rye&family=Special+Elite&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css?v=7">
+  <link rel="stylesheet" href="/css/combat.css?v=3">
+  <link rel="stylesheet" href="/css/posse.css?v=2">
+</head>
+<body>
+  <header class="masthead">
+    <div class="masthead-inner">
+      <img class="brand-logo" src="/img/logo-light.svg" alt="Wild Imaginary West">
+      <div class="brand-title">
+        <div class="kicker">SADDLE UP</div>
+        <h1>Posse Sheets</h1>
+        <div class="sub">Everyone can see and edit every sheet — changes save as you go</div>
+      </div>
+    </div>
+  </header>
+  <nav class="sitenav" data-nav aria-label="Site"></nav>
+
+  <main class="wrap">
+    <div id="list-view">
+      <section class="card corner">
+        <h2 class="section-title">The Posse</h2>
+        <div class="roster" id="roster"></div>
+      </section>
+      <section class="card corner">
+        <h2 class="section-title">New character — pick a Trade</h2>
+        <div class="trade-pick" id="trade-pick"></div>
+        <form class="new-pc" id="new-pc">
+          <input id="new-name" type="text" maxlength="40" placeholder="Character name" required aria-label="Character name">
+          <button class="btn" type="submit" id="new-btn" disabled>Create the <span id="new-trade">…</span></button>
+        </form>
+        <p class="tip">Starts with the sheet’s quick-build Skills (3B Charm, 4B Finesse, 2B Intuition, 3B Nerve), 10 Health, and the Trade’s first ability and Ace-in-the-Hole. Change anything you like.</p>
+      </section>
+    </div>
+
+    <div id="sheet-view" hidden></div>
+    <div class="footer"><span class="conn" id="conn">Connected</span> · Sheets based on the official Wild Imaginary West Trade sheets. ™ &amp; © Rune Foundry and Boylei Hobby Time.</div>
+  </main>
+
+  <script type="module" src="/js/posse.js?v=3"></script>
+</body>
+</html>

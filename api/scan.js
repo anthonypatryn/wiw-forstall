@@ -1,28 +1,17 @@
-import crypto from 'node:crypto';
 import { load, save, storeKind } from '../lib/store.js';
+import { pinOk, send, readBody, sinceParam } from '../lib/http.js';
 import { freshState, playerView, wardenView, doRoll, doGuess, doNote, wardenAction } from '../lib/game.js';
+import { freshCombat, addLog } from '../lib/combat.js';
+import { poolLabel } from '../lib/dice.js';
 
-// Locally (no env var) the Warden PIN defaults to 1234. On Vercel it must be set.
-const PIN = process.env.WARDEN_PIN || (process.env.VERCEL ? null : '1234');
-
-function pinOk(given) {
-  if (!PIN || !given) return false;
-  const a = Buffer.from(String(given)), b = Buffer.from(PIN);
-  return a.length === b.length && crypto.timingSafeEqual(a, b);
-}
-
-function send(res, status, body) {
-  res.statusCode = status;
-  res.setHeader('Content-Type', 'application/json');
-  res.setHeader('Cache-Control', 'no-store');
-  res.end(JSON.stringify(body));
-}
-
-async function readBody(req) {
-  if (req.body !== undefined) return typeof req.body === 'string' ? JSON.parse(req.body || '{}') : req.body;
-  let raw = '';
-  for await (const chunk of req) raw += chunk;
-  return raw ? JSON.parse(raw) : {};
+// Scanner rolls and breakthroughs also go in the shared Table Log (combat document).
+async function tableLog(entry) {
+  try {
+    const c = (await load('combat')) || freshCombat();
+    addLog(c, entry);
+    c.v = (c.v || 0) + 1;
+    await save(c, 'combat');
+  } catch { /* the scan itself already succeeded */ }
 }
 
 export default async function handler(req, res) {
@@ -32,7 +21,7 @@ export default async function handler(req, res) {
     let state = (await load()) || freshState();
 
     if (req.method === 'GET') {
-      const since = url.searchParams.has('since') ? Number(url.searchParams.get('since')) : null;
+      const since = sinceParam(url);
       if (url.searchParams.get('view') === 'warden') {
         if (!warden) return send(res, 401, { error: 'Wrong PIN.' });
         if (since === state.v) return send(res, 200, { v: state.v, unchanged: true });
@@ -59,6 +48,12 @@ export default async function handler(req, res) {
 
     state.v = (state.v || 0) + 1;
     await save(state);
+    if (body.action === 'roll') {
+      await tableLog({ type: 'roll', who: 'Forstall Scan', label: `Intuition — scanning the ${state.active}${result.halved ? ' (half pool)' : ''}`,
+        pool: poolLabel(result.pool), spur: result.spurTalent, dice: result.dice, hits: result.hits, aces: result.dice.filter((d) => d.face === 'ace').length });
+    } else if (body.action === 'guess' && result.solved) {
+      await tableLog({ type: 'event', text: `📡 The posse decoded the ${state.active}’s Kurtz Frequency!` });
+    }
     return send(res, 200, { result, state: warden ? wardenView(state) : playerView(state) });
   } catch (err) {
     return send(res, 400, { error: err.message || String(err) });

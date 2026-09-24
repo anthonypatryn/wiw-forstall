@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Map of the West · Wild Imaginary West</title>
+  <meta name="description" content="Interactive map of the Uncivilized West — towns, regions, and where the posse is.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗺️</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Rye&family=Special+Elite&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css?v=7">
+  <link rel="stylesheet" href="/css/map.css?v=1">
+</head>
+<body>
+  <header class="masthead">
+    <div class="masthead-inner">
+      <img class="brand-logo" src="/img/logo-light.svg" alt="Wild Imaginary West">
+      <div class="brand-title">
+        <div class="kicker">THE UNITED STATES OF AMERICA AND</div>
+        <h1>The Uncivilized West</h1>
+        <div class="sub">Tap a town to read up on it · drag your character to where the posse is</div>
+      </div>
+      <button class="btn small warden-link" id="warden-btn" type="button">⭐ Warden</button>
+    </div>
+  </header>
+  <nav class="sitenav" data-nav aria-label="Site"></nav>
+
+  <main class="map-wrap">
+    <div class="viewport" id="viewport" aria-label="Map of the West">
+      <div class="stage" id="stage">
+        <img src="/img/map.jpg" alt="Map of the United States of America and the Uncivilized West" draggable="false" width="2456" height="1584">
+        <div class="layer" id="places"></div>
+        <div class="layer" id="tokens"></div>
+      </div>
+      <div class="map-ctrls">
+        <button type="button" id="zoom-in" aria-label="Zoom in">+</button>
+        <button type="button" id="zoom-out" aria-label="Zoom out">−</button>
+        <button type="button" id="zoom-fit" aria-label="Fit map">⤢</button>
+      </div>
+      <div class="map-banner" id="banner" hidden></div>
+    </div>
+
+    <aside class="panel" id="panel">
+      <div id="panel-body"></div>
+      <section class="posse-box">
+        <h3>THE POSSE ON THE MAP</h3>
+        <div id="posse-list"></div>
+      </section>
+      <section class="warden-box" id="warden-box" hidden>
+        <h3>WARDEN TOOLS</h3>
+        <button class="btn small" id="add-pin" type="button">📍 Add a place</button>
+        <p class="muted">Then tap the map where it goes.</p>
+      </section>
+    </aside>
+  </main>
+
+  <script type="module" src="/js/map.js?v=1"></script>
+</body>
+</html>

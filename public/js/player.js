@@ -1,10 +1,14 @@
 import {
   $, esc, api, startPolling, injectDefs, bulletSVG, animateRoll, staticDice,
   readoutHTML, diamondsHTML, chipsHTML, WAVE_SVG, toast, store,
+  mountNav,
 } from './common.js';
 import { renderNotebook } from './notebook.js';
+import { mountTableLog } from './tablelog.js';
 
 injectDefs();
+mountTableLog();
+mountNav('/');
 document.querySelectorAll('[data-icon]').forEach((el) => { el.innerHTML = bulletSVG(el.dataset.icon, 'hit'); });
 $('#wave-holder').innerHTML = WAVE_SVG;
 

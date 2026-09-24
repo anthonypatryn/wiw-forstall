@@ -1,9 +1,13 @@
 import {
   $, esc, api, setPin, startPolling, injectDefs, staticDice, diamondsHTML, chipsHTML, toast, store, timeAgo,
+  mountNav,
 } from './common.js';
 import { renderNotebook } from './notebook.js';
+import { mountTableLog } from './tablelog.js';
 
 injectDefs();
+mountTableLog();
+mountNav(null);
 
 const SIZES = ['Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Titan'];
 let data = null;

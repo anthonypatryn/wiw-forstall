@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>NPC Names · Wild Imaginary West</title>
+  <meta name="description" content="Deal a hand from the saloon deck to name an NPC — Wild Imaginary West RPG.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🂡</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Rye&family=Special+Elite&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css?v=7">
+  <link rel="stylesheet" href="/css/names.css?v=1">
+</head>
+<body>
+  <header class="masthead">
+    <div class="masthead-inner">
+      <img class="brand-logo" src="/img/logo-light.svg" alt="Wild Imaginary West">
+      <div class="brand-title">
+        <div class="kicker">PICK A CARD OR ROLL THEM BONES</div>
+        <h1>NPC Names</h1>
+        <div class="sub">Deal from the saloon deck — Official Guidebook, pages 203–204</div>
+      </div>
+    </div>
+  </header>
+  <nav class="sitenav" data-nav aria-label="Site"></nav>
+
+  <main class="wrap">
+    <section class="table-felt" aria-label="Card table">
+      <div class="deck-area">
+        <div class="deck" id="deck" aria-hidden="true"></div>
+        <div class="deck-count" id="deck-count">52 cards</div>
+      </div>
+      <div class="hand" id="hand">
+        <div class="slot" data-col="first"><div class="slot-label">FIRST NAME</div></div>
+        <div class="slot" data-col="last"><div class="slot-label">LAST NAME</div></div>
+        <div class="slot" data-col="personality"><div class="slot-label">PERSONALITY</div></div>
+        <div class="slot" data-col="physical"><div class="slot-label">PHYSICAL TRAIT</div></div>
+      </div>
+      <div class="table-ctrls">
+        <button class="btn deal" id="deal" type="button">🂠 Deal a stranger</button>
+        <div class="seg" role="radiogroup" aria-label="Stranger">
+          <button type="button" role="radio" data-style="first1" aria-checked="false">♂ Male</button>
+          <button type="button" role="radio" data-style="first2" aria-checked="false">♀ Female</button>
+          <button type="button" role="radio" data-style="either" aria-checked="true">🎲 Random</button>
+        </div>
+        <button class="btn small secondary light" id="shuffle" type="button">Shuffle the deck</button>
+      </div>
+      <p class="table-tip">Tap any card to swap just that one.</p>
+    </section>
+
+    <section class="card corner result-card" id="result" hidden>
+      <div class="npc-line" id="npc-line"></div>
+      <div class="npc-actions">
+        <button class="btn small" id="save" type="button">Add to the ledger</button>
+        <button class="btn small secondary" id="copy" type="button">Copy</button>
+      </div>
+    </section>
+
+    <section class="card corner">
+      <div class="head-row"><h2 class="section-title">The Ledger</h2><button class="btn small secondary" id="clear-ledger" type="button">Clear</button></div>
+      <p class="muted" style="margin-top:0">Strangers you’ve met — saved on this device.</p>
+      <ol class="ledger" id="ledger"></ol>
+    </section>
+  </main>
+
+  <script type="module" src="/js/names.js?v=3"></script>
+</body>
+</html>
