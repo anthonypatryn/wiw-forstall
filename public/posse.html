@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Rye&family=Special+Elite&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css?v=11">
   <link rel="stylesheet" href="/css/combat.css?v=3">
-  <link rel="stylesheet" href="/css/posse.css?v=23">
+  <link rel="stylesheet" href="/css/posse.css?v=24">
 </head>
 <body>
   <header class="masthead">
@@ -41,6 +41,8 @@
           <label class="wide">WHAT FOR<input id="aw-reason" maxlength="120" placeholder="e.g. Cleared the Copper Canyon mine"></label>
         </div>
         <button class="btn" id="aw-go" type="button">🏆 Award</button>
+        <div class="aw-jackpot"><b>🏨 TOWN REST</b> <span class="muted">The posse beds down in town (p. 54): everyone gets full Health, Statuses cleared, Supplies reset, Forstalls recharged.</span>
+          <div class="aw-jp-row"><button class="btn small" id="town-all" type="button">Town rest for everyone</button></div></div>
         <div class="aw-jackpot"><b>🎰 JACKPOT</b> <span class="muted">Play of the game (p. 54): the posse votes, the winner gets +1 Prestige.</span>
           <div class="aw-jp-row"><select id="jp-who" aria-label="Jackpot winner"></select><input id="jp-why" maxlength="120" placeholder="What did they do?"><button class="btn small" id="jp-go" type="button">Jackpot!</button></div></div>
       </section>
@@ -63,6 +65,6 @@
     <div class="footer"><span class="conn" id="conn">Connected</span> · Sheets based on the official Wild Imaginary West Trade sheets. ™ &amp; © Rune Foundry and Boylei Hobby Time.</div>
   </main>
 
-  <script type="module" src="/js/posse.js?v=28"></script>
+  <script type="module" src="/js/posse.js?v=29"></script>
 </body>
 </html>

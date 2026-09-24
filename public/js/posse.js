@@ -103,6 +103,11 @@ $('#aw-go').addEventListener('click', async () => {
   const r = await act(body);
   if (r) { toast(`Awarded ${r.what} to ${r.count} character${r.count > 1 ? 's' : ''}.`); ['#aw-prestige', '#aw-dollars', '#aw-scrap', '#aw-item', '#aw-reason'].forEach((id) => { $(id).value = ''; }); }
 });
+$('#town-all').addEventListener('click', async () => {
+  if (!confirm('Town Rest for the whole posse?')) return;
+  const r = await act({ action: 'townRestAll' });
+  if (r) toast(`${r.count} character${r.count === 1 ? '' : 's'} rested up in town.`);
+});
 $('#jp-go').addEventListener('click', async () => {
   const r = await act({ action: 'jackpot', id: $('#jp-who').value, reason: $('#jp-why').value });
   if (r) { toast(`🎰 Jackpot for ${r.name}!`); $('#jp-why').value = ''; }
@@ -773,7 +778,10 @@ function hydrate(p) {
       ${bleedPanel(p, meta.skills)}
       ${!p.dead && !p.bleeding && p.health === 0 && p.statuses?.Unconscious > 0 ? '<p class="bleed"><b>UNCONSCIOUS</b> — saved! Relieve Unconscious (roll Intuition) to wake up with 1 Health.</p>' : ''}
       ${p.dead ? '<p class="bleed"><b>FALLEN</b> — this character has died. The Warden can revive them from the Combat page.</p>' : ''}
-      <button class="btn small secondary rest" type="button" data-rest>🔥 Rest at camp / town</button>`;
+      ${p.dead ? '' : `<div class="rest-row"><span class="rl">REST</span>
+        <select data-camp-skill aria-label="Skill to roll at camp">${meta.skills.map((s) => `<option value="${s}">${s} (${esc(String(p.skills[s.toLowerCase()] || '—').toUpperCase())})</option>`).join('')}</select>
+        <button class="btn small secondary" type="button" data-camp title="Roll a Skill; regain Health equal to Hits (p. 52)">🔥 Campfire</button>
+        <button class="btn small secondary" type="button" data-town title="Full Health, Statuses cleared, Supplies reset, Forstall recharged (p. 54)">🏨 Town</button></div>`}`;
     vitals.querySelectorAll('[data-hp]').forEach((b) => b.addEventListener('click', () => send({ op: 'health', delta: Number(b.dataset.hp) })));
     vitals.querySelectorAll('[data-bleed-roll]').forEach((b) => b.addEventListener('click', () => bleedRoll(p, b.dataset.bleedRoll)));
     vitals.querySelectorAll('.bleed-panel [data-op]').forEach((b) => b.addEventListener('click', () => {
@@ -785,7 +793,14 @@ function hydrate(p) {
       g.addEventListener('click', go);
       g.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
     });
-    vitals.querySelector('[data-rest]').addEventListener('click', () => { if (confirm('Rest up? Health refills, Statuses clear, Ace meter resets.')) send({ op: 'rest' }); });
+    vitals.querySelector('[data-camp]')?.addEventListener('click', async () => {
+      const skill = vitals.querySelector('[data-camp-skill]').value;
+      const r = await send({ op: 'campRest', skill });
+      if (r?.dice) { rollPopup(r, `${p.name} · Campfire rest · ${skill} · ${r.pool}`); toast(`Regained ${r.healed} Health by the fire.`); }
+    });
+    vitals.querySelector('[data-town]')?.addEventListener('click', () => {
+      if (confirm('Town Rest? Full Health, Statuses cleared, Supplies reset, Forstall recharged.')) send({ op: 'townRest' });
+    });
   }
   vitals.querySelectorAll('.spur[data-spur]').forEach((b) => b.classList.toggle('on', p.talents.includes(b.dataset.spur)));
 
