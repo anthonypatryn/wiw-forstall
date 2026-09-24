@@ -11,7 +11,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Rye&family=Special+Elite&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css?v=11">
   <link rel="stylesheet" href="/css/combat.css?v=3">
-  <link rel="stylesheet" href="/css/posse.css?v=22">
+  <link rel="stylesheet" href="/css/posse.css?v=23">
 </head>
 <body>
   <header class="masthead">
@@ -22,12 +22,28 @@
         <h1>Posse Sheets</h1>
         <div class="sub">Create your character, then view it at the table — changes save as you go</div>
       </div>
+      <button class="btn small warden-link" id="warden-btn" type="button">⭐ Warden</button>
     </div>
   </header>
   <nav class="sitenav" data-nav aria-label="Site"></nav>
 
   <main class="wrap">
     <div id="list-view">
+      <section class="card corner" id="award-card" hidden>
+        <h2 class="section-title">Warden · Award the Posse</h2>
+        <p class="muted" style="margin-top:0">After a fight or an expedition. Prestige goes to Total and Unclaimed; dollars and Scrap add to what they have; loot goes into Other items.</p>
+        <div class="aw-who" id="aw-who"></div>
+        <div class="aw-grid">
+          <label>PRESTIGE<input id="aw-prestige" type="number" min="0" max="100" inputmode="numeric" placeholder="0"></label>
+          <label>DOLLARS $<input id="aw-dollars" type="number" min="0" inputmode="numeric" placeholder="0"></label>
+          <label>SCRAP<input id="aw-scrap" type="number" min="0" inputmode="numeric" placeholder="0"></label>
+          <label class="wide">LOOT ITEM<input id="aw-item" maxlength="120" placeholder="e.g. Pristine Chupacabra pelt"></label>
+          <label class="wide">WHAT FOR<input id="aw-reason" maxlength="120" placeholder="e.g. Cleared the Copper Canyon mine"></label>
+        </div>
+        <button class="btn" id="aw-go" type="button">🏆 Award</button>
+        <div class="aw-jackpot"><b>🎰 JACKPOT</b> <span class="muted">Play of the game (p. 54): the posse votes, the winner gets +1 Prestige.</span>
+          <div class="aw-jp-row"><select id="jp-who" aria-label="Jackpot winner"></select><input id="jp-why" maxlength="120" placeholder="What did they do?"><button class="btn small" id="jp-go" type="button">Jackpot!</button></div></div>
+      </section>
       <section class="card corner">
         <h2 class="section-title">The Posse</h2>
         <div class="roster" id="roster"></div>
@@ -47,6 +63,6 @@
     <div class="footer"><span class="conn" id="conn">Connected</span> · Sheets based on the official Wild Imaginary West Trade sheets. ™ &amp; © Rune Foundry and Boylei Hobby Time.</div>
   </main>
 
-  <script type="module" src="/js/posse.js?v=27"></script>
+  <script type="module" src="/js/posse.js?v=28"></script>
 </body>
 </html>

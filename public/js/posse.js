@@ -1,5 +1,5 @@
 import {
-  $, esc, api, startPolling, injectDefs, toast, mountNav, poolHTML, readPool, fillPool, rollPopup, bleedPanel,
+  $, esc, api, startPolling, tryWarden, forgetWarden, savedPin, wardenModal, store, injectDefs, toast, mountNav, poolHTML, readPool, fillPool, rollPopup, bleedPanel,
 } from './common.js';
 import { mountTableLog } from './tablelog.js';
 import { ICONS } from './icons.js';
@@ -69,6 +69,54 @@ async function bleedRoll(p, skill) {
   await rollPopup(r, `${p.name} · Bleeding Out · ${skill} · ${r.pool}`);
   toast(r.outcome === 'dead' ? `No Hits… ${p.name} has died.` : r.outcome === 'last' ? 'Hung on — but no Skills left. First Aid, now!' : `Hung on! ${r.left} Skill${r.left === 1 ? '' : 's'} left.`, r.outcome !== 'alive');
 }
+// "This is me": each device remembers its player's character and opens straight to it.
+const myId = () => store.get('wiw.me') || null;
+function setMe(id) {
+  store.set('wiw.me', id);
+  const pc = id && pcById(id);
+  toast(pc ? `Got it — this device opens ${pc.name}’s sheet.` : 'Cleared. This device opens the posse list.');
+  render();
+}
+
+// ---------- Warden: awards + Jackpot ----------
+let warden = false;
+function renderAward() {
+  const card = $('#award-card');
+  card.hidden = !warden;
+  if (!warden || card.contains(document.activeElement)) return;
+  const alive = data.posse.filter((p) => !p.dead);
+  const was = new Set([...card.querySelectorAll('[data-aw]')].filter((c) => !c.checked).map((c) => c.value));
+  $('#aw-who').innerHTML = alive.length ? `<label class="check aw-all"><input type="checkbox" id="aw-all" checked> Everyone</label>${alive.map((p) =>
+    `<label class="check"><input type="checkbox" data-aw value="${p.id}"${was.has(p.id) ? '' : ' checked'}> ${esc(p.name)}</label>`).join('')}` : '<span class="muted">No characters yet.</span>';
+  if ($('#aw-all')) $('#aw-all').checked = !was.size;
+  const jp = $('#jp-who').value;
+  $('#jp-who').innerHTML = `<option value="">— who? —</option>${alive.map((p) => `<option value="${p.id}">${esc(p.name)}</option>`).join('')}`;
+  $('#jp-who').value = alive.some((p) => p.id === jp) ? jp : '';
+}
+$('#aw-who').addEventListener('change', (e) => {
+  if (e.target.id === 'aw-all') $('#aw-who').querySelectorAll('[data-aw]').forEach((c) => { c.checked = e.target.checked; });
+  else $('#aw-all').checked = [...$('#aw-who').querySelectorAll('[data-aw]')].every((c) => c.checked);
+});
+$('#aw-go').addEventListener('click', async () => {
+  const ids = [...$('#aw-who').querySelectorAll('[data-aw]:checked')].map((c) => c.value);
+  const body = { action: 'award', ids, prestige: $('#aw-prestige').value, dollars: $('#aw-dollars').value, scrap: $('#aw-scrap').value, item: $('#aw-item').value, reason: $('#aw-reason').value };
+  const r = await act(body);
+  if (r) { toast(`Awarded ${r.what} to ${r.count} character${r.count > 1 ? 's' : ''}.`); ['#aw-prestige', '#aw-dollars', '#aw-scrap', '#aw-item', '#aw-reason'].forEach((id) => { $(id).value = ''; }); }
+});
+$('#jp-go').addEventListener('click', async () => {
+  const r = await act({ action: 'jackpot', id: $('#jp-who').value, reason: $('#jp-why').value });
+  if (r) { toast(`🎰 Jackpot for ${r.name}!`); $('#jp-why').value = ''; }
+});
+function setWardenUI() {
+  $('#warden-btn').textContent = warden ? '⭐ Warden mode · lock' : '⭐ Warden';
+  if (data) render();
+}
+$('#warden-btn').addEventListener('click', async () => {
+  if (warden) { warden = false; forgetWarden(); }
+  else if (!(warden = await wardenModal(EP))) return;
+  setWardenUI();
+});
+
 async function deletePc(id) {
   const pc = pcById(id);
   if (!pc || !confirm(`Delete ${pc.name}’s sheet for everyone? This can’t be undone.`)) return;
@@ -109,8 +157,11 @@ const tierLoadout = {}; // unsaved picks per sheet: { ranged, melee, extras: [] 
 // ---------- roster ----------
 function renderList() {
   const roster = $('#roster');
-  roster.innerHTML = data.posse.length ? data.posse.map((p) => `
-    <div class="pc-tile${p.dead ? ' dead' : ''}">
+  const me = myId();
+  const list = [...data.posse].sort((a, b) => (b.id === me) - (a.id === me));
+  roster.innerHTML = list.length ? list.map((p) => `
+    <div class="pc-tile${p.dead ? ' dead' : ''}${p.id === me ? ' mine' : ''}">
+      <button type="button" class="me-star" data-me="${p.id}" aria-pressed="${p.id === me}" title="${p.id === me ? 'This is you — tap to unset' : 'This is me'}">${p.id === me ? '★ ME' : '☆ This is me'}</button>
       <a class="pc-open" href="#${p.id}" aria-label="Open ${esc(p.name)}’s sheet">
         <img class="pc-face" src="/img/tokens/trade-${p.trade.toLowerCase()}.webp" alt="">
         <div class="t">THE ${esc(p.trade.toUpperCase())}${p.dead ? ' · FALLEN' : ''}</div>
@@ -123,6 +174,8 @@ function renderList() {
     </div>`).join('') : '<p class="empty-note">No one’s signed up yet. Pick a Trade below.</p>';
 
   roster.querySelectorAll('[data-del]').forEach((b) => b.addEventListener('click', () => deletePc(b.dataset.del)));
+  roster.querySelectorAll('[data-me]').forEach((b) => b.addEventListener('click', () => setMe(b.dataset.me === myId() ? null : b.dataset.me)));
+  renderAward();
 
   const pick = $('#trade-pick');
   if (!pick.dataset.ready) {
@@ -204,6 +257,7 @@ function buildSheet(p) {
     <div class="sheet-bar">
       <a class="btn small secondary" href="#">← All characters</a>
       <span class="save-state" data-save-state></span>
+      <button type="button" class="me-star" data-me-bar>☆ This is me</button>
       <span class="mode-tag" data-mode-tag></span>
       <a class="mode-tag bleed-tag" data-bleed-tag data-jump="health" href="#${p.id}" hidden>🩸 BLEEDING OUT</a>
       <button class="btn small" type="button" data-mode="edit" hidden>✎ Edit</button>
@@ -416,6 +470,7 @@ function wireSheet(p) {
   });
 
   $('#delete-pc').addEventListener('click', () => deletePc(p.id));
+  view.querySelector('[data-me-bar]').addEventListener('click', () => setMe(myId() === p.id ? null : p.id));
   on('click', (e) => {
     const b = e.target.closest('[data-spend]');
     if (b) { b.blur(); spendPrestige(view, p, b.dataset.spend); }
@@ -584,6 +639,8 @@ function applyMode(view, p) {
   view.querySelector('.sheet-bar [data-mode="view"]').hidden = creating || locked;
   view.querySelector('[data-mode-tag]').textContent = creating ? 'CREATING' : locked ? 'VIEWING' : 'EDITING';
   view.querySelector('[data-bleed-tag]').hidden = !p.bleeding || p.dead;
+  const mine = myId() === p.id, star = view.querySelector('[data-me-bar]');
+  star.textContent = mine ? '★ ME' : '☆ This is me'; star.setAttribute('aria-pressed', String(mine));
   view.querySelector('[data-mode-tag]').dataset.m = creating ? 'create' : locked ? 'view' : 'edit';
 }
 function unlockSheet(p) {
@@ -818,7 +875,19 @@ $('#sheet-view').addEventListener('focusout', () => setTimeout(() => { if (vital
     const scan = await api('GET', null, '?view=player');
     kzOptions = (scan.notebook || []).filter((e) => e.solved).map((e) => ({ kz: e.kz, name: e.name }));
   } catch {}
-  poller = startPolling('player', (d) => { data = d; render(); }, (ok) => {
+  if (savedPin()) warden = await tryWarden(savedPin(), EP);
+  setWardenUI();
+  let jumped = false;
+  poller = startPolling('player', (d) => {
+    data = d;
+    // open this device's character on arrival (once per visit, only from the bare list)
+    if (!jumped) {
+      jumped = true;
+      const me = myId();
+      if (me && !location.hash && pcById(me)) history.replaceState(null, '', `#${me}`);
+    }
+    render();
+  }, (ok) => {
     $('#conn').classList.toggle('off', !ok);
     $('#conn').textContent = ok ? 'Connected' : 'Reconnecting…';
   }, EP);
