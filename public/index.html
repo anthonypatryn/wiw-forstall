@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Forstall Scanner · Wild Imaginary West</title>
+  <meta name="description" content="Decode monster Kurtz Frequencies with your Forstall — a Scanning companion for the Wild Imaginary West RPG.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📡</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Rye&family=Special+Elite&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css?v=1">
+</head>
+<body>
+  <header class="masthead">
+    <div class="masthead-inner">
+      <img class="brand-logo" src="/img/logo-light.svg" alt="Wild Imaginary West">
+      <div class="brand-title">
+        <div class="kicker">EDISON FORSTALL · SCANNING MODE</div>
+        <h1>Kurtz Frequency Scanner</h1>
+        <div class="sub">Scanning — Official Guidebook, pages 83–84</div>
+      </div>
+      <label class="operator">OPERATOR
+        <input id="operator" type="text" maxlength="40" placeholder="Your character" autocomplete="off">
+      </label>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="grid">
+      <div>
+        <section class="card target idle" id="target" aria-live="polite">
+          <div>
+            <div class="label">TARGET IN LINE OF SIGHT</div>
+            <div class="name">Forstall idle…</div>
+            <div class="meta">Waiting for the Warden to point the antenna at a monster.</div>
+          </div>
+        </section>
+
+        <section class="card corner" id="scan-card">
+          <h2 class="section-title"><span class="step">STEP 1</span> Scan — roll with Intuition</h2>
+          <div class="pool">
+            <div class="stepper" data-color="B">
+              <div class="bullet-icon" data-icon="B"></div>
+              <div class="lbl">Black dice<small>2 Blank · Spur · 2 Hit · Ace</small></div>
+              <div class="ctrl"><button type="button" data-d="-1" aria-label="One fewer Black die">−</button><span class="count" id="count-B">2</span><button type="button" data-d="1" aria-label="One more Black die">+</button></div>
+            </div>
+            <div class="stepper" data-color="G">
+              <div class="bullet-icon" data-icon="G"></div>
+              <div class="lbl">Gold dice<small>Blank · Spur · 3 Hit · Ace</small></div>
+              <div class="ctrl"><button type="button" data-d="-1" aria-label="One fewer Gold die">−</button><span class="count" id="count-G">0</span><button type="button" data-d="1" aria-label="One more Gold die">+</button></div>
+            </div>
+          </div>
+          <div class="opts">
+            <label class="check"><input type="checkbox" id="spur-talent"> Reroll Spurs <span class="muted">(Intuition Talent)</span></label>
+            <span class="muted" id="pool-note"></span>
+          </div>
+          <div class="roll-row">
+            <button class="btn" id="roll-btn" type="button" disabled>🎯 Scan the Monster</button>
+            <span class="note">Spend 3 Grit. Each Hit earns one digit — an Ace counts as two.</span>
+          </div>
+          <div class="tray" id="tray"><span class="empty">Your bullet dice land here.</span></div>
+          <div class="tally" id="tally"></div>
+          <div class="tip" id="known-box"></div>
+        </section>
+
+        <section class="card corner">
+          <h2 class="section-title"><span class="step">STEP 2</span> Guess the frequency</h2>
+          <div class="forstall">
+            <div class="forstall-top">
+              <span class="lamp" id="lamp"></span>
+              <span class="model">EDISON FORSTALL · KURTZ DISPLAY</span>
+            </div>
+            <div class="screen" id="screen">
+              <div id="wave-holder"></div>
+              <div class="rows" id="rows"></div>
+            </div>
+            <div class="keypad" id="keypad"></div>
+            <div class="legend">
+              <span><i style="background:var(--green)"></i>Right digit, right spot</span>
+              <span><i style="background:var(--yellow)"></i>In the frequency, wrong spot</span>
+              <span><i style="background:var(--red)"></i>Not in the frequency</span>
+              <span><i style="background:var(--brass);border-radius:50%;transform:none"></i>Recovered by Scan</span>
+            </div>
+          </div>
+          <p class="tip">Guess as many times as you like. You can use the same digit in more than one spot — it only lights green or yellow as many times as it really appears.</p>
+        </section>
+      </div>
+
+      <aside class="card notebook" id="notebook">
+        <h2 class="section-title">Posse Notebook</h2>
+        <input class="search" id="nb-search" type="search" placeholder="Search monsters…" aria-label="Search notebook">
+        <div id="nb-body"></div>
+      </aside>
+    </div>
+    <div class="footer"><span class="conn" id="conn">Connected</span> · A fan-made table tool for the <em>Wild Imaginary West</em> RPG by Rune Foundry &amp; Boylei Hobby Time.</div>
+  </main>
+
+  <script type="module" src="/js/player.js?v=1"></script>
+</body>
+</html>

@@ -1,0 +1,50 @@
+/* Warden's Station extras */
+.btn.lock-btn { color: #f6ecd9; border-color: rgba(246,236,217,.6); margin-left: auto; }
+.brand-title .sub a { color: var(--brass); }
+.gate { max-width: 420px; margin: 30px auto; }
+.gate form { display: flex; gap: 10px; }
+.gate input { flex: 1; padding: 10px 12px; border: 1.5px solid var(--ink); border-radius: var(--radius); background: #fffdf7; font: 22px var(--type); letter-spacing: .2em; }
+
+.pick { display: flex; flex-wrap: wrap; gap: 10px; }
+.pick select, .custom-form input, .custom-form select {
+  padding: 10px 12px; border: 1.5px solid var(--ink); border-radius: var(--radius); background: #fffdf7; font-size: 16px;
+}
+.pick select { flex: 1 1 320px; min-width: 0; font-family: var(--type); }
+.small-note { font-size: 14px; margin: 10px 0 0; }
+
+.w-kz { display: flex; align-items: center; gap: 6px; margin-top: 4px; }
+.w-kz .slot {
+  width: 44px; height: 56px; display: grid; place-items: center; font: 38px/1 var(--display);
+  background: #0c0a09; border: 1.5px solid #4d4540; border-radius: 3px; color: #8a7f76; cursor: pointer; position: relative;
+}
+.w-kz .slot:hover { border-color: var(--brass); }
+.w-kz .slot.revealed { color: var(--brass); border-color: var(--brass); }
+.w-kz .slot.green { color: #7fd08a; border-color: #7fd08a; }
+.w-kz .slot.solved { color: var(--phosphor); border-color: var(--phosphor); }
+.w-kz .dash { color: #8a7f76; font: 28px var(--display); }
+.w-legend { font: 13px var(--type); color: #a89c88; margin-top: 8px; }
+.w-legend b { font-weight: 400; }
+.w-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.w-actions .btn { color: #f4ead6; border-color: rgba(244,234,214,.5); background: rgba(0,0,0,.35); }
+.w-actions .btn:hover { background: var(--rust); }
+
+.feed { display: flex; flex-direction: column; gap: 10px; max-height: 620px; overflow-y: auto; }
+.feed .item { display: flex; gap: 12px; align-items: center; padding: 8px 10px; border-left: 3px solid var(--ink-faint); background: rgba(255,255,255,.35); flex-wrap: wrap; }
+.feed .item.roll { border-left-color: var(--brass); }
+.feed .item.guess { border-left-color: var(--teal); background: rgba(23,20,19,.92); color: #d8ccb6; }
+.feed .when { font: 13px var(--type); color: var(--ink-faint); min-width: 64px; }
+.feed .what { font: 18px/1.2 var(--display); letter-spacing: .05em; }
+.feed .dice-mini { display: flex; gap: 4px; flex-wrap: wrap; }
+.feed .dice-mini .die { width: 62px; filter: none; }
+.feed .dice-mini .die .rr { display: none; }
+.feed .item.guess .dia { width: 32px; height: 32px; font-size: 18px; }
+.feed .item.guess .dia::before { width: 22px; height: 22px; }
+.feed .item.guess .diamonds { gap: 4px; }
+
+.custom-form { display: grid; grid-template-columns: 1fr 110px; gap: 8px; }
+.custom-form #c-name { grid-column: 1 / -1; }
+.custom-form .kz-in { display: flex; gap: 6px; }
+.custom-form .kz-in input { flex: 1; min-width: 0; font-family: var(--type); letter-spacing: .1em; }
+.custom-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px dotted rgba(34,31,31,.35); }
+.custom-row span { font: 16px var(--type); }
+.nb-tools { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }

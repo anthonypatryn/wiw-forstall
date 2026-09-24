@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Warden's Station · Forstall Scanner</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>⭐</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Rye&family=Special+Elite&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css?v=1">
+  <link rel="stylesheet" href="/css/warden.css?v=1">
+</head>
+<body class="warden">
+  <header class="masthead">
+    <div class="masthead-inner">
+      <img class="brand-logo" src="/img/logo-light.svg" alt="Wild Imaginary West">
+      <div class="brand-title">
+        <div class="kicker">FOR THE WARDEN’S EYES ONLY</div>
+        <h1>Warden’s Station</h1>
+        <div class="sub">Pick the monster, watch the posse scan. <a href="/" target="_blank" rel="noopener">Open the player page ↗</a></div>
+      </div>
+      <button class="btn small secondary lock-btn" id="logout" type="button" hidden>Lock station</button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <section class="card corner gate" id="gate">
+      <h2 class="section-title">Warden PIN</h2>
+      <form id="pin-form">
+        <input id="pin" type="password" inputmode="numeric" autocomplete="current-password" placeholder="PIN" aria-label="Warden PIN">
+        <button class="btn" type="submit">Unlock</button>
+      </form>
+      <p class="muted" id="pin-msg"></p>
+    </section>
+
+    <div class="grid" id="station" hidden>
+      <div>
+        <section class="card corner">
+          <h2 class="section-title"><span class="step">TARGET</span> Point the antenna</h2>
+          <div class="pick">
+            <select id="monster-select" aria-label="Monster"></select>
+            <button class="btn" id="lock" type="button">Lock target</button>
+            <button class="btn secondary" id="clear" type="button">Stand down</button>
+          </div>
+          <p class="muted small-note">✓ decoded · ◐ partly scanned. Players only see the name — never the frequency — until they decode it.</p>
+        </section>
+
+        <section class="card target idle" id="w-target"></section>
+
+        <section class="card corner">
+          <h2 class="section-title"><span class="step">LIVE</span> Scan feed</h2>
+          <div id="feed" class="feed"></div>
+        </section>
+      </div>
+
+      <aside>
+        <section class="card corner">
+          <h2 class="section-title">House rules</h2>
+          <label class="check"><input type="checkbox" id="easy"> Warden’s aid: show digit positions</label>
+          <p class="tip">From the Guidebook’s tip (p. 84): if the posse isn’t into puzzles, give the position of each digit earned — but Scanning costs <b>5 Grit</b> instead of 3.</p>
+        </section>
+
+        <section class="card corner">
+          <h2 class="section-title">Homebrew monster</h2>
+          <form id="custom-form" class="custom-form">
+            <input id="c-name" type="text" maxlength="40" placeholder="Monster name" required>
+            <select id="c-size" aria-label="Size">
+              <option>Tiny</option><option>Small</option><option selected>Medium</option><option>Large</option><option>Huge</option><option>Titan</option>
+            </select>
+            <div class="kz-in">
+              <input id="c-kz" type="text" maxlength="10" placeholder="0-0-0000" required pattern="\d-?\d-?\d{4}" aria-label="Kurtz Frequency">
+              <button class="btn small secondary" type="button" id="c-rand" title="Random frequency">🎲</button>
+            </div>
+            <button class="btn small" type="submit">Add monster</button>
+          </form>
+          <div id="custom-list"></div>
+          <p class="tip">“Make Your Own Monster” (p. 193): a Kurtz Value is a random six-digit number and may repeat digits.</p>
+        </section>
+
+        <section class="card notebook">
+          <h2 class="section-title">Posse Notebook</h2>
+          <input class="search" id="nb-search" type="search" placeholder="Search monsters…" aria-label="Search notebook">
+          <div id="nb-body"></div>
+        </section>
+      </aside>
+    </div>
+    <div class="footer"><span class="conn" id="conn">Connected</span> · <span id="store-kind"></span></div>
+  </main>
+
+  <script type="module" src="/js/warden.js?v=1"></script>
+</body>
+</html>
