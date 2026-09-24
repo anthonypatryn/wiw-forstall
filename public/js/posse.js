@@ -170,7 +170,7 @@ function renderList() {
       <a class="pc-open" href="#${p.id}" aria-label="Open ${esc(p.name)}’s sheet">
         <img class="pc-face" src="/img/tokens/trade-${p.trade.toLowerCase()}.webp" alt="">
         <div class="t">THE ${esc(p.trade.toUpperCase())}${p.dead ? ' · FALLEN' : ''}</div>
-        <div class="n">${esc(p.name)}</div>
+        <div class="n">${esc(p.name)}</div>${p.title ? `<div class="tile-title">“${esc(p.title)}”</div>` : ''}
         <div class="hp"><span class="bar"><i style="width:${Math.min(100, (p.health / Math.max(1, p.maxHealth)) * 100)}%"></i></span><span class="num">${p.health}/${p.maxHealth}</span></div>
       </a>
       <div class="tile-actions">${p.done === false
@@ -269,12 +269,12 @@ function buildSheet(p) {
       <button class="btn small" type="button" data-mode="view" hidden>✓ Done editing</button>
       <button class="btn small" type="button" data-mode="finish" hidden>Save character</button>
       <button class="btn small secondary danger" id="delete-pc" type="button">Delete</button>
-      <nav class="sheet-toc" aria-label="Jump to">${[['starter', 'Checklist'], ['skills', 'Skills'], ['health', 'Health'], ['statuses', 'Statuses'], ['weapons', 'Weapons'], ['abilities', 'Abilities'], ['prestige', 'Prestige'], ['talents', 'Talents'], ['disposition', 'Story'], ['reputation', 'Reputation'], ['gear', 'Gear'], ['inventory', 'Inventory'], ['forstall', 'Forstall'], ['horse', 'Horse'], ['mech', 'Mech']].map(([id, label]) => `<a href="#${p.id}" data-jump="${id}">${label}</a>`).join('')}</nav>
+      <nav class="sheet-toc" aria-label="Jump to">${[['starter', 'Checklist'], ['skills', 'Skills'], ['health', 'Health'], ['statuses', 'Statuses'], ['weapons', 'Weapons'], ['abilities', 'Abilities'], ['prestige', 'Prestige'], ['talents', 'Talents'], ['achievements', 'Titles'], ['disposition', 'Story'], ['reputation', 'Reputation'], ['gear', 'Gear'], ['inventory', 'Inventory'], ['forstall', 'Forstall'], ['horse', 'Horse'], ['mech', 'Mech']].map(([id, label]) => `<a href="#${p.id}" data-jump="${id}">${label}</a>`).join('')}</nav>
     </div>
     <div class="sheet-head">
       <div class="sh-trade"><small>THE</small>${esc(p.trade.toUpperCase())}</div>
       <img class="sh-logo" src="/img/logo-light.svg" alt="Wild Imaginary West">
-      <label class="sh-name"><span>NAME</span><input class="sheet-name" data-path="name" maxlength="40" aria-label="Character name"></label>
+      <label class="sh-name"><span>NAME</span><input class="sheet-name" data-path="name" maxlength="40" aria-label="Character name"><em class="sh-title" data-dyn="title"></em></label>
       <img class="sh-art" src="/img/trades/${p.trade.toLowerCase()}.webp" alt="The ${esc(p.trade)}">
     </div>
 
@@ -298,6 +298,7 @@ function buildSheet(p) {
       ${box('PRESTIGE', 'fame &amp; progression', `<div class="w-grid">${inp('prestige.total', 'Total', { type: 'number' })}${inp('prestige.unclaimed', 'Unclaimed', { type: 'number' })}</div>
         <div class="tier-title" data-dyn="tier-title"></div>
         <div class="spend" data-dyn="spend"></div>`, 'prestige')}
+      ${box('ACHIEVEMENTS', 'title rewards for your growing legend', '<div data-dyn="ach"></div>', 'achievements')}
       ${box('TALENTS', 'reroll Spurs when using marked items', `<div class="talents">${meta.talents.map((tl) =>
           `<label><input type="checkbox" data-toggle="talents" value="${esc(tl)}"><span>${esc(tl)} <small>(${esc(TALENT_INFO[tl] || '')})</small></span></label>`).join('')}</div>`, 'talents')}
       ${box('DISPOSITION', 'attitude, worries, &amp; wishes', inp('disposition', '', { type: 'textarea', max: 1000 }), 'disposition')}
@@ -393,6 +394,11 @@ function wireSheet(p) {
   on('change', (e) => {
     if (e.target.matches('.pick')) return pickItem(p, e.target);
     if (e.target.matches('[data-pack]')) return choosePack(p, e.target.dataset.pack === '2' ? 'pack2' : 'pack', e.target.value);
+    if (e.target.matches('[data-ach]')) {
+      const on = e.target.checked, name = e.target.dataset.ach; e.target.blur();
+      return act({ action: 'achieve', id: p.id, name, on }).then((ok) => ok && toast(on ? `🏅 ${name} granted.` : `${name} removed.`));
+    }
+    if (e.target.matches('[data-ach-title]')) { e.target.blur(); return act({ action: 'sheet', id: p.id, path: 'title', value: e.target.value }); }
     if (e.target.matches('[data-tier]')) {
       e.target.blur();
       const pc = pcById(p.id), f = { tier: e.target.value };
@@ -623,6 +629,21 @@ async function spendPrestige(view, p, what) {
   if (await act(body)) toast(`${label} — done. It’s in the Table Log.`);
 }
 
+// Achievements & Title Rewards (p. 34)
+const earnedTitles = (p) => [...meta.tiers.filter((t) => (p.prestige.total || 0) >= t.prestige).map((t) => t.name), ...(p.achievements || [])];
+function renderAch(view, p) {
+  const box = view.querySelector('[data-dyn="ach"]');
+  view.querySelector('[data-dyn="title"]').textContent = p.title ? `“${p.title}”` : '';
+  if (!box || box.contains(document.activeElement)) return;
+  const got = new Set(p.achievements || []), titles = earnedTitles(p);
+  box.innerHTML = `<div class="ach-tiers">${meta.tiers.map((t) => { const ok = (p.prestige.total || 0) >= t.prestige;
+      return `<span class="ach-tier${ok ? ' ok' : ''}" title="Reach ${t.prestige} total Prestige">${ok ? '✓ ' : ''}${t.name} <small>${t.prestige}</small></span>`; }).join('')}</div>
+    <ul class="ach-list">${meta.achievements.map((a) => `<li class="${got.has(a.name) ? 'ok' : ''}">
+      <label><input type="checkbox" data-ach="${esc(a.name)}"${got.has(a.name) ? ' checked' : ''}${warden ? '' : ' disabled'}><b>${esc(a.name)}</b></label><small>${esc(a.req)}</small></li>`).join('')}</ul>
+    <p class="muted ach-note">${warden ? 'Warden: tick an Achievement when they earn it — it’s announced in the Table Log.' : 'The Warden ticks these off when you earn them.'}</p>
+    <label class="ach-show">SHOW TITLE UNDER NAME <select data-ach-title><option value="">— none —</option>${titles.map((t) => `<option${t === p.title ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select></label>`;
+}
+
 // View / edit modes. Finished sheets open locked; play trackers stay live.
 let starterMissing = [];
 const editMode = new Set();
@@ -632,7 +653,7 @@ function applyMode(view, p) {
   const locked = !isEditing(p);
   view.classList.toggle('viewing', locked);
   view.querySelectorAll('.sheet input, .sheet select, .sheet textarea, .sheet-head input, .sheet .spur[data-spur]').forEach((el) => {
-    if (el.matches('[data-stc]') || el.closest('[data-dyn="spend"]')) return; // Statuses + Prestige spending stay live
+    if (el.matches('[data-stc]') || el.closest('[data-dyn="spend"], [data-dyn="ach"]')) return; // Statuses + Prestige spending stay live
     const path = el.dataset.path || el.dataset.vpath || el.closest('.dp[data-pool]')?.dataset.pool;
     el.disabled = locked && !(path && PLAY_PATHS.test(path));
   });
@@ -741,6 +762,7 @@ function hydrate(p) {
   }
   renderStarter(view, p);
   renderSpend(view, p);
+  renderAch(view, p);
   applyMode(view, p);
   view.querySelectorAll('[data-toggle]').forEach((el) => { el.checked = p[el.dataset.toggle].includes(el.value); });
   view.querySelectorAll('[data-ab]').forEach((el) => el.classList.toggle('locked', !p.abilities.includes(el.dataset.ab)));
