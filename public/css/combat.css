@@ -153,3 +153,14 @@ details.more p { font-size: 14px; margin: 6px 0; }
 .add-npc select#add-npc { flex: 2; min-width: 0; }
 .add-npc select#npc-as { flex: 1; min-width: 0; }
 .add-npc select[hidden] { display: none !important; }
+/* phone: long option text in the Warden's pickers must not widen the page */
+.combat-grid > * { min-width: 0; }
+.add-enemy { flex-wrap: wrap; }
+.add-enemy select { min-width: 0; max-width: 100%; }
+.add-npc select#add-npc { flex: 1 1 100%; }
+.duel-table { font-size: 14px; }
+@media (max-width: 480px) {
+  .duel-table tbody th { width: 64px; font-size: 12px; }
+  .duel-table .duel-tray .die { width: 26px; }
+  .duel-table thead th { font-size: 15px; }
+}

@@ -464,3 +464,6 @@ button { cursor: pointer; }
 .bleed-panel .bp-used { padding: 5px 10px 3px; border: 1px dashed #8f1d17; border-radius: 3px; font: 13px var(--display); letter-spacing: .08em; color: #8f1d17; }
 .bleed-panel .bp-last { color: #8f1d17; }
 .bleed-panel .bp-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+/* phone: grid columns may shrink below their widest dropdown/input (long option text was widening pages) */
+.grid > * { min-width: 0; }
+.grid select { max-width: 100%; }

@@ -340,3 +340,20 @@ body.on-sheet .masthead { display: none; }
 .rest-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 10px; padding-top: 8px; border-top: 1px dotted rgba(34,31,31,.35); }
 .rest-row .rl { font: 12px var(--display); letter-spacing: .12em; color: var(--rust); flex-basis: 100%; }
 .rest-row select { flex: 1; min-width: 0; padding: 4px 6px; border: 1px solid var(--ink-faint); border-radius: 3px; background: #fffdf7; font-size: 14px; }
+/* phone: award form inputs must shrink with their columns */
+.aw-grid label { min-width: 0; }
+.aw-grid input { width: 100%; min-width: 0; box-sizing: border-box; }
+@media (max-width: 560px) { .aw-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+/* phone: sheet header + compact sticky bar */
+@media (max-width: 560px) {
+  .sheet-head { grid-template-columns: minmax(0, 1fr) 92px; }
+  .sh-name { min-width: 0; }
+  .sh-art { height: 118px; margin-right: -6px; }
+  .sheet-bar { padding: 6px 8px; gap: 5px 6px; }
+  .sheet-bar .btn.small { padding: 5px 8px 3px; font-size: 12px; }
+  .sheet-bar .me-star { padding: 3px 7px 1px; }
+  .sheet-bar .save-state { display: none; }
+  .sheet-toc { padding-top: 4px; }
+  .sheet-toc a { padding: 3px 8px 1px; font-size: 12px; }
+}
+@media (max-width: 560px) { .rest-row select { flex-basis: 100%; } }
