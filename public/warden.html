@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Rye&family=Special+Elite&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css?v=1">
-  <link rel="stylesheet" href="/css/warden.css?v=1">
+  <link rel="stylesheet" href="/css/warden.css?v=2">
 </head>
 <body class="warden">
   <header class="masthead">
@@ -71,8 +71,9 @@
             </select>
             <div class="kz-in">
               <input id="c-kz" type="text" maxlength="10" placeholder="0-0-0000" required pattern="\d-?\d-?\d{4}" aria-label="Kurtz Frequency">
-              <button class="btn small secondary" type="button" id="c-rand" title="Random frequency">🎲</button>
+              <button class="btn small secondary" type="button" id="c-rand" title="Random unused frequency" aria-label="Random unused frequency">🎲</button>
             </div>
+            <p class="kz-msg" id="c-msg" aria-live="polite"></p>
             <button class="btn small" type="submit">Add monster</button>
           </form>
           <div id="custom-list"></div>
@@ -89,6 +90,6 @@
     <div class="footer"><span class="conn" id="conn">Connected</span> · <span id="store-kind"></span></div>
   </main>
 
-  <script type="module" src="/js/warden.js?v=1"></script>
+  <script type="module" src="/js/warden.js?v=2"></script>
 </body>
 </html>

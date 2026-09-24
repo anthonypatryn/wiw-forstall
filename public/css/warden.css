@@ -41,10 +41,13 @@
 .feed .item.guess .dia::before { width: 22px; height: 22px; }
 .feed .item.guess .diamonds { gap: 4px; }
 
-.custom-form { display: grid; grid-template-columns: 1fr 110px; gap: 8px; }
-.custom-form #c-name { grid-column: 1 / -1; }
+.custom-form { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 8px; }
+.custom-form #c-name, .custom-form > .btn, .custom-form .kz-msg { grid-column: 1 / -1; }
 .custom-form .kz-in { display: flex; gap: 6px; }
-.custom-form .kz-in input { flex: 1; min-width: 0; font-family: var(--type); letter-spacing: .1em; }
+.custom-form .kz-in input { flex: 1; min-width: 0; font: 20px var(--type); letter-spacing: .12em; text-align: center; }
+.custom-form .kz-in .btn { flex: none; font-size: 20px; padding: 0 12px; }
+.custom-form .kz-msg { font-size: 14px; min-height: 1.2em; margin: -2px 0 0; color: var(--ink-faint); }
+.custom-form .kz-msg.bad { color: var(--red); }
 .custom-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px dotted rgba(34,31,31,.35); }
 .custom-row span { font: 16px var(--type); }
 .nb-tools { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }

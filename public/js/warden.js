@@ -49,7 +49,8 @@ async function act(body, okMsg) {
     const res = await api('POST', body);
     poller.push(res.state);
     if (okMsg) toast(okMsg);
-  } catch (e) { toast(e.message, true); }
+    return true;
+  } catch (e) { toast(e.message, true); return false; }
 }
 
 // ---------- target picker ----------
@@ -147,12 +148,34 @@ function renderFeed() {
 // ---------- settings / homebrew ----------
 $('#easy').addEventListener('change', (e) => act({ action: 'setEasy', value: e.target.checked }, e.target.checked ? 'Warden’s aid on — positions shown.' : 'Warden’s aid off.'));
 
-const rand6 = () => Array.from({ length: 6 }, () => Math.floor(Math.random() * 10));
-$('#c-rand').addEventListener('click', () => { const d = rand6(); $('#c-kz').value = `${d[0]}-${d[1]}-${d.slice(2).join('')}`; });
+// Homebrew frequencies must not collide with any existing monster's.
+const kzDigits = (v) => v.replace(/\D/g, '');
+const fmtKz = (d) => `${d[0]}-${d[1]}-${d.slice(2)}`;
+const takenBy = (digits) => data?.monsters.find((m) => kzDigits(m.kz) === digits);
+
+function checkKz() {
+  const input = $('#c-kz');
+  const d = kzDigits(input.value);
+  const owner = d.length === 6 && takenBy(d);
+  const msg = $('#c-msg');
+  msg.classList.toggle('bad', !!owner);
+  msg.textContent = owner ? `Taken — that’s the ${owner.name}’s frequency.` : d.length === 6 ? `${fmtKz(d)} is free.` : '';
+  input.setCustomValidity(owner ? 'That frequency is already taken.' : '');
+  return !owner;
+}
+$('#c-kz').addEventListener('input', checkKz);
+$('#c-kz').addEventListener('blur', () => { const d = kzDigits($('#c-kz').value); if (d.length === 6) $('#c-kz').value = fmtKz(d); });
+$('#c-rand').addEventListener('click', () => {
+  let d;
+  do d = Array.from({ length: 6 }, () => Math.floor(Math.random() * 10)).join(''); while (takenBy(d));
+  $('#c-kz').value = fmtKz(d);
+  checkKz();
+});
 $('#custom-form').addEventListener('submit', async (e) => {
   e.preventDefault();
-  await act({ action: 'addCustom', name: $('#c-name').value, size: $('#c-size').value, kz: $('#c-kz').value }, 'Homebrew monster added.');
-  $('#c-name').value = ''; $('#c-kz').value = '';
+  if (!checkKz()) return;
+  const ok = await act({ action: 'addCustom', name: $('#c-name').value, size: $('#c-size').value, kz: $('#c-kz').value }, 'Homebrew monster added.');
+  if (ok) { $('#c-name').value = ''; $('#c-kz').value = ''; $('#c-msg').textContent = ''; }
 });
 function renderCustom() {
   const list = data.monsters.filter((m) => m.custom);
