@@ -272,6 +272,7 @@ function renderEnemyTools() {
   const npcAs = () => { $('#npc-as').hidden = !$('#add-npc').value.startsWith('ledger:'); };
   $('#add-npc').addEventListener('change', npcAs); npcAs();
   api('GET', null, '?view=warden', '/api/npcs').then((r) => {
+    ledgerNpcs = r.npcs || []; duelSig = ''; renderDuel();
     $('#ledger-opts').innerHTML = (r.npcs || []).map((n) => `<option value="ledger:${esc(n.name)}">${esc(n.name)}${n.faction ? ` (${esc(n.faction)})` : ''}</option>`).join('');
   }).catch(() => {});
   $('#add-npc-btn').addEventListener('click', () => {
@@ -339,7 +340,7 @@ function renderLog() { renderLogInto($('#log'), data.log); }
 
 // ---------- High Noon Duel (p. 58) ----------
 const DUEL_STEPS = ['Charm', 'Finesse', 'Intuition', 'Nerve', 'Draw!'];
-let duelSeen = 0, duelKey = null, duelSig = '';
+let duelSeen = 0, duelKey = null, duelSig = '', ledgerNpcs = [];
 function renderDuel() {
   const box = $('#duel');
   if (box.contains(document.activeElement) && document.activeElement.tagName === 'SELECT') return;
@@ -352,9 +353,12 @@ function renderDuel() {
   if (!d) {
     const foes = data.enemies.filter((e) => !e.defeated);
     const opts = `<option value="">— pick —</option><optgroup label="The Posse">${alive.map((p) => `<option value="pc:${p.id}">${esc(p.name)}</option>`).join('')}</optgroup>
-      ${foes.length ? `<optgroup label="NPCs & enemies in the fight">${foes.map((e) => `<option value="en:${e.id}">${esc(e.name)}</option>`).join('')}</optgroup>` : ''}`;
+      ${foes.length ? `<optgroup label="NPCs & enemies in the fight">${foes.map((e) => `<option value="en:${e.id}">${esc(e.name)}</option>`).join('')}</optgroup>` : ''}
+      ${warden && data.npcCatalog ? `<optgroup label="Book NPCs (Warden)">${data.npcCatalog.filter((n) => n.faction).map((n) => `<option value="np:${esc(n.key)}|${esc(n.name)}">${esc(n.name)}</option>`).join('')}</optgroup>
+        <optgroup label="Human combatants (p. 191)">${data.npcCatalog.filter((n) => !n.faction).map((n) => `<option value="np:${esc(n.key)}|">${esc(n.name.replace('Human - ', ''))}</option>`).join('')}</optgroup>
+        ${ledgerNpcs.length ? `<optgroup label="Your NPC ledger (fights like a Moderate combatant)">${ledgerNpcs.map((n) => `<option value="np:npc:Human - Moderate Combatant|${esc(n.name)}">${esc(n.name)}</option>`).join('')}</optgroup>` : ''}` : ''}`;
     box.innerHTML = `<p class="muted" style="margin-top:0">Stripped of gear and defenses: just Skills and the town’s Dueling Pistols (2G). Both roll each Skill in turn; whoever rolls more Hits adds <b>1B</b> to their Draw! (a tie gives both). Then both fire.</p>
-      <p class="muted">Dueling an NPC? The Warden adds them under The Opposition first (“+ Add NPC”).</p>
+      <p class="muted">Dueling an NPC? In Warden mode the list includes every book NPC and your NPC ledger. Someone already in the fight takes the result on their card.</p>
       <div class="duel-pick"><select id="duel-a" aria-label="First duelist">${opts}</select><b>vs</b><select id="duel-b" aria-label="Second duelist">${opts}</select>
       <button class="btn" id="duel-go" type="button">Face off</button></div>`;
     $('#duel-go').addEventListener('click', () => act({ action: 'duelStart', a: $('#duel-a').value, b: $('#duel-b').value }));
