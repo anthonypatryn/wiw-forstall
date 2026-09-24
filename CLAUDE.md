@@ -7,6 +7,7 @@
 - Trade sheet PDFs and the 5 battle maps came from `Downloads`.
 - Book pages used so far:
   - pp. 6–8: character creation
+  - p. 32: spend Prestige (pcOp `spend`); p. 54: Jackpot + Bleeding Out (pcOp `bleedRoll`); p. 58: High Noon Duel (`state.duel`, duelAction, sides `pc:<id>`/`en:<id>`)
   - p. 33: Prestige tiers + Starting at Higher Prestige loadouts (`TIERS` in lib/sheets.js, pcOp `tierKit`)
   - p. 85: ranges
   - pp. 83–84: scanning

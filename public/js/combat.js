@@ -248,6 +248,14 @@ function renderEnemyTools() {
       <input type="number" id="add-count" min="1" max="8" value="1" aria-label="How many">
       <button class="btn small" id="add-monster-btn" type="button">+ Add monster</button>
     </div>
+    <div class="add-enemy add-npc">
+      <select id="add-npc" aria-label="NPC"><option value="">— an NPC or human —</option>
+        <optgroup label="Human combatants (p. 191)">${data.npcCatalog.filter((n) => !n.faction).map((n) => `<option value="${esc(n.key)}">${esc(n.name.replace('Human - ', ''))} · ${n.health} Health</option>`).join('')}</optgroup>
+        ${[...new Set(data.npcCatalog.filter((n) => n.faction).map((n) => n.faction))].map((f) => `<optgroup label="${esc(f)}">${data.npcCatalog.filter((n) => n.faction === f).map((n) => `<option value="${esc(n.key)}">${esc(n.name)} · ${n.health} Health</option>`).join('')}</optgroup>`).join('')}
+        <optgroup label="Your NPC ledger" id="ledger-opts"></optgroup></select>
+      <select id="npc-as" aria-label="Fights like" title="Stats for a ledger NPC">${data.npcCatalog.filter((n) => !n.faction).map((n) => `<option value="${esc(n.key)}">fights like: ${esc(n.name.replace('Human - ', ''))}</option>`).join('')}</select>
+      <button class="btn small" id="add-npc-btn" type="button">+ Add NPC</button>
+    </div>
     <div class="custom-enemy">
       <input id="ce-name" placeholder="Outlaw, bandit…" aria-label="Name">
       <input id="ce-hp" type="number" min="1" placeholder="Health" aria-label="Health">
@@ -260,6 +268,17 @@ function renderEnemyTools() {
       <button class="btn small secondary danger" id="clear-enemies" type="button">Clear all enemies</button>
     </div>`;
   $('#add-monster-btn').addEventListener('click', () => act({ action: 'addEnemy', profile: $('#add-monster').value, count: $('#add-count').value }));
+  // ledger NPCs have no stat block, so they borrow a human combatant's (Weak / Moderate / Strong)
+  const npcAs = () => { $('#npc-as').hidden = !$('#add-npc').value.startsWith('ledger:'); };
+  $('#add-npc').addEventListener('change', npcAs); npcAs();
+  api('GET', null, '?view=warden', '/api/npcs').then((r) => {
+    $('#ledger-opts').innerHTML = (r.npcs || []).map((n) => `<option value="ledger:${esc(n.name)}">${esc(n.name)}${n.faction ? ` (${esc(n.faction)})` : ''}</option>`).join('');
+  }).catch(() => {});
+  $('#add-npc-btn').addEventListener('click', () => {
+    const v = $('#add-npc').value;
+    if (!v) return toast('Pick an NPC.', true);
+    act(v.startsWith('ledger:') ? { action: 'addEnemy', profile: $('#npc-as').value, name: v.slice(7) } : { action: 'addEnemy', profile: v });
+  });
   $('#ce-add').addEventListener('click', async () => {
     const ok = await act({ action: 'addEnemy', name: $('#ce-name').value, health: $('#ce-hp').value, defense: readPool($('#ce-def')) || '—', finesse: readPool($('#ce-fin')) || '1B', size: 'Human' });
     if (ok !== null) { $('#ce-name').value = ''; $('#ce-hp').value = ''; document.querySelectorAll('.custom-enemy .dp input').forEach((i) => { i.value = ''; }); }
@@ -317,6 +336,50 @@ $('#roll-btn').addEventListener('click', () => doRoll({
 
 // ---------- log ----------
 function renderLog() { renderLogInto($('#log'), data.log); }
+
+// ---------- High Noon Duel (p. 58) ----------
+const DUEL_STEPS = ['Charm', 'Finesse', 'Intuition', 'Nerve', 'Draw!'];
+let duelSeen = 0, duelKey = null, duelSig = '';
+function renderDuel() {
+  const box = $('#duel');
+  if (box.contains(document.activeElement) && document.activeElement.tagName === 'SELECT') return;
+  const d = data.duel;
+  const alive = data.posse.filter((p) => !p.dead);
+  // redraw only when something changed, so a roll animation isn't cut off by the next poll
+  const sig = JSON.stringify([d?.at, d?.step, d?.done, alive.map((p) => [p.id, p.name]), data.enemies.map((e) => [e.id, e.name, e.defeated])]);
+  if (sig === duelSig) return;
+  duelSig = sig;
+  if (!d) {
+    const foes = data.enemies.filter((e) => !e.defeated);
+    const opts = `<option value="">— pick —</option><optgroup label="The Posse">${alive.map((p) => `<option value="pc:${p.id}">${esc(p.name)}</option>`).join('')}</optgroup>
+      ${foes.length ? `<optgroup label="NPCs & enemies in the fight">${foes.map((e) => `<option value="en:${e.id}">${esc(e.name)}</option>`).join('')}</optgroup>` : ''}`;
+    box.innerHTML = `<p class="muted" style="margin-top:0">Stripped of gear and defenses: just Skills and the town’s Dueling Pistols (2G). Both roll each Skill in turn; whoever rolls more Hits adds <b>1B</b> to their Draw! (a tie gives both). Then both fire.</p>
+      <p class="muted">Dueling an NPC? The Warden adds them under The Opposition first (“+ Add NPC”).</p>
+      <div class="duel-pick"><select id="duel-a" aria-label="First duelist">${opts}</select><b>vs</b><select id="duel-b" aria-label="Second duelist">${opts}</select>
+      <button class="btn" id="duel-go" type="button">Face off</button></div>`;
+    $('#duel-go').addEventListener('click', () => act({ action: 'duelStart', a: $('#duel-a').value, b: $('#duel-b').value }));
+    duelKey = null;
+    return;
+  }
+  const next = DUEL_STEPS[d.step];
+  const cell = (r, i) => r ? `<td><div class="tray duel-tray" data-dt="${r.skill}-${i}"></div><span class="dh">${r.rolls[i].hits} hit${r.rolls[i].hits === 1 ? '' : 's'}</span>${r.won?.[i] ? ' <b class="plus">+1B</b>' : ''}</td>` : '<td class="muted">—</td>';
+  box.innerHTML = `<table class="duel-table"><thead><tr><th></th><th>${esc(d.names[0])}<small>Draw! ${d.bonus[0]}B 2G</small></th><th>${esc(d.names[1])}<small>Draw! ${d.bonus[1]}B 2G</small></th></tr></thead>
+    <tbody>${DUEL_STEPS.map((st) => { const r = d.rounds.find((x) => x.skill === st);
+      return `<tr class="${st === next ? 'now' : ''}"><th>${st}</th>${cell(r, 0)}${cell(r, 1)}</tr>`; }).join('')}</tbody></table>
+    ${d.result ? `<div class="duel-result">${d.result.map((r) => `<div class="dr ${r.level}"><b>${esc(r.name)}</b> takes <b>${r.against}</b> Hit${r.against === 1 ? '' : 's'}: ${esc(r.text)}</div>`).join('')}</div>` : ''}
+    <div class="duel-actions">${next ? `<button class="btn" id="duel-roll" type="button">${next === 'Draw!' ? '💥 DRAW!' : `🎲 Both roll ${next}`}</button>` : ''}
+      <button class="btn small secondary" id="duel-end" type="button">${d.done ? 'Close the Duel' : 'Call it off'}</button></div>`;
+  d.rounds.forEach((r) => r.rolls.forEach((x, i) => { const t = box.querySelector(`[data-dt="${r.skill}-${i}"]`); if (t) staticDice(t, x.dice); }));
+  // animate only the newest round, once
+  if (duelKey !== d.at) { duelKey = d.at; duelSeen = d.rounds.length; } // joined mid-duel: don't replay
+  else if (d.rounds.length > duelSeen) {
+    const r = d.rounds[d.rounds.length - 1];
+    r.rolls.forEach((x, i) => { const t = box.querySelector(`[data-dt="${r.skill}-${i}"]`); if (t) animateRoll(t, x.dice); });
+    duelSeen = d.rounds.length;
+  }
+  $('#duel-roll')?.addEventListener('click', (e) => { e.target.disabled = true; act({ action: 'duelRoll' }); });
+  $('#duel-end').addEventListener('click', () => { if (d.done || confirm('Call off the Duel?')) act({ action: 'duelEnd' }); });
+}
 $('#clear-log').addEventListener('click', () => { if (confirm('Clear the table log?')) act({ action: 'clearLog' }); });
 
 // ---------- render & boot ----------
@@ -330,6 +393,7 @@ function render() {
   renderEnemyTools();
   renderEnemies();
   renderRollAs();
+  renderDuel();
   renderLog();
   if (warden && $('#show-hp')) $('#show-hp').checked = !!data.settings.showEnemyHealth;
 }
