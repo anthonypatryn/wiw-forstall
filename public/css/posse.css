@@ -1,9 +1,12 @@
 /* Posse Sheets — list view */
 .roster { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 12px; }
 .pc-tile {
-  position: relative; display: block; text-decoration: none; color: inherit; background: #fffaf0; border: 1.5px solid var(--ink); border-radius: var(--radius);
-  padding: 12px 14px 12px 82px; box-shadow: 2px 2px 0 rgba(34,31,31,.18); transition: transform .1s; min-height: 84px;
+  position: relative; background: #fffaf0; border: 1.5px solid var(--ink); border-radius: var(--radius);
+  box-shadow: 2px 2px 0 rgba(34,31,31,.18); transition: transform .1s;
 }
+.pc-tile .pc-open { position: relative; display: block; text-decoration: none; color: inherit; padding: 12px 14px 8px 82px; min-height: 84px; }
+.pc-tile .tile-actions { display: flex; gap: 8px; justify-content: flex-end; padding: 8px 12px 10px; border-top: 1px dotted rgba(34,31,31,.35); }
+.pc-tile .tile-actions .btn { text-decoration: none; }
 .pc-tile:hover { transform: translateY(-2px); border-color: var(--rust); }
 .pc-tile .pc-face { position: absolute; left: 12px; top: 12px; width: 58px; height: 58px; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,.35); }
 .pc-tile .n { font: 24px/1.05 var(--western); }
@@ -241,3 +244,16 @@ body.on-sheet .masthead { display: none; }
 .ks-other { flex-basis: 100%; display: flex; gap: 8px; }
 .ks-other input { flex: 1; max-width: 420px; padding: 6px 8px; border: 1px solid var(--ink-faint); border-radius: 3px; background: #fffdf7; font-size: 15px; }
 .starter-in .pack-card li { display: list-item; padding: 0; border: 0; gap: 0; }
+
+/* sheet toolbar */
+.sheet-bar { position: sticky; top: 0; z-index: 20; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 0 0 12px; padding: 8px 12px;
+  background: var(--paper); border: 2px solid var(--ink); border-radius: 6px; box-shadow: 0 4px 10px rgba(0,0,0,.15); }
+.sheet-bar .btn { text-decoration: none; }
+.sheet-bar .save-state { flex: 1; text-align: center; font: 14px var(--display); letter-spacing: .08em; color: var(--ink-soft); }
+.sheet-bar .save-state.busy { color: var(--rust); }
+.sheet-bar .save-state.err { color: #b3261e; }
+.danger-zone { justify-content: flex-start; }
+/* pack cards: top-align contents (buttons centre them by default) */
+.pack-card { display: flex; flex-direction: column; justify-content: flex-start; align-items: stretch; }
+.f.wide { grid-column: 1 / -1; }
+.f textarea[data-path^="horse."] { min-height: 64px; }

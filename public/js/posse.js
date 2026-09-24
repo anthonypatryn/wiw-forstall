@@ -48,13 +48,25 @@ let chosenTrade = null;
 let kzOptions = [];
 let factions = [];          // known factions for the Reputation dropdowns
 
+let saving = 0;
+function saveState(text, err) {
+  const el = document.querySelector('[data-save-state]');
+  if (el) { el.textContent = text; el.classList.toggle('err', !!err); el.classList.toggle('busy', text.startsWith('Saving')); }
+}
 async function act(body, el) {
+  saving++; saveState('Saving…');
   try {
     const res = await api('POST', body, '', EP);
+    if (!--saving) saveState('✓ Saved');
     poller.push(res.state);
     if (el) { el.classList.remove('saved'); void el.offsetWidth; el.classList.add('saved'); }
     return res.result ?? true;
-  } catch (e) { toast(e.message, true); if (el && data) render(); return null; }
+  } catch (e) { saving = Math.max(0, saving - 1); saveState('Didn’t save — try again', true); toast(e.message, true); if (el && data) render(); return null; }
+}
+async function deletePc(id) {
+  const pc = pcById(id);
+  if (!pc || !confirm(`Delete ${pc.name}’s sheet for everyone? This can’t be undone.`)) return;
+  if (await act({ action: 'pc', id, op: 'remove' })) { toast(`${pc.name} deleted.`); if (location.hash) location.hash = ''; }
 }
 const pcById = (id) => data?.posse.find((p) => p.id === id);
 const get = (obj, path) => path.split('.').reduce((o, k) => (o == null ? o : o[k]), obj);
@@ -92,12 +104,17 @@ const tierLoadout = {}; // unsaved picks per sheet: { ranged, melee, extras: [] 
 function renderList() {
   const roster = $('#roster');
   roster.innerHTML = data.posse.length ? data.posse.map((p) => `
-    <a class="pc-tile${p.dead ? ' dead' : ''}" href="#${p.id}">
-      <img class="pc-face" src="/img/tokens/trade-${p.trade.toLowerCase()}.webp" alt="">
-      <div class="t">THE ${esc(p.trade.toUpperCase())}${p.dead ? ' · FALLEN' : ''}</div>
-      <div class="n">${esc(p.name)}</div>
-      <div class="hp"><span class="bar"><i style="width:${Math.min(100, (p.health / Math.max(1, p.maxHealth)) * 100)}%"></i></span><span class="num">${p.health}/${p.maxHealth}</span></div>
-    </a>`).join('') : '<p class="empty-note">No one’s signed up yet. Pick a Trade below.</p>';
+    <div class="pc-tile${p.dead ? ' dead' : ''}">
+      <a class="pc-open" href="#${p.id}" aria-label="Open ${esc(p.name)}’s sheet">
+        <img class="pc-face" src="/img/tokens/trade-${p.trade.toLowerCase()}.webp" alt="">
+        <div class="t">THE ${esc(p.trade.toUpperCase())}${p.dead ? ' · FALLEN' : ''}</div>
+        <div class="n">${esc(p.name)}</div>
+        <div class="hp"><span class="bar"><i style="width:${Math.min(100, (p.health / Math.max(1, p.maxHealth)) * 100)}%"></i></span><span class="num">${p.health}/${p.maxHealth}</span></div>
+      </a>
+      <div class="tile-actions"><a class="btn small" href="#${p.id}">✎ Edit sheet</a><button type="button" class="btn small secondary danger" data-del="${p.id}">Delete</button></div>
+    </div>`).join('') : '<p class="empty-note">No one’s signed up yet. Pick a Trade below.</p>';
+
+  roster.querySelectorAll('[data-del]').forEach((b) => b.addEventListener('click', () => deletePc(b.dataset.del)));
 
   const pick = $('#trade-pick');
   if (!pick.dataset.ready) {
@@ -176,8 +193,12 @@ function buildSheet(p) {
   const horses = catalog.filter((i) => i.sub === 'Horse Breeds' || i.sub === 'Legendary Steeds');
 
   $('#sheet-view').innerHTML = `
+    <div class="sheet-bar">
+      <a class="btn small secondary" href="#">← All characters</a>
+      <span class="save-state" data-save-state>✓ Changes save automatically</span>
+      <button class="btn small secondary danger" id="delete-pc" type="button">Delete character</button>
+    </div>
     <div class="sheet-head">
-      <a class="back" href="#">← The Posse</a>
       <div class="sh-trade"><small>THE</small>${esc(p.trade.toUpperCase())}</div>
       <img class="sh-logo" src="/img/logo-light.svg" alt="Wild Imaginary West">
       <label class="sh-name"><span>NAME</span><input class="sheet-name" data-path="name" maxlength="40" aria-label="Character name"></label>
@@ -231,7 +252,7 @@ function buildSheet(p) {
           <img class="ride-art" data-art="horse" alt="" hidden>
           <div class="w-grid">${inp('horse.name', 'Name')}${inp('horse.breed', 'Breed')}${inp('horse.breakingPoint', 'Breaking point', { cls: 'narrow2' })}</div>
           <div class="w-grid">${inp('horse.maxHealth', 'Max health', { max: 4, cls: 'narrow' })}${inp('horse.health', 'Health', { max: 4, cls: 'narrow' })}${inp('horse.bond', 'Bond', { type: 'select', options: meta.reputationLevels })}</div>
-          ${inp('horse.breedAbility', 'Breed ability', { max: 300 })}${inp('horse.disposition', 'Disposition', { max: 300 })}${inp('horse.appearance', 'Appearance', { max: 300 })}`, 'horse')}
+          ${inp('horse.breedAbility', 'Breed ability', { type: 'textarea', max: 300, cls: 'wide' })}${inp('horse.disposition', 'Disposition', { type: 'textarea', max: 300, cls: 'wide' })}${inp('horse.appearance', 'Appearance', { type: 'textarea', max: 300, cls: 'wide' })}`, 'horse')}
       ${box('MECH', 'carts, wagons, &amp; cabins given the chance at a new life', `
           <div class="w-top">${pick('mech', 0, [['Mech classes', mechs]], '— pick a class —')}${spurBox('Mechs')}</div>
           <img class="ride-art" data-art="mech" alt="" hidden>
@@ -242,7 +263,7 @@ function buildSheet(p) {
           <div class="w-grid">${inp('mech.supplies', 'Supply slots', { cls: 'narrow2' })}${inp('mech.cover', 'Player cover', { cls: 'narrow2' })}</div>
           <div class="w-grid">${[0, 1, 2, 3].map((u) => inp(`mech.upgrades.${u}`, `${u + 1}.`)).join('')}</div>`, 'mech')}
     </div>
-    <div class="danger-zone"><button class="btn small secondary danger" id="delete-pc" type="button">Delete this character</button></div>`;
+    <div class="danger-zone"><a class="btn small secondary" href="#">← All characters</a></div>`;
 
   wireSheet(p);
 }
@@ -361,10 +382,8 @@ function wireSheet(p) {
     }
   });
 
-  $('#delete-pc').addEventListener('click', async () => {
-    if (!confirm(`Delete ${pcById(p.id).name}’s sheet for everyone? This can’t be undone.`)) return;
-    if (await act({ action: 'pc', id: p.id, op: 'remove' })) location.hash = '';
-  });
+  $('#delete-pc').addEventListener('click', () => deletePc(p.id));
+
 }
 
 const weaponTalent = (w) => {
