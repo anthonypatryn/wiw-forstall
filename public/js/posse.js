@@ -247,8 +247,13 @@ function buildSheet(p) {
   wireSheet(p);
 }
 
+let sheetWires = null;
 function wireSheet(p) {
   const view = $('#sheet-view');
+  // #sheet-view outlives each sheet, so drop the previous sheet's listeners first
+  sheetWires?.abort();
+  sheetWires = new AbortController();
+  const on = (type, fn) => view.addEventListener(type, fn, { signal: sheetWires.signal });
   const timers = new Map();
   saveField = (path, value, el) => {
     clearTimeout(timers.get(path));
@@ -263,16 +268,16 @@ function wireSheet(p) {
     if (path) return { path, value: el.type === 'number' ? Number(el.value) : el.value };
     return null;
   };
-  view.addEventListener('input', (e) => {
+  on('input', (e) => {
     const f = fieldValue(e.target);
     if (!f || e.target.type === 'checkbox' || e.target.tagName === 'SELECT') return;
     clearTimeout(timers.get(f.path));
     timers.set(f.path, setTimeout(() => saveField(f.path, fieldValue(e.target).value, e.target), 600));
   });
-  view.addEventListener('keydown', (e) => {
+  on('keydown', (e) => {
     if (e.key === 'Enter' && e.target.matches('[data-ks-other]')) { e.preventDefault(); view.querySelector('[data-start="ks-other"]').click(); }
   });
-  view.addEventListener('change', (e) => {
+  on('change', (e) => {
     if (e.target.matches('.pick')) return pickItem(p, e.target);
     if (e.target.matches('[data-pack]')) return choosePack(p, e.target.dataset.pack === '2' ? 'pack2' : 'pack', e.target.value);
     if (e.target.matches('[data-tier]')) {
@@ -282,7 +287,7 @@ function wireSheet(p) {
       return act({ action: 'sheet', id: p.id, fields: f });
     }
     if (e.target.matches('[data-tl]')) {
-      const pc0 = pcById(p.id), lo = (tierLoadout[p.id] ||= { ranged: pc0.tierKit?.[0], melee: pc0.tierKit?.[1], extras: [] }), k = e.target.dataset.tl;
+      const pc0 = pcById(p.id), lo = (tierLoadout[p.id] ||= { ranged: pc0.tierKit?.[0], melee: pc0.tierKit?.[1], extras: (pc0.tierKit || []).slice(2) }), k = e.target.dataset.tl;
       if (k.startsWith('x')) lo.extras[Number(k.slice(1))] = e.target.value; else lo[k] = e.target.value;
       return;
     }
@@ -296,7 +301,7 @@ function wireSheet(p) {
     const f = fieldValue(e.target);
     if (f && e.target.type !== 'checkbox') saveField(f.path, f.value, e.target);
   });
-  view.addEventListener('click', (e) => {
+  on('click', (e) => {
     const s = e.target.closest('[data-spur]');
     if (s) act({ action: 'sheet', id: p.id, list: 'talents', item: s.dataset.spur });
   });
@@ -304,7 +309,7 @@ function wireSheet(p) {
   view.querySelectorAll('[data-bool]').forEach((el) => el.addEventListener('change', () => act({ action: 'sheet', id: p.id, path: el.dataset.bool, value: el.checked })));
 
   // rolls: always use the dice on screen (and save them), with Spur rerolls from the linked Talent
-  view.addEventListener('click', async (e) => {
+  on('click', async (e) => {
     const b = e.target.closest('[data-roll-path], [data-gear-roll]');
     if (!b) return;
     const pc = pcById(p.id);
@@ -328,7 +333,7 @@ function wireSheet(p) {
     if (r?.dice) rollPopup(r, `${pc.name} · ${label} · ${r.pool}`);
   });
 
-  view.addEventListener('click', async (e) => {
+  on('click', async (e) => {
     const b = e.target.closest('[data-start]');
     if (!b) return;
     b.blur();
@@ -453,7 +458,7 @@ function renderStarter(view, p) {
   const story = [p.appearance, p.disposition, p.history].filter((x) => String(x || '').trim()).length;
   const wallet = String(p.wallet || '').trim();
   const tier = tierOf(p), high = tier && tier.prestige > 0, applied = high && p.tierApplied === p.tier;
-  const lo = tierLoadout[p.id] || { ranged: p.tierKit?.[0], melee: p.tierKit?.[1], extras: [] };
+  const lo = tierLoadout[p.id] || { ranged: p.tierKit?.[0], melee: p.tierKit?.[1], extras: (p.tierKit || []).slice(2) };
   const tierBody = `<select data-tier aria-label="Starting Prestige tier"><option value="">— pick a starting tier —</option>${meta.tiers.map((t) =>
       `<option value="${t.name}"${t.name === p.tier ? ' selected' : ''}>${t.name} · ${t.prestige} Prestige</option>`).join('')}</select>
     <span class="muted">New posse? Tenderfoot. Some expeditions start higher.</span>
@@ -465,6 +470,7 @@ function renderStarter(view, p) {
         ${Array.from({ length: tier.extras }, (_, i) => `<label>EXTRA ITEM ${i + 1}<select data-tl="x${i}">${optList(catalog.filter((it) => it.cat === 'Gear'), '— pick an item —')}</select></label>`).join('')}
       </div>
       <button type="button" class="btn small" data-start="tier">${applied ? 'Re-apply' : 'Apply'} the ${tier.name} loadout</button>
+      <span class="muted">Extra first aid, explosives, armor and special ammo go into Gear Items; the rest into Other items.</span>
       <span class="muted">${applied ? `Applied: ${tier.prestige} Prestige to spend (see page two), $${tier.wallet}, ${tier.scrap} Scrap.` : `Sets ${tier.prestige} unclaimed Prestige, $${tier.wallet} Wallet and ${tier.scrap} Scrap, and swaps out the Used Pistol and Pocket Knife.`}</span>` : `<div class="sb">${hasStart ? '✓ Used Pistol and Pocket Knife are in Weapons.' : '<button type="button" class="btn small secondary" data-start="weapons">Add Used Pistol + Pocket Knife</button>'}
         ${wallet ? `✓ $${esc(wallet)} in the Wallet.` : '<button type="button" class="btn small secondary" data-start="wallet">Set the Wallet to $5</button>'}</div>`}</div>` : ''}`;
   const packs = tier?.packs || 1;
