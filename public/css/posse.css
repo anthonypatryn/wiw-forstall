@@ -377,3 +377,17 @@ body.on-sheet .masthead { display: none; }
 .sh-title { display: block; font: italic 16px var(--body); color: var(--brass, #d9b36c); margin-top: 2px; }
 .sh-name { flex-wrap: wrap; }
 .tile-title { font: italic 14px var(--body); color: var(--rust); }
+
+/* upgrades + special ammo */
+.upg { margin: 6px 0; }
+.upg-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; }
+.upg-lbl { font: 12px var(--display); letter-spacing: .1em; color: var(--rust); }
+.upg-row select { flex: 1; min-width: 0; max-width: 100%; padding: 4px 6px; border: 1px solid var(--ink-faint); border-radius: 3px; background: #fffdf7; font-size: 14px; }
+.upg-chips { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 6px; }
+.upg-chip { display: inline-flex; align-items: center; gap: 5px; padding: 2px 4px 1px 9px; border-radius: 12px; background: var(--ink); color: var(--paper); font-size: 13px; }
+.upg-chip button { border: 0; background: rgba(255,255,255,.2); color: inherit; width: 18px; height: 18px; border-radius: 50%; line-height: 1; cursor: pointer; }
+.upg-none { font-size: 13px; }
+.rds-ctl { display: flex; align-items: flex-end; gap: 3px; }
+.pmb.sm { width: 24px; height: 24px; font-size: 15px; line-height: 1; margin-bottom: 2px; }
+.rds-ctl .pmb.sm { flex: none; width: 26px; height: 26px; min-width: 26px; padding: 0; border-radius: 50%; display: grid; place-items: center; font-size: 16px; }
+.rds-ctl .f { min-width: 0; flex: 1; }

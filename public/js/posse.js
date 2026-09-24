@@ -235,7 +235,8 @@ function buildSheet(p) {
       <div class="ranges">${[['arms', 'Arm’s Reach'], ['short', 'Short Range'], ['long', 'Long Range'], ['distant', 'Distant']].map(([k, l]) =>
         `<div class="range-in"><span class="rl">${l}</span>${poolHTML(`data-pool="weapons.${i}.${k}"`, l)}<button type="button" class="roll-mini" data-roll-path="weapons.${i}.${k}" data-roll-label="${l.toLowerCase()}" data-weapon="${i}" aria-label="Roll ${l}">🎲</button></div>`).join('')}</div>
       <div class="w-grid">${[0, 1, 2, 3].map((u) => inp(`weapons.${i}.upgrades.${u}`, `${u + 1}.`)).join('')}</div>
-      <div class="w-grid ammo">${[0, 1].map((a) => inp(`weapons.${i}.ammo.${a}.name`, 'Sp. Ammo') + inp(`weapons.${i}.ammo.${a}.rds`, 'rds', { max: 6, cls: 'narrow' })).join('')}</div>
+      <div class="upg" data-upg-box="weapon" data-i="${i}"></div>
+      <div class="w-grid ammo">${[0, 1].map((a) => inp(`weapons.${i}.ammo.${a}.name`, 'Sp. Ammo', { list: 'ammo-list', max: 40 }) + `<div class="rds-ctl">${inp(`weapons.${i}.ammo.${a}.rds`, 'rds', { max: 6, cls: 'narrow' })}<button type="button" class="pmb sm" data-rds="${i}.${a}" data-d="-1" aria-label="One less">−</button><button type="button" class="pmb sm" data-rds="${i}.${a}" data-d="1" aria-label="One more">+</button></div>`).join('')}</div>
       <div class="w-info" data-winfo="${i}"></div>
     </div>`;
 
@@ -317,6 +318,7 @@ function buildSheet(p) {
             <div class="range-in full"><span class="rl">Sweep</span>${poolHTML('data-pool="forstall.sweep"', 'Sweep')}<button type="button" class="roll-mini" data-roll-path="forstall.sweep" data-roll-label="Forstall Sweep" data-talent="Forstalls" aria-label="Roll Sweep">🎲</button></div></div>
           <div class="row2" data-dyn="charges"></div>
           <div class="w-grid">${[0, 1, 2, 3].map((u) => inp(`forstall.upgrades.${u}`, `${u + 1}.`)).join('')}</div>
+          <div class="upg" data-upg-box="forstall" data-i="0"></div>
           <div class="w-grid">${[0, 1, 2, 3].map((u) => inp(`forstall.kz.${u}`, 'Kurtz Frequency (Kz)', { list: 'kz-list', ph: '0-0-0000' })).join('')}</div>
           <datalist id="kz-list"></datalist>`, 'forstall')}
       ${box('HORSE', 'you’re only as good as your loyal steed', `
@@ -333,7 +335,9 @@ function buildSheet(p) {
             ${inp('mech.state', 'Condition', { type: 'select', options: meta.mechStates })}</div>
           <div class="range-in mech-def"><span class="rl">Defense</span>${poolHTML('data-pool="mech.defense"', 'Mech defense')}<button type="button" class="roll-mini" data-roll-path="mech.defense" data-roll-label="Mech Defense" data-talent="Mechs" aria-label="Roll mech defense">🎲</button></div>
           <div class="w-grid">${inp('mech.supplies', 'Supply slots', { cls: 'narrow2' })}${inp('mech.cover', 'Player cover', { cls: 'narrow2' })}</div>
-          <div class="w-grid">${[0, 1, 2, 3].map((u) => inp(`mech.upgrades.${u}`, `${u + 1}.`)).join('')}</div>`, 'mech')}
+          <div class="w-grid">${[0, 1, 2, 3].map((u) => inp(`mech.upgrades.${u}`, `${u + 1}.`)).join('')}</div>
+          <div class="upg" data-upg-box="mech" data-i="0"></div>`, 'mech')}
+    <datalist id="ammo-list">${catalog.filter((x) => x.sub === 'Special Ammo & Arrows').map((x) => `<option value="${esc(x.name)}">${esc(x.effect || '')} · $${x.cost}</option>`).join('')}</datalist>
     </div>
     <div class="danger-zone"><a class="btn small secondary" href="#">← All characters</a></div>`;
 
@@ -482,6 +486,23 @@ function wireSheet(p) {
 
   $('#delete-pc').addEventListener('click', () => deletePc(p.id));
   view.querySelector('[data-me-bar]').addEventListener('click', () => setMe(myId() === p.id ? null : p.id));
+  on('click', async (e) => {
+    const go = e.target.closest('[data-upg-go]'), rm = e.target.closest('[data-upg-rm]'), rds = e.target.closest('[data-rds]');
+    const ub = e.target.closest('[data-upg-box]');
+    if (go && ub) {
+      const v = ub.querySelector('[data-upg-pick]').value;
+      if (!v) return toast('Pick an upgrade first.', true);
+      const [item, pay] = v.split('|');
+      go.blur();
+      if (await act({ action: 'pc', id: p.id, op: 'installUpgrade', target: ub.dataset.upgBox, index: ub.dataset.i, item, pay })) toast('Upgrade installed — it’s in the Table Log.');
+    } else if (rm && ub) {
+      if (confirm('Take this upgrade off? (No refund.)')) act({ action: 'pc', id: p.id, op: 'removeUpgrade', target: ub.dataset.upgBox, index: ub.dataset.i, slot: rm.dataset.upgRm });
+    } else if (rds) {
+      const [i, a] = rds.dataset.rds.split('.');
+      rds.blur();
+      act({ action: 'pc', id: p.id, op: 'ammo', index: i, slot: a, delta: rds.dataset.d });
+    }
+  });
   on('click', (e) => {
     const b = e.target.closest('[data-spend]');
     if (b) { b.blur(); spendPrestige(view, p, b.dataset.spend); }
@@ -629,6 +650,41 @@ async function spendPrestige(view, p, what) {
   if (await act(body)) toast(`${label} — done. It’s in the Table Log.`);
 }
 
+// Upgrades (pp. 93–100): picker per weapon / Forstall / mech — build with Scrap or buy with $.
+const UPG_SINGULAR = { Rifles: 'Rifle', Shotguns: 'Shotgun', Pistols: 'Pistol', Bows: 'Bow' };
+const upgType = (it) => String(it.type || '').replace(/^L\d\s+/, '').replace(/\s*\(.*\)$/, '').trim();
+function upgFits(it, target, wSub) {
+  if (it.cat !== 'Upgrades') return false;
+  const to = String(it.appliesTo || '').split(/,\s*/);
+  if (target === 'forstall') return it.sub === 'Forstall Upgrades' || (it.sub === 'For Purchase' && to.includes('Forstall'));
+  if (target === 'mech') return it.sub === 'Mech Upgrades' || (it.sub === 'For Purchase' && to.includes('Mech'));
+  if (wSub === 'Melee') return it.sub === 'Melee Weapon Upgrades' || (it.sub === 'For Purchase' && to.includes('Melee'));
+  const one = UPG_SINGULAR[wSub];
+  return !!one && (it.sub === 'Ranged Weapon Upgrades' || (it.sub === 'For Purchase' && to.includes(one)));
+}
+function renderUpgrades(view, p) {
+  view.querySelectorAll('[data-upg-box]').forEach((box) => {
+    if (box.contains(document.activeElement)) return;
+    const target = box.dataset.upgBox, i = Number(box.dataset.i);
+    const tgt = target === 'weapon' ? p.weapons[i] : p[target];
+    const wSub = target === 'weapon' ? (itemById(tgt.itemId)?.sub || (/melee/i.test(tgt.type) ? 'Melee' : tgt.type)) : null;
+    const slots = Math.max(0, Math.min(4, Number(tgt.slots) || 0));
+    const ups = (tgt.upgrades || []).slice(0, 4);
+    const used = ups.filter((u) => String(u || '').trim()).length;
+    const have = new Set((tgt.upgradeIds || []).map((id) => itemById(id)).filter(Boolean).map(upgType));
+    if (!slots) { box.innerHTML = target === 'weapon' && !tgt.model ? '' : '<span class="muted upg-none">No upgrade slots.</span>'; return; }
+    const opts = catalog.filter((it) => upgFits(it, target, wSub));
+    const opt = (it, pay) => { const blocked = upgType(it) !== 'Utility' && have.has(upgType(it));
+      return `<option value="${it.id}|${pay}"${blocked ? ' disabled' : ''}>${esc(it.name.replace(/^(Ranged Weapon|Melee Weapon|Forstall|Mech) /, ''))}${it.upgrade && it.upgrade !== 'None' ? ` (${esc(it.upgrade)})` : ''} — ${pay === 'scrap' ? `${it.scrapCost} Scrap` : `$${it.cost}`}${blocked ? ' · already has one' : ''}</option>`; };
+    box.innerHTML = `<div class="upg-row"><span class="upg-lbl">UPGRADES ${used}/${slots}</span>
+      ${used < slots ? `<select data-upg-pick aria-label="Add an upgrade"><option value="">+ add an upgrade…</option>
+        <optgroup label="Build with Scrap">${opts.filter((it) => it.scrapCost).map((it) => opt(it, 'scrap')).join('')}</optgroup>
+        <optgroup label="Buy with $">${opts.map((it) => opt(it, 'cash')).join('')}</optgroup></select>
+        <button type="button" class="btn small" data-upg-go>Install</button>` : '<span class="muted">All slots full.</span>'}</div>
+      ${used ? `<div class="upg-chips">${ups.map((u, k) => (String(u || '').trim() ? `<span class="upg-chip">${esc(u)}<button type="button" data-upg-rm="${k}" aria-label="Remove ${esc(u)}">×</button></span>` : '')).join('')}</div>` : ''}`;
+  });
+}
+
 // Achievements & Title Rewards (p. 34)
 const earnedTitles = (p) => [...meta.tiers.filter((t) => (p.prestige.total || 0) >= t.prestige).map((t) => t.name), ...(p.achievements || [])];
 function renderAch(view, p) {
@@ -648,12 +704,12 @@ function renderAch(view, p) {
 let starterMissing = [];
 const editMode = new Set();
 const isEditing = (p) => p.done === false || editMode.has(p.id);
-const PLAY_PATHS = /^(wallet|scrap|supplies|horse\.health|mech\.health|mech\.state|weapons\.\d\.ammo\.\d\.rds)$/;
+const PLAY_PATHS = /^(wallet|scrap|supplies|horse\.health|mech\.health|mech\.state|mech\.toppled|weapons\.\d\.ammo\.\d\.(rds|name))$/;
 function applyMode(view, p) {
   const locked = !isEditing(p);
   view.classList.toggle('viewing', locked);
   view.querySelectorAll('.sheet input, .sheet select, .sheet textarea, .sheet-head input, .sheet .spur[data-spur]').forEach((el) => {
-    if (el.matches('[data-stc]') || el.closest('[data-dyn="spend"], [data-dyn="ach"]')) return; // Statuses + Prestige spending stay live
+    if (el.matches('[data-stc]') || el.closest('[data-dyn="spend"], [data-dyn="ach"], [data-upg-box]')) return; // Statuses + Prestige spending stay live
     const path = el.dataset.path || el.dataset.vpath || el.closest('.dp[data-pool]')?.dataset.pool;
     el.disabled = locked && !(path && PLAY_PATHS.test(path));
   });
@@ -763,6 +819,7 @@ function hydrate(p) {
   renderStarter(view, p);
   renderSpend(view, p);
   renderAch(view, p);
+  renderUpgrades(view, p);
   applyMode(view, p);
   view.querySelectorAll('[data-toggle]').forEach((el) => { el.checked = p[el.dataset.toggle].includes(el.value); });
   view.querySelectorAll('[data-ab]').forEach((el) => el.classList.toggle('locked', !p.abilities.includes(el.dataset.ab)));
