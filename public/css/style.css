@@ -382,11 +382,11 @@ button { cursor: pointer; }
 /* ---------- dice-pool input (Black / Gold counts) ---------- */
 .dp { display: inline-flex; gap: 6px; align-items: center; }
 .dp label { display: inline-flex; align-items: center; gap: 3px; }
-.dp-chip {
-  width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font: 13px/1 var(--display); padding-top: 2px; flex: none;
-}
-.dp-chip.b { background: radial-gradient(circle at 35% 30%, #5a5451, #121010); color: #f1e7d2; }
-.dp-chip.g { background: radial-gradient(circle at 35% 30%, #fbe6a6, #94651f); color: #2a1b0c; }
+.dp-chip { display: inline-flex; flex: none; }
+.mini-bullet { width: 30px; height: 10px; display: inline-block; vertical-align: middle; filter: drop-shadow(0 1px 1px rgba(0,0,0,.35)); }
+.pool-icons { display: inline-flex; align-items: center; gap: 2px; white-space: nowrap; }
+.pool-icons b { font: 17px/1 var(--display); font-weight: 400; margin-left: 4px; }
+.pool-icons b:first-child { margin-left: 0; }
 .dp input {
   width: 46px; padding: 4px 4px; font: 17px var(--type); text-align: center; color: var(--ink);
   border: 1px solid rgba(34,31,31,.4); border-radius: 3px; background: #fffdf7;

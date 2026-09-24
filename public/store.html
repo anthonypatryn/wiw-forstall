@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>General Store · Wild Imaginary West</title>
+  <meta name="description" content="Every weapon, trap, upgrade and supply from the Wild Imaginary West Guidebook, with Warden-approved buying and selling.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💰</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Rye&family=Special+Elite&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css?v=9">
+  <link rel="stylesheet" href="/css/store.css?v=1">
+</head>
+<body>
+  <header class="masthead">
+    <div class="masthead-inner">
+      <img class="brand-logo" src="/img/logo-light.svg" alt="Wild Imaginary West">
+      <div class="brand-title">
+        <div class="kicker">MERCANTILE · GUNSMITH · TRADING POST</div>
+        <h1>General Store</h1>
+        <div class="sub">Everything in the Guidebook’s Grab Some Gear &amp; Goods and Services — pp. 63–107, 201–203</div>
+      </div>
+      <button class="btn small warden-link" id="warden-btn" type="button">⭐ Warden</button>
+    </div>
+  </header>
+  <nav class="sitenav" data-nav aria-label="Site"></nav>
+
+  <main class="wrap store-wrap">
+    <div class="store-grid">
+      <div>
+        <div class="cat-tabs" id="cat-tabs" role="tablist"></div>
+        <div class="filters">
+          <input class="search" id="q" type="search" placeholder="Search the shelves…" aria-label="Search items">
+          <select id="sub" aria-label="Section"></select>
+          <select id="sort" aria-label="Sort">
+            <option value="book">Book order</option><option value="cheap">Cheapest first</option><option value="dear">Priciest first</option><option value="az">A → Z</option>
+          </select>
+        </div>
+        <p class="muted count" id="count"></p>
+        <div class="items" id="items"></div>
+      </div>
+
+      <aside class="side">
+        <section class="card corner shopper">
+          <h2 class="section-title">Shopping As</h2>
+          <select id="shopper" aria-label="Character"></select>
+          <div class="wallet" id="wallet"></div>
+          <p class="muted small-note">Purchases and sales wait for the Warden’s nod. Money comes out of — or goes into — the character’s Wallet.</p>
+        </section>
+        <section class="card corner warden-only" id="queue-card" hidden>
+          <div class="head-row"><h2 class="section-title">Warden’s Counter</h2><button class="btn small secondary" id="clear-history" type="button">Clear history</button></div>
+          <div id="queue"></div>
+        </section>
+        <section class="card corner">
+          <h2 class="section-title">Requests</h2>
+          <div id="my-requests"></div>
+        </section>
+        <section class="card corner">
+          <h2 class="section-title">Their Inventory</h2>
+          <div id="inventory"></div>
+        </section>
+        <section class="card corner warden-only" id="create-card" hidden>
+          <h2 class="section-title">Make an Item</h2>
+          <form id="create" class="create"></form>
+        </section>
+      </aside>
+    </div>
+  </main>
+
+  <script type="module" src="/js/store.js?v=1"></script>
+</body>
+</html>

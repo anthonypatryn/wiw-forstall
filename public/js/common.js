@@ -167,6 +167,7 @@ const NAV = [
   ['/names', 'NPC Names'],
   ['/map', 'Map'],
   ['/battle', 'Battle Map'],
+  ['/store', 'Store'],
 ];
 export function mountNav(active) {
   const el = document.querySelector('[data-nav]');
@@ -212,7 +213,7 @@ export function parsePoolStr(s) {
 }
 export const composePool = (b, g) => `${b > 0 ? b + 'B' : ''}${g > 0 ? g + 'G' : ''}`;
 export function poolHTML(attrs = '', label = '') {
-  const one = (c, name) => `<label class="dp-${c.toLowerCase()}" title="${name} dice"><span class="dp-chip ${c.toLowerCase()}" aria-hidden="true">${c}</span><input type="number" min="0" max="12" step="1" inputmode="numeric" data-c="${c}" placeholder="0" aria-label="${label ? label + ' — ' : ''}${name} dice"></label>`;
+  const one = (c, name) => `<label class="dp-${c.toLowerCase()}" title="${name} dice"><span class="dp-chip" aria-hidden="true">${miniBullet(c)}</span><input type="number" min="0" max="12" step="1" inputmode="numeric" data-c="${c}" placeholder="0" aria-label="${label ? label + ' — ' : ''}${name} dice"></label>`;
   return `<span class="dp" ${attrs}>${one('B', 'Black')}${one('G', 'Gold')}</span>`;
 }
 export function readPool(dp) {
@@ -246,4 +247,15 @@ export function wardenModal(endpoint) {
       else back.querySelector('[data-msg]').textContent = 'Wrong PIN, partner.';
     });
   });
+}
+
+// ---------- tiny bullet icons (Black / Gold dice) ----------
+export const miniBullet = (c) => `<svg class="mini-bullet" viewBox="0 0 180 60" aria-hidden="true">
+  <rect x="3" y="6" width="11" height="48" rx="2" fill="url(#rim${c})"/><rect x="19" y="7" width="98" height="46" rx="3" fill="url(#case${c})"/>
+  <path d="M117 9 C143 9 166 19 177 30 C166 41 143 51 117 51 Z" fill="url(#tip${c})"/></svg>`;
+// "2B1G" -> 2 ▸black 1 ▸gold
+export function poolIcons(pool) {
+  const m = String(pool || '').toUpperCase().match(/^(?:(\d+)B)?(?:(\d+)G)?$/);
+  if (!pool || !m || (!m[1] && !m[2])) return esc(pool || '—');
+  return `<span class="pool-icons" title="${esc(pool)}">${m[1] ? `<b>${m[1]}</b>${miniBullet('B')}` : ''}${m[2] ? `<b>${m[2]}</b>${miniBullet('G')}` : ''}</span>`;
 }
