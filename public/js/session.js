@@ -99,11 +99,46 @@ function renderGlance() {
   renderLogInto($('#glance-log'), (combat.log || []).slice(0, 12));
 }
 
+// ---------- homebrew: monsters (scanner), NPC ledger, store items ----------
+async function loadHomebrew() {
+  const box = $('#homebrew');
+  const [scan, npcs, shop] = await Promise.all([
+    api('GET', null, '?view=warden', '/api/scan').catch(() => null),
+    api('GET', null, '?view=warden', '/api/npcs').catch(() => null),
+    api('GET', null, '?view=warden', '/api/shop').catch(() => null),
+  ]);
+  const mons = (scan?.monsters || []).filter((m) => m.custom);
+  const people = npcs?.npcs || [];
+  const items = shop?.custom || [];
+  const row = (label, sub, attrs) => `<li><span><b>${esc(label)}</b>${sub ? `<small>${esc(sub)}</small>` : ''}</span><button type="button" class="btn small secondary danger" ${attrs}>Delete</button></li>`;
+  box.innerHTML = `
+    <h4 class="hb-h">MONSTERS <small>${mons.length} · made on the Warden’s Station</small></h4>
+    ${mons.length ? `<ul class="hb-list">${mons.map((m) => row(m.name, `${m.size} · Kz ${m.kz}`, `data-hb="monster" data-key="${esc(m.name)}"`)).join('')}</ul>` : '<p class="muted">None yet.</p>'}
+    <h4 class="hb-h">NPC LEDGER <small>${people.length} · dealt, written or from the book</small></h4>
+    ${people.length ? `<ul class="hb-list">${people.map((n) => row(n.name, [n.faction, n.personality].filter(Boolean).join(' · '), `data-hb="npc" data-key="${esc(n.id)}"`)).join('')}</ul>` : '<p class="muted">None yet.</p>'}
+    <h4 class="hb-h">STORE ITEMS <small>${items.length} · made in the Store</small></h4>
+    ${items.length ? `<ul class="hb-list">${items.map((i) => row(i.name, [i.cat, i.cost != null ? `$${i.cost}` : ''].filter(Boolean).join(' · '), `data-hb="item" data-key="${esc(i.id)}"`)).join('')}</ul>` : '<p class="muted">None yet.</p>'}`;
+  box.querySelectorAll('[data-hb]').forEach((b) => b.addEventListener('click', async () => {
+    const name = b.closest('li').querySelector('b').textContent;
+    if (!confirm(`Delete ${name} for good?`)) return;
+    const kind = b.dataset.hb, key = b.dataset.key;
+    try {
+      if (kind === 'monster') await api('POST', { action: 'removeCustom', name: key }, '', '/api/scan');
+      if (kind === 'npc') await api('POST', { action: 'remove', id: key }, '', '/api/npcs');
+      if (kind === 'item') await api('POST', { action: 'removeCustom', id: key }, '', '/api/shop');
+      toast(`${name} deleted.`);
+      loadHomebrew();
+    } catch (e) { toast(e.message, true); }
+  }));
+}
+$('#hb-refresh').addEventListener('click', loadHomebrew);
+
 // ---------- boot ----------
 function open() {
   $('#gate').hidden = true; $('#desk').hidden = false; $('#lock').hidden = false;
   poller?.stop(); combatPoller?.stop();
   poller = startPolling('warden', onSessions, (ok, e) => { if (e?.status === 401) lockUp(); }, EP);
+  loadHomebrew();
   combatPoller = startPolling('warden', (d) => { combat = d; renderGlance(); }, (ok) => { $('#glance-conn').textContent = ok ? '● live' : 'reconnecting…'; }, '/api/combat');
 }
 function lockUp() {

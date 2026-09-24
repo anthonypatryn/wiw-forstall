@@ -9,8 +9,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Rye&family=Special+Elite&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=12">
-  <link rel="stylesheet" href="/css/session.css?v=1">
+  <link rel="stylesheet" href="/css/style.css?v=13">
+  <link rel="stylesheet" href="/css/session.css?v=2">
 </head>
 <body>
   <header class="masthead">
@@ -43,6 +43,12 @@
           <div class="sess-tabs" id="sess-tabs"></div>
           <div id="editor"></div>
         </section>
+
+        <section class="card corner">
+          <div class="head-row"><h2 class="section-title">Your Homebrew</h2><button class="btn small secondary" id="hb-refresh" type="button">↻ Refresh</button></div>
+          <p class="muted" style="margin-top:0">Everything you’ve made up, in one place. Deleting can’t be undone.</p>
+          <div id="homebrew"></div>
+        </section>
       </div>
 
       <aside>
@@ -58,6 +64,6 @@
     </div>
   </main>
 
-  <script type="module" src="/js/session.js?v=2"></script>
+  <script type="module" src="/js/session.js?v=3"></script>
 </body>
 </html>

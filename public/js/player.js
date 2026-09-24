@@ -53,12 +53,38 @@ function halfLabel() {
   return `${b ? b + 'B' : ''}${g ? g + 'G' : ''}` || '0 dice';
 }
 
+// ---------- who's scanning: fill the pool from their sheet's Intuition + Talent ----------
+let posse = [];
+const scanner = () => posse.find((p) => p.id === $('#scanner').value);
+function applyScanner() {
+  const p = scanner();
+  if (!p) return;
+  const m = String(p.skills?.intuition || '').toUpperCase();
+  pool.B = Number((m.match(/(\d+)B/) || [])[1] || 0); pool.G = Number((m.match(/(\d+)G/) || [])[1] || 0);
+  spur.checked = (p.talents || []).includes('Intuition');
+  store.set('wiw.poolB', pool.B); store.set('wiw.poolG', pool.G); store.set('wiw.spur', spur.checked);
+  renderPool();
+}
+async function loadPosse() {
+  try {
+    const d = await api('GET', null, '?view=player', '/api/combat');
+    posse = (d.posse || []).filter((p) => !p.dead);
+    const sel = $('#scanner'), cur = sel.value || store.get('wiw.scanner', '') || store.get('wiw.me', '');
+    sel.innerHTML = `<option value="">— pick a character (fills in their Intuition) —</option>${posse.map((p) => `<option value="${p.id}">${esc(p.name)} · Intuition ${esc(String(p.skills?.intuition || '—').toUpperCase())}${(p.talents || []).includes('Intuition') ? ' · Talent' : ''}</option>`).join('')}`;
+    sel.value = posse.some((p) => p.id === cur) ? cur : '';
+    applyScanner();
+  } catch {}
+}
+$('#scanner').addEventListener('change', () => { store.set('wiw.scanner', $('#scanner').value); applyScanner(); });
+loadPosse();
+window.addEventListener('focus', loadPosse);
+
 // ---------- roll ----------
 $('#roll-btn').addEventListener('click', async () => {
   if (busy) return;
   busy = true; renderPool();
   try {
-    const res = await api('POST', { action: 'roll', black: pool.B, gold: pool.G, spurTalent: spur.checked });
+    const res = await api('POST', { action: 'roll', black: pool.B, gold: pool.G, spurTalent: spur.checked, who: scanner()?.name || '' });
     shownRollAt = res.result.at;
     poller.push(res.state);
     await showRoll(res.result, true);

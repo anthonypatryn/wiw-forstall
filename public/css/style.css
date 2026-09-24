@@ -467,3 +467,7 @@ button { cursor: pointer; }
 /* phone: grid columns may shrink below their widest dropdown/input (long option text was widening pages) */
 .grid > * { min-width: 0; }
 .grid select { max-width: 100%; }
+
+/* scanner: who's scanning */
+.who-scan { display: flex; flex-direction: column; gap: 4px; margin: 0 0 12px; font: 13px var(--display); letter-spacing: .12em; color: var(--ink-soft); }
+.who-scan select { max-width: 100%; padding: 8px 10px; border: 1.5px solid var(--ink); border-radius: var(--radius); background: #fffdf7; font: 16px var(--body); letter-spacing: 0; color: var(--ink); }

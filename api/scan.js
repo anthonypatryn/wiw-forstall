@@ -49,7 +49,8 @@ export default async function handler(req, res) {
     state.v = (state.v || 0) + 1;
     await save(state);
     if (body.action === 'roll') {
-      await tableLog({ type: 'roll', who: 'Forstall Scan', label: `Intuition — scanning the ${state.active}${result.halved ? ' (half pool)' : ''}`,
+      const who = String(body.who || '').replace(/[<>]/g, '').trim().slice(0, 40);
+      await tableLog({ type: 'roll', who: who || 'Forstall Scan', label: `${who ? 'Forstall Scan · ' : ''}Intuition — scanning the ${state.active}${result.halved ? ' (half pool)' : ''}`,
         pool: poolLabel(result.pool), spur: result.spurTalent, dice: result.dice, hits: result.hits, aces: result.dice.filter((d) => d.face === 'ace').length });
     } else if (body.action === 'guess' && result.solved) {
       await tableLog({ type: 'event', text: `📡 The posse decoded the ${state.active}’s Kurtz Frequency!` });
