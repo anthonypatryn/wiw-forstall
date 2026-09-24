@@ -391,3 +391,16 @@ body.on-sheet .masthead { display: none; }
 .pmb.sm { width: 24px; height: 24px; font-size: 15px; line-height: 1; margin-bottom: 2px; }
 .rds-ctl .pmb.sm { flex: none; width: 26px; height: 26px; min-width: 26px; padding: 0; border-radius: 50%; display: grid; place-items: center; font-size: 16px; }
 .rds-ctl .f { min-width: 0; flex: 1; }
+
+/* horse + mech status lines */
+.ride-dyn { margin: 6px 0 8px; }
+.ride-line { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; padding: 4px 0; font-size: 14px; }
+.ride-line > b { font: 12px var(--display); letter-spacing: .1em; color: var(--rust); font-weight: 400; }
+.ride-line .on { color: #3d6b3a; font-weight: 700; }
+.ride-line .off { color: var(--ink-soft); }
+.ride-line input[type=number] { width: 56px; padding: 3px 5px; border: 1px solid var(--ink-faint); border-radius: 3px; background: #fffdf7; }
+.ride-line input[type=checkbox] { width: 17px; height: 17px; accent-color: var(--rust); margin: 0; }
+.ride-note { font-size: 12px; margin: 2px 0; }
+.cond { padding: 2px 8px 0; border-radius: 3px; font: 13px var(--display); letter-spacing: .1em; background: #3d6b3a; color: #fff; }
+.cond.compromised { background: #b7791f; }
+.cond.totaled { background: #8f1d17; }

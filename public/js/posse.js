@@ -326,13 +326,14 @@ function buildSheet(p) {
           <img class="ride-art" data-art="horse" alt="" hidden>
           <div class="w-grid">${inp('horse.name', 'Name')}${inp('horse.breed', 'Breed')}${inp('horse.breakingPoint', 'Breaking point', { cls: 'narrow2' })}</div>
           <div class="w-grid">${inp('horse.maxHealth', 'Max health', { max: 4, cls: 'narrow' })}${inp('horse.health', 'Health', { max: 4, cls: 'narrow' })}${inp('horse.bond', 'Bond', { type: 'select', options: meta.reputationLevels })}</div>
+          <div class="ride-dyn" data-dyn="horse"></div>
           ${inp('horse.breedAbility', 'Breed ability', { type: 'textarea', max: 300, cls: 'wide' })}${inp('horse.disposition', 'Disposition', { type: 'textarea', max: 300, cls: 'wide' })}${inp('horse.appearance', 'Appearance', { type: 'textarea', max: 300, cls: 'wide' })}`, 'horse')}
       ${box('MECH', 'carts, wagons, &amp; cabins given the chance at a new life', `
           <div class="w-top">${pick('mech', 0, [['Mech classes', mechs]], '— pick a class —')}${spurBox('Mechs')}</div>
           <img class="ride-art" data-art="mech" alt="" hidden>
           <div class="w-grid">${inp('mech.class', 'Class')}${inp('mech.slots', 'Upgrade slots', { max: 4, cls: 'narrow2' })}${inp('mech.speed', 'Speed', { cls: 'narrow2' })}</div>
-          <div class="w-grid">${inp('mech.maxHealth', 'Max health', { max: 4, cls: 'narrow' })}${inp('mech.health', 'Health', { max: 4, cls: 'narrow' })}
-            ${inp('mech.state', 'Condition', { type: 'select', options: meta.mechStates })}</div>
+          <div class="w-grid">${inp('mech.maxHealth', 'Max health', { max: 4, cls: 'narrow' })}${inp('mech.health', 'Health', { max: 4, cls: 'narrow' })}</div>
+          <div class="ride-dyn" data-dyn="mech"></div>
           <div class="range-in mech-def"><span class="rl">Defense</span>${poolHTML('data-pool="mech.defense"', 'Mech defense')}<button type="button" class="roll-mini" data-roll-path="mech.defense" data-roll-label="Mech Defense" data-talent="Mechs" aria-label="Roll mech defense">🎲</button></div>
           <div class="w-grid">${inp('mech.supplies', 'Supply slots', { cls: 'narrow2' })}${inp('mech.cover', 'Player cover', { cls: 'narrow2' })}</div>
           <div class="w-grid">${[0, 1, 2, 3].map((u) => inp(`mech.upgrades.${u}`, `${u + 1}.`)).join('')}</div>
@@ -398,6 +399,7 @@ function wireSheet(p) {
   on('change', (e) => {
     if (e.target.matches('.pick')) return pickItem(p, e.target);
     if (e.target.matches('[data-pack]')) return choosePack(p, e.target.dataset.pack === '2' ? 'pack2' : 'pack', e.target.value);
+    if (e.target.matches('[data-topple]')) { e.target.blur(); return act({ action: 'sheet', id: p.id, path: 'mech.toppled', value: e.target.checked }); }
     if (e.target.matches('[data-ach]')) {
       const on = e.target.checked, name = e.target.dataset.ach; e.target.blur();
       return act({ action: 'achieve', id: p.id, name, on }).then((ok) => ok && toast(on ? `🏅 ${name} granted.` : `${name} removed.`));
@@ -497,6 +499,14 @@ function wireSheet(p) {
       if (await act({ action: 'pc', id: p.id, op: 'installUpgrade', target: ub.dataset.upgBox, index: ub.dataset.i, item, pay })) toast('Upgrade installed — it’s in the Table Log.');
     } else if (rm && ub) {
       if (confirm('Take this upgrade off? (No refund.)')) act({ action: 'pc', id: p.id, op: 'removeUpgrade', target: ub.dataset.upgBox, index: ub.dataset.i, slot: rm.dataset.upgRm });
+    } else if (e.target.closest('[data-break]')) {
+      e.target.closest('[data-break]').blur();
+      const r = await act({ action: 'pc', id: p.id, op: 'breakHorse' });
+      if (r?.dice) { await rollPopup(r, `${pcById(p.id).name} · Breaking the horse · ${r.hits} Hits vs ${r.need}`); toast(r.ok ? 'Broken! Bond is now Neutral.' : 'It won’t be broken… this time.', !r.ok); }
+    } else if (e.target.closest('[data-rep]')) {
+      const b = e.target.closest('[data-rep]'); b.blur();
+      const n = view.querySelector('[data-rep-n]').value;
+      if (await act({ action: 'pc', id: p.id, op: 'mechRepair', amount: n, pay: b.dataset.rep })) toast('Mech repaired.');
     } else if (rds) {
       const [i, a] = rds.dataset.rds.split('.');
       rds.blur();
@@ -685,6 +695,36 @@ function renderUpgrades(view, p) {
   });
 }
 
+// Horse Bond (pp. 104–108) + mech Condition / repairs (pp. 92–94)
+const MECH_COND = {
+  Functional: ['FULLY-FUNCTIONING', 'No penalties.'],
+  Compromised: ['COMPROMISED', 'At half Health or less: the Grit cost to Move is doubled (max 6 Grit).'],
+  Totaled: ['TOTALED', 'Everyone inside must get out. Salvage it for Scrap or repair it with Scrap.'],
+};
+function renderRides(view, p) {
+  const hb = view.querySelector('[data-dyn="horse"]'), mb = view.querySelector('[data-dyn="mech"]');
+  const h = p.horse || {}, m = p.mech || {};
+  if (hb && !hb.contains(document.activeElement)) {
+    const revered = h.bond === 'Revered', wild = !h.bond || h.bond === 'Suspicious' || h.bond === 'Hostile';
+    const extra = /clydesdale/i.test(h.breed || '') ? 2 : 1;
+    hb.innerHTML = h.breed ? `
+      <div class="ride-line"><b>REVERED BOND ABILITY</b> ${h.breedAbility ? `<span class="${revered ? 'on' : 'off'}">${revered ? '✓ Active' : `🔒 Unlocks at Revered (now ${esc(h.bond || '—')})`}</span>` : '<span class="muted">none for this breed</span>'}</div>
+      <div class="ride-line"><b>SUPPLIES</b> <span>+${extra} Supplies slot${extra > 1 ? 's' : ''} in its pack (you must be within Arm’s Reach)${wild ? ' — once it’s broken' : ''}.</span></div>
+      ${wild ? `<div class="ride-line"><button type="button" class="btn small" data-break>🐎 Break this horse</button><span class="muted">Roll all four Skills; total Hits must reach Breaking Point ${esc(h.breakingPoint || '?')}. Bought, gifted or stolen horses don’t need breaking.</span></div>` : ''}
+      <p class="muted ride-note">The Warden raises or lowers Bond as you ride together (edit mode).</p>` : '';
+  }
+  if (mb && !mb.contains(document.activeElement)) {
+    const st = m.state || 'Functional', [label, fx] = MECH_COND[st] || MECH_COND.Functional;
+    const max = Number(m.maxHealth) || 0, hp = Number(m.health) || 0;
+    mb.innerHTML = max ? `
+      <div class="ride-line"><b>CONDITION</b> <span class="cond ${st.toLowerCase()}">${label}</span> <span class="muted">${fx}</span></div>
+      <label class="ride-line check"><input type="checkbox" data-topple${m.toppled ? ' checked' : ''}> Toppled <span class="muted">— can’t move, mounted weapons won’t fire until it’s righted.</span></label>
+      ${hp < max ? `<div class="ride-line repair"><b>REPAIR</b> <input type="number" min="1" max="${max - hp}" value="${max - hp}" data-rep-n aria-label="Health to repair"> Health
+        <button type="button" class="btn small secondary" data-rep="scrap">🔧 Use Scrap (1 each)</button><button type="button" class="btn small secondary" data-rep="cash">Mech depot ($2 each)</button>
+        <span class="muted">Not during combat.</span></div>` : ''}` : '';
+  }
+}
+
 // Achievements & Title Rewards (p. 34)
 const earnedTitles = (p) => [...meta.tiers.filter((t) => (p.prestige.total || 0) >= t.prestige).map((t) => t.name), ...(p.achievements || [])];
 function renderAch(view, p) {
@@ -709,7 +749,7 @@ function applyMode(view, p) {
   const locked = !isEditing(p);
   view.classList.toggle('viewing', locked);
   view.querySelectorAll('.sheet input, .sheet select, .sheet textarea, .sheet-head input, .sheet .spur[data-spur]').forEach((el) => {
-    if (el.matches('[data-stc]') || el.closest('[data-dyn="spend"], [data-dyn="ach"], [data-upg-box]')) return; // Statuses + Prestige spending stay live
+    if (el.matches('[data-stc]') || el.closest('[data-dyn="spend"], [data-dyn="ach"], [data-upg-box], [data-dyn="horse"], [data-dyn="mech"]')) return; // Statuses + Prestige spending stay live
     const path = el.dataset.path || el.dataset.vpath || el.closest('.dp[data-pool]')?.dataset.pool;
     el.disabled = locked && !(path && PLAY_PATHS.test(path));
   });
@@ -820,6 +860,7 @@ function hydrate(p) {
   renderSpend(view, p);
   renderAch(view, p);
   renderUpgrades(view, p);
+  renderRides(view, p);
   applyMode(view, p);
   view.querySelectorAll('[data-toggle]').forEach((el) => { el.checked = p[el.dataset.toggle].includes(el.value); });
   view.querySelectorAll('[data-ab]').forEach((el) => el.classList.toggle('locked', !p.abilities.includes(el.dataset.ab)));

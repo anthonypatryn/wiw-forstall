@@ -9,6 +9,7 @@
   - pp. 6–8: character creation
   - p. 32: spend Prestige (pcOp `spend`); p. 54: Jackpot + Bleeding Out (pcOp `bleedRoll`); p. 58: High Noon Duel (`state.duel`, duelAction, sides `pc:<id>`/`en:<id>`)
   - p. 34: Achievements (`ACHIEVEMENTS` in sheets.js; Warden action `achieve`); pp. 52/54: campfire vs town rest (pcOps `campRest`/`townRest`, Warden `townRestAll`)
+  - p. 79: trophies & loot (`lib/trophies.js`, all 59 bestiary trophies; Warden actions `loot`/`search`); pp. 93–100: upgrades (`upgradeFits`/`upgradeType`, pcOps `installUpgrade`/`removeUpgrade`), p. 76: Special Ammo (pcOp `ammo`); pp. 104–108: horse Bond/breaking (pcOp `breakHorse`); p. 92/94: mech Condition from Health (`mechState`), repairs (pcOp `mechRepair`)
   - p. 33: Prestige tiers + Starting at Higher Prestige loadouts (`TIERS` in lib/sheets.js, pcOp `tierKit`)
   - p. 85: ranges
   - pp. 83–84: scanning
