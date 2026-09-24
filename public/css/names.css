@@ -64,8 +64,11 @@
 .face .corner.tl { top: 7px; left: 8px; }
 .face .corner.br { bottom: 7px; right: 8px; transform: rotate(180deg); }
 .face .pip-big { font-size: 34px; line-height: 1; opacity: .9; }
-.face .val { font: 400 20px/1.1 var(--western); color: #1c1a19; margin-top: 6px; overflow-wrap: anywhere; }
-.face .val.long { font: 700 16px/1.2 var(--body); }
+.face .val {
+  font: 400 20px/1.12 var(--western); color: #1c1a19; margin-top: 6px; width: 100%;
+  overflow-wrap: normal; word-break: keep-all; hyphens: none; text-wrap: balance;  /* never split a word; JS shrinks to fit */
+}
+.face .val .w { white-space: nowrap; }
 .face .alt { font: italic 14px var(--body); color: #6b625a; margin-top: 4px; }
 .pcard:hover .face { box-shadow: 0 0 0 3px var(--brass), 0 4px 10px rgba(0,0,0,.45); }
 

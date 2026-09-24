@@ -49,9 +49,22 @@ function cardFace(col, idx, pick) {
   return `<div class="face${red ? ' red' : ''}" aria-label="${esc(name)}: ${esc(val)}">
     <div class="corner tl">${r}<span>${SUIT[suit]}</span></div>
     <div class="pip-big">${SUIT[suit]}</div>
-    <div class="val${val.length > 14 ? ' long' : ''}">${esc(val)}</div>
+    <div class="val">${esc(val)}</div>
     <div class="corner br">${r}<span>${SUIT[suit]}</span></div>
   </div>`;
+}
+
+// Shrink a card's text until every word fits whole (hyphenated words stay together) in at most ~3 lines.
+function fitText(el) {
+  if (!el) return;
+  const text = el.textContent.replace(/-/g, '‑'); // non-breaking hyphen
+  el.innerHTML = text.split(/\s+/).map((w) => `<span class="w">${esc(w)}</span>`).join(' ');
+  const words = [...el.querySelectorAll('.w')];
+  const maxH = el.parentElement.clientHeight * 0.42;
+  const fits = () => el.scrollHeight <= maxH && words.every((w) => w.getBoundingClientRect().width <= el.clientWidth - 2);
+  let size = 20;
+  el.style.fontSize = `${size}px`;
+  while (size > 10 && !fits()) { size -= 1; el.style.fontSize = `${size}px`; }
 }
 
 const slotEl = (col) => document.querySelector(`.slot[data-col="${col}"]`);
@@ -74,6 +87,7 @@ async function dealTo(col) {
   el.setAttribute('aria-label', `Swap the ${col} card`);
   el.innerHTML = `<div class="flip"><div class="back"></div>${cardFace(col, card, pick)}</div>`;
   slotEl(col).appendChild(el);
+  fitText(el.querySelector('.val'));
   const o = deckOffset(el);
   if (!reduceMotion) {
     await el.animate([
@@ -232,6 +246,7 @@ document.querySelectorAll('.seg [data-style]').forEach((b) => {
       hand.first.pick = style;
       const card = slotEl('first').querySelector('.pcard .flip');
       card.querySelector('.face').outerHTML = cardFace('first', hand.first.card, style);
+      fitText(card.querySelector('.val'));
       showResult();
     }
   });
