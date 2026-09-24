@@ -20,9 +20,21 @@ const TALENT_INFO = {
   Pistols: 'simple & versatile', Rifles: 'accurate at Long Range', Shotguns: 'powerful at Short Range', Traps: 'incl. improvised',
 };
 
+// Status list exactly as printed on the official sheet: skill to relieve it + the short rule.
+const SHEET_STATUSES = [
+  ['Afraid', 'CHA', 'Cannot move closer to source. Attack pools halved.'],
+  ['Burned', 'FIN', '−Health equal to Status Severity. Lasting: Max = −2.'],
+  ['Dazed', 'INT', 'Roll 1B to determine if the desired Action occurs.'],
+  ['Electrocuted', 'NRV', 'Cannot Aim or Dodge. Convert Gold dice to Black.'],
+  ['Poisoned', 'NRV', 'Roll −2B with any Skill. Lasting: −1B with any Skill.'],
+  ['Trapped', 'F/N', 'Cannot take the Move or Dodge Actions.'],
+  ['Unconscious', 'INT', 'Cannot take Actions except to remove this Status.'],
+];
+
 let meta = null;
 let data = null;
 let poller = null;
+let vitalsStale = false;  // vitals skipped a redraw while someone typed there
 let builtFor = null;       // sheet id currently rendered
 let chosenTrade = null;
 let kzOptions = [];
@@ -211,17 +223,28 @@ function hydrate(p) {
 
   const send = (o) => act({ action: 'pc', id: p.id, ...o });
   const vitals = view.querySelector('[data-dyn="vitals"]');
-  if (!vitals.contains(document.activeElement)) {
-    const pct = Math.max(0, Math.min(100, (p.health / Math.max(1, p.maxHealth)) * 100));
+  // Only hold off re-rendering while someone is typing in a box (checkbox/button focus doesn't count).
+  const typing = vitals.contains(document.activeElement) && document.activeElement.matches('input:not([type=checkbox]), textarea, select');
+  const pct = Math.max(0, Math.min(100, (p.health / Math.max(1, p.maxHealth)) * 100));
+  if (typing) {
+    vitalsStale = true;
+    vitals.querySelector('.bar i').style.width = `${pct}%`;
+    vitals.querySelector('.hp .num').textContent = `${p.health}/${p.maxHealth}`;
+  } else {
+    vitalsStale = false;
     vitals.innerHTML = `
       <div class="hp"><span class="lbl">HEALTH</span><span class="bar"><i style="width:${pct}%"></i></span><span class="num">${p.health}/${p.maxHealth}</span>
         <span class="pm"><button type="button" data-hp="-1" aria-label="Lose 1 Health">−</button><button type="button" data-hp="1" aria-label="Gain 1 Health">+</button></span></div>
       <div class="fr"><label class="f">MAX HEALTH<input data-vpath="maxHealth" type="number" min="1" max="99" value="${p.maxHealth}"></label>
         <div class="f">DEFENSE${poolHTML('data-pool="defense"', 'Defense')}</div></div>
       <div class="row2">${pipRow('GRIT', p.grit, Math.max(6, p.grit), 'grit')}</div>
-      <div class="statuses">${Object.entries(p.statuses || {}).map(([s, v]) => `<span class="st" title="${esc(meta.statuses[s].text)}">${s} <b>${v}</b>
-        <button type="button" data-st="${s}" data-v="${v - 1}" aria-label="Lower ${s}">−</button><button type="button" data-st="${s}" data-v="${v + 1}" aria-label="Raise ${s}">+</button></span>`).join('')}
-        <select class="st-add" data-st-add aria-label="Add a Status"><option value="">+ Status…</option>${Object.keys(meta.statuses).filter((s) => !p.statuses?.[s]).map((s) => `<option>${s}</option>`).join('')}</select></div>
+      <div class="status-list"><div class="lbl">STATUSES <span class="muted">— relieved by rolling with the associated Skill</span></div>
+        ${SHEET_STATUSES.map(([s, sk, txt]) => { const v = p.statuses?.[s] || 0; return `<div class="st-row${v ? ' on' : ''}">
+          <label class="st-check"><input type="checkbox" data-stc="${s}"${v ? ' checked' : ''}><span class="st-sk">${sk}</span><b>${s}</b></label>
+          <span class="st-desc">${esc(txt)}</span>
+          <span class="sev">${v ? `<button type="button" data-st="${s}" data-v="${v - 1}" aria-label="Lower ${s}">−</button><b title="Severity">${v}</b><button type="button" data-st="${s}" data-v="${v + 1}" aria-label="Raise ${s}">+</button>` : ''}</span>
+        </div>`; }).join('')}
+      </div>
       ${p.bleeding ? '<p class="bleed"><b>BLEEDING OUT</b> — handle it on the Combat &amp; Dice page.</p>' : ''}
       ${p.dead ? '<p class="bleed"><b>FALLEN</b></p>' : ''}
       <div><button class="btn small secondary" type="button" data-rest>🔥 Rest at camp / town</button> <span class="muted" style="font-size:13px">full Health, clear Statuses, reset Ace meter</span></div>`;
@@ -230,7 +253,7 @@ function hydrate(p) {
       act({ action: 'sheet', id: p.id, path: el.dataset.vpath, value: el.type === 'number' ? Number(el.value) : el.value }, el)));
     vitals.querySelectorAll('[data-grit]').forEach((b) => b.addEventListener('click', () => send({ op: 'grit', value: nextVal(b, Number(b.dataset.grit)) })));
     vitals.querySelectorAll('[data-st]').forEach((b) => b.addEventListener('click', () => send({ op: 'status', status: b.dataset.st, value: Number(b.dataset.v) })));
-    vitals.querySelector('[data-st-add]').addEventListener('change', (e) => { if (e.target.value) send({ op: 'status', status: e.target.value, value: 1 }); });
+    vitals.querySelectorAll('[data-stc]').forEach((c) => c.addEventListener('change', () => send({ op: 'status', status: c.dataset.stc, value: c.checked ? 1 : 0 })));
     vitals.querySelector('[data-rest]').addEventListener('click', () => { if (confirm('Rest up? Health refills, Statuses clear, Ace meter resets.')) send({ op: 'rest' }); });
   }
 
@@ -277,6 +300,7 @@ function render() {
   hydrate(p);
 }
 window.addEventListener('hashchange', render);
+$('#sheet-view').addEventListener('focusout', () => setTimeout(() => { if (vitalsStale) render(); }, 60));
 
 (async () => {
   meta = await api('GET', null, '?view=meta', EP);
