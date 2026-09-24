@@ -189,7 +189,7 @@ function buildSheet(p) {
           <div class="w-top">${pick('forstall', 0, [['Forstall models', forstalls]], '— pick a model —')}${spurBox('Forstalls')}</div>
           <div class="w-grid">${inp('forstall.model', 'Model')}${inp('forstall.slots', 'Total upgrade slots', { max: 4, cls: 'narrow2' })}${inp('forstall.range', 'Range', { cls: 'narrow2' })}</div>
           <div class="w-grid">${inp('forstall.grit', 'Grit', { max: 4, cls: 'narrow' })}${inp('forstall.duration', 'Duration (hrs)', { max: 6, cls: 'narrow2' })}
-            <div class="range-in"><span class="rl">Sweep</span>${poolHTML('data-pool="forstall.sweep"', 'Sweep')}<button type="button" class="roll-mini" data-roll-path="forstall.sweep" data-roll-label="Forstall Sweep" data-talent="Forstalls" aria-label="Roll Sweep">🎲</button></div></div>
+            <div class="range-in full"><span class="rl">Sweep</span>${poolHTML('data-pool="forstall.sweep"', 'Sweep')}<button type="button" class="roll-mini" data-roll-path="forstall.sweep" data-roll-label="Forstall Sweep" data-talent="Forstalls" aria-label="Roll Sweep">🎲</button></div></div>
           <div class="row2" data-dyn="charges"></div>
           <div class="w-grid">${[0, 1, 2, 3].map((u) => inp(`forstall.upgrades.${u}`, `${u + 1}.`)).join('')}</div>
           <div class="w-grid">${[0, 1, 2, 3].map((u) => inp(`forstall.kz.${u}`, 'Kurtz Frequency (Kz)', { list: 'kz-list', ph: '0-0-0000' })).join('')}</div>
@@ -367,7 +367,7 @@ function hydrate(p) {
     vitals.innerHTML = `
       <div class="hp-top"><label class="f narrow"><span>max</span><input data-vpath="maxHealth" type="number" min="1" max="99" value="${p.maxHealth}"></label>
         <div class="hp-mid"><button type="button" class="pmb" data-hp="-1" aria-label="Lose 1 Health">−</button><span class="hp-big">${p.health}</span><button type="button" class="pmb" data-hp="1" aria-label="Gain 1 Health">+</button></div>
-        <div class="f narrow"><span>def</span>${poolHTML('data-pool="defense"', 'Defense')}</div></div>
+        <div class="f hp-def"><span>defense</span>${poolHTML('data-pool="defense"', 'Defense')}</div></div>
       <div class="hp"><span class="bar"><i style="width:${pct}%"></i></span></div>
       <div class="def-spur">${spurBox('Defense')}<span class="muted">Defense Talent (dodge &amp; cover)</span></div>
       <h4>GRIT <small>action points reload on your next turn</small></h4>

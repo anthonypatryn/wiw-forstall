@@ -121,7 +121,7 @@ body.on-sheet .masthead { display: none; }
 .bleed b { font: 15px var(--display); letter-spacing: .1em; color: #ff8c73; }
 
 /* statuses */
-.st-row { display: grid; grid-template-columns: 138px 1fr auto; align-items: center; gap: 8px; padding: 4px; border-bottom: 1px dotted rgba(34,31,31,.25); border-radius: 3px; }
+.st-row { display: grid; grid-template-columns: 156px 1fr auto; align-items: center; gap: 8px; padding: 4px; border-bottom: 1px dotted rgba(34,31,31,.25); border-radius: 3px; }
 .st-row:last-child { border-bottom: 0; }
 .st-row.on { background: rgba(164,64,31,.1); }
 .st-check { display: flex; align-items: center; gap: 6px; cursor: pointer; }
@@ -140,9 +140,10 @@ body.on-sheet .masthead { display: none; }
 .w-top { display: flex; gap: 8px; align-items: center; }
 .pick { flex: 1; min-width: 0; padding: 6px 8px; border: 1.5px dashed var(--ink-faint); border-radius: 4px; background: #fbf7ee; font: 14px var(--body); color: var(--ink-soft); }
 .pick:focus { border-style: solid; border-color: var(--rust); outline: none; }
-.ranges { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 6px 10px; }
+.ranges { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); gap: 8px 16px; }
 .range-in { display: flex; align-items: center; gap: 6px; }
-.range-in .rl { font: 13px var(--display); letter-spacing: .1em; color: var(--rust); min-width: 76px; }
+.range-in .rl { font: 13px var(--display); letter-spacing: .1em; color: var(--rust); min-width: 84px; white-space: nowrap; }
+.range-in .dp { flex: none; }
 .w-grid.ammo { grid-template-columns: 1fr 70px 1fr 70px; }
 @media (max-width: 480px) { .w-grid.ammo { grid-template-columns: 1fr 60px; } }
 .w-info { font-size: 13px; color: var(--ink-soft); }
@@ -186,3 +187,8 @@ body.on-sheet .masthead { display: none; }
 .danger-zone { display: flex; justify-content: flex-end; margin-top: 16px; }
 
 .mech-def { margin: 10px 0 4px; }
+
+.w-grid .range-in.full { grid-column: 1 / -1; margin-top: 4px; }
+.hp-top .hp-def { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; }
+.st-check b { white-space: nowrap; }
+@media (max-width: 480px) { .range-in { flex-wrap: wrap; row-gap: 4px; } .range-in .rl { min-width: 0; flex-basis: 100%; } }
