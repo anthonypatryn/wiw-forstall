@@ -238,10 +238,7 @@ function buildSheet(p) {
     <div class="sheet page2">
       ${box('PRESTIGE', 'fame &amp; progression', `<div class="w-grid">${inp('prestige.total', 'Total', { type: 'number' })}${inp('prestige.unclaimed', 'Unclaimed', { type: 'number' })}</div>
         <div class="tier-title" data-dyn="tier-title"></div>
-        <ul class="prestige-ref">
-          <li><b>2</b> Practice Skill — swap one Black die for Gold</li><li><b>2</b> Increase Health — +1 max Health (max 5 times)</li>
-          <li><b>4</b> Develop Talent — reroll Spurs with a Talent</li><li><b>4</b> Unlock Ability — a new Trade ability</li>
-          <li><b>6</b> Master Skill — +1B to a Skill (max 3 times)</li><li><b>6</b> Ace-in-the-Hole! 2</li></ul>`, 'prestige')}
+        <div class="spend" data-dyn="spend"></div>`, 'prestige')}
       ${box('TALENTS', 'reroll Spurs when using marked items', `<div class="talents">${meta.talents.map((tl) =>
           `<label><input type="checkbox" data-toggle="talents" value="${esc(tl)}"><span>${esc(tl)} <small>(${esc(TALENT_INFO[tl] || '')})</small></span></label>`).join('')}</div>`, 'talents')}
       ${box('DISPOSITION', 'attitude, worries, &amp; wishes', inp('disposition', '', { type: 'textarea', max: 1000 }), 'disposition')}
@@ -419,6 +416,10 @@ function wireSheet(p) {
   });
 
   $('#delete-pc').addEventListener('click', () => deletePc(p.id));
+  on('click', (e) => {
+    const b = e.target.closest('[data-spend]');
+    if (b) { b.blur(); spendPrestige(view, p, b.dataset.spend); }
+  });
   on('click', async (e) => {
     const b = e.target.closest('[data-mode]');
     if (!b) return;
@@ -519,6 +520,49 @@ function cylinder(grit) {
   return `<svg class="cyl" viewBox="0 0 100 100" aria-label="Grit ${grit} of 6"><circle class="cyl-body" cx="50" cy="50" r="47"/><circle class="cyl-hub" cx="50" cy="50" r="8"/>${ch}</svg>`;
 }
 
+// Spend Prestige (p. 32): each row checks cost and limits; the server applies it.
+const SPEND = [
+  ['practice', 2, 'Practice Skill', 'Swap 1B for 1G on a Skill'],
+  ['health', 2, 'Improve Health', '+1 max Health (up to 5 times)'],
+  ['talent', 4, 'Develop Talent', 'Reroll Spurs for that kind of roll'],
+  ['ability', 4, 'Unlock Ability', 'A new ability from your Trade'],
+  ['master', 6, 'Master Skill', '+1B to a Skill (up to 3 times)'],
+  ['ace2', 6, 'Ace-in-the-Hole 2', 'Your second Ace-in-the-Hole'],
+];
+function renderSpend(view, p) {
+  const box = view.querySelector('[data-dyn="spend"]');
+  if (!box || box.contains(document.activeElement)) return;
+  const t = meta.trades[p.trade], have = p.prestige.unclaimed || 0, pr = p.prestige;
+  const skillSel = (k, needBlack) => `<select data-sp="${k}" aria-label="Skill">${meta.skills.map((sk) => {
+    const pool = String(p.skills[sk.toLowerCase()] || '').toUpperCase();
+    const off = needBlack && !/\d+B/.test(pool);
+    return `<option value="${sk}"${off ? ' disabled' : ''}>${sk} (${pool || '—'})</option>`; }).join('')}</select>`;
+  const pickers = {
+    practice: skillSel('practice', true),
+    health: `<span class="muted">${pr.healthUps || 0}/5 used</span>`,
+    talent: `<select data-sp="talent" aria-label="Talent">${meta.talents.filter((x) => !p.talents.includes(x)).map((x) => `<option>${esc(x)}</option>`).join('')}</select>`,
+    ability: (() => { const left = t.abilities.filter((a) => !p.abilities.includes(a.name)); return left.length ? `<select data-sp="ability" aria-label="Ability">${left.map((a) => `<option>${esc(a.name)}</option>`).join('')}</select>` : '<span class="muted">All unlocked</span>'; })(),
+    master: `${skillSel('master')}<span class="muted">${pr.mastered || 0}/3</span>`,
+    ace2: p.aceTwo ? '<span class="muted">Unlocked ✓</span>' : `<span class="muted">${esc(t.aces[1]?.name || '')}</span>`,
+  };
+  const maxed = { health: (pr.healthUps || 0) >= 5, master: (pr.mastered || 0) >= 3, ace2: !!p.aceTwo, ability: t.abilities.every((a) => p.abilities.includes(a.name)), talent: meta.talents.every((x) => p.talents.includes(x)) };
+  box.innerHTML = `<div class="sp-have">UNCLAIMED PRESTIGE: <b>${have}</b></div>${SPEND.map(([k, cost, name, desc]) => `
+    <div class="sp-row${have < cost || maxed[k] ? ' off' : ''}"><span class="sp-cost">${cost}</span><div class="sp-what"><b>${name}</b><small>${desc}</small></div>
+      <div class="sp-pick">${pickers[k]}</div><button type="button" class="btn small" data-spend="${k}" ${have < cost || maxed[k] ? 'disabled' : ''}>Spend ${cost}</button></div>`).join('')}`;
+}
+async function spendPrestige(view, p, what) {
+  const pc = pcById(p.id);
+  const val = (k) => view.querySelector(`[data-sp="${k}"]`)?.value;
+  const body = { action: 'pc', id: p.id, op: 'spend', what };
+  let label = SPEND.find((x) => x[0] === what)[2];
+  if (what === 'practice' || what === 'master') { body.skill = val(what); label += ` (${body.skill})`; }
+  if (what === 'talent') { body.talent = val('talent'); label += ` (${body.talent})`; }
+  if (what === 'ability') { body.ability = val('ability'); label += ` (${body.ability})`; }
+  const cost = SPEND.find((x) => x[0] === what)[1];
+  if (!confirm(`Spend ${cost} Prestige on ${label} for ${pc.name}?`)) return;
+  if (await act(body)) toast(`${label} — done. It’s in the Table Log.`);
+}
+
 // View / edit modes. Finished sheets open locked; play trackers stay live.
 let starterMissing = [];
 const editMode = new Set();
@@ -528,7 +572,7 @@ function applyMode(view, p) {
   const locked = !isEditing(p);
   view.classList.toggle('viewing', locked);
   view.querySelectorAll('.sheet input, .sheet select, .sheet textarea, .sheet-head input, .sheet .spur[data-spur]').forEach((el) => {
-    if (el.matches('[data-stc]')) return; // Statuses stay live
+    if (el.matches('[data-stc]') || el.closest('[data-dyn="spend"]')) return; // Statuses + Prestige spending stay live
     const path = el.dataset.path || el.dataset.vpath || el.closest('.dp[data-pool]')?.dataset.pool;
     el.disabled = locked && !(path && PLAY_PATHS.test(path));
   });
@@ -634,6 +678,7 @@ function hydrate(p) {
     if (it?.img && img.dataset.src !== it.img) { img.dataset.src = it.img; img.src = `/img/store/${it.img}.webp`; img.alt = it.name; }
   }
   renderStarter(view, p);
+  renderSpend(view, p);
   applyMode(view, p);
   view.querySelectorAll('[data-toggle]').forEach((el) => { el.checked = p[el.dataset.toggle].includes(el.value); });
   view.querySelectorAll('[data-ab]').forEach((el) => el.classList.toggle('locked', !p.abilities.includes(el.dataset.ab)));
