@@ -32,7 +32,7 @@ export default async function handler(req, res) {
     let state = (await load()) || freshState();
 
     if (req.method === 'GET') {
-      const since = Number(url.searchParams.get('since'));
+      const since = url.searchParams.has('since') ? Number(url.searchParams.get('since')) : null;
       if (url.searchParams.get('view') === 'warden') {
         if (!warden) return send(res, 401, { error: 'Wrong PIN.' });
         if (since === state.v) return send(res, 200, { v: state.v, unchanged: true });
