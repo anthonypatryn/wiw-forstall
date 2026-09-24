@@ -36,7 +36,7 @@ function renderTabs() {
   }));
 }
 function renderSubs() {
-  const subs = [...new Set(items().filter((i) => cat === 'All' || i.cat === cat).map((i) => i.sub))];
+  const subs = [...new Set(items().filter((i) => cat === 'All' || i.cat === cat).map((i) => i.sub))].sort((a, b) => a.localeCompare(b));
   const cur = $('#sub').value;
   $('#sub').innerHTML = `<option value="">All sections</option>${subs.map((s) => `<option>${esc(s)}</option>`).join('')}`;
   $('#sub').value = subs.includes(cur) ? cur : '';

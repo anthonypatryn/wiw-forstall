@@ -111,3 +111,30 @@
   .hand { grid-template-columns: repeat(2, var(--cw)); gap: 14px 22px; }
 }
 @media (max-width: 380px) { :root { --cw: 118px; --ch: 166px; } .hand { gap: 12px 14px; } }
+
+/* manual NPC + book NPCs */
+.manual { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.manual label { display: flex; flex-direction: column; gap: 3px; font: 13px var(--display); letter-spacing: .12em; color: var(--ink-soft); }
+.manual input:not([type=checkbox]) { padding: 7px 9px; border: 1px solid var(--ink-faint); border-radius: 3px; background: #fffdf7; font: 16px var(--body); letter-spacing: 0; color: var(--ink); }
+.manual-go { grid-column: 1 / -1; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+@media (max-width: 760px) { .manual { grid-template-columns: 1fr 1fr; } }
+.faction { border-top: 2px solid var(--ink); padding: 14px 0 6px; }
+.faction:first-child { border-top: 0; padding-top: 0; }
+.faction > h3 { margin: 0 0 10px; font: 400 26px/1 var(--western); }
+.faction > h3 small { font: 13px var(--display); letter-spacing: .14em; color: var(--ink-faint); margin-left: 8px; }
+.book-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
+.bnpc { background: #fffaf0; border: 1.5px solid var(--ink); border-radius: var(--radius); padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; }
+.bnpc .hd { display: flex; gap: 10px; align-items: center; }
+.bnpc .hd img { width: 58px; height: 58px; border-radius: 50%; flex: none; box-shadow: 0 2px 4px rgba(0,0,0,.35); }
+.bnpc .nm { font: 400 20px/1.1 var(--western); }
+.bnpc .tag { font: 12px var(--display); letter-spacing: .14em; color: var(--rust); }
+.bnpc q { font: italic 15px/1.35 var(--body); color: var(--ink-soft); }
+.bnpc p { margin: 0; font-size: 14px; line-height: 1.4; }
+.bnpc .statline { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: 13px; }
+.bnpc .statline span { white-space: nowrap; }
+.bnpc .statline b { font: 12px var(--display); letter-spacing: .12em; color: var(--ink-faint); font-weight: 400; margin-right: 3px; }
+.bnpc details summary { cursor: pointer; font: 13px var(--display); letter-spacing: .12em; color: var(--rust); }
+.bnpc details p { margin: 4px 0; }
+.bnpc .acts { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: auto; }
+.bnpc .acts input { flex: 1 1 120px; min-width: 0; padding: 6px 8px; border: 1px solid var(--ink-faint); border-radius: 3px; font-size: 15px; }
+.bnpc .acts .btn { font-size: 14px; padding: 6px 9px 4px; box-shadow: none; }

@@ -227,12 +227,88 @@ function connect() {
 function setWarden() {
   $('#warden-btn').textContent = warden ? '⭐ Warden mode · lock' : '⭐ Warden';
   $('#known-wrap').hidden = !warden;
+  $('#manual-card').hidden = !warden;
+  $('#book-card').hidden = !warden;
+  if (warden) loadBook(); else { book = null; $('#book').innerHTML = ''; }
 }
 $('#warden-btn').addEventListener('click', async () => {
   if (warden) { warden = false; forgetWarden(); }
   else if (!(warden = await wardenModal(EP))) return;
   setWarden(); connect();
 });
+
+
+// ---------- Warden: write an NPC by hand ----------
+$('#dl-pers').innerHTML = [...new Set(NPC.personality)].map((v) => `<option value="${esc(v)}">`).join('');
+$('#dl-phys').innerHTML = [...new Set(NPC.physical)].map((v) => `<option value="${esc(v)}">`).join('');
+$('#manual').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const f = e.target;
+  const name = `${f.first.value.trim()} ${f.last.value.trim()}`.trim();
+  const r = await npcAct({ action: 'add', name, personality: f.personality.value.trim(), physical: f.physical.value.trim(), known: f.known.checked });
+  if (r) { toast(`${name} is in the NPC ledger.`); f.reset(); f.known.checked = true; }
+});
+
+// ---------- Warden: NPCs from the Guidebook ----------
+let book = null;
+const randomName = () => {
+  const i = Math.floor(Math.random() * 52), j = Math.floor(Math.random() * 52);
+  return `${NPC[Math.random() < 0.5 ? 'first1' : 'first2'][i]} ${NPC.last[j]}`;
+};
+function statBlock(p) {
+  const atk = p.attacks.map((w) => `<p><b>${esc(w.weapon)}</b> — ${w.ranges.map((r) => `${esc(r.range)} (${esc(r.grit)} Grit): ${esc(r.damage)}`).join(' · ')}${w.notes ? ` <i>${esc(w.notes)}</i>` : ''}</p>`).join('');
+  return `<div class="statline"><span><b>HEALTH</b>${esc(p.health)}</span><span><b>DEF</b>${esc(p.defense)}</span><span><b>SPEED</b>${esc(p.speed)}</span>
+      <span><b>CHA</b>${esc(p.charm)}</span><span><b>FIN</b>${esc(p.finesse)}</span><span><b>INT</b>${esc(p.intuition)}</span><span><b>NRV</b>${esc(p.nerve)}</span></div>
+    <details><summary>Abilities, attacks &amp; items</summary>
+      ${p.talents ? `<p><b>Talents:</b> ${esc(p.talents)}</p>` : ''}${p.abilities.map((a) => `<p>${esc(a)}</p>`).join('')}${atk}${p.items ? `<p><b>Items:</b> ${esc(p.items)}</p>` : ''}
+    </details>`;
+}
+function renderBook() {
+  if (!book) return;
+  const person = (pp, faction, prof) => `<article class="bnpc" data-name="${esc(pp.name)}" data-faction="${esc(faction)}">
+      <div class="hd">${prof ? `<img src="/img/tokens/npc-${esc(prof.img)}.webp" alt="">` : ''}<div><div class="nm">${esc(pp.name)}</div><div class="tag">${esc(faction.toUpperCase())} · P. ${pp.page}</div></div></div>
+      ${pp.quote ? `<q>${esc(pp.quote.replace(/^“|”$/g, ''))}</q>` : ''}<p>${esc(pp.desc)}</p>
+      ${prof ? statBlock(prof) : ''}
+      <div class="acts"><button class="btn small secondary" data-ledger type="button">+ NPC ledger</button>${prof ? '<button class="btn small" data-fight type="button">⚔ Add to Combat</button>' : ''}</div>
+    </article>`;
+  $('#book').innerHTML = book.factions.map((f) => `<div class="faction"><h3>${esc(f.faction)}<small>P. ${f.page}</small></h3><div class="book-grid">
+      ${f.people.map((pp) => person(pp, f.faction, pp.name === f.profile.name ? f.profile : null)).join('')}</div></div>`).join('')
+    + `<div class="faction"><h3>Ready-Made Enemies<small>P. 191 · JUST ADD A NAME</small></h3><div class="book-grid">${book.generic.map((g) => `<article class="bnpc" data-generic="${esc(g.name)}">
+      <div class="hd"><div><div class="nm">${esc(g.name.replace('Human - ', ''))}</div><div class="tag">HUMAN ENEMY PROFILE</div></div></div>
+      ${statBlock(g)}
+      <div class="acts"><input placeholder="Name them…" maxlength="40" data-gname><button class="btn small secondary" data-roll type="button" title="Random name from the card table">🎲</button>
+        <button class="btn small secondary" data-ledger type="button">+ Ledger</button><button class="btn small" data-fight type="button">⚔ Combat</button></div></article>`).join('')}</div></div>`;
+
+  $('#book').querySelectorAll('.bnpc').forEach((card) => {
+    const generic = card.dataset.generic;
+    const g = generic && book.generic.find((x) => x.name === generic);
+    const nameOf = () => (generic ? (card.querySelector('[data-gname]').value.trim() || randomName()) : card.dataset.name);
+    card.querySelector('[data-roll]')?.addEventListener('click', () => { card.querySelector('[data-gname]').value = randomName(); });
+    card.querySelector('[data-ledger]').addEventListener('click', async () => {
+      const name = nameOf();
+      const f = book.factions.find((x) => x.faction === card.dataset.faction);
+      const pp = f?.people.find((x) => x.name === name);
+      const r = await npcAct({
+        action: 'add', name, faction: card.dataset.faction || '', known: false,
+        personality: '', physical: '',
+        wardenNotes: pp ? `${pp.quote} ${pp.desc}`.trim() : (g ? `Uses the ${g.name} profile (p. 191).` : ''),
+        img: f && f.profile.name === name ? `npc-${f.profile.img}` : '',
+      });
+      if (r) toast(`${name} added to the ledger (hidden from the posse until you tick “met”).`);
+    });
+    card.querySelector('[data-fight]')?.addEventListener('click', async () => {
+      const name = nameOf();
+      try {
+        await api('POST', { action: 'addEnemy', profile: `npc:${generic || name}`, name: generic ? name : undefined }, '', '/api/combat');
+        toast(`${name} joins the fight — see Combat & Dice.`);
+      } catch (err) { toast(err.message, true); }
+    });
+  });
+}
+async function loadBook() {
+  if (book || !warden) return;
+  try { book = await api('GET', null, '?view=book', EP); renderBook(); } catch {}
+}
 
 // ---------- controls ----------
 document.querySelectorAll('.seg [data-style]').forEach((b) => {
