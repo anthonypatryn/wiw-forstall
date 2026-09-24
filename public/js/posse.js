@@ -272,7 +272,12 @@ function wireSheet(p) {
   view.addEventListener('change', (e) => {
     if (e.target.matches('.pick')) return pickItem(p, e.target);
     if (e.target.matches('[data-pack]')) return choosePack(p, e.target.dataset.pack === '2' ? 'pack2' : 'pack', e.target.value);
-    if (e.target.matches('[data-tier]')) return e.target.blur(), act({ action: 'sheet', id: p.id, path: 'tier', value: e.target.value });
+    if (e.target.matches('[data-tier]')) {
+      e.target.blur();
+      const pc = pcById(p.id), f = { tier: e.target.value };
+      if (e.target.value === 'Tenderfoot' && !String(pc.wallet || '').trim()) { f.wallet = '5'; if (!String(pc.scrap || '').trim()) f.scrap = '0'; }
+      return act({ action: 'sheet', id: p.id, fields: f });
+    }
     if (e.target.matches('[data-tl]')) {
       const pc0 = pcById(p.id), lo = (tierLoadout[p.id] ||= { ranged: pc0.tierKit?.[0], melee: pc0.tierKit?.[1], extras: [] }), k = e.target.dataset.tl;
       if (k.startsWith('x')) lo.extras[Number(k.slice(1))] = e.target.value; else lo[k] = e.target.value;
@@ -332,8 +337,7 @@ function wireSheet(p) {
     } else if (b.dataset.start === 'weapons') {
       if (await act({ action: 'pc', id: p.id, op: 'startKit' })) toast('Used Pistol and Pocket Knife added to Weapons.');
     } else if (b.dataset.start === 'wallet') {
-      const r = await act({ action: 'pc', id: p.id, op: 'rollWallet' });
-      if (r?.dice) rollPopup(r, `${pc.name} · Starting Wallet · 6B → $${r.dollars}`);
+      if (await act({ action: 'sheet', id: p.id, path: 'wallet', value: '5' })) toast('$5 in the Wallet.');
     } else if (b.dataset.start === 'tier') {
       const lo = tierLoadout[p.id] || { extras: [] };
       const r = await act({ action: 'pc', id: p.id, op: 'tierKit', tier: pc.tier, ranged: lo.ranged, melee: lo.melee, extras: lo.extras.filter(Boolean) });
@@ -453,7 +457,7 @@ function renderStarter(view, p) {
       : [hasStart, 'Step 4 · Starting weapons', hasStart ? 'Used Pistol and Pocket Knife are in Weapons.' : '<button type="button" class="btn small secondary" data-start="weapons">Add Used Pistol + Pocket Knife</button>'],
     [!!p.pack && (packs < 2 || !!p.pack2), `Step 4 · Equipment Pack${packs > 1 ? 's (2)' : ''}`, `${packSelect('data-pack')}${packs > 1 ? packSelect('data-pack="2"') : ''} <span class="muted">Gear goes into Inventory, plus 1 Supplies slot.</span>`],
     high ? [applied, 'Step 5 · Wallet', applied ? `<b>$${esc(wallet)}</b> in the Wallet (${tier.name}).` : `Your tier starts with $${tier.wallet}.`]
-      : [wallet !== '', 'Step 5 · Wallet', wallet ? `<b>$${esc(wallet)}</b> in the Wallet.` : '<button type="button" class="btn small" data-start="wallet">🎲 Roll 6B for your Wallet</button> <span class="muted">Aces $2, Hits $1.</span>'],
+      : [wallet !== '', 'Step 5 · Wallet', wallet ? `<b>$${esc(wallet)}</b> in the Wallet.` : '<button type="button" class="btn small" data-start="wallet">Set the Wallet to $5</button> <span class="muted">A Tenderfoot starts with $5 (p. 33).</span>'],
     [p.maxHealth >= 10 && String(p.supplies || '').trim() !== '', 'Step 5 · Health, Prestige &amp; Supplies', `Max Health <b>${p.maxHealth}</b> · Prestige <b>${p.prestige.total}</b> (${high ? `a ${tier.name} starts at ${tier.prestige}` : 'a Tenderfoot starts at 0'}) · Supplies <b>${esc(p.supplies || '—')}</b>
       ${p.maxHealth < 10 || !String(p.supplies || '').trim() ? '<button type="button" class="btn small secondary" data-start="basics">Set the starting values</button>' : ''}`],
     [keepsakes > 0, 'Step 5 · Keepsakes', `<select data-keepsake aria-label="Add a keepsake"><option value="">+ add a keepsake…</option>${meta.keepsakes.map((k) => `<option>${esc(k)}</option>`).join('')}</select> <span class="muted">${keepsakes ? `${keepsakes} carried.` : 'Pick one or two, or write your own under Other items.'}</span>`],
