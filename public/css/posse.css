@@ -13,7 +13,12 @@
 .pc-tile .t { font: 14px var(--display); letter-spacing: .14em; color: var(--rust); }
 .pc-tile .hp { margin-top: 8px; }
 .pc-tile.dead { opacity: .5; }
-.trade-pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 8px; margin-bottom: 14px; }
+/* 7 Trades: 4 + 3 centred on wide screens, 3 + 3 + 1… never a lone straggler at the left */
+.trade-pick { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 14px; }
+.trade-pick button { flex: 0 1 calc((100% - 24px) / 4); min-width: 0; }
+@media (max-width: 900px) { .trade-pick button { flex-basis: calc((100% - 16px) / 3); } }
+@media (max-width: 600px) { .trade-pick button { flex-basis: calc((100% - 8px) / 2); } }
+@media (max-width: 380px) { .trade-pick button { flex-basis: 100%; } }
 .trade-pick button {
   text-align: left; border: 1.5px solid var(--ink); border-radius: var(--radius); background: rgba(255,255,255,.5); padding: 10px 12px;
   font: 22px/1 var(--display); letter-spacing: .06em; color: var(--ink); display: grid; grid-template-columns: 42px 1fr; column-gap: 8px; align-items: center;
