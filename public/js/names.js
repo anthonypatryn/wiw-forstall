@@ -1,4 +1,4 @@
-import { $, esc, toast, store, mountNav } from './common.js';
+import { $, esc, api, toast, store, mountNav, startPolling, timeAgo, tryWarden, forgetWarden, savedPin, wardenModal } from './common.js';
 import { NPC } from './npc-data.js';
 import { mountTableLog } from './tablelog.js';
 
@@ -146,21 +146,50 @@ function showResult() {
   $('#npc-line').innerHTML = `${esc(npc.name)}<small>${esc(npc.personality)} · ${esc(npc.physical.toLowerCase())}</small>`;
 }
 
-// ---------- ledger ----------
-function renderLedger() {
-  const list = store.get('wiw.npcLedger', []);
-  $('#ledger').innerHTML = list.length ? list.map((n, i) => `<li><b>${esc(n.name)}</b> — ${esc(n.personality)}, <span class="muted">${esc(n.physical.toLowerCase())}</span>
-    <button type="button" data-rm="${i}" aria-label="Remove">✕</button></li>`).join('') : '<p class="empty-note">Nobody yet.</p>';
-  $('#ledger').querySelectorAll('[data-rm]').forEach((b) => b.addEventListener('click', () => {
-    const l = store.get('wiw.npcLedger', []); l.splice(Number(b.dataset.rm), 1); store.set('wiw.npcLedger', l); renderLedger();
-  }));
+// ---------- shared NPC ledger ----------
+const EP = '/api/npcs';
+let npcs = [], warden = false, poller = null, pendingLedger = false;
+
+async function npcAct(body, el) {
+  try {
+    const res = await api('POST', body, '', EP);
+    poller.push(res.state);
+    if (el) { el.classList.remove('saved'); void el.offsetWidth; el.classList.add('saved'); }
+    return res.result ?? true;
+  } catch (e) { toast(e.message, true); return null; }
 }
-$('#save').addEventListener('click', () => {
+
+function renderLedger() {
+  const box = $('#ledger');
+  // Don't wipe out a note someone is typing; re-render when they leave the field.
+  if (box.contains(document.activeElement) && /^(TEXTAREA|INPUT)$/.test(document.activeElement.tagName)) { pendingLedger = true; return; }
+  pendingLedger = false;
+  const q = $('#npc-search').value.trim().toLowerCase();
+  const list = npcs.filter((n) => !q || [n.name, n.personality, n.physical, n.where, n.posseNotes, n.wardenNotes].join(' ').toLowerCase().includes(q));
+  box.innerHTML = list.length ? list.map((n) => `<article class="npc${n.known ? '' : ' hidden-npc'}" data-id="${n.id}">
+      <div class="npc-top"><div><div class="npc-name">${esc(n.name)}</div><div class="npc-traits">${esc(n.personality)}${n.physical ? ` · ${esc(n.physical.toLowerCase())}` : ''}</div></div>
+        <span class="when">${n.known ? '' : 'HIDDEN · '}${timeAgo(n.at)}</span></div>
+      <label class="f">WHERE THEY MET<input type="text" data-f="where" maxlength="80" value="${esc(n.where || '')}" placeholder="e.g. the saloon in Dodge"></label>
+      <label class="f">POSSE NOTES<textarea data-f="posseNote" maxlength="3000" placeholder="What does the posse know about them?">${esc(n.posseNotes || '')}</textarea></label>
+      ${warden ? `<label class="f secret-note">WARDEN NOTES — SECRET<textarea data-f="wardenNote" maxlength="3000" placeholder="Secrets, motives, stats…">${esc(n.wardenNotes || '')}</textarea></label>
+        <div class="npc-tools"><label class="check"><input type="checkbox" data-known${n.known ? ' checked' : ''}> Posse has met them</label>
+          <button class="btn small secondary danger" data-remove type="button">Remove</button></div>` : ''}
+    </article>`).join('') : `<p class="empty-note">${q ? 'Nobody matches.' : 'Nobody yet — deal a stranger and add them.'}</p>`;
+  box.querySelectorAll('.npc').forEach((card) => {
+    const id = card.dataset.id;
+    card.querySelectorAll('[data-f]').forEach((el) => el.addEventListener('change', () => npcAct({ action: el.dataset.f, id, text: el.value }, el)));
+    card.querySelector('[data-known]')?.addEventListener('change', (e) => npcAct({ action: 'known', id, value: e.target.checked }));
+    card.querySelector('[data-remove]')?.addEventListener('click', () => { if (confirm('Remove this NPC from the ledger?')) npcAct({ action: 'remove', id }); });
+  });
+}
+$('#ledger').addEventListener('focusout', () => setTimeout(() => { if (pendingLedger) renderLedger(); }, 60));
+$('#npc-search').addEventListener('input', renderLedger);
+
+$('#save').addEventListener('click', async () => {
   const npc = npcFromHand();
   if (!npc) return;
-  store.set('wiw.npcLedger', [npc, ...store.get('wiw.npcLedger', [])].slice(0, 60));
-  renderLedger();
-  toast(`${npc.name} is in the ledger.`);
+  const r = await npcAct({ action: 'add', ...npc, known: $('#save-known').checked });
+  if (r) toast(`${npc.name} is in the NPC ledger.`);
 });
 $('#copy').addEventListener('click', async () => {
   const npc = npcFromHand();
@@ -168,7 +197,22 @@ $('#copy').addEventListener('click', async () => {
   try { await navigator.clipboard.writeText(`${npc.name} — ${npc.personality}, ${npc.physical.toLowerCase()}`); toast('Copied.'); }
   catch { toast('Couldn’t copy — select the text instead.', true); }
 });
-$('#clear-ledger').addEventListener('click', () => { if (confirm('Clear the ledger on this device?')) { store.set('wiw.npcLedger', []); renderLedger(); } });
+
+function connect() {
+  poller?.stop();
+  poller = startPolling(warden ? 'warden' : 'player', (d) => { npcs = d.npcs; renderLedger(); }, (ok, e) => {
+    if (e?.status === 401) { warden = false; forgetWarden(); setWarden(); connect(); }
+  }, EP);
+}
+function setWarden() {
+  $('#warden-btn').textContent = warden ? '⭐ Warden mode · lock' : '⭐ Warden';
+  $('#known-wrap').hidden = !warden;
+}
+$('#warden-btn').addEventListener('click', async () => {
+  if (warden) { warden = false; forgetWarden(); }
+  else if (!(warden = await wardenModal(EP))) return;
+  setWarden(); connect();
+});
 
 // ---------- controls ----------
 document.querySelectorAll('.seg [data-style]').forEach((b) => {
@@ -190,4 +234,9 @@ $('#deal').addEventListener('click', deal);
 $('#shuffle').addEventListener('click', async () => { if (busy) return; busy = true; shuffleDeck(); await animateShuffle(); busy = false; toast('Fresh deck — all 52 cards.'); });
 
 shuffleDeck();
-renderLedger();
+(async () => {
+  const pin = savedPin();
+  if (pin) warden = await tryWarden(pin, EP);
+  setWarden();
+  connect();
+})();

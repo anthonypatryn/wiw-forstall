@@ -83,12 +83,22 @@
 .npc-line { font: 400 clamp(28px, 4.5vw, 42px)/1.15 var(--western); }
 .npc-line small { display: block; font: italic 20px var(--body); color: var(--ink-soft); margin-top: 8px; }
 .npc-actions { display: flex; gap: 10px; justify-content: center; margin-top: 14px; }
-.ledger { margin: 0; padding-left: 26px; display: flex; flex-direction: column; gap: 8px; }
-.ledger li { font-size: 17px; }
-.ledger li b { font: 400 20px var(--western); }
-.ledger li .muted { font-style: italic; }
-.ledger li button { background: none; border: 0; color: var(--ink-faint); font-size: 14px; }
-.ledger li button:hover { color: var(--red); }
+.head-row .search { max-width: 280px; }
+.ledger { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; margin-top: 12px; }
+.npc { background: #fffaf0; border: 1.5px solid var(--ink); border-radius: var(--radius); padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; box-shadow: 2px 2px 0 rgba(34,31,31,.15); }
+.npc.hidden-npc { border-style: dashed; background: #f3ecf6; }
+.npc-top { display: flex; justify-content: space-between; gap: 8px; align-items: flex-start; }
+.npc-name { font: 400 24px/1.1 var(--western); }
+.npc-traits { font: italic 15px var(--body); color: var(--ink-soft); }
+.npc label.f { display: flex; flex-direction: column; gap: 3px; font: 13px var(--display); letter-spacing: .14em; color: var(--ink-soft); }
+.npc input[type=text], .npc textarea { font: 15px/1.4 var(--body); border: 1px solid rgba(34,31,31,.3); border-radius: 3px; background: rgba(255,255,255,.7); padding: 6px 8px; width: 100%; letter-spacing: 0; color: var(--ink); }
+.npc textarea { min-height: 70px; resize: vertical; }
+.npc .secret-note { color: #7a2c9e; }
+.npc .secret-note textarea { background: #f6eef9; border-color: #7a2c9e; }
+.npc-tools { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; font-size: 14px; }
+.npc .when { font: 12px var(--type); color: var(--ink-faint); white-space: nowrap; }
+.npc .saved { animation: saved .9s ease-out; }
+@keyframes saved { 0% { background: rgba(63,155,74,.25); } 100% { background: rgba(255,255,255,.7); } }
 
 @media (max-width: 860px) {
   :root { --cw: 128px; --ch: 180px; }

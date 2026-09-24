@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Rye&family=Special+Elite&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css?v=7">
-  <link rel="stylesheet" href="/css/names.css?v=1">
+  <link rel="stylesheet" href="/css/names.css?v=2">
 </head>
 <body>
   <header class="masthead">
@@ -21,6 +21,7 @@
         <h1>NPC Names</h1>
         <div class="sub">Deal from the saloon deck — Official Guidebook, pages 203–204</div>
       </div>
+      <button class="btn small warden-link" id="warden-btn" type="button">⭐ Warden</button>
     </div>
   </header>
   <nav class="sitenav" data-nav aria-label="Site"></nav>
@@ -52,18 +53,19 @@
     <section class="card corner result-card" id="result" hidden>
       <div class="npc-line" id="npc-line"></div>
       <div class="npc-actions">
-        <button class="btn small" id="save" type="button">Add to the ledger</button>
+        <button class="btn small" id="save" type="button">Add to the NPC ledger</button>
+        <label class="check" id="known-wrap" hidden><input type="checkbox" id="save-known" checked> Posse has met them</label>
         <button class="btn small secondary" id="copy" type="button">Copy</button>
       </div>
     </section>
 
     <section class="card corner">
-      <div class="head-row"><h2 class="section-title">The Ledger</h2><button class="btn small secondary" id="clear-ledger" type="button">Clear</button></div>
-      <p class="muted" style="margin-top:0">Strangers you’ve met — saved on this device.</p>
-      <ol class="ledger" id="ledger"></ol>
+      <div class="head-row"><h2 class="section-title">NPC Ledger</h2><input class="search" id="npc-search" type="search" placeholder="Search names, notes, places…" aria-label="Search NPCs"></div>
+      <p class="muted" style="margin-top:6px">Shared with the whole posse. Anyone can jot posse notes; Warden notes stay secret.</p>
+      <div class="ledger" id="ledger"></div>
     </section>
   </main>
 
-  <script type="module" src="/js/names.js?v=3"></script>
+  <script type="module" src="/js/names.js?v=4"></script>
 </body>
 </html>
