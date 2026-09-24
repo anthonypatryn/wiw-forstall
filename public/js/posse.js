@@ -111,7 +111,9 @@ function renderList() {
         <div class="n">${esc(p.name)}</div>
         <div class="hp"><span class="bar"><i style="width:${Math.min(100, (p.health / Math.max(1, p.maxHealth)) * 100)}%"></i></span><span class="num">${p.health}/${p.maxHealth}</span></div>
       </a>
-      <div class="tile-actions"><a class="btn small" href="#${p.id}">✎ Edit sheet</a><button type="button" class="btn small secondary danger" data-del="${p.id}">Delete</button></div>
+      <div class="tile-actions">${p.done === false
+        ? `<span class="tile-wip">BEING CREATED</span><a class="btn small" href="#${p.id}">Finish creating</a>`
+        : `<a class="btn small secondary" href="#${p.id}">View</a><a class="btn small secondary" href="#${p.id}/edit">✎ Edit</a>`}<button type="button" class="btn small secondary danger" data-del="${p.id}">Delete</button></div>
     </div>`).join('') : '<p class="empty-note">No one’s signed up yet. Pick a Trade below.</p>';
 
   roster.querySelectorAll('[data-del]').forEach((b) => b.addEventListener('click', () => deletePc(b.dataset.del)));
@@ -195,8 +197,12 @@ function buildSheet(p) {
   $('#sheet-view').innerHTML = `
     <div class="sheet-bar">
       <a class="btn small secondary" href="#">← All characters</a>
-      <span class="save-state" data-save-state>✓ Changes save automatically</span>
-      <button class="btn small secondary danger" id="delete-pc" type="button">Delete character</button>
+      <span class="save-state" data-save-state></span>
+      <span class="mode-tag" data-mode-tag></span>
+      <button class="btn small" type="button" data-mode="edit" hidden>✎ Edit</button>
+      <button class="btn small" type="button" data-mode="view" hidden>✓ Done editing</button>
+      <button class="btn small" type="button" data-mode="finish" hidden>Save character</button>
+      <button class="btn small secondary danger" id="delete-pc" type="button">Delete</button>
       <nav class="sheet-toc" aria-label="Jump to">${[['starter', 'Checklist'], ['skills', 'Skills'], ['health', 'Health'], ['statuses', 'Statuses'], ['weapons', 'Weapons'], ['abilities', 'Abilities'], ['prestige', 'Prestige'], ['talents', 'Talents'], ['disposition', 'Story'], ['reputation', 'Reputation'], ['gear', 'Gear'], ['inventory', 'Inventory'], ['forstall', 'Forstall'], ['horse', 'Horse'], ['mech', 'Mech']].map(([id, label]) => `<a href="#${p.id}" data-jump="${id}">${label}</a>`).join('')}</nav>
     </div>
     <div class="sheet-head">
@@ -207,7 +213,8 @@ function buildSheet(p) {
     </div>
 
     <details class="starter" data-starter id="sec-starter"><summary><b>NEW CHARACTER CHECKLIST</b><small>Guidebook pp. 6–8</small><span class="st-prog" data-dyn="starter-prog"></span></summary>
-      <div class="starter-in" data-dyn="starter"></div></details>
+      <div class="starter-in" data-dyn="starter"></div>
+      <div class="st-finish"><button type="button" class="btn" data-mode="finish">Save character</button><span class="muted">Checks that nothing is missing, then locks the sheet for play.</span><ul class="st-errs" data-st-errs></ul></div></details>
 
     <div class="sheet page1">
       ${box('SKILLS', 'practice &amp; master with Prestige', Object.entries(SKILL_INFO).map(([k, [nm, ds]]) => `<div class="sk">
@@ -405,6 +412,26 @@ function wireSheet(p) {
   });
 
   $('#delete-pc').addEventListener('click', () => deletePc(p.id));
+  on('click', async (e) => {
+    const b = e.target.closest('[data-mode]');
+    if (!b) return;
+    b.blur();
+    const pc = pcById(p.id);
+    if (b.dataset.mode === 'edit') { if (unlockSheet(p)) { hydrate(pc); toast('Editing — tap Done editing when finished.'); } }
+    else if (b.dataset.mode === 'view') { editMode.delete(p.id); hydrate(pc); toast('Sheet locked.'); }
+    else if (b.dataset.mode === 'finish') {
+      renderStarter(view, pc);
+      const errs = view.querySelector('[data-st-errs]');
+      if (starterMissing.length) {
+        errs.innerHTML = `<li class="head">Not quite ready — still missing:</li>${starterMissing.map((m) => `<li>${m}</li>`).join('')}`;
+        view.querySelector('[data-starter]').open = true;
+        errs.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        return toast(`${starterMissing.length} thing${starterMissing.length > 1 ? 's' : ''} still missing.`, true);
+      }
+      errs.innerHTML = '';
+      if (await act({ action: 'pc', id: p.id, op: 'finish' })) { window.scrollTo({ top: 0, behavior: 'smooth' }); toast(`${pc.name} is saved and ready to ride. Tap ✎ Edit to change anything.`); }
+    }
+  });
 
 }
 
@@ -485,6 +512,34 @@ function cylinder(grit) {
   return `<svg class="cyl" viewBox="0 0 100 100" aria-label="Grit ${grit} of 6"><circle class="cyl-body" cx="50" cy="50" r="47"/><circle class="cyl-hub" cx="50" cy="50" r="8"/>${ch}</svg>`;
 }
 
+// View / edit modes. Finished sheets open locked; play trackers stay live.
+let starterMissing = [];
+const editMode = new Set();
+const isEditing = (p) => p.done === false || editMode.has(p.id);
+const PLAY_PATHS = /^(wallet|scrap|supplies|horse\.health|mech\.health|mech\.state|weapons\.\d\.ammo\.\d\.rds)$/;
+function applyMode(view, p) {
+  const locked = !isEditing(p);
+  view.classList.toggle('viewing', locked);
+  view.querySelectorAll('.sheet input, .sheet select, .sheet textarea, .sheet-head input, .sheet .spur[data-spur]').forEach((el) => {
+    if (el.matches('[data-stc]')) return; // Statuses stay live
+    const path = el.dataset.path || el.dataset.vpath || el.closest('.dp[data-pool]')?.dataset.pool;
+    el.disabled = locked && !(path && PLAY_PATHS.test(path));
+  });
+  const creating = p.done === false;
+  view.querySelector('[data-starter]').hidden = !creating;
+  view.querySelector('[data-jump="starter"]').hidden = !creating;
+  view.querySelectorAll('[data-mode="finish"]').forEach((b) => { b.hidden = !creating; });
+  view.querySelector('.sheet-bar [data-mode="edit"]').hidden = !locked;
+  view.querySelector('.sheet-bar [data-mode="view"]').hidden = creating || locked;
+  view.querySelector('[data-mode-tag]').textContent = creating ? 'CREATING' : locked ? 'VIEWING' : 'EDITING';
+  view.querySelector('[data-mode-tag]').dataset.m = creating ? 'create' : locked ? 'view' : 'edit';
+}
+function unlockSheet(p) {
+  if (!confirm(`Edit ${pcById(p.id)?.name || 'this character'}’s sheet? Changes save as you type.`)) return false;
+  editMode.add(p.id);
+  return true;
+}
+
 // Character creation checklist (Guidebook pp. 6–8), with one-tap fills.
 function renderStarter(view, p) {
   const box = view.querySelector('[data-dyn="starter"]');
@@ -531,6 +586,9 @@ function renderStarter(view, p) {
       <div class="ks-other"><input data-ks-other maxlength="120" placeholder="Other keepsake…" aria-label="Other keepsake"><button type="button" class="btn small secondary" data-start="ks-other">Add</button></div>`],
   ];
   const done = steps.filter((st) => st[0]).length;
+  const why = { 1: tier ? `Apply the ${tier.name} loadout (weapons, Wallet).` : 'Pick a starting Prestige tier.', 2: `${named ? '' : 'Give them a name. '}Fill in Appearance, Disposition &amp; History on page two (${story}/3).`,
+    3: `Assign exactly 12 Black dice, 1–6 per Skill (now ${dice}).`, 4: `Pick ${packs > 1 ? 'two Equipment Packs' : 'an Equipment Pack'}.`, 5: 'Set Max Health and Supplies.', 6: 'Check or write at least one keepsake.' };
+  starterMissing = steps.map((st, n) => (st[0] ? null : `<b>Step ${n + 1} · ${st[1]}</b> — ${why[n] || ''}`)).filter(Boolean);
   box.innerHTML = `<ol>${steps.map(([ok, title, body], n) => `<li class="${ok ? 'ok' : ''}"><span class="tick">${ok ? '✓' : ''}</span><div><b>Step ${n + 1} · ${title}</b><div class="sb">${body}</div></div></li>`).join('')}</ol>`;
   box.querySelectorAll('[data-pack]').forEach((el) => { el.value = (el.dataset.pack === '2' ? p.pack2 : p.pack) || ''; });
   box.querySelectorAll('[data-tl]').forEach((el) => { const k = el.dataset.tl; el.value = (k.startsWith('x') ? lo.extras[Number(k.slice(1))] : lo[k]) || ''; });
@@ -568,6 +626,7 @@ function hydrate(p) {
     if (it?.img && img.dataset.src !== it.img) { img.dataset.src = it.img; img.src = `/img/store/${it.img}.webp`; img.alt = it.name; }
   }
   renderStarter(view, p);
+  applyMode(view, p);
   view.querySelectorAll('[data-toggle]').forEach((el) => { el.checked = p[el.dataset.toggle].includes(el.value); });
   view.querySelectorAll('[data-ab]').forEach((el) => el.classList.toggle('locked', !p.abilities.includes(el.dataset.ab)));
   view.querySelectorAll('[data-bool]').forEach((el) => { el.checked = !!p[el.dataset.bool]; });
@@ -669,7 +728,7 @@ function hydrate(p) {
 // ---------- routing & boot ----------
 function render() {
   if (!data) return;
-  const id = location.hash.slice(1);
+  const [id, wants] = location.hash.slice(1).split('/');
   const p = id && pcById(id);
   $('#list-view').hidden = !!p;
   $('#sheet-view').hidden = !p;
@@ -681,7 +740,8 @@ function render() {
     renderList();
     return;
   }
-  if (builtFor !== p.id) { buildSheet(p); builtFor = p.id; window.scrollTo(0, 0); }
+  if (builtFor !== p.id) { editMode.clear(); buildSheet(p); builtFor = p.id; window.scrollTo(0, 0); }
+  if (wants === 'edit') { history.replaceState(null, '', `#${p.id}`); if (p.done !== false) unlockSheet(p); }
   hydrate(p);
 }
 window.addEventListener('hashchange', render);

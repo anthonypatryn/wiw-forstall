@@ -37,6 +37,7 @@
   - `lib/sheets.js` defines `newSheet`, `PACKS`, `KEEPSAKES`, `giveStartingWeapons`, `weaponFields`, and a whitelisted `RULES` validator.
   - Every new sheet field needs a RULES entry.
   - Multi-field saves send `{action:'sheet', id, fields:{path:value}}`.
+  - View/edit modes: `done:false` = being created (checklist + Save character → pcOp `finish`). Finished sheets (`done` true or missing) open locked; `applyMode` in posse.js disables fields except `PLAY_PATHS` (wallet/scrap/supplies, horse/mech health, ammo) and the Health/Grit/Status/uses buttons. `#id/edit` opens in edit mode.
 - Catalog:
   - `lib/catalog.js` holds 307 items, generated from the price list. Item ids look like `pistols-used-pistol`.
   - `img` names a file in `/img/store/<img>.webp`.
