@@ -166,6 +166,7 @@ const NAV = [
   ['/posse', 'Posse Sheets'],
   ['/names', 'NPC Names'],
   ['/map', 'Map'],
+  ['/battle', 'Battle Map'],
 ];
 export function mountNav(active) {
   const el = document.querySelector('[data-nav]');

@@ -71,7 +71,7 @@ vp.addEventListener('pointerdown', (e) => {
   if (e.target.closest('.token, .map-ctrls, .map-banner')) return;
   pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
   if (pointers.size === 1) downPlace = e.target.closest('.place'); // pointer capture changes e.target later
-  vp.setPointerCapture(e.pointerId);
+  try { vp.setPointerCapture(e.pointerId); } catch {}
   moved = false;
   if (pointers.size === 1) panStart = { x: e.clientX, y: e.clientY, vx: view.x, vy: view.y };
   if (pointers.size === 2) {
@@ -206,7 +206,7 @@ function wireToken(el) {
   let start = null;
   el.addEventListener('pointerdown', (e) => {
     e.stopPropagation();
-    el.setPointerCapture(e.pointerId);
+    try { el.setPointerCapture(e.pointerId); } catch {}
     const t = data.tokens[el.dataset.id];
     start = { cx: e.clientX, cy: e.clientY, x: t.x, y: t.y, moved: false };
     el.classList.add('dragging');
