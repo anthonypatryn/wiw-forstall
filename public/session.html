@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Session · Wild Imaginary West</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📜</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Rye&family=Special+Elite&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css?v=12">
+  <link rel="stylesheet" href="/css/session.css?v=1">
+</head>
+<body>
+  <header class="masthead">
+    <div class="masthead-inner">
+      <img class="brand-logo" src="/img/logo-light.svg" alt="Wild Imaginary West">
+      <div class="brand-title">
+        <div class="kicker">FOR THE WARDEN’S EYES ONLY</div>
+        <h1>Session</h1>
+        <div class="sub">Your notes for each game night, and the whole table at a glance</div>
+      </div>
+      <button class="btn small warden-link" id="lock" type="button" hidden>⭐ Lock</button>
+    </div>
+  </header>
+  <nav class="sitenav" data-nav aria-label="Site"></nav>
+
+  <main class="wrap">
+    <section class="card corner gate" id="gate" hidden>
+      <h2 class="section-title">Warden only</h2>
+      <p class="muted">This page is just for the Warden.</p>
+      <button class="btn" id="unlock" type="button">⭐ Enter the Warden PIN</button>
+    </section>
+
+    <div class="grid" id="desk" hidden>
+      <div>
+        <section class="card corner">
+          <div class="head-row">
+            <h2 class="section-title">Session Notes</h2>
+            <button class="btn small" id="new-session" type="button">+ New session</button>
+          </div>
+          <div class="sess-tabs" id="sess-tabs"></div>
+          <div id="editor"></div>
+        </section>
+      </div>
+
+      <aside>
+        <section class="card corner">
+          <div class="head-row"><h2 class="section-title">At a Glance</h2><span class="muted" id="glance-conn"></span></div>
+          <div id="glance"></div>
+        </section>
+        <section class="card corner">
+          <h2 class="section-title">Recent at the Table</h2>
+          <div class="log glance-log" id="glance-log"></div>
+        </section>
+      </aside>
+    </div>
+  </main>
+
+  <script type="module" src="/js/session.js?v=2"></script>
+</body>
+</html>

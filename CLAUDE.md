@@ -8,6 +8,7 @@
 - Book pages used so far:
   - pp. 6–8: character creation
   - p. 32: spend Prestige (pcOp `spend`); p. 54: Jackpot + Bleeding Out (pcOp `bleedRoll`); p. 58: High Noon Duel (`state.duel`, duelAction, sides `pc:<id>`/`en:<id>`)
+  - p. 34: Achievements (`ACHIEVEMENTS` in sheets.js; Warden action `achieve`); pp. 52/54: campfire vs town rest (pcOps `campRest`/`townRest`, Warden `townRestAll`)
   - p. 33: Prestige tiers + Starting at Higher Prestige loadouts (`TIERS` in lib/sheets.js, pcOp `tierKit`)
   - p. 85: ranges
   - pp. 83–84: scanning
@@ -46,6 +47,8 @@
   - `lib/npcs.js` `allFactions(state)` returns the book's 7 plus `state.factions` (custom, with a `known` flag).
   - Players only see known factions. `GET /api/npcs?view=factions` returns them.
 - Tokens: `/img/tokens/{trade-*, monster-*, npc-*}.webp`, chosen by `artFor()` in `lib/battle.js`.
+
+- Session page: `/session` + `api/session.js` + `lib/session.js` (Redis key `session`), every request needs the PIN; `mountNav` adds the ⭐ Session link only when a PIN is saved.
 
 ## Conventions
 - **Cache busting:** bump `?v=N` on the page's css/js tags after edits. Pages import `common.js` unversioned, so bump the page scripts when common.js changes.

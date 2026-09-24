@@ -14,6 +14,7 @@ Live: https://wiw-forstall.vercel.app
 | `/map` | The Uncivilized West: town write-ups, Warden notes and pins, tokens. |
 | `/battle` | Hex battle map (1" hexes, ranges from p. 85). Art tokens, HP, a status card, and 5 preset maps. |
 | `/store` | The full price list (307 items) plus Warden-made items. Buying and selling are requests that the Warden approves. |
+| `/session` | Warden only (shows in the nav in Warden mode): session notes per game night, a recap button that posts to the Table Log, and a live at-a-glance panel (posse Health/Grit/Statuses/Prestige/$, enemies, duel, recent rolls). |
 
 Every page has the shared **Table Log**, which records all rolls from any page.
 
@@ -27,6 +28,7 @@ The data lives in Upstash Redis, one JSON document per area:
 - `battle`
 - `npcs`: the ledger and custom factions
 - `shop`: custom items and buy/sell requests
+- `session`: the Warden's session notes
 
 It persists between sessions and all clients poll for changes. Editing works on trust: anyone can edit any sheet. The Warden PIN protects Warden tools.
 
