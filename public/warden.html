@@ -9,8 +9,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Rye&family=Special+Elite&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=2">
-  <link rel="stylesheet" href="/css/warden.css?v=2">
+  <link rel="stylesheet" href="/css/style.css?v=3">
+  <link rel="stylesheet" href="/css/warden.css?v=3">
 </head>
 <body class="warden">
   <header class="masthead">
@@ -74,10 +74,17 @@
               <button class="btn small secondary" type="button" id="c-rand" title="Random unused frequency" aria-label="Random unused frequency">🎲</button>
             </div>
             <p class="kz-msg" id="c-msg" aria-live="polite"></p>
+            <label class="sweep-pick">Sweep Tolerance
+              <select id="c-sweep"><option value="">None</option><option>1</option><option>2</option><option>3</option><option>4</option><option>Immune</option></select>
+            </label>
+            <fieldset class="traits-pick">
+              <legend>Forstall traits <span class="muted">(optional flair)</span></legend>
+              <div id="c-traits"></div>
+            </fieldset>
             <button class="btn small" type="submit">Add monster</button>
           </form>
           <div id="custom-list"></div>
-          <p class="tip">“Make Your Own Monster” (p. 193): a Kurtz Value is a random six-digit number and may repeat digits.</p>
+          <p class="tip">“Make Your Own Monster” (p. 193): a Kurtz Value is a random six-digit number and may repeat digits. Traits marked <b>AUTO</b> change the Scan for you; <b>JAM</b> traits give you a switch to cut the posse’s signal.</p>
         </section>
 
         <section class="card notebook">
@@ -90,6 +97,6 @@
     <div class="footer"><span class="conn" id="conn">Connected</span> · <span id="store-kind"></span></div>
   </main>
 
-  <script type="module" src="/js/warden.js?v=3"></script>
+  <script type="module" src="/js/warden.js?v=4"></script>
 </body>
 </html>

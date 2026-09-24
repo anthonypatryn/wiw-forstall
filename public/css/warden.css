@@ -51,3 +51,27 @@
 .custom-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px dotted rgba(34,31,31,.35); }
 .custom-row span { font: 16px var(--type); }
 .nb-tools { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+
+/* homebrew traits */
+.sweep-pick { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; font: 17px var(--display); letter-spacing: .08em; }
+.sweep-pick select { width: auto; padding: 6px 10px; }
+.traits-pick { grid-column: 1 / -1; border: 1px solid rgba(34,31,31,.35); border-radius: var(--radius); padding: 6px 10px 8px; margin: 0; }
+.traits-pick legend { font: 17px var(--display); letter-spacing: .08em; padding: 0 4px; }
+.traits-pick legend .muted { font: italic 13px var(--body); letter-spacing: 0; }
+.trait-opt { display: grid; grid-template-columns: auto 1fr; gap: 2px 8px; padding: 6px 0; border-bottom: 1px dotted rgba(34,31,31,.25); cursor: pointer; }
+.trait-opt:last-child { border-bottom: 0; }
+.custom-form .trait-opt input { padding: 0; margin-top: 3px; width: 16px; height: 16px; accent-color: var(--rust); }
+.trait-opt b { font: 700 15px var(--body); }
+.trait-opt small { grid-column: 2; font-size: 13px; line-height: 1.35; color: var(--ink-soft); }
+.tag { display: inline-block; font: 11px/1 var(--display); letter-spacing: .1em; padding: 3px 5px 2px; border-radius: 2px; margin-left: 4px; vertical-align: 2px; background: var(--ink-faint); color: #fff; }
+.tag.auto { background: var(--teal); }
+.tag.jam { background: var(--rust); }
+.custom-row .traits-line { display: block; font: 13px var(--body); color: var(--ink-faint); }
+
+/* target traits + jam */
+.w-traits { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; max-width: 640px; }
+.w-trait { font: 14px/1.4 var(--body); color: #d8ccb6; background: rgba(0,0,0,.4); border-left: 3px solid var(--brass); padding: 6px 10px; }
+.w-trait b { font: 16px var(--display); letter-spacing: .08em; color: #f4ead6; }
+.w-trait.jam { border-left-color: var(--rust); }
+.w-trait.auto { border-left-color: #5fb3b9; }
+.btn.jam-on { background: var(--red) !important; border-color: var(--red) !important; animation: blink 1.4s infinite; }

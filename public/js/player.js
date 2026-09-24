@@ -35,10 +35,12 @@ function renderPool() {
   $('#count-G').textContent = pool.G;
   const a = data?.active;
   const label = `${pool.B ? pool.B + 'B' : ''}${pool.G ? pool.G + 'G' : ''}` || '0 dice';
-  $('#pool-note').innerHTML = a?.scanHalf
+  $('#pool-note').innerHTML = data?.jammed
+    ? '<span class="badge">⚡ FORSTALL JAMMED</span> No Scanning until the signal comes back.'
+    : a?.scanHalf
     ? `<span class="badge">SPINAL DEFLECTORS</span> Chupacabra — you roll half your pool (${esc(label)} → ${halfLabel()})`
     : `Rolling <b>${esc(label)}</b>`;
-  $('#roll-btn').disabled = busy || !a || a.solved || pool.B + pool.G === 0;
+  $('#roll-btn').disabled = busy || !a || a.solved || data?.jammed || pool.B + pool.G === 0;
 }
 function halfLabel() {
   const total = Math.floor((pool.B + pool.G) / 2);
@@ -99,7 +101,7 @@ function buildKeypad() {
 
 function press(k) {
   const a = data?.active;
-  if (!a || a.solved) return;
+  if (!a || a.solved || data.jammed) return;
   if (k === 'back') input.pop();
   else if (k === 'clear') input = [];
   else if (k === 'enter') return submitGuess();
@@ -135,8 +137,10 @@ async function submitGuess() {
 function renderBoard() {
   const a = data?.active;
   const rows = $('#rows');
-  $('#lamp').classList.toggle('on', !!a && !a.solved);
-  $('#screen').classList.toggle('live', !!a && !a.solved);
+  const jammed = !!data?.jammed;
+  $('#lamp').classList.toggle('on', !!a && !a.solved && !jammed);
+  $('#screen').classList.toggle('live', !!a && !a.solved && !jammed);
+  $('#screen').classList.toggle('jammed', jammed);
   if (!a) {
     rows.innerHTML = '<div class="empty-msg">NO SIGNAL — awaiting target</div>';
     seenGuesses = null;
@@ -146,6 +150,8 @@ function renderBoard() {
       <div class="row${i >= fresh ? ' fresh' : ''}"><span class="n">${i + 1}</span>${diamondsHTML(g.digits, g.result)}</div>`).join('');
     if (a.solved) {
       html += `<div class="solved-banner">FREQUENCY LOCKED · ${esc(a.kz)}</div>`;
+    } else if (jammed) {
+      html += '<div class="solved-banner jam">⚡ SIGNAL LOST — FORSTALL JAMMED</div>';
     } else {
       html += `<div class="row input-row"><span class="n">▶</span>${diamondsHTML(input, [], (i) => ` input${i === input.length ? ' cursor' : ''}`)}</div>`;
       if (!a.guesses.length) html = '<div class="empty-msg">Punch in six digits and transmit.</div>' + html;
@@ -159,7 +165,7 @@ function renderBoard() {
   const known = new Set(a?.known || []);
   document.querySelectorAll('#keypad [data-k]').forEach((b) => {
     const k = b.dataset.k;
-    b.disabled = !a || a.solved;
+    b.disabled = !a || a.solved || jammed;
     if (/^\d$/.test(k)) {
       b.className = `key ${st[k] || ''}${known.has(Number(k)) ? ' known' : ''}`;
     }
@@ -182,6 +188,7 @@ function renderTarget() {
       <div class="name">${esc(a.name)}</div>
       <div class="meta">${esc(a.size)}${a.page ? ` · Guidebook p. ${a.page}` : ''}
         ${a.solved ? ' <span class="badge green">DECODED</span>' : ''}
+        ${data.jammed ? ' <span class="badge">⚡ JAMMED</span>' : ''}
         ${data.settings.easyMode ? ' <span class="badge teal">WARDEN’S AID: POSITIONS SHOWN</span>' : ''}</div>
     </div>
     ${readoutHTML(a.positional)}`;

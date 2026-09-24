@@ -350,3 +350,9 @@ button { cursor: pointer; }
   .target { grid-template-columns: 1fr; }
   .key { height: 44px; }
 }
+
+/* jammed Forstall */
+.solved-banner.jam { color: #ff7a5c; text-shadow: 0 0 12px rgba(255,90,60,.7); animation: blink 1.4s infinite; }
+.screen.jammed .wave { opacity: .25; }
+.screen.jammed .wave path { stroke: #ff7a5c; animation: jitter .12s steps(2) infinite; }
+@keyframes jitter { 50% { transform: translate(3px, -2px); } }
