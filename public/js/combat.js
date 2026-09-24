@@ -212,11 +212,27 @@ function enemyCard(e) {
     }).join('')}</div>
     <div>${p.frenzy.map((f) => `<div class="frenzy-row${e.frenzied.includes(f.name) ? ' hit' : ''}"><b>${esc(f.name)}</b> ${f.event ? '(Event) ' : ''}at ${f.health} Health${e.frenzied.includes(f.name) ? ' — <b>ACTIVE</b>' : ''}<br>${esc(f.text)}</div>`).join('')}</div>
     <details class="more"><summary>Features &amp; tolerances</summary>${p.features.map((f) => `<p>${esc(f)}</p>`).join('')}<p><b>Tolerances:</b> ${esc(p.tolerances)}</p></details>` : ''}
+    ${e.defeated ? lootHTML(e, p) : ''}
     <div class="f-actions">
       <label class="check" style="font-size:14px"><input type="checkbox" data-secret> Secret rolls</label>
       <button class="btn small secondary danger" data-remove type="button">Remove</button>
     </div>
   </article>`;
+}
+
+// ---------- loot (p. 79), Warden side ----------
+const lootSel = {}; // keep dropdown picks across re-renders
+function lootHTML(e, p) {
+  const sel = lootSel[e.id] ||= { pc: '', cond: 'Good' };
+  const alive = data.posse.filter((x) => !x.dead);
+  const who = (attr) => `<select ${attr} aria-label="Who">${`<option value="">— who? —</option>`}${alive.map((x) => `<option value="${x.id}"${x.id === sel.pc ? ' selected' : ''}>${esc(x.name)}</option>`).join('')}</select>`;
+  const t = p?.trophy;
+  return `<div class="loot"><b class="loot-h">🏆 LOOT</b>${e.looted ? ` <span class="muted">Trophy taken by ${esc(e.looted)}.</span>` : ''}
+    ${t ? `<p class="loot-tro"><b>${esc(t.split(/\.\s/)[0])}.</b> ${esc(t.slice(t.split(/\.\s/)[0].length + 1).trim())}</p>
+      <div class="loot-row">${who('data-loot-pc')}<select data-loot-cond aria-label="Condition">${data.loot.conditions.map((c) => `<option${c === sel.cond ? ' selected' : ''}>${c}</option>`).join('')}</select>
+        <button class="btn small" type="button" data-loot>Give trophy</button></div>
+      <p class="loot-guide">${data.loot.guide.map((g) => `<span><b>${g.range}</b>: ${g.with}</span>`).join('')}</p>` : ''}
+    <div class="loot-row">${t ? '' : who('data-loot-pc')}<button class="btn small secondary" type="button" data-search>🎲 Search the body (Intuition)</button><span class="muted">you decide what they find</span></div></div>`;
 }
 
 function renderEnemies() {
@@ -232,6 +248,17 @@ function renderEnemies() {
     card.querySelectorAll('[data-rollpool]').forEach((b) => b.addEventListener('click', () =>
       doRoll({ pool: b.dataset.rollpool, who: eid, label: b.dataset.label, hidden: card.querySelector('[data-secret]').checked })));
     card.querySelector('[data-remove]').addEventListener('click', () => { if (confirm('Remove this enemy?')) send({ op: 'remove' }); });
+    const ls = lootSel[eid] ||= { pc: '', cond: 'Good' };
+    card.querySelector('[data-loot-pc]')?.addEventListener('change', (ev) => { ls.pc = ev.target.value; });
+    card.querySelector('[data-loot-cond]')?.addEventListener('change', (ev) => { ls.cond = ev.target.value; });
+    card.querySelector('[data-loot]')?.addEventListener('click', async () => {
+      const r = await act({ action: 'loot', enemy: eid, pc: ls.pc, condition: ls.cond });
+      if (r) toast(`${r.name} is in their Inventory.`);
+    });
+    card.querySelector('[data-search]')?.addEventListener('click', async () => {
+      const r = await act({ action: 'search', enemy: eid, pc: ls.pc });
+      if (r?.dice) rollPopup(r, `${r.who} searches ${card.querySelector('.f-name').textContent} · ${r.pool}`);
+    });
   });
 }
 
