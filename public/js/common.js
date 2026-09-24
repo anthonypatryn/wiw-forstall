@@ -106,6 +106,22 @@ export function animateRoll(tray, dice) {
 // Pop-up dice tray for rolls made away from a page's own tray (e.g. character sheets).
 // Uses the same tumble animation as the Combat page; only the person who rolled sees it.
 let popTimer;
+// Bleeding Out panel (p. 54) for a character; buttons carry data-bleed-roll / data-op.
+export function bleedPanel(p, skillsMeta) {
+  if (!p.bleeding || p.dead) return '';
+  const used = p.bleeding.skills;
+  const left = skillsMeta.filter((s) => !used.includes(s));
+  return `<div class="bleed-panel" role="alert"><b class="bp-title">🩸 BLEEDING OUT</b>
+    <p>At the end of each ally’s turn, roll a Skill you haven’t used yet. Get at least <b>1 Hit</b> to hang on. No Hit, or no Skills left, and it’s over. Only an ally’s First Aid can save you.</p>
+    <div class="bp-skills">${skillsMeta.map((s) => {
+      const pool = (p.skills[s.toLowerCase()] || '').toUpperCase() || '—';
+      return used.includes(s) ? `<span class="bp-used">✓ ${s}</span>`
+        : `<button type="button" class="btn small" data-bleed-roll="${s}">🎲 ${s} <small>${pool}</small></button>`;
+    }).join('')}</div>
+    ${left.length ? `<p class="muted">${left.length} Skill${left.length > 1 ? 's' : ''} left.</p>` : '<p class="bp-last"><b>No Skills left.</b> Without First Aid, they die at the end of the next ally’s turn.</p>'}
+    <div class="bp-actions"><button type="button" class="btn small" data-op="stabilize">✚ Saved by First Aid</button><button type="button" class="btn small secondary danger" data-op="die">Didn’t make it</button></div></div>`;
+}
+
 export async function rollPopup(r, title = '') {
   let box = document.querySelector('.roll-pop');
   if (!box) {

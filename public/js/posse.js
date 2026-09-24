@@ -1,5 +1,5 @@
 import {
-  $, esc, api, startPolling, injectDefs, toast, mountNav, poolHTML, readPool, fillPool, rollPopup,
+  $, esc, api, startPolling, injectDefs, toast, mountNav, poolHTML, readPool, fillPool, rollPopup, bleedPanel,
 } from './common.js';
 import { mountTableLog } from './tablelog.js';
 import { ICONS } from './icons.js';
@@ -62,6 +62,12 @@ async function act(body, el) {
     if (el) { el.classList.remove('saved'); void el.offsetWidth; el.classList.add('saved'); }
     return res.result ?? true;
   } catch (e) { saving = Math.max(0, saving - 1); saveState('Didn’t save — try again', true); toast(e.message, true); if (el && data) render(); return null; }
+}
+async function bleedRoll(p, skill) {
+  const r = await act({ action: 'pc', id: p.id, op: 'bleedRoll', skill });
+  if (!r?.dice) return;
+  await rollPopup(r, `${p.name} · Bleeding Out · ${skill} · ${r.pool}`);
+  toast(r.outcome === 'dead' ? `No Hits… ${p.name} has died.` : r.outcome === 'last' ? 'Hung on — but no Skills left. First Aid, now!' : `Hung on! ${r.left} Skill${r.left === 1 ? '' : 's'} left.`, r.outcome !== 'alive');
 }
 async function deletePc(id) {
   const pc = pcById(id);
@@ -199,6 +205,7 @@ function buildSheet(p) {
       <a class="btn small secondary" href="#">← All characters</a>
       <span class="save-state" data-save-state></span>
       <span class="mode-tag" data-mode-tag></span>
+      <a class="mode-tag bleed-tag" data-bleed-tag data-jump="health" href="#${p.id}" hidden>🩸 BLEEDING OUT</a>
       <button class="btn small" type="button" data-mode="edit" hidden>✎ Edit</button>
       <button class="btn small" type="button" data-mode="view" hidden>✓ Done editing</button>
       <button class="btn small" type="button" data-mode="finish" hidden>Save character</button>
@@ -532,6 +539,7 @@ function applyMode(view, p) {
   view.querySelector('.sheet-bar [data-mode="edit"]').hidden = !locked;
   view.querySelector('.sheet-bar [data-mode="view"]').hidden = creating || locked;
   view.querySelector('[data-mode-tag]').textContent = creating ? 'CREATING' : locked ? 'VIEWING' : 'EDITING';
+  view.querySelector('[data-bleed-tag]').hidden = !p.bleeding || p.dead;
   view.querySelector('[data-mode-tag]').dataset.m = creating ? 'create' : locked ? 'view' : 'edit';
 }
 function unlockSheet(p) {
@@ -660,10 +668,16 @@ function hydrate(p) {
       <div class="def-spur">${spurBox('Defense')}<span class="muted">Defense Talent (dodge &amp; cover)</span></div>
       <h4>GRIT <small>action points reload on your next turn</small></h4>
       ${cylinder(p.grit)}
-      ${p.bleeding ? '<p class="bleed"><b>BLEEDING OUT</b> — handle it on the Combat &amp; Dice page.</p>' : ''}
-      ${p.dead ? '<p class="bleed"><b>FALLEN</b></p>' : ''}
+      ${bleedPanel(p, meta.skills)}
+      ${!p.dead && !p.bleeding && p.health === 0 && p.statuses?.Unconscious > 0 ? '<p class="bleed"><b>UNCONSCIOUS</b> — saved! Relieve Unconscious (roll Intuition) to wake up with 1 Health.</p>' : ''}
+      ${p.dead ? '<p class="bleed"><b>FALLEN</b> — this character has died. The Warden can revive them from the Combat page.</p>' : ''}
       <button class="btn small secondary rest" type="button" data-rest>🔥 Rest at camp / town</button>`;
     vitals.querySelectorAll('[data-hp]').forEach((b) => b.addEventListener('click', () => send({ op: 'health', delta: Number(b.dataset.hp) })));
+    vitals.querySelectorAll('[data-bleed-roll]').forEach((b) => b.addEventListener('click', () => bleedRoll(p, b.dataset.bleedRoll)));
+    vitals.querySelectorAll('.bleed-panel [data-op]').forEach((b) => b.addEventListener('click', () => {
+      if (b.dataset.op === 'die' && !confirm(`Mark ${p.name} as dead?`)) return;
+      send({ op: b.dataset.op });
+    }));
     vitals.querySelectorAll('[data-grit]').forEach((g) => {
       const go = () => send({ op: 'grit', value: g.classList.contains('on') && Number(g.dataset.grit) === p.grit ? p.grit - 1 : Number(g.dataset.grit) });
       g.addEventListener('click', go);

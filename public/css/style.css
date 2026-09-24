@@ -454,3 +454,13 @@ button { cursor: pointer; }
 .roll-pop .rp-x { position: absolute; top: 6px; right: 8px; width: 30px; height: 30px; border: 1px solid var(--ink); border-radius: 50%; background: transparent; font-size: 20px; line-height: 1; cursor: pointer; }
 @media (max-width: 480px) { .roll-pop .die { width: 70px; } }
 @media (prefers-reduced-motion: reduce) { .roll-pop { transition: none; } }
+
+/* Bleeding Out panel (sheet + combat) */
+.bleed-panel { margin: 10px 0; padding: 10px 12px; border: 2px solid #8f1d17; border-radius: 6px; background: #fbe9e4; color: #3a1411; }
+.bleed-panel .bp-title { font: 20px var(--display); letter-spacing: .12em; color: #8f1d17; font-weight: 400; }
+.bleed-panel p { margin: 6px 0; font-size: 14px; line-height: 1.35; }
+.bleed-panel .bp-skills { display: flex; flex-wrap: wrap; gap: 6px; }
+.bleed-panel .bp-skills small { opacity: .8; margin-left: 4px; }
+.bleed-panel .bp-used { padding: 5px 10px 3px; border: 1px dashed #8f1d17; border-radius: 3px; font: 13px var(--display); letter-spacing: .08em; color: #8f1d17; }
+.bleed-panel .bp-last { color: #8f1d17; }
+.bleed-panel .bp-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }

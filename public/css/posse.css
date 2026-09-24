@@ -292,3 +292,6 @@ body.on-sheet .masthead { display: none; }
 .sheet-bar .save-state { order: 1; flex: none; margin-left: auto; }
 .sheet-bar #delete-pc { order: 2; }
 .sheet-bar .sheet-toc { order: 3; }
+.bleed-tag { background: #8f1d17 !important; text-decoration: none; animation: bleedPulse 1.6s ease-in-out infinite; }
+@keyframes bleedPulse { 50% { opacity: .55; } }
+@media (prefers-reduced-motion: reduce) { .bleed-tag { animation: none; } }

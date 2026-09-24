@@ -1,6 +1,6 @@
 import {
   $, esc, api, startPolling, injectDefs, bulletSVG, animateRoll, staticDice, toast, store, timeAgo,
-  mountNav, tryWarden, forgetWarden, savedPin, poolHTML, readPool,
+  mountNav, tryWarden, forgetWarden, savedPin, poolHTML, readPool, rollPopup, bleedPanel,
 } from './common.js';
 import { renderLogInto } from './tablelog.js';
 
@@ -140,9 +140,7 @@ function pcCard(p) {
     ${p.aces >= 6 && !p.dead ? `<div class="ace-ready"><b>ACE-IN-THE-HOLE READY</b> — ${aces.map((a) => `<b>${esc(a.name)}</b>: ${esc(a.text)}`).join('<br>')}
       <div style="margin-top:6px"><button class="btn small" data-ace-use type="button">Play it (reset meter)</button></div></div>` : ''}
     ${p.dead ? '' : statusesHTML(p, true)}
-    ${p.bleeding ? `<div class="bleed"><b>BLEEDING OUT</b> — at the end of each ally’s turn, roll a different Skill and get at least one Hit. Miss once, or run out of Skills, and it’s over.
-      <div class="skills">${meta.skills.map((s) => `<button type="button" class="${p.bleeding.skills.includes(s) ? 'done' : ''}" data-bleed="${s}">${s}</button>`).join('')}</div>
-      <button class="btn small" data-op="stabilize" type="button">Saved by First Aid</button> <button class="btn small danger" data-op="die" type="button">Didn’t make it</button></div>` : ''}
+    ${bleedPanel(p, meta.skills)}
     <div class="f-actions">
       ${!p.dead ? `<button class="btn small secondary" data-init type="button">🎲 Finesse${init ? ` · ${init.hits} hit${init.hits === 1 ? '' : 's'}` : ' (turn order)'}</button>` : ''}
       ${hasQuickDraw && !p.dead ? '<label class="check" style="font-size:14px"><input type="checkbox" data-qd> Quick-Draw +2B</label>' : ''}
@@ -165,7 +163,10 @@ function renderPosse() {
       send({ op: 'aces', value: b.classList.contains('on') && !b.nextElementSibling?.classList.contains('on') ? n - 1 : n });
     }));
     card.querySelector('[data-ace-use]')?.addEventListener('click', () => send({ op: 'aces', value: 0, used: true }));
-    card.querySelectorAll('[data-bleed]').forEach((b) => b.addEventListener('click', () => send({ op: 'bleedSkill', skill: b.dataset.bleed })));
+    card.querySelectorAll('[data-bleed-roll]').forEach((b) => b.addEventListener('click', async () => {
+      const r = await send({ op: 'bleedRoll', skill: b.dataset.bleedRoll });
+      if (r?.dice) rollPopup(r, `${r.who} · Bleeding Out · ${b.dataset.bleedRoll} · ${r.pool}${r.outcome === 'dead' ? ' · DIED' : ''}`);
+    }));
     card.querySelectorAll('[data-op]').forEach((b) => b.addEventListener('click', () => {
       if (b.dataset.op === 'die' && !confirm('Mark this character as dead?')) return;
       send({ op: b.dataset.op });
