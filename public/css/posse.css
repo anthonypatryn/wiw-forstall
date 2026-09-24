@@ -215,3 +215,15 @@ body.on-sheet .masthead { display: none; }
 .pack-row small { flex-basis: 100%; font-size: 13px; }
 .rep select { width: 100%; padding: 5px 6px; border: 0; border-bottom: 1px solid var(--ink); background: transparent; font: 16px var(--type); }
 .ride-art { display: block; width: 100%; max-height: 220px; object-fit: contain; margin: 4px 0 10px; border-radius: 4px; mix-blend-mode: multiply; }
+
+/* Prestige tier loadout (p. 33) */
+.tier-kit { flex-basis: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
+.tier-kit table { border-collapse: collapse; font-size: 14px; width: 100%; max-width: 620px; }
+.tier-kit th { font: 11px var(--display); letter-spacing: .1em; color: var(--ink-faint); font-weight: 400; text-align: left; padding: 2px 6px; }
+.tier-kit td { padding: 2px 6px; border-top: 1px solid var(--ink-faint); font-style: italic; }
+.tier-picks { flex-basis: 100%; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr)); gap: 8px 12px; }
+.tier-picks label { display: flex; flex-direction: column; gap: 3px; font: 11px var(--display); letter-spacing: .1em; color: var(--rust); }
+.tier-picks select { width: 100%; }
+.pack-row [data-pack2-wrap] select { margin-left: 0; }
+.tier-title { margin: 6px 0 2px; font-size: 15px; }
+.tier-title b { font: 18px var(--western, var(--display)); color: var(--rust); font-weight: 400; }

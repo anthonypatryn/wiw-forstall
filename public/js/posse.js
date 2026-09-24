@@ -66,7 +66,7 @@ const randomName = () => `${NPC[Math.random() < 0.5 ? 'first1' : 'first2'][Math.
 
 // Equipment Pack contents go at the top of "Other items" under a header line; picking another pack swaps that block.
 const PACK_LINE = /^— .+ Pack —$/;
-function withPack(text, pack) {
+function withPack(text, packs) {
   const packItems = new Set(Object.values(meta.packs).flat());
   const out = []; let skip = false;
   for (const line of String(text || '').split('\n')) {
@@ -77,12 +77,16 @@ function withPack(text, pack) {
     out.push(line);
   }
   const rest = out.join('\n').trim();
-  if (!pack) return rest;
-  const block = [`— ${pack} —`, ...meta.packs[pack]].join('\n');
-  return rest ? `${block}\n\n${rest}` : block;
+  const block = packs.filter(Boolean).map((pk) => [`— ${pk} —`, ...meta.packs[pk]].join('\n')).join('\n\n');
+  return [block, rest].filter(Boolean).join('\n\n');
 }
 const packSelect = (attr) => `<select ${attr} aria-label="Equipment Pack"><option value="">— pick an Equipment Pack —</option>${Object.entries(meta.packs).map(([n, items]) =>
   `<option value="${esc(n)}" title="${esc(items.join(', '))}">${esc(n)}</option>`).join('')}</select>`;
+const tierOf = (p) => meta.tiers.find((t) => t.name === p.tier) || null;
+const tierByPrestige = (n) => [...meta.tiers].reverse().find((t) => (Number(n) || 0) >= t.prestige) || meta.tiers[0];
+const RANGED_SUBS = ['Rifles', 'Shotguns', 'Pistols', 'Bows'];
+const optList = (items, first) => `<option value="">${first}</option>${groupBy(items).map(([g, list]) => `<optgroup label="${esc(g)}">${list.map((it) => `<option value="${esc(it.id)}">${esc(it.name)}</option>`).join('')}</optgroup>`).join('')}`;
+const tierLoadout = {}; // unsaved picks per sheet: { ranged, melee, extras: [] }
 
 // ---------- roster ----------
 function renderList() {
@@ -197,6 +201,7 @@ function buildSheet(p) {
     <div class="page-label">— PAGE TWO —</div>
     <div class="sheet page2">
       ${box('PRESTIGE', 'fame &amp; progression', `<div class="w-grid">${inp('prestige.total', 'Total', { type: 'number' })}${inp('prestige.unclaimed', 'Unclaimed', { type: 'number' })}</div>
+        <div class="tier-title" data-dyn="tier-title"></div>
         <ul class="prestige-ref">
           <li><b>2</b> Practice Skill — swap one Black die for Gold</li><li><b>2</b> Increase Health — +1 max Health (max 5 times)</li>
           <li><b>4</b> Develop Talent — reroll Spurs with a Talent</li><li><b>4</b> Unlock Ability — a new Trade ability</li>
@@ -208,7 +213,7 @@ function buildSheet(p) {
       ${box('REPUTATION', 'alters Charm rolls made against a faction', `<div class="reps">${[0, 1, 2, 3].map((i) =>
           `<div class="rep"><label class="f"><span>Faction</span><select data-path="reputation.${i}.faction" data-faction-select></select></label>${inp(`reputation.${i}.level`, '', { type: 'select', options: REP_OPTIONS })}</div>`).join('')}</div>`, 'reputation')}
       ${box('HISTORY', 'how your legend began', inp('history', '', { type: 'textarea' }), 'history')}
-      ${box('GEAR ITEMS', 'first aid, explosives, &amp; traps', `<div class="pack-row"><span class="rl">Equipment Pack</span>${packSelect('data-pack')}<small class="muted">its gear is written into Inventory → Other items</small></div>${[0, 1, 2].map(gear).join('')}`, 'gear')}
+      ${box('GEAR ITEMS', 'first aid, explosives, &amp; traps', `<div class="pack-row"><span class="rl">Equipment Pack</span>${packSelect('data-pack')}<span data-pack2-wrap hidden>${packSelect('data-pack="2"')}</span><small class="muted">its gear is written into Inventory → Other items</small></div>${[0, 1, 2].map(gear).join('')}`, 'gear')}
       ${box('INVENTORY', 'loot, trophies, &amp; additional items', `
           <div class="w-grid">${inp('wallet', 'Wallet $', { max: 20 })}${inp('scrap', 'Scrap (pcs)', { max: 20 })}${inp('supplies', 'Supplies', { max: 20 })}</div>
           <div data-dyn="items"></div>${inp('inventory', 'Other items', { type: 'textarea' })}`, 'inventory')}
@@ -266,7 +271,13 @@ function wireSheet(p) {
   });
   view.addEventListener('change', (e) => {
     if (e.target.matches('.pick')) return pickItem(p, e.target);
-    if (e.target.matches('[data-pack]')) return choosePack(p, e.target.value);
+    if (e.target.matches('[data-pack]')) return choosePack(p, e.target.dataset.pack === '2' ? 'pack2' : 'pack', e.target.value);
+    if (e.target.matches('[data-tier]')) return e.target.blur(), act({ action: 'sheet', id: p.id, path: 'tier', value: e.target.value });
+    if (e.target.matches('[data-tl]')) {
+      const pc0 = pcById(p.id), lo = (tierLoadout[p.id] ||= { ranged: pc0.tierKit?.[0], melee: pc0.tierKit?.[1], extras: [] }), k = e.target.dataset.tl;
+      if (k.startsWith('x')) lo.extras[Number(k.slice(1))] = e.target.value; else lo[k] = e.target.value;
+      return;
+    }
     if (e.target.matches('[data-keepsake]')) return addKeepsake(p, e.target);
     if (e.target.matches('[data-faction-select]') && e.target.value === '__other') {
       const v = (prompt('Faction name:') || '').trim().slice(0, 40);
@@ -323,6 +334,10 @@ function wireSheet(p) {
     } else if (b.dataset.start === 'wallet') {
       const r = await act({ action: 'pc', id: p.id, op: 'rollWallet' });
       if (r?.dice) rollPopup(r, `${pc.name} · Starting Wallet · 6B → $${r.dollars}`);
+    } else if (b.dataset.start === 'tier') {
+      const lo = tierLoadout[p.id] || { extras: [] };
+      const r = await act({ action: 'pc', id: p.id, op: 'tierKit', tier: pc.tier, ranged: lo.ranged, melee: lo.melee, extras: lo.extras.filter(Boolean) });
+      if (r) { delete tierLoadout[p.id]; toast(`${pc.tier} loadout filled in: ${r.ranged}, ${r.melee}.`); }
     } else if (b.dataset.start === 'basics') {
       await act({ action: 'sheet', id: p.id, fields: { maxHealth: Math.max(10, pc.maxHealth), supplies: pc.supplies || '1' } });
     }
@@ -339,9 +354,10 @@ const weaponTalent = (w) => {
   return WEAPON_TALENT[it?.sub] || (Object.values(WEAPON_TALENT).includes(w.type) ? w.type : null);
 };
 
-function choosePack(p, pack) {
+function choosePack(p, key, pack) {
   const pc = pcById(p.id);
-  const f = { pack, inventory: withPack(pc.inventory, pack) };
+  const next = { pack: pc.pack || '', pack2: pc.pack2 || '', [key]: pack };
+  const f = { [key]: pack, inventory: withPack(pc.inventory, [next.pack, next.pack2]) };
   if (!String(pc.supplies || '').trim()) f.supplies = '1';
   act({ action: 'sheet', id: p.id, fields: f }).then((ok) => ok && toast(pack ? `${pack} written into Inventory.` : 'Pack removed from Inventory.'));
 }
@@ -412,22 +428,40 @@ function renderStarter(view, p) {
   const named = p.name && p.name !== `The ${p.trade}`;
   const story = [p.appearance, p.disposition, p.history].filter((x) => String(x || '').trim()).length;
   const wallet = String(p.wallet || '').trim();
+  const tier = tierOf(p), high = tier && tier.prestige > 0, applied = high && p.tierApplied === p.tier;
+  const lo = tierLoadout[p.id] || { ranged: p.tierKit?.[0], melee: p.tierKit?.[1], extras: [] };
+  const tierBody = `<select data-tier aria-label="Starting Prestige tier"><option value="">— pick a starting tier —</option>${meta.tiers.map((t) =>
+      `<option value="${t.name}"${t.name === p.tier ? ' selected' : ''}>${t.name} · ${t.prestige} Prestige</option>`).join('')}</select>
+    <span class="muted">New posse? Tenderfoot. Some expeditions start higher.</span>
+    ${tier ? `<div class="tier-kit"><table><tr><th>Ranged</th><th>Melee or Trap</th><th>Scrap</th><th>Wallet</th><th>Packs</th><th>Extra items</th></tr>
+      <tr><td>${tier.ranged}</td><td>${tier.melee}</td><td>${tier.scrap}</td><td>$${tier.wallet}</td><td>${tier.packs}</td><td>${tier.extras}</td></tr></table>
+      ${high ? `<div class="tier-picks">
+        <label>${tier.ranged.toUpperCase()} RANGED WEAPON<select data-tl="ranged">${optList(catalog.filter((i) => i.cat === 'Weapons' && RANGED_SUBS.includes(i.sub) && i.quality === tier.ranged), '— pick one —')}</select></label>
+        <label>${tier.melee.toUpperCase()} MELEE WEAPON OR TRAP<select data-tl="melee">${optList(catalog.filter((i) => ((i.cat === 'Weapons' && i.sub === 'Melee') || i.cat === 'Traps') && i.quality === tier.melee), '— pick one —')}</select></label>
+        ${Array.from({ length: tier.extras }, (_, i) => `<label>EXTRA ITEM ${i + 1}<select data-tl="x${i}">${optList(catalog.filter((it) => it.cat === 'Gear'), '— pick an item —')}</select></label>`).join('')}
+      </div>
+      <button type="button" class="btn small" data-start="tier">${applied ? 'Re-apply' : 'Apply'} the ${tier.name} loadout</button>
+      <span class="muted">${applied ? `Applied: ${tier.prestige} Prestige to spend (see page two), $${tier.wallet}, ${tier.scrap} Scrap.` : `Sets ${tier.prestige} unclaimed Prestige, $${tier.wallet} Wallet and ${tier.scrap} Scrap, and swaps out the Used Pistol and Pocket Knife.`}</span>` : '<span class="muted">Tenderfoots start with the basics below.</span>'}</div>` : ''}`;
+  const packs = tier?.packs || 1;
   const steps = [
+    [!!tier && (!high || applied), 'Step 0 · Starting Prestige tier (p. 33)', tierBody],
     [true, 'Step 1 · Pick a Trade', `The ${esc(p.trade)}. Starting Ability <b>${esc(t.abilities[0].name)}</b> and Ace-in-the-Hole <b>${esc(t.aces[0].name)}</b> are already marked.`],
     [named && story === 3, 'Step 2 · Get to know yourself', `${named ? `Name: <b>${esc(p.name)}</b>. ` : ''}<button type="button" class="btn small secondary" data-start="name">🎲 Random name (p. 204)</button>
       <span class="muted">Then fill in Appearance, Disposition &amp; History on page two (${story}/3 done).</span>`],
     [skillsOk, 'Step 3 · Assign your Skills', `<b>${dice}/12</b> Black dice assigned, 1–6 per Skill. ${skillsOk ? '' : `<button type="button" class="btn small secondary" data-start="quick">Use quick build (${Object.values(t.quickBuild).join(' · ')})</button>`}`],
-    [hasStart, 'Step 4 · Starting weapons', hasStart ? 'Used Pistol and Pocket Knife are in Weapons.' : '<button type="button" class="btn small secondary" data-start="weapons">Add Used Pistol + Pocket Knife</button>'],
-    [!!p.pack, 'Step 4 · Equipment Pack', `${packSelect('data-pack')} <span class="muted">Its gear goes into Inventory, plus 1 Supplies slot.</span>`],
-    [wallet !== '', 'Step 5 · Wallet', wallet ? `<b>$${esc(wallet)}</b> in the Wallet.` : '<button type="button" class="btn small" data-start="wallet">🎲 Roll 6B for your Wallet</button> <span class="muted">Aces $2, Hits $1.</span>'],
-    [p.maxHealth >= 10 && String(p.supplies || '').trim() !== '', 'Step 5 · Health, Prestige &amp; Supplies', `Max Health <b>${p.maxHealth}</b> · Prestige <b>${p.prestige.total}</b> (a Tenderfoot starts at 0) · Supplies <b>${esc(p.supplies || '—')}</b>
+    high ? [applied, 'Step 4 · Starting weapons', applied ? `Your ${tier.name} weapons are on the sheet.` : 'Comes from your tier loadout in Step 0.']
+      : [hasStart, 'Step 4 · Starting weapons', hasStart ? 'Used Pistol and Pocket Knife are in Weapons.' : '<button type="button" class="btn small secondary" data-start="weapons">Add Used Pistol + Pocket Knife</button>'],
+    [!!p.pack && (packs < 2 || !!p.pack2), `Step 4 · Equipment Pack${packs > 1 ? 's (2)' : ''}`, `${packSelect('data-pack')}${packs > 1 ? packSelect('data-pack="2"') : ''} <span class="muted">Gear goes into Inventory, plus 1 Supplies slot.</span>`],
+    high ? [applied, 'Step 5 · Wallet', applied ? `<b>$${esc(wallet)}</b> in the Wallet (${tier.name}).` : `Your tier starts with $${tier.wallet}.`]
+      : [wallet !== '', 'Step 5 · Wallet', wallet ? `<b>$${esc(wallet)}</b> in the Wallet.` : '<button type="button" class="btn small" data-start="wallet">🎲 Roll 6B for your Wallet</button> <span class="muted">Aces $2, Hits $1.</span>'],
+    [p.maxHealth >= 10 && String(p.supplies || '').trim() !== '', 'Step 5 · Health, Prestige &amp; Supplies', `Max Health <b>${p.maxHealth}</b> · Prestige <b>${p.prestige.total}</b> (${high ? `a ${tier.name} starts at ${tier.prestige}` : 'a Tenderfoot starts at 0'}) · Supplies <b>${esc(p.supplies || '—')}</b>
       ${p.maxHealth < 10 || !String(p.supplies || '').trim() ? '<button type="button" class="btn small secondary" data-start="basics">Set the starting values</button>' : ''}`],
     [keepsakes > 0, 'Step 5 · Keepsakes', `<select data-keepsake aria-label="Add a keepsake"><option value="">+ add a keepsake…</option>${meta.keepsakes.map((k) => `<option>${esc(k)}</option>`).join('')}</select> <span class="muted">${keepsakes ? `${keepsakes} carried.` : 'Pick one or two, or write your own under Other items.'}</span>`],
   ];
   const done = steps.filter((st) => st[0]).length;
   box.innerHTML = `<ol>${steps.map(([ok, title, body]) => `<li class="${ok ? 'ok' : ''}"><span class="tick">${ok ? '✓' : ''}</span><div><b>${title}</b><div class="sb">${body}</div></div></li>`).join('')}</ol>`;
-  const ps = box.querySelector('[data-pack]');
-  if (ps) ps.value = p.pack || '';
+  box.querySelectorAll('[data-pack]').forEach((el) => { el.value = (el.dataset.pack === '2' ? p.pack2 : p.pack) || ''; });
+  box.querySelectorAll('[data-tl]').forEach((el) => { const k = el.dataset.tl; el.value = (k.startsWith('x') ? lo.extras[Number(k.slice(1))] : lo[k]) || ''; });
   view.querySelector('[data-dyn="starter-prog"]').textContent = done === steps.length ? 'All set ✓' : `${done}/${steps.length} done`;
   const det = view.querySelector('[data-starter]');
   if (!det.dataset.init) { det.dataset.init = '1'; det.open = done < steps.length; }
@@ -452,7 +486,10 @@ function hydrate(p) {
     el.innerHTML = `<option value="">— faction —</option>${names.map((n) => `<option value="${esc(n)}">${esc(n)}</option>`).join('')}<option value="__other">✎ Other…</option>`;
     el.value = cur;
   });
-  view.querySelectorAll('[data-pack]').forEach((el) => { if (el !== document.activeElement) el.value = p.pack || ''; });
+  view.querySelectorAll('[data-pack]').forEach((el) => { if (el !== document.activeElement) el.value = (el.dataset.pack === '2' ? p.pack2 : p.pack) || ''; });
+  view.querySelector('[data-pack2-wrap]').hidden = (tierOf(p)?.packs || 1) < 2 && !p.pack2;
+  const tt = tierByPrestige(p.prestige.total), nx = meta.tiers[meta.tiers.indexOf(tt) + 1];
+  view.querySelector('[data-dyn="tier-title"]').innerHTML = `Prestige tier: <b>${tt.name}</b>${nx ? ` <span class="muted">· ${nx.name} at ${nx.prestige}</span>` : ''}`;
   for (const k of ['horse', 'mech']) {
     const img = view.querySelector(`[data-art="${k}"]`), it = p[k]?.itemId && itemById(p[k].itemId);
     img.hidden = !it?.img;
