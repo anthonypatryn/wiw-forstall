@@ -177,11 +177,31 @@ export function mountNav(active) {
 // ---------- Warden PIN (shared across pages) ----------
 export async function tryWarden(pin, endpoint) {
   setPin(pin);
-  try { await api('POST', { action: 'auth' }, '', endpoint); store.set('wiw.pin', pin); return true; }
-  catch { setPin(null); return false; }
+  try { await api('POST', { action: 'auth' }, '', endpoint); pinStore.set(pin); markWarden(true); return true; }
+  catch { setPin(null); markWarden(false); return false; }
 }
-export function forgetWarden() { setPin(null); store.set('wiw.pin', null); }
-export const savedPin = () => store.get('wiw.pin');
+export function forgetWarden() { setPin(null); pinStore.set(null); markWarden(false); }
+export const savedPin = () => pinStore.get();
+
+// The PIN lives only for this browser tab, so a shared or player device drops back to
+// player view when the tab closes. (Older versions kept it forever — clear that.)
+const pinStore = {
+  get() { try { return sessionStorage.getItem('wiw.pin'); } catch { return null; } },
+  set(v) { try { if (v) sessionStorage.setItem('wiw.pin', v); else sessionStorage.removeItem('wiw.pin'); } catch {} },
+};
+try { localStorage.removeItem('wiw.pin'); } catch {}
+
+// A strip under the nav so it's always obvious you're looking at the Warden's view.
+export function markWarden(on) {
+  let bar = document.querySelector('.warden-strip');
+  if (on && !bar) {
+    bar = document.createElement('div');
+    bar.className = 'warden-strip';
+    bar.innerHTML = '⭐ WARDEN MODE — players don’t see the Warden tools <button type="button">Switch to player view</button>';
+    bar.querySelector('button').addEventListener('click', () => { forgetWarden(); location.reload(); });
+    (document.querySelector('.sitenav') || document.body.firstElementChild).after(bar);
+  } else if (!on && bar) bar.remove();
+}
 
 // ---------- dice-pool inputs: two numbers, never typed letters ----------
 export function parsePoolStr(s) {

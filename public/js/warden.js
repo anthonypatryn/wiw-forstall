@@ -1,6 +1,6 @@
 import {
   $, esc, api, setPin, startPolling, injectDefs, staticDice, diamondsHTML, chipsHTML, toast, store, timeAgo,
-  mountNav,
+  mountNav, tryWarden, forgetWarden, savedPin,
 } from './common.js';
 import { renderNotebook } from './notebook.js';
 import { mountTableLog } from './tablelog.js';
@@ -16,10 +16,8 @@ let selectedTouched = false;
 
 // ---------- PIN gate ----------
 async function unlock(pin, quiet) {
-  setPin(pin);
   try {
-    await api('POST', { action: 'auth' });
-    store.set('wiw.pin', pin);
+    if (!(await tryWarden(pin))) { const e = new Error('Wrong PIN.'); e.status = 401; throw e; }
     $('#gate').hidden = true;
     $('#station').hidden = false;
     $('#logout').hidden = false;
@@ -36,7 +34,7 @@ async function unlock(pin, quiet) {
 }
 function lock(msg = '') {
   poller?.stop();
-  store.set('wiw.pin', null);
+  forgetWarden();
   setPin(null);
   $('#gate').hidden = false;
   $('#station').hidden = true;
@@ -45,7 +43,7 @@ function lock(msg = '') {
 }
 $('#pin-form').addEventListener('submit', (e) => { e.preventDefault(); unlock($('#pin').value.trim()); });
 $('#logout').addEventListener('click', () => lock());
-const saved = store.get('wiw.pin');
+const saved = savedPin();
 if (saved) unlock(saved, true);
 
 async function act(body, okMsg) {

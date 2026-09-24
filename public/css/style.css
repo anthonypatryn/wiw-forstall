@@ -430,3 +430,11 @@ button { cursor: pointer; }
 .log-drawer-head a { color: var(--brass); font: 15px var(--display); letter-spacing: .08em; text-decoration: none; }
 .log-close { background: none; border: 0; color: var(--paper); font-size: 18px; }
 .log-drawer .log { padding: 10px; }
+
+/* ---------- Warden mode indicator ---------- */
+.warden-strip {
+  background: repeating-linear-gradient(45deg, #7a2c14 0 12px, #8e3218 12px 24px); color: #fff; text-align: center;
+  font: 15px var(--display); letter-spacing: .14em; padding: 7px 12px 5px; position: sticky; top: 44px; z-index: 19;
+}
+.warden-strip button { margin-left: 10px; background: rgba(0,0,0,.3); border: 1px solid #fff; color: #fff; font: 13px var(--display); letter-spacing: .08em; padding: 3px 8px 1px; border-radius: 3px; }
+.warden-strip button:hover { background: #fff; color: var(--rust-dark); }
