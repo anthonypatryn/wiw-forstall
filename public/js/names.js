@@ -177,7 +177,13 @@ function renderLedger() {
     </article>`).join('') : `<p class="empty-note">${q ? 'Nobody matches.' : 'Nobody yet — deal a stranger and add them.'}</p>`;
   box.querySelectorAll('.npc').forEach((card) => {
     const id = card.dataset.id;
-    card.querySelectorAll('[data-f]').forEach((el) => el.addEventListener('change', () => npcAct({ action: el.dataset.f, id, text: el.value }, el)));
+    card.querySelectorAll('[data-f]').forEach((el) => {
+      // save shortly after typing stops, and again on leaving the box if anything changed
+      let timer, sent = el.value;
+      const save = () => { clearTimeout(timer); if (el.value !== sent) { sent = el.value; npcAct({ action: el.dataset.f, id, text: el.value }, el); } };
+      el.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(save, 800); });
+      el.addEventListener('change', save);
+    });
     card.querySelector('[data-known]')?.addEventListener('change', (e) => npcAct({ action: 'known', id, value: e.target.checked }));
     card.querySelector('[data-remove]')?.addEventListener('click', () => { if (confirm('Remove this NPC from the ledger?')) npcAct({ action: 'remove', id }); });
   });

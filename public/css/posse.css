@@ -79,7 +79,7 @@
 .talents label { display: flex; gap: 8px; align-items: flex-start; font-size: 15px; cursor: pointer; }
 .talents input { margin-top: 4px; width: 16px; height: 16px; accent-color: var(--rust); }
 .talents small { color: var(--ink-faint); }
-.rep { display: grid; grid-template-columns: 1fr 140px; gap: 8px; }
+.rep { display: grid; grid-template-columns: 1fr 170px; gap: 8px; }
 .prestige-ref { font-size: 14px; margin: 0; padding-left: 18px; color: var(--ink-soft); }
 .prestige-ref b { color: var(--ink); }
 .danger-zone { display: flex; justify-content: flex-end; margin-top: 16px; }

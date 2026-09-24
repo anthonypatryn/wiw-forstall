@@ -106,11 +106,11 @@ function statusesHTML(f, editable) {
 }
 function wireCommon(card, send) {
   card.querySelectorAll('[data-hp]').forEach((b) => b.addEventListener('click', () => send({ op: 'health', delta: Number(b.dataset.hp) })));
-  card.querySelector('[data-hpn]')?.addEventListener('keydown', (e) => {
-    if (e.key !== 'Enter' || !e.target.value) return;
-    send({ op: 'health', delta: Number(e.target.value) });
-    e.target.value = '';
-  });
+  // Apply the typed amount on Enter or when leaving the box (whichever comes first).
+  const hpn = card.querySelector('[data-hpn]');
+  const applyHp = () => { const v = Number(hpn.value); hpn.value = ''; if (v) send({ op: 'health', delta: v }); };
+  hpn?.addEventListener('keydown', (e) => { if (e.key === 'Enter') applyHp(); });
+  hpn?.addEventListener('change', applyHp);
   card.querySelectorAll('[data-grit]').forEach((b) => b.addEventListener('click', () => {
     const n = Number(b.dataset.grit);
     send({ op: 'grit', value: b.classList.contains('on') && !b.nextElementSibling?.classList.contains('on') ? n - 1 : n });

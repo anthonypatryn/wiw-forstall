@@ -34,6 +34,9 @@ const SHEET_STATUSES = [
 let meta = null;
 let data = null;
 let poller = null;
+// Reputation standing with its Charm modifier, as printed on the sheet.
+const REP_OPTIONS = [['Revered', 'Revered (+2B)'], ['Helpful', 'Helpful (+1B)'], ['Neutral', 'Neutral (+0B)'], ['Suspicious', 'Suspicious (−1B)'], ['Hostile', 'Hostile (−2B)']];
+let saveField = () => {};   // set per sheet in buildSheet
 let vitalsStale = false;  // vitals skipped a redraw while someone typed there
 let builtFor = null;       // sheet id currently rendered
 let chosenTrade = null;
@@ -83,7 +86,8 @@ $('#new-pc').addEventListener('submit', async (e) => {
 
 // ---------- sheet ----------
 const inp = (path, label, opts = {}) => `<label class="f"${opts.style ? ` style="${opts.style}"` : ''}>${label}
-  ${opts.type === 'select' ? `<select data-path="${path}">${opts.options.map((o) => `<option>${esc(o)}</option>`).join('')}</select>`
+  ${opts.type === 'select' ? `<select data-path="${path}">${opts.options.map((o) => (Array.isArray(o)
+      ? `<option value="${esc(o[0])}">${esc(o[1])}</option>` : `<option>${esc(o)}</option>`)).join('')}</select>`
     : opts.type === 'textarea' ? `<textarea data-path="${path}" maxlength="${opts.max || 3000}" placeholder="${esc(opts.ph || '')}"></textarea>`
     : `<input data-path="${path}" type="${opts.type || 'text'}" maxlength="${opts.max || 60}" placeholder="${esc(opts.ph || '')}"${opts.list ? ` list="${opts.list}"` : ''}>`}</label>`;
 
@@ -141,8 +145,7 @@ function buildSheet(p) {
         ${meta.talents.map((tl) => `<label><input type="checkbox" data-toggle="talents" value="${esc(tl)}"><span>${esc(tl)} <small>(${esc(TALENT_INFO[tl] || '')})</small></span></label>`).join('')}
       </div></div></section>
       <section class="sec"><h3>REPUTATION <small>alters Charm rolls made against a faction</small></h3><div class="in">
-        ${[0, 1, 2, 3].map((i) => `<div class="rep">${inp(`reputation.${i}.faction`, 'FACTION')}${inp(`reputation.${i}.level`, 'STANDING', { type: 'select', options: meta.reputationLevels })}</div>`).join('')}
-        <p class="muted" style="margin:0;font-size:14px">Revered +2B · Helpful +1B · Neutral +0B · Suspicious −1B · Hostile −2B</p>
+        ${[0, 1, 2, 3].map((i) => `<div class="rep">${inp(`reputation.${i}.faction`, 'FACTION')}${inp(`reputation.${i}.level`, 'STANDING', { type: 'select', options: REP_OPTIONS })}</div>`).join('')}
       </div></section>
       <section class="sec"><h3>GEAR ITEMS <small>first aid, explosives, &amp; traps</small></h3><div class="in">
         ${[0, 1, 2].map((i) => `<div class="weapon"><div class="fr">${inp(`gear.${i}.item`, 'ITEM')}${inp(`gear.${i}.type`, 'TYPE')}${inp(`gear.${i}.grit`, 'GRIT', { max: 4 })}</div>
@@ -179,20 +182,38 @@ function buildSheet(p) {
     <div class="danger-zone"><button class="btn small secondary danger" id="delete-pc" type="button">Delete this character</button></div>`;
 
   const view = $('#sheet-view');
-  view.querySelectorAll('[data-path]').forEach((el) => el.addEventListener('change', () => {
-    const v = el.type === 'number' ? Number(el.value) : el.value;
-    act({ action: 'sheet', id: p.id, path: el.dataset.path, value: v }, el);
-  }));
+  const timers = new Map();
+  saveField = (path, value, el) => {
+    clearTimeout(timers.get(path));
+    const saved = get(pcById(p.id), path);
+    if (String(saved ?? '').toUpperCase() === String(value ?? '').toUpperCase()) return; // nothing new
+    return act({ action: 'sheet', id: p.id, path, value }, el);
+  };
+  const fieldValue = (el) => {
+    const dp = el.closest('.dp[data-pool]');
+    if (dp) return { path: dp.dataset.pool, value: readPool(dp) };
+    if (el.dataset.path) return { path: el.dataset.path, value: el.type === 'number' ? Number(el.value) : el.value };
+    if (el.dataset.vpath) return { path: el.dataset.vpath, value: el.type === 'number' ? Number(el.value) : el.value };
+    return null;
+  };
+  view.addEventListener('input', (e) => {
+    const f = fieldValue(e.target);
+    if (!f || e.target.type === 'checkbox') return;
+    clearTimeout(timers.get(f.path));
+    timers.set(f.path, setTimeout(() => saveField(f.path, fieldValue(e.target).value, e.target), 600));
+  });
   view.addEventListener('change', (e) => {
-    const dp = e.target.closest('.dp[data-pool]');
-    if (dp) act({ action: 'sheet', id: p.id, path: dp.dataset.pool, value: readPool(dp) }, e.target);
+    const f = fieldValue(e.target);
+    if (f && e.target.type !== 'checkbox') saveField(f.path, f.value, e.target);
   });
   view.querySelectorAll('[data-toggle]').forEach((el) => el.addEventListener('change', () => act({ action: 'sheet', id: p.id, list: el.dataset.toggle, item: el.value })));
   view.querySelectorAll('[data-bool]').forEach((el) => el.addEventListener('change', () => act({ action: 'sheet', id: p.id, path: el.dataset.bool, value: el.checked })));
   view.querySelectorAll('[data-roll-path]').forEach((b) => b.addEventListener('click', async () => {
     const pc = pcById(p.id);
-    const pool = get(pc, b.dataset.rollPath);
+    const dp = b.parentElement.querySelector(`.dp[data-pool="${b.dataset.rollPath}"]`);
+    const pool = dp ? readPool(dp) : get(pc, b.dataset.rollPath);
     if (!isPool(pool)) return toast('Set how many Black and Gold dice first.', true);
+    if (dp && pool !== String(get(pc, b.dataset.rollPath) || '').toUpperCase()) saveField(dp.dataset.pool, pool, null);
     const weapon = b.dataset.weapon !== undefined ? pc.weapons[b.dataset.weapon] : null;
     const label = weapon ? `${weapon.model || weapon.manufacturer || 'Weapon'} — ${b.dataset.rollLabel}` : b.dataset.rollLabel;
     const r = await act({ action: 'roll', who: pc.id, pool, label, spur: b.dataset.talent ? pc.talents.includes(b.dataset.talent) : false });
@@ -249,8 +270,6 @@ function hydrate(p) {
       ${p.dead ? '<p class="bleed"><b>FALLEN</b></p>' : ''}
       <div><button class="btn small secondary" type="button" data-rest>🔥 Rest at camp / town</button> <span class="muted" style="font-size:13px">full Health, clear Statuses, reset Ace meter</span></div>`;
     vitals.querySelectorAll('[data-hp]').forEach((b) => b.addEventListener('click', () => send({ op: 'health', delta: Number(b.dataset.hp) })));
-    vitals.querySelectorAll('[data-vpath]').forEach((el) => el.addEventListener('change', () =>
-      act({ action: 'sheet', id: p.id, path: el.dataset.vpath, value: el.type === 'number' ? Number(el.value) : el.value }, el)));
     vitals.querySelectorAll('[data-grit]').forEach((b) => b.addEventListener('click', () => send({ op: 'grit', value: nextVal(b, Number(b.dataset.grit)) })));
     vitals.querySelectorAll('[data-st]').forEach((b) => b.addEventListener('click', () => send({ op: 'status', status: b.dataset.st, value: Number(b.dataset.v) })));
     vitals.querySelectorAll('[data-stc]').forEach((c) => c.addEventListener('change', () => send({ op: 'status', status: c.dataset.stc, value: c.checked ? 1 : 0 })));
