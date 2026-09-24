@@ -103,6 +103,30 @@ export function animateRoll(tray, dice) {
   return Promise.all(settle);
 }
 
+// Pop-up dice tray for rolls made away from a page's own tray (e.g. character sheets).
+// Uses the same tumble animation as the Combat page; only the person who rolled sees it.
+let popTimer;
+export async function rollPopup(r, title = '') {
+  let box = document.querySelector('.roll-pop');
+  if (!box) {
+    box = document.createElement('div');
+    box.className = 'roll-pop';
+    box.setAttribute('role', 'status');
+    box.innerHTML = '<button type="button" class="rp-x" aria-label="Close">×</button><div class="rp-title"></div><div class="tray rp-tray"></div><div class="rp-tally"></div>';
+    document.body.appendChild(box);
+    const close = () => { box.classList.remove('show'); clearTimeout(popTimer); };
+    box.querySelector('.rp-x').addEventListener('click', close);
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') close(); });
+  }
+  clearTimeout(popTimer);
+  box.querySelector('.rp-title').textContent = title;
+  box.querySelector('.rp-tally').innerHTML = '';
+  box.classList.add('show');
+  await animateRoll(box.querySelector('.rp-tray'), r.dice);
+  box.querySelector('.rp-tally').innerHTML = `<span class="hits">${r.hits} HIT${r.hits === 1 ? '' : 'S'}</span>${r.aces ? `<span class="muted">${r.aces} Ace${r.aces > 1 ? 's' : ''}</span>` : ''}${r.spur ? '<span class="muted">Spurs rerolled</span>' : ''}`;
+  popTimer = setTimeout(() => box.classList.remove('show'), 5000);
+}
+
 export function staticDice(tray, dice) {
   tray.innerHTML = dice.map((d) => {
     const rr = d.faces.length - 1;

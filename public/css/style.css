@@ -438,3 +438,19 @@ button { cursor: pointer; }
 }
 .warden-strip button { margin-left: 10px; background: rgba(0,0,0,.3); border: 1px solid #fff; color: #fff; font: 13px var(--display); letter-spacing: .08em; padding: 3px 8px 1px; border-radius: 3px; }
 .warden-strip button:hover { background: #fff; color: var(--rust-dark); }
+
+/* pop-up dice tray (sheet rolls) */
+.roll-pop {
+  position: fixed; left: 50%; bottom: 20px; z-index: 60; width: min(560px, calc(100vw - 32px));
+  transform: translate(-50%, 140%); transition: transform .3s ease; pointer-events: none;
+  background: var(--paper); border: 2px solid var(--ink); border-radius: var(--radius); box-shadow: 0 10px 30px rgba(0,0,0,.45); padding: 10px 12px 12px;
+}
+.roll-pop.show { transform: translate(-50%, 0); pointer-events: auto; }
+.roll-pop .rp-title { font: 17px var(--display); letter-spacing: .1em; padding-right: 30px; }
+.roll-pop .rp-tray { margin-top: 8px; min-height: 70px; }
+.roll-pop .die { width: 92px; }
+.roll-pop .rp-tally { display: flex; gap: 12px; align-items: baseline; justify-content: center; margin-top: 8px; min-height: 30px; }
+.roll-pop .rp-tally .hits { font: 28px var(--display); letter-spacing: .06em; color: var(--rust); }
+.roll-pop .rp-x { position: absolute; top: 6px; right: 8px; width: 30px; height: 30px; border: 1px solid var(--ink); border-radius: 50%; background: transparent; font-size: 20px; line-height: 1; cursor: pointer; }
+@media (max-width: 480px) { .roll-pop .die { width: 70px; } }
+@media (prefers-reduced-motion: reduce) { .roll-pop { transition: none; } }

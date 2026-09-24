@@ -1,5 +1,5 @@
 import {
-  $, esc, api, startPolling, injectDefs, toast, mountNav, poolHTML, readPool, fillPool,
+  $, esc, api, startPolling, injectDefs, toast, mountNav, poolHTML, readPool, fillPool, rollPopup,
 } from './common.js';
 import { mountTableLog } from './tablelog.js';
 import { ICONS } from './icons.js';
@@ -306,7 +306,7 @@ function wireSheet(p) {
     if (!isPool(pool)) return toast('Set how many Black and Gold dice first.', true);
     const spur = !!talent && pc.talents.includes(talent);
     const r = await act({ action: 'roll', who: pc.id, pool, label, spur });
-    if (r?.hits !== undefined) toast(`${label}: ${r.hits} hit${r.hits === 1 ? '' : 's'}${r.aces ? ` (${r.aces} Ace${r.aces > 1 ? 's' : ''})` : ''}${spur ? ' · Spurs rerolled' : ''} — it’s in the Table Log.`);
+    if (r?.dice) rollPopup(r, `${pc.name} · ${label} · ${r.pool}`);
   });
 
   view.addEventListener('click', async (e) => {
@@ -322,7 +322,7 @@ function wireSheet(p) {
       if (await act({ action: 'pc', id: p.id, op: 'startKit' })) toast('Used Pistol and Pocket Knife added to Weapons.');
     } else if (b.dataset.start === 'wallet') {
       const r = await act({ action: 'pc', id: p.id, op: 'rollWallet' });
-      if (r?.dollars !== undefined) toast(`Rolled 6B — $${r.dollars} in the Wallet. It’s in the Table Log.`);
+      if (r?.dice) rollPopup(r, `${pc.name} · Starting Wallet · 6B → $${r.dollars}`);
     } else if (b.dataset.start === 'basics') {
       await act({ action: 'sheet', id: p.id, fields: { maxHealth: Math.max(10, pc.maxHealth), supplies: pc.supplies || '1' } });
     }
