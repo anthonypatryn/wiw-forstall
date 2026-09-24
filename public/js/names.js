@@ -162,7 +162,7 @@ function showResult() {
 
 // ---------- shared NPC ledger ----------
 const EP = '/api/npcs';
-let npcs = [], warden = false, poller = null, pendingLedger = false;
+let npcs = [], factions = [], warden = false, poller = null, pendingLedger = false;
 
 async function npcAct(body, el) {
   try {
@@ -172,6 +172,50 @@ async function npcAct(body, el) {
     return res.result ?? true;
   } catch (e) { toast(e.message, true); return null; }
 }
+
+const factionOptions = (cur) => `<option value="">— none —</option>${factions.map((f) => `<option value="${esc(f.name)}"${f.name === cur ? ' selected' : ''}>${esc(f.name)}${f.known ? '' : ' (secret)'}</option>`).join('')}`;
+
+// ---------- Warden: factions ----------
+const openFac = new Set();
+function renderFactions() {
+  const box = $('#factions');
+  if (!warden || box.contains(document.activeElement)) return;
+  box.innerHTML = factions.map((f) => {
+    const members = npcs.filter((n) => n.faction === f.name);
+    const bookPeople = f.book && book ? (book.factions.find((b) => b.faction === f.name)?.people || []) : [];
+    const loose = npcs.filter((n) => n.faction !== f.name);
+    return `<details class="fac" data-fid="${esc(f.id)}"${openFac.has(f.id) ? ' open' : ''}><summary><h3>${esc(f.name)}<small>${f.book ? `GUIDEBOOK P. ${f.page}` : f.known ? 'YOUR FACTION · POSSE KNOWS' : 'YOUR FACTION · SECRET'} · ${members.length} IN LEDGER</small></h3></summary>
+      ${f.book ? '' : `<label class="f">DESCRIPTION<textarea data-fdesc maxlength="1000" placeholder="Who they are, what they want">${esc(f.desc || '')}</textarea></label>`}
+      ${bookPeople.length ? `<p class="muted fac-book">Guidebook members: ${bookPeople.map((pp) => esc(pp.name)).join(', ')}</p>` : ''}
+      <div class="fac-members">${members.length ? members.map((n) => `<span class="mem">${esc(n.name)}${n.known ? '' : ' <i>(hidden)</i>'}<button type="button" data-unfac="${n.id}" aria-label="Take ${esc(n.name)} out of ${esc(f.name)}">×</button></span>`).join('') : '<span class="muted">No NPCs from the ledger yet.</span>'}</div>
+      <div class="fac-add"><select data-addmem aria-label="Add an NPC to ${esc(f.name)}"><option value="">+ add an NPC from the ledger…</option>${loose.map((n) => `<option value="${n.id}">${esc(n.name)}${n.faction ? ` (now: ${esc(n.faction)})` : ''}</option>`).join('')}</select></div>
+      ${f.book ? '' : `<div class="npc-tools"><label class="check"><input type="checkbox" data-fknown${f.known ? ' checked' : ''}> Posse knows about them</label><button class="btn small secondary danger" type="button" data-fremove>Delete faction</button></div>`}
+    </details>`;
+  }).join('');
+  box.querySelectorAll('details.fac').forEach((d) => {
+    const fid = d.dataset.fid;
+    d.addEventListener('toggle', () => { if (d.open) openFac.add(fid); else openFac.delete(fid); });
+    const f = factions.find((x) => x.id === fid);
+    d.querySelector('[data-addmem]').addEventListener('change', (e) => { if (e.target.value) npcAct({ action: 'setFaction', id: e.target.value, faction: f.name }); });
+    d.querySelectorAll('[data-unfac]').forEach((b) => b.addEventListener('click', () => npcAct({ action: 'setFaction', id: b.dataset.unfac, faction: '' })));
+    const desc = d.querySelector('[data-fdesc]');
+    if (desc) {
+      let sent = desc.value;
+      desc.addEventListener('change', () => { if (desc.value !== sent) { sent = desc.value; npcAct({ action: 'editFaction', id: fid, desc: desc.value }, desc); } });
+    }
+    d.querySelector('[data-fknown]')?.addEventListener('change', (e) => npcAct({ action: 'editFaction', id: fid, known: e.target.checked }));
+    d.querySelector('[data-fremove]')?.addEventListener('click', () => {
+      if (confirm(`Delete ${f.name}? NPCs in it keep their notes but lose the faction.`)) npcAct({ action: 'removeFaction', id: fid });
+    });
+  });
+}
+$('#factions').addEventListener('focusout', () => setTimeout(renderFactions, 60));
+$('#faction-new').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const f = e.target;
+  const r = await npcAct({ action: 'addFaction', name: f.name.value.trim(), desc: f.desc.value.trim(), known: f.known.checked });
+  if (r) { toast(`${r.name} created.`); openFac.add(r.id); f.reset(); f.known.checked = true; renderFactions(); }
+});
 
 function renderLedger() {
   const box = $('#ledger');
@@ -183,6 +227,7 @@ function renderLedger() {
   box.innerHTML = list.length ? list.map((n) => `<article class="npc${n.known ? '' : ' hidden-npc'}" data-id="${n.id}">
       <div class="npc-top"><div><div class="npc-name">${esc(n.name)}</div><div class="npc-traits">${esc(n.personality)}${n.physical ? ` · ${esc(n.physical.toLowerCase())}` : ''}</div></div>
         <span class="when">${n.known ? '' : 'HIDDEN · '}${timeAgo(n.at)}</span></div>
+      ${warden ? `<label class="f">FACTION<select data-faction>${factionOptions(n.faction)}</select></label>` : n.faction ? `<div class="npc-faction">${esc(n.faction)}</div>` : ''}
       <label class="f">WHERE THEY MET<input type="text" data-f="where" maxlength="80" value="${esc(n.where || '')}" placeholder="e.g. the saloon in Dodge"></label>
       <label class="f">POSSE NOTES<textarea data-f="posseNote" maxlength="3000" placeholder="What does the posse know about them?">${esc(n.posseNotes || '')}</textarea></label>
       ${warden ? `<label class="f secret-note">WARDEN NOTES — SECRET<textarea data-f="wardenNote" maxlength="3000" placeholder="Secrets, motives, stats…">${esc(n.wardenNotes || '')}</textarea></label>
@@ -198,6 +243,7 @@ function renderLedger() {
       el.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(save, 800); });
       el.addEventListener('change', save);
     });
+    card.querySelector('[data-faction]')?.addEventListener('change', (e) => npcAct({ action: 'setFaction', id, faction: e.target.value }, e.target));
     card.querySelector('[data-known]')?.addEventListener('change', (e) => npcAct({ action: 'known', id, value: e.target.checked }));
     card.querySelector('[data-remove]')?.addEventListener('click', () => { if (confirm('Remove this NPC from the ledger?')) npcAct({ action: 'remove', id }); });
   });
@@ -220,7 +266,7 @@ $('#copy').addEventListener('click', async () => {
 
 function connect() {
   poller?.stop();
-  poller = startPolling(warden ? 'warden' : 'player', (d) => { npcs = d.npcs; renderLedger(); }, (ok, e) => {
+  poller = startPolling(warden ? 'warden' : 'player', (d) => { npcs = d.npcs; factions = d.factions || []; renderLedger(); renderFactions(); }, (ok, e) => {
     if (e?.status === 401) { warden = false; forgetWarden(); setWarden(); connect(); }
   }, EP);
 }
@@ -229,6 +275,7 @@ function setWarden() {
   $('#known-wrap').hidden = !warden;
   $('#manual-card').hidden = !warden;
   $('#book-card').hidden = !warden;
+  $('#faction-card').hidden = !warden;
   if (warden) loadBook(); else { book = null; $('#book').innerHTML = ''; }
 }
 $('#warden-btn').addEventListener('click', async () => {
@@ -339,7 +386,7 @@ function renderBook() {
 }
 async function loadBook() {
   if (book || !warden) return;
-  try { book = await api('GET', null, '?view=book', EP); renderBook(); } catch {}
+  try { book = await api('GET', null, '?view=book', EP); renderBook(); renderFactions(); } catch {}
 }
 
 // ---------- controls ----------

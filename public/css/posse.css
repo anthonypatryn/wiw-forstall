@@ -192,3 +192,26 @@ body.on-sheet .masthead { display: none; }
 .hp-top .hp-def { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; }
 .st-check b { white-space: nowrap; }
 @media (max-width: 480px) { .range-in { flex-wrap: wrap; row-gap: 4px; } .range-in .rl { min-width: 0; flex-basis: 100%; } }
+
+/* new character checklist */
+.starter { margin: 0 0 14px; background: #fffaf0; border: 2px solid var(--ink); border-radius: 6px; }
+.starter > summary { list-style: none; cursor: pointer; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; padding: 10px 14px 8px; }
+.starter > summary::-webkit-details-marker { display: none; }
+.starter > summary::before { content: '▸'; color: var(--rust); transition: transform .2s; }
+.starter[open] > summary::before { transform: rotate(90deg); }
+.starter > summary b { font: 20px var(--display); letter-spacing: .12em; font-weight: 400; }
+.starter > summary small { color: var(--ink-faint); font-size: 13px; }
+.starter .st-prog { margin-left: auto; font: 15px var(--display); letter-spacing: .08em; color: var(--rust); }
+.starter-in ol { list-style: none; margin: 0; padding: 0 14px 12px; display: grid; gap: 2px; }
+.starter-in li { display: grid; grid-template-columns: 26px 1fr; gap: 10px; padding: 8px 0; border-top: 1px dotted rgba(34,31,31,.3); }
+.starter-in li > div > b { font: 15px var(--display); letter-spacing: .1em; font-weight: 400; color: var(--rust); }
+.starter-in li.ok > div > b { color: var(--ink-soft); }
+.starter-in .sb { font-size: 15px; display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 3px; }
+.starter-in .tick { width: 24px; height: 24px; border: 2px solid var(--ink); border-radius: 50%; display: grid; place-items: center; font-weight: 700; }
+.starter-in li.ok .tick { background: var(--ink); color: var(--paper); }
+.starter-in select, .pack-row select { max-width: 100%; padding: 5px 8px; border: 1px solid var(--ink-faint); border-radius: 3px; background: #fffdf7; font-size: 15px; }
+.pack-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 0 0 12px; margin-bottom: 10px; border-bottom: 1px dotted rgba(34,31,31,.35); }
+.pack-row .rl { font: 13px var(--display); letter-spacing: .1em; color: var(--rust); }
+.pack-row small { flex-basis: 100%; font-size: 13px; }
+.rep select { width: 100%; padding: 5px 6px; border: 0; border-bottom: 1px solid var(--ink); background: transparent; font: 16px var(--type); }
+.ride-art { display: block; width: 100%; max-height: 220px; object-fit: contain; margin: 4px 0 10px; border-radius: 4px; mix-blend-mode: multiply; }

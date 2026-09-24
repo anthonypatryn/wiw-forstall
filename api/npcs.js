@@ -15,6 +15,7 @@ export default async function handler(req, res) {
         if (!warden) return send(res, 401, { error: 'Wrong PIN.' });
         return send(res, 200, BOOK_NPCS);
       }
+      if (url.searchParams.get('view') === 'factions') return send(res, 200, { factions: npcView(state, { warden }).factions });
       if (url.searchParams.get('view') === 'warden' && !warden) return send(res, 401, { error: 'Wrong PIN.' });
       if (sinceParam(url) === state.v) return send(res, 200, { v: state.v, unchanged: true });
       return send(res, 200, npcView(state, { warden }));

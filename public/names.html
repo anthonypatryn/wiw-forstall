@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Rye&family=Special+Elite&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css?v=9">
-  <link rel="stylesheet" href="/css/names.css?v=6">
+  <link rel="stylesheet" href="/css/names.css?v=7">
 </head>
 <body>
   <header class="masthead">
@@ -72,6 +72,18 @@
       <datalist id="dl-pers"></datalist><datalist id="dl-phys"></datalist>
     </section>
 
+    <section class="card corner warden-only" id="faction-card" data-acc="factions" hidden>
+      <h2 class="section-title">Factions</h2>
+      <p class="muted" style="margin-top:0">The Guidebook’s seven plus any you make. Players pick known factions for Reputation on their sheets. Put NPCs in a faction here or on their ledger card.</p>
+      <form class="faction-new" id="faction-new">
+        <label>NEW FACTION<input name="name" maxlength="60" required placeholder="e.g. The Dust Devils"></label>
+        <label>DESCRIPTION<input name="desc" maxlength="1000" placeholder="Who they are, what they want"></label>
+        <div class="manual-go"><label class="check"><input type="checkbox" name="known" checked> Posse knows about them</label>
+          <button class="btn small" type="submit">Create faction</button></div>
+      </form>
+      <div id="factions"></div>
+    </section>
+
     <section class="card corner warden-only" id="book-card" data-acc="book" hidden>
       <h2 class="section-title">Book NPCs</h2>
       <p class="muted" style="margin-top:0">Faction figures from the Guidebook (pp. 120–133) and ready-made human enemies (p. 191). Warden eyes only.</p>
@@ -85,6 +97,6 @@
     </section>
   </main>
 
-  <script type="module" src="/js/names.js?v=12"></script>
+  <script type="module" src="/js/names.js?v=13"></script>
 </body>
 </html>

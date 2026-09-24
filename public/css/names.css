@@ -156,3 +156,26 @@ details.faction > summary h3 small { font: 13px var(--display); letter-spacing: 
 details.faction[open] > summary { margin-bottom: 10px; }
 details.faction { padding: 12px 0; }
 details.faction:first-of-type { border-top: 0; }
+
+/* factions */
+.faction-new { display: grid; grid-template-columns: 1fr 2fr; gap: 10px 14px; margin-bottom: 14px; }
+.faction-new label { display: flex; flex-direction: column; gap: 4px; font: 13px var(--display); letter-spacing: .12em; color: var(--ink-soft); }
+.faction-new input:not([type=checkbox]) { padding: 7px 9px; border: 1px solid var(--ink-faint); border-radius: 3px; background: #fffdf7; font: 16px var(--type); }
+.faction-new .manual-go { grid-column: 1 / -1; }
+@media (max-width: 600px) { .faction-new { grid-template-columns: 1fr; } }
+details.fac { border-top: 2px solid var(--ink); padding: 10px 0; }
+details.fac > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 10px; }
+details.fac > summary::-webkit-details-marker { display: none; }
+details.fac > summary::before { content: '▸'; color: var(--rust); font-size: 20px; transition: transform .2s; }
+details.fac[open] > summary::before { transform: rotate(90deg); }
+details.fac > summary h3 { margin: 0; font: 400 24px/1.1 var(--western); }
+details.fac > summary h3 small { display: block; font: 12px var(--display); letter-spacing: .14em; color: var(--ink-faint); margin-top: 2px; }
+details.fac[open] > summary { margin-bottom: 8px; }
+.fac textarea { min-height: 60px; }
+.fac-book { font-size: 14px; margin: 6px 0; }
+.fac-members { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
+.fac-members .mem { display: inline-flex; align-items: center; gap: 6px; padding: 3px 4px 3px 10px; border-radius: 14px; background: var(--ink); color: var(--paper); font-size: 14px; }
+.fac-members .mem i { opacity: .7; }
+.fac-members .mem button { border: 0; background: rgba(255,255,255,.18); color: inherit; width: 20px; height: 20px; border-radius: 50%; line-height: 1; cursor: pointer; }
+.fac-add select, .npc select[data-faction] { width: 100%; max-width: 420px; padding: 6px 8px; border: 1px solid var(--ink-faint); border-radius: 3px; background: #fffdf7; font-size: 15px; }
+.npc-faction { display: inline-block; margin: 4px 0 2px; padding: 3px 8px 1px; border-radius: 2px; background: var(--ink); color: var(--paper); font: 12px var(--display); letter-spacing: .12em; }

@@ -3,6 +3,7 @@ import {
 } from './common.js';
 import { mountTableLog } from './tablelog.js';
 import { ICONS } from './icons.js';
+import { NPC } from './npc-data.js';
 
 const EP = '/api/combat';
 injectDefs();
@@ -45,6 +46,7 @@ let vitalsStale = false;    // vitals skipped a redraw while someone typed there
 let builtFor = null;        // sheet id currently rendered
 let chosenTrade = null;
 let kzOptions = [];
+let factions = [];          // known factions for the Reputation dropdowns
 
 async function act(body, el) {
   try {
@@ -59,6 +61,28 @@ const get = (obj, path) => path.split('.').reduce((o, k) => (o == null ? o : o[k
 const isPool = (s) => /^(\d+[BG])+$/i.test(String(s || '').replace(/\s+/g, ''));
 const firstPool = (s) => (String(s || '').toUpperCase().match(/(?:\d+[BG])+/) || [''])[0];
 const itemById = (id) => catalog.find((i) => i.id === id);
+const diceCount = (pool) => [...String(pool || '').toUpperCase().matchAll(/(\d+)[BG]/g)].reduce((n, m) => n + Number(m[1]), 0);
+const randomName = () => `${NPC[Math.random() < 0.5 ? 'first1' : 'first2'][Math.floor(Math.random() * 52)]} ${NPC.last[Math.floor(Math.random() * 52)]}`;
+
+// Equipment Pack contents go at the top of "Other items" under a header line; picking another pack swaps that block.
+const PACK_LINE = /^— .+ Pack —$/;
+function withPack(text, pack) {
+  const packItems = new Set(Object.values(meta.packs).flat());
+  const out = []; let skip = false;
+  for (const line of String(text || '').split('\n')) {
+    // after a pack header, drop only lines that are pack items (anything the player added stays)
+    if (PACK_LINE.test(line.trim())) { skip = true; continue; }
+    if (skip && (!line.trim() || packItems.has(line.trim()))) continue;
+    skip = false;
+    out.push(line);
+  }
+  const rest = out.join('\n').trim();
+  if (!pack) return rest;
+  const block = [`— ${pack} —`, ...meta.packs[pack]].join('\n');
+  return rest ? `${block}\n\n${rest}` : block;
+}
+const packSelect = (attr) => `<select ${attr} aria-label="Equipment Pack"><option value="">— pick an Equipment Pack —</option>${Object.entries(meta.packs).map(([n, items]) =>
+  `<option value="${esc(n)}" title="${esc(items.join(', '))}">${esc(n)}</option>`).join('')}</select>`;
 
 // ---------- roster ----------
 function renderList() {
@@ -156,6 +180,9 @@ function buildSheet(p) {
       <img class="sh-art" src="/img/trades/${p.trade.toLowerCase()}.webp" alt="The ${esc(p.trade)}">
     </div>
 
+    <details class="starter" data-starter><summary><b>NEW CHARACTER CHECKLIST</b><small>Guidebook pp. 6–8</small><span class="st-prog" data-dyn="starter-prog"></span></summary>
+      <div class="starter-in" data-dyn="starter"></div></details>
+
     <div class="sheet page1">
       ${box('SKILLS', 'practice &amp; master with Prestige', Object.entries(SKILL_INFO).map(([k, [nm, ds]]) => `<div class="sk">
           ${spurBox(nm)}<div class="sk-name"><b>${nm}</b><small>${ds}</small><em>quick-build: assign ${esc(t.quickBuild[k])}</em></div>
@@ -179,9 +206,9 @@ function buildSheet(p) {
       ${box('DISPOSITION', 'attitude, worries, &amp; wishes', inp('disposition', '', { type: 'textarea', max: 1000 }), 'disposition')}
       ${box('APPEARANCE', 'age, build, &amp; attire', inp('appearance', '', { type: 'textarea', max: 1000 }), 'appearance')}
       ${box('REPUTATION', 'alters Charm rolls made against a faction', `<div class="reps">${[0, 1, 2, 3].map((i) =>
-          `<div class="rep">${inp(`reputation.${i}.faction`, 'Faction')}${inp(`reputation.${i}.level`, '', { type: 'select', options: REP_OPTIONS })}</div>`).join('')}</div>`, 'reputation')}
+          `<div class="rep"><label class="f"><span>Faction</span><select data-path="reputation.${i}.faction" data-faction-select></select></label>${inp(`reputation.${i}.level`, '', { type: 'select', options: REP_OPTIONS })}</div>`).join('')}</div>`, 'reputation')}
       ${box('HISTORY', 'how your legend began', inp('history', '', { type: 'textarea' }), 'history')}
-      ${box('GEAR ITEMS', 'first aid, explosives, &amp; traps', [0, 1, 2].map(gear).join(''), 'gear')}
+      ${box('GEAR ITEMS', 'first aid, explosives, &amp; traps', `<div class="pack-row"><span class="rl">Equipment Pack</span>${packSelect('data-pack')}<small class="muted">its gear is written into Inventory → Other items</small></div>${[0, 1, 2].map(gear).join('')}`, 'gear')}
       ${box('INVENTORY', 'loot, trophies, &amp; additional items', `
           <div class="w-grid">${inp('wallet', 'Wallet $', { max: 20 })}${inp('scrap', 'Scrap (pcs)', { max: 20 })}${inp('supplies', 'Supplies', { max: 20 })}</div>
           <div data-dyn="items"></div>${inp('inventory', 'Other items', { type: 'textarea' })}`, 'inventory')}
@@ -196,11 +223,13 @@ function buildSheet(p) {
           <datalist id="kz-list"></datalist>`, 'forstall')}
       ${box('HORSE', 'you’re only as good as your loyal steed', `
           <div class="w-top">${pick('horse', 0, [['Horse breeds', horses]], '— pick a breed —')}</div>
+          <img class="ride-art" data-art="horse" alt="" hidden>
           <div class="w-grid">${inp('horse.name', 'Name')}${inp('horse.breed', 'Breed')}${inp('horse.breakingPoint', 'Breaking point', { cls: 'narrow2' })}</div>
           <div class="w-grid">${inp('horse.maxHealth', 'Max health', { max: 4, cls: 'narrow' })}${inp('horse.health', 'Health', { max: 4, cls: 'narrow' })}${inp('horse.bond', 'Bond', { type: 'select', options: meta.reputationLevels })}</div>
           ${inp('horse.breedAbility', 'Breed ability', { max: 300 })}${inp('horse.disposition', 'Disposition', { max: 300 })}${inp('horse.appearance', 'Appearance', { max: 300 })}`, 'horse')}
       ${box('MECH', 'carts, wagons, &amp; cabins given the chance at a new life', `
           <div class="w-top">${pick('mech', 0, [['Mech classes', mechs]], '— pick a class —')}${spurBox('Mechs')}</div>
+          <img class="ride-art" data-art="mech" alt="" hidden>
           <div class="w-grid">${inp('mech.class', 'Class')}${inp('mech.slots', 'Upgrade slots', { max: 4, cls: 'narrow2' })}${inp('mech.speed', 'Speed', { cls: 'narrow2' })}</div>
           <div class="w-grid">${inp('mech.maxHealth', 'Max health', { max: 4, cls: 'narrow' })}${inp('mech.health', 'Health', { max: 4, cls: 'narrow' })}
             ${inp('mech.state', 'Condition', { type: 'select', options: meta.mechStates })}</div>
@@ -237,6 +266,14 @@ function wireSheet(p) {
   });
   view.addEventListener('change', (e) => {
     if (e.target.matches('.pick')) return pickItem(p, e.target);
+    if (e.target.matches('[data-pack]')) return choosePack(p, e.target.value);
+    if (e.target.matches('[data-keepsake]')) return addKeepsake(p, e.target);
+    if (e.target.matches('[data-faction-select]') && e.target.value === '__other') {
+      const v = (prompt('Faction name:') || '').trim().slice(0, 40);
+      if (!v) { e.target.value = get(pcById(p.id), e.target.dataset.path) ?? ''; return; }
+      if (![...e.target.options].some((o) => o.value === v)) e.target.add(new Option(v, v), e.target.options[e.target.options.length - 1]);
+      e.target.value = v;
+    }
     const f = fieldValue(e.target);
     if (f && e.target.type !== 'checkbox') saveField(f.path, f.value, e.target);
   });
@@ -272,6 +309,25 @@ function wireSheet(p) {
     if (r?.hits !== undefined) toast(`${label}: ${r.hits} hit${r.hits === 1 ? '' : 's'}${r.aces ? ` (${r.aces} Ace${r.aces > 1 ? 's' : ''})` : ''}${spur ? ' · Spurs rerolled' : ''} — it’s in the Table Log.`);
   });
 
+  view.addEventListener('click', async (e) => {
+    const b = e.target.closest('[data-start]');
+    if (!b) return;
+    const pc = pcById(p.id), t = meta.trades[pc.trade];
+    if (b.dataset.start === 'name') {
+      const n = randomName();
+      if (await act({ action: 'sheet', id: p.id, path: 'name', value: n })) toast(`Howdy, ${n}.`);
+    } else if (b.dataset.start === 'quick') {
+      await act({ action: 'sheet', id: p.id, fields: Object.fromEntries(Object.entries(t.quickBuild).map(([k, v]) => [`skills.${k}`, v])) });
+    } else if (b.dataset.start === 'weapons') {
+      if (await act({ action: 'pc', id: p.id, op: 'startKit' })) toast('Used Pistol and Pocket Knife added to Weapons.');
+    } else if (b.dataset.start === 'wallet') {
+      const r = await act({ action: 'pc', id: p.id, op: 'rollWallet' });
+      if (r?.dollars !== undefined) toast(`Rolled 6B — $${r.dollars} in the Wallet. It’s in the Table Log.`);
+    } else if (b.dataset.start === 'basics') {
+      await act({ action: 'sheet', id: p.id, fields: { maxHealth: Math.max(10, pc.maxHealth), supplies: pc.supplies || '1' } });
+    }
+  });
+
   $('#delete-pc').addEventListener('click', async () => {
     if (!confirm(`Delete ${pcById(p.id).name}’s sheet for everyone? This can’t be undone.`)) return;
     if (await act({ action: 'pc', id: p.id, op: 'remove' })) location.hash = '';
@@ -282,6 +338,21 @@ const weaponTalent = (w) => {
   const it = w.itemId && itemById(w.itemId);
   return WEAPON_TALENT[it?.sub] || (Object.values(WEAPON_TALENT).includes(w.type) ? w.type : null);
 };
+
+function choosePack(p, pack) {
+  const pc = pcById(p.id);
+  const f = { pack, inventory: withPack(pc.inventory, pack) };
+  if (!String(pc.supplies || '').trim()) f.supplies = '1';
+  act({ action: 'sheet', id: p.id, fields: f }).then((ok) => ok && toast(pack ? `${pack} written into Inventory.` : 'Pack removed from Inventory.'));
+}
+function addKeepsake(p, sel) {
+  const k = sel.value; sel.value = '';
+  if (!k) return;
+  const pc = pcById(p.id);
+  const line = `Keepsake: ${k}`;
+  if (String(pc.inventory || '').includes(line)) return toast('They already carry that one.', true);
+  act({ action: 'sheet', id: p.id, path: 'inventory', value: `${String(pc.inventory || '').trim()}\n${line}`.trim() }).then((ok) => ok && toast('Keepsake added to Inventory.'));
+}
 
 // Picking from a dropdown fills the matching section in one save.
 function pickItem(p, sel) {
@@ -329,6 +400,39 @@ function cylinder(grit) {
   return `<svg class="cyl" viewBox="0 0 100 100" aria-label="Grit ${grit} of 6"><circle class="cyl-body" cx="50" cy="50" r="47"/><circle class="cyl-hub" cx="50" cy="50" r="8"/>${ch}</svg>`;
 }
 
+// Character creation checklist (Guidebook pp. 6–8), with one-tap fills.
+function renderStarter(view, p) {
+  const box = view.querySelector('[data-dyn="starter"]');
+  if (box.contains(document.activeElement)) return;
+  const t = meta.trades[p.trade];
+  const dice = Object.values(p.skills).reduce((n, v) => n + diceCount(v), 0);
+  const skillsOk = dice === 12 && Object.values(p.skills).every((v) => diceCount(v) >= 1 && diceCount(v) <= 6);
+  const hasStart = ['pistols-used-pistol', 'melee-pocket-knife'].every((id) => p.weapons.some((w) => w.itemId === id));
+  const keepsakes = (String(p.inventory || '').match(/^Keepsake: /gm) || []).length;
+  const named = p.name && p.name !== `The ${p.trade}`;
+  const story = [p.appearance, p.disposition, p.history].filter((x) => String(x || '').trim()).length;
+  const wallet = String(p.wallet || '').trim();
+  const steps = [
+    [true, 'Step 1 · Pick a Trade', `The ${esc(p.trade)}. Starting Ability <b>${esc(t.abilities[0].name)}</b> and Ace-in-the-Hole <b>${esc(t.aces[0].name)}</b> are already marked.`],
+    [named && story === 3, 'Step 2 · Get to know yourself', `${named ? `Name: <b>${esc(p.name)}</b>. ` : ''}<button type="button" class="btn small secondary" data-start="name">🎲 Random name (p. 204)</button>
+      <span class="muted">Then fill in Appearance, Disposition &amp; History on page two (${story}/3 done).</span>`],
+    [skillsOk, 'Step 3 · Assign your Skills', `<b>${dice}/12</b> Black dice assigned, 1–6 per Skill. ${skillsOk ? '' : `<button type="button" class="btn small secondary" data-start="quick">Use quick build (${Object.values(t.quickBuild).join(' · ')})</button>`}`],
+    [hasStart, 'Step 4 · Starting weapons', hasStart ? 'Used Pistol and Pocket Knife are in Weapons.' : '<button type="button" class="btn small secondary" data-start="weapons">Add Used Pistol + Pocket Knife</button>'],
+    [!!p.pack, 'Step 4 · Equipment Pack', `${packSelect('data-pack')} <span class="muted">Its gear goes into Inventory, plus 1 Supplies slot.</span>`],
+    [wallet !== '', 'Step 5 · Wallet', wallet ? `<b>$${esc(wallet)}</b> in the Wallet.` : '<button type="button" class="btn small" data-start="wallet">🎲 Roll 6B for your Wallet</button> <span class="muted">Aces $2, Hits $1.</span>'],
+    [p.maxHealth >= 10 && String(p.supplies || '').trim() !== '', 'Step 5 · Health, Prestige &amp; Supplies', `Max Health <b>${p.maxHealth}</b> · Prestige <b>${p.prestige.total}</b> (a Tenderfoot starts at 0) · Supplies <b>${esc(p.supplies || '—')}</b>
+      ${p.maxHealth < 10 || !String(p.supplies || '').trim() ? '<button type="button" class="btn small secondary" data-start="basics">Set the starting values</button>' : ''}`],
+    [keepsakes > 0, 'Step 5 · Keepsakes', `<select data-keepsake aria-label="Add a keepsake"><option value="">+ add a keepsake…</option>${meta.keepsakes.map((k) => `<option>${esc(k)}</option>`).join('')}</select> <span class="muted">${keepsakes ? `${keepsakes} carried.` : 'Pick one or two, or write your own under Other items.'}</span>`],
+  ];
+  const done = steps.filter((st) => st[0]).length;
+  box.innerHTML = `<ol>${steps.map(([ok, title, body]) => `<li class="${ok ? 'ok' : ''}"><span class="tick">${ok ? '✓' : ''}</span><div><b>${title}</b><div class="sb">${body}</div></div></li>`).join('')}</ol>`;
+  const ps = box.querySelector('[data-pack]');
+  if (ps) ps.value = p.pack || '';
+  view.querySelector('[data-dyn="starter-prog"]').textContent = done === steps.length ? 'All set ✓' : `${done}/${steps.length} done`;
+  const det = view.querySelector('[data-starter]');
+  if (!det.dataset.init) { det.dataset.init = '1'; det.open = done < steps.length; }
+}
+
 // Re-render the live bits (and fill inputs nobody is typing in).
 function hydrate(p) {
   const view = $('#sheet-view');
@@ -339,6 +443,22 @@ function hydrate(p) {
     const id = k === 'weapon' ? p.weapons[el.dataset.i]?.itemId : k === 'gear' ? p.gear[el.dataset.i]?.itemId : p[k]?.itemId;
     el.value = id && el.querySelector(`option[value="${CSS.escape(id)}"]`) ? id : '';
   });
+  // Reputation: known factions (+ whatever is already written, + Other…)
+  view.querySelectorAll('[data-faction-select]').forEach((el) => {
+    if (el === document.activeElement) return;
+    const cur = get(p, el.dataset.path) || '';
+    const names = factions.map((f) => f.name);
+    if (cur && !names.includes(cur)) names.push(cur);
+    el.innerHTML = `<option value="">— faction —</option>${names.map((n) => `<option value="${esc(n)}">${esc(n)}</option>`).join('')}<option value="__other">✎ Other…</option>`;
+    el.value = cur;
+  });
+  view.querySelectorAll('[data-pack]').forEach((el) => { if (el !== document.activeElement) el.value = p.pack || ''; });
+  for (const k of ['horse', 'mech']) {
+    const img = view.querySelector(`[data-art="${k}"]`), it = p[k]?.itemId && itemById(p[k].itemId);
+    img.hidden = !it?.img;
+    if (it?.img && img.dataset.src !== it.img) { img.dataset.src = it.img; img.src = `/img/store/${it.img}.webp`; img.alt = it.name; }
+  }
+  renderStarter(view, p);
   view.querySelectorAll('[data-toggle]').forEach((el) => { el.checked = p[el.dataset.toggle].includes(el.value); });
   view.querySelectorAll('[data-ab]').forEach((el) => el.classList.toggle('locked', !p.abilities.includes(el.dataset.ab)));
   view.querySelectorAll('[data-bool]').forEach((el) => { el.checked = !!p[el.dataset.bool]; });
@@ -464,6 +584,7 @@ $('#sheet-view').addEventListener('focusout', () => setTimeout(() => { if (vital
     const [c, shop] = await Promise.all([api('GET', null, '?view=catalog', '/api/shop'), api('GET', null, '?view=player', '/api/shop')]);
     catalog = [...c.catalog, ...(shop.custom || [])];
   } catch { catalog = []; }
+  try { factions = (await api('GET', null, '?view=factions', '/api/npcs')).factions || []; } catch {}
   // Decoded frequencies from the Forstall notebook make handy suggestions for the sheet's Kz boxes.
   try {
     const scan = await api('GET', null, '?view=player');
