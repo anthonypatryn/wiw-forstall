@@ -1,5 +1,8 @@
-import { $, esc, api, startPolling, injectDefs, toast, mountNav, poolHTML, readPool, fillPool } from './common.js';
+import {
+  $, esc, api, startPolling, injectDefs, toast, mountNav, poolHTML, readPool, fillPool,
+} from './common.js';
 import { mountTableLog } from './tablelog.js';
+import { ICONS } from './icons.js';
 
 const EP = '/api/combat';
 injectDefs();
@@ -19,7 +22,6 @@ const TALENT_INFO = {
   Forstalls: 'sweeping & bursts', Mechs: 'attachable upgrades', 'Melee Weapons': 'incl. improvised', 'Mounted Weapons': 'incl. artillery',
   Pistols: 'simple & versatile', Rifles: 'accurate at Long Range', Shotguns: 'powerful at Short Range', Traps: 'incl. improvised',
 };
-
 // Status list exactly as printed on the official sheet: skill to relieve it + the short rule.
 const SHEET_STATUSES = [
   ['Afraid', 'CHA', 'Cannot move closer to source. Attack pools halved.'],
@@ -30,15 +32,17 @@ const SHEET_STATUSES = [
   ['Trapped', 'F/N', 'Cannot take the Move or Dodge Actions.'],
   ['Unconscious', 'INT', 'Cannot take Actions except to remove this Status.'],
 ];
-
-let meta = null;
-let data = null;
-let poller = null;
 // Reputation standing with its Charm modifier, as printed on the sheet.
 const REP_OPTIONS = [['Revered', 'Revered (+2B)'], ['Helpful', 'Helpful (+1B)'], ['Neutral', 'Neutral (+0B)'], ['Suspicious', 'Suspicious (−1B)'], ['Hostile', 'Hostile (−2B)']];
+// Weapon / gear kinds and the Talent that lets them reroll Spurs.
+const WEAPON_TALENT = { Rifles: 'Rifles', Shotguns: 'Shotguns', Pistols: 'Pistols', Bows: 'Bows', Melee: 'Melee Weapons', Mounted: 'Mounted Weapons' };
+const GEAR_TALENT = { 'First Aid': 'First Aid', Explosives: 'Explosives', Trap: 'Traps', Traps: 'Traps', Improvised: 'Traps', 'Mech Repair Kits': 'Mechs', 'Shields & Armor': 'Defense' };
+const GEAR_SUBS = ['First Aid', 'Explosives', 'Trap', 'Improvised', 'Mech Repair Kits', 'Special Ammo & Arrows', 'Shields & Armor', 'Batteries', 'Tools'];
+
+let meta = null, data = null, poller = null, catalog = [];
 let saveField = () => {};   // set per sheet in buildSheet
-let vitalsStale = false;  // vitals skipped a redraw while someone typed there
-let builtFor = null;       // sheet id currently rendered
+let vitalsStale = false;    // vitals skipped a redraw while someone typed there
+let builtFor = null;        // sheet id currently rendered
 let chosenTrade = null;
 let kzOptions = [];
 
@@ -53,12 +57,15 @@ async function act(body, el) {
 const pcById = (id) => data?.posse.find((p) => p.id === id);
 const get = (obj, path) => path.split('.').reduce((o, k) => (o == null ? o : o[k]), obj);
 const isPool = (s) => /^(\d+[BG])+$/i.test(String(s || '').replace(/\s+/g, ''));
+const firstPool = (s) => (String(s || '').toUpperCase().match(/(?:\d+[BG])+/) || [''])[0];
+const itemById = (id) => catalog.find((i) => i.id === id);
 
 // ---------- roster ----------
 function renderList() {
   const roster = $('#roster');
   roster.innerHTML = data.posse.length ? data.posse.map((p) => `
     <a class="pc-tile${p.dead ? ' dead' : ''}" href="#${p.id}">
+      <img class="pc-face" src="/img/tokens/trade-${p.trade.toLowerCase()}.webp" alt="">
       <div class="t">THE ${esc(p.trade.toUpperCase())}${p.dead ? ' · FALLEN' : ''}</div>
       <div class="n">${esc(p.name)}</div>
       <div class="hp"><span class="bar"><i style="width:${Math.min(100, (p.health / Math.max(1, p.maxHealth)) * 100)}%"></i></span><span class="num">${p.health}/${p.maxHealth}</span></div>
@@ -68,7 +75,7 @@ function renderList() {
   if (!pick.dataset.ready) {
     pick.dataset.ready = '1';
     pick.innerHTML = Object.entries(meta.trades).map(([name, t]) =>
-      `<button type="button" data-trade="${name}" aria-pressed="false">${name}<small>${esc(t.abilities[0].name)} · ${esc(t.aces[0].name)}</small></button>`).join('');
+      `<button type="button" data-trade="${name}" aria-pressed="false"><img src="/img/tokens/trade-${name.toLowerCase()}.webp" alt="">${name}<small>${esc(t.abilities[0].name)} · ${esc(t.aces[0].name)}</small></button>`).join('');
     pick.querySelectorAll('[data-trade]').forEach((b) => b.addEventListener('click', () => {
       chosenTrade = b.dataset.trade;
       pick.querySelectorAll('[data-trade]').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
@@ -84,103 +91,129 @@ $('#new-pc').addEventListener('submit', async (e) => {
   if (sheet?.id) { $('#new-name').value = ''; location.hash = sheet.id; }
 });
 
-// ---------- sheet ----------
-const inp = (path, label, opts = {}) => `<label class="f"${opts.style ? ` style="${opts.style}"` : ''}>${label}
+// ---------- small builders ----------
+const spurIcon = `<svg viewBox="0 0 100 100" aria-hidden="true"><path fill="currentColor" d="${ICONS.spur}"/></svg>`;
+// The sheet's Spur box: ticking it = having that Talent (rerolls Spurs on those rolls).
+const spurBox = (talent, extra = '') => talent
+  ? `<button type="button" class="spur" data-spur="${esc(talent)}" title="Talent: ${esc(talent)} — reroll Spurs" aria-label="${esc(talent)} Talent"${extra}>${spurIcon}</button>`
+  : `<span class="spur off" title="Pick an item first">${spurIcon}</span>`;
+const inp = (path, label, opts = {}) => `<label class="f${opts.cls ? ' ' + opts.cls : ''}">${label ? `<span>${label}</span>` : ''}
   ${opts.type === 'select' ? `<select data-path="${path}">${opts.options.map((o) => (Array.isArray(o)
       ? `<option value="${esc(o[0])}">${esc(o[1])}</option>` : `<option>${esc(o)}</option>`)).join('')}</select>`
     : opts.type === 'textarea' ? `<textarea data-path="${path}" maxlength="${opts.max || 3000}" placeholder="${esc(opts.ph || '')}"></textarea>`
     : `<input data-path="${path}" type="${opts.type || 'text'}" maxlength="${opts.max || 60}" placeholder="${esc(opts.ph || '')}"${opts.list ? ` list="${opts.list}"` : ''}>`}</label>`;
+const box = (title, sub, body, cls = '') => `<section class="sbox ${cls}"><h3><span>${title}</span></h3>${sub ? `<div class="sbox-sub">${sub}</div>` : ''}<div class="sbox-in">${body}</div></section>`;
+const pick = (kind, i, groups, placeholder) => `<select class="pick" data-pick="${kind}" data-i="${i}" aria-label="${placeholder}">
+  <option value="">${placeholder}</option>${groups.map(([g, list]) => `<optgroup label="${esc(g)}">${list.map((it) => `<option value="${esc(it.id)}">${esc(it.name)}${it.cost != null ? ` — $${it.cost.toFixed(2)}` : ''}</option>`).join('')}</optgroup>`).join('')}</select>`;
+const groupBy = (items, key = 'sub') => Object.entries(items.reduce((m, i) => ((m[i[key]] ||= []).push(i), m), {}));
 
+// ---------- sheet ----------
 function buildSheet(p) {
   const t = meta.trades[p.trade];
-  const weapons = [0, 1, 2].map((i) => `<div class="weapon">
-      <div class="fr">${inp(`weapons.${i}.manufacturer`, 'MANUFACTURER')}${inp(`weapons.${i}.model`, 'MODEL')}${inp(`weapons.${i}.slots`, 'UPGRADE SLOTS', { max: 4 })}${inp(`weapons.${i}.grit`, 'GRIT', { max: 4 })}</div>
-      <div class="ranges">${[['arms', "ARM’S REACH"], ['short', 'SHORT RANGE'], ['long', 'LONG RANGE']].map(([k, l]) =>
-        `<div class="range-in"><div class="f">${l}${poolHTML(`data-pool="weapons.${i}.${k}"`, l)}</div><button type="button" class="roll-mini" data-roll-path="weapons.${i}.${k}" data-roll-label="${l.toLowerCase()}" data-weapon="${i}">🎲</button></div>`).join('')}</div>
-      <div class="fr">${[0, 1, 2, 3].map((u) => inp(`weapons.${i}.upgrades.${u}`, `UPGRADE ${u + 1}`)).join('')}</div>
-      <div class="fr">${[0, 1].map((a) => inp(`weapons.${i}.ammo.${a}.name`, 'SP. AMMO') + inp(`weapons.${i}.ammo.${a}.rds`, 'RDS', { max: 6 })).join('')}</div>
-    </div>`).join('');
+  const weapons = catalog.filter((i) => i.cat === 'Weapons');
+  const gearItems = catalog.filter((i) => GEAR_SUBS.includes(i.sub) || i.cat === 'Traps');
+  const weaponGroups = groupBy(weapons);
+  const gearGroups = groupBy(gearItems);
+
+  const weapon = (i) => `<div class="weapon" data-w="${i}">
+      <div class="w-top">${pick('weapon', i, weaponGroups, '— pick a weapon from the store list —')}<span data-wspur="${i}"></span></div>
+      <div class="w-grid">
+        ${inp(`weapons.${i}.manufacturer`, 'Manufacturer')}${inp(`weapons.${i}.model`, 'Model')}
+        ${inp(`weapons.${i}.slots`, 'Upgrade slots', { max: 4, cls: 'narrow' })}${inp(`weapons.${i}.grit`, 'Grit', { max: 8, cls: 'narrow' })}
+      </div>
+      <div class="ranges">${[['arms', 'Arm’s Reach'], ['short', 'Short Range'], ['long', 'Long Range'], ['distant', 'Distant']].map(([k, l]) =>
+        `<div class="range-in"><span class="rl">${l}</span>${poolHTML(`data-pool="weapons.${i}.${k}"`, l)}<button type="button" class="roll-mini" data-roll-path="weapons.${i}.${k}" data-roll-label="${l.toLowerCase()}" data-weapon="${i}" aria-label="Roll ${l}">🎲</button></div>`).join('')}</div>
+      <div class="w-grid">${[0, 1, 2, 3].map((u) => inp(`weapons.${i}.upgrades.${u}`, `${u + 1}.`)).join('')}</div>
+      <div class="w-grid ammo">${[0, 1].map((a) => inp(`weapons.${i}.ammo.${a}.name`, 'Sp. Ammo') + inp(`weapons.${i}.ammo.${a}.rds`, 'rds', { max: 6, cls: 'narrow' })).join('')}</div>
+      <div class="w-info" data-winfo="${i}"></div>
+    </div>`;
 
   const abilities = t.abilities.map((a, i) => `<div class="ab" data-ab="${esc(a.name)}">
-      <div class="hd"><input type="checkbox" data-toggle="abilities" value="${esc(a.name)}" aria-label="Unlocked"><b>${esc(a.name)}</b><span class="cost">${i === 0 ? 'STARTING' : `${a.cost} PRESTIGE`}</span></div>
+      <div class="hd"><input type="checkbox" data-toggle="abilities" value="${esc(a.name)}" aria-label="Unlocked"><b>${esc(a.name)}</b>${i === 0 ? '<span class="cost">STARTING</span>' : `<span class="cost">${a.cost} PRESTIGE</span>`}</div>
       <p>${esc(a.text)}</p>
       ${/\(\d\/day\)/.test(a.text) ? `<div class="uses" data-uses="${esc(a.name)}"></div>` : ''}
     </div>`).join('');
-  const aces = t.aces.map((a, i) => `<div class="ab ace${i ? '' : ''}" ${i ? 'data-ace2' : ''}>
-      <div class="hd">${i ? '<input type="checkbox" data-bool="aceTwo" aria-label="Unlocked">' : ''}<b>${i ? 'ACE-IN-THE-HOLE 2' : 'ACE-IN-THE-HOLE'} · ${esc(a.name)}</b><span class="cost">${i ? '6 PRESTIGE' : 'STARTING'}</span></div>
-      <p>${esc(a.text)}</p></div>`).join('');
+  const aces = t.aces.map((a, i) => `<div class="ab ace" ${i ? 'data-ace2' : ''}>
+      <div class="hd">${i ? '<input type="checkbox" data-bool="aceTwo" aria-label="Unlocked">' : ''}<b>${i ? 'ACE-IN-THE-HOLE 2' : 'ACE-IN-THE-HOLE'}</b><span class="cost">${i ? '6 PRESTIGE' : 'STARTING'}</span></div>
+      <p><b>${esc(a.name)}.</b> ${esc(a.text)}</p></div>`).join('');
+
+  const gear = (i) => `<div class="gear" data-g="${i}">
+      <div class="w-top">${pick('gear', i, gearGroups, '— pick gear —')}<span data-gspur="${i}"></span></div>
+      <div class="w-grid">${inp(`gear.${i}.item`, 'Item')}${inp(`gear.${i}.type`, 'Type', { cls: 'narrow2' })}${inp(`gear.${i}.grit`, 'Grit', { max: 4, cls: 'narrow' })}</div>
+      <div class="g-row">${inp(`gear.${i}.notes`, 'Dice / effect')}<button type="button" class="roll-mini" data-gear-roll="${i}" aria-label="Roll this gear">🎲</button></div>
+      <div class="row2" data-dyn="gear-${i}"></div></div>`;
+
+  const forstalls = catalog.filter((i) => i.cat === 'Forstalls' && i.sub === 'Models' && i.sweep);
+  const mechs = catalog.filter((i) => i.cat === 'Mechs');
+  const horses = catalog.filter((i) => i.sub === 'Horse Breeds' || i.sub === 'Legendary Steeds');
 
   $('#sheet-view').innerHTML = `
-    <div class="sheet-top">
+    <div class="sheet-head">
       <a class="back" href="#">← The Posse</a>
-      <input class="sheet-name" data-path="name" maxlength="40" aria-label="Character name">
-      <span class="trade-badge">THE ${esc(p.trade.toUpperCase())}</span>
+      <div class="sh-trade"><small>THE</small>${esc(p.trade.toUpperCase())}</div>
+      <img class="sh-logo" src="/img/logo-light.svg" alt="Wild Imaginary West">
+      <label class="sh-name"><span>NAME</span><input class="sheet-name" data-path="name" maxlength="40" aria-label="Character name"></label>
+      <img class="sh-art" src="/img/trades/${p.trade.toLowerCase()}.webp" alt="The ${esc(p.trade)}">
     </div>
-    <div class="sheet-grid">
-      <section class="sec"><h3>SKILLS <small>practice &amp; master with Prestige</small></h3><div class="in">
-        ${Object.entries(SKILL_INFO).map(([k, [nm, ds]]) => `<div class="sk"><span class="nm">${nm}</span><span class="ds">${ds}</span>
-          ${poolHTML(`data-pool="skills.${k}"`, nm)}<button type="button" class="roll-mini" data-roll-path="skills.${k}" data-roll-label="${nm}" data-talent="${nm}">🎲 Roll</button></div>`).join('')}
-      </div></section>
-      <section class="sec"><h3>HEALTH &amp; GRIT <small>tracked live in Combat &amp; Dice</small></h3><div class="in" data-dyn="vitals"></div></section>
-      <section class="sec w12"><h3>ABILITIES <small>unlock with Prestige · tick the ones you have</small></h3><div class="in">
-        <div class="abgrid">${abilities}</div>
-        <div class="row2" data-dyn="aces"></div>
-        <div class="abgrid">${aces}</div>
-      </div></section>
-      <section class="sec w12"><h3>WEAPONS <small>each weapon has between 1–4 upgrade slots · 🎲 rolls that range’s dice</small></h3><div class="in">${weapons}</div></section>
 
-      <div class="page-label">— PAGE TWO —</div>
-      <section class="sec w4"><h3>PRESTIGE <small>fame &amp; progression</small></h3><div class="in">
-        <div class="fr">${inp('prestige.total', 'TOTAL', { type: 'number' })}${inp('prestige.unclaimed', 'UNCLAIMED', { type: 'number' })}</div>
+    <div class="sheet page1">
+      ${box('SKILLS', 'practice &amp; master with Prestige', Object.entries(SKILL_INFO).map(([k, [nm, ds]]) => `<div class="sk">
+          ${spurBox(nm)}<div class="sk-name"><b>${nm}</b><small>${ds}</small><em>quick-build: assign ${esc(t.quickBuild[k])}</em></div>
+          ${poolHTML(`data-pool="skills.${k}"`, nm)}<button type="button" class="roll-mini" data-roll-path="skills.${k}" data-roll-label="${nm}" data-talent="${nm}" aria-label="Roll ${nm}">🎲</button></div>`).join(''), 'skills')}
+      ${box('HEALTH', 'increase max Health with Prestige', '<div data-dyn="vitals"></div>', 'health')}
+      ${box('STATUSES', 'relieved by rolling with the associated Skill', '<div data-dyn="statuses"></div>', 'statuses')}
+      ${box('WEAPONS', 'each weapon has between 1–4 upgrade slots', [0, 1, 2].map(weapon).join(''), 'weapons')}
+      ${box('ABILITIES', 'abilities can be used freely unless otherwise specified', `<div class="abgrid">${abilities}</div>
+          <div class="row2 aces" data-dyn="aces"></div><div class="abgrid">${aces}</div>`, 'abilities')}
+    </div>
+
+    <div class="page-label">— PAGE TWO —</div>
+    <div class="sheet page2">
+      ${box('PRESTIGE', 'fame &amp; progression', `<div class="w-grid">${inp('prestige.total', 'Total', { type: 'number' })}${inp('prestige.unclaimed', 'Unclaimed', { type: 'number' })}</div>
         <ul class="prestige-ref">
-          <li><b>2</b> Practice Skill — swap one Black die for Gold</li>
-          <li><b>2</b> Increase Health — +1 max Health (max 5 times)</li>
-          <li><b>4</b> Develop Talent — reroll Spurs with a Talent</li>
-          <li><b>4</b> Unlock Ability — a new Trade ability</li>
-          <li><b>6</b> Master Skill — +1B to a Skill (max 3 times)</li>
-          <li><b>6</b> Ace-in-the-Hole! 2</li>
-        </ul>
-      </div></section>
-      <section class="sec w8"><h3>TALENTS <small>reroll Spurs when using marked items</small></h3><div class="in"><div class="talents">
-        ${meta.talents.map((tl) => `<label><input type="checkbox" data-toggle="talents" value="${esc(tl)}"><span>${esc(tl)} <small>(${esc(TALENT_INFO[tl] || '')})</small></span></label>`).join('')}
-      </div></div></section>
-      <section class="sec"><h3>REPUTATION <small>alters Charm rolls made against a faction</small></h3><div class="in">
-        ${[0, 1, 2, 3].map((i) => `<div class="rep">${inp(`reputation.${i}.faction`, 'FACTION')}${inp(`reputation.${i}.level`, 'STANDING', { type: 'select', options: REP_OPTIONS })}</div>`).join('')}
-      </div></section>
-      <section class="sec"><h3>GEAR ITEMS <small>first aid, explosives, &amp; traps</small></h3><div class="in">
-        ${[0, 1, 2].map((i) => `<div class="weapon"><div class="fr">${inp(`gear.${i}.item`, 'ITEM')}${inp(`gear.${i}.type`, 'TYPE')}${inp(`gear.${i}.grit`, 'GRIT', { max: 4 })}</div>
-          ${inp(`gear.${i}.notes`, 'DICE / NOTES')}<div class="row2" data-dyn="gear-${i}"></div></div>`).join('')}
-      </div></section>
-      <section class="sec"><h3>FORSTALL <small>emits energy waves that disturb &amp; repel monsters</small></h3><div class="in">
-        <div class="fr">${inp('forstall.model', 'MODEL')}${inp('forstall.slots', 'UPGRADE SLOTS', { max: 4 })}${inp('forstall.range', 'RANGE')}${inp('forstall.grit', 'GRIT', { max: 4 })}${inp('forstall.duration', 'DURATION (HRS)', { max: 6 })}</div>
-        <div class="row2" data-dyn="charges"></div>
-        <div class="fr">${[0, 1, 2, 3].map((u) => inp(`forstall.upgrades.${u}`, `UPGRADE ${u + 1}`)).join('')}</div>
-        <div class="fr">${[0, 1, 2, 3].map((u) => inp(`forstall.kz.${u}`, 'KURTZ FREQUENCY (KZ)', { list: 'kz-list', ph: '0-0-0000' })).join('')}</div>
-        <datalist id="kz-list"></datalist>
-      </div></section>
-      <section class="sec"><h3>HORSE <small>you’re only as good as your loyal steed</small></h3><div class="in">
-        <div class="fr">${inp('horse.name', 'NAME')}${inp('horse.breed', 'BREED')}${inp('horse.breakingPoint', 'BREAKING POINT')}</div>
-        <div class="fr">${inp('horse.maxHealth', 'MAX HEALTH', { max: 4 })}${inp('horse.health', 'HEALTH', { max: 4 })}${inp('horse.bond', 'BOND', { type: 'select', options: meta.reputationLevels })}</div>
-        ${inp('horse.breedAbility', 'BREED ABILITY', { max: 300 })}${inp('horse.disposition', 'DISPOSITION', { max: 300 })}${inp('horse.appearance', 'APPEARANCE', { max: 300 })}
-      </div></section>
-      <section class="sec"><h3>MECH <small>carts, wagons, &amp; cabins given a new life</small></h3><div class="in">
-        <div class="fr">${inp('mech.class', 'CLASS')}${inp('mech.slots', 'UPGRADE SLOTS', { max: 4 })}${inp('mech.speed', 'SPEED')}</div>
-        <div class="fr">${inp('mech.maxHealth', 'MAX HEALTH', { max: 4 })}${inp('mech.health', 'HEALTH', { max: 4 })}<div class="f">DEFENSE${poolHTML('data-pool="mech.defense"', 'Mech defense')}</div>${inp('mech.state', 'CONDITION', { type: 'select', options: meta.mechStates })}</div>
-        <div class="fr">${inp('mech.supplies', 'SUPPLY SLOTS')}${inp('mech.cover', 'PLAYER COVER')}</div>
-        <div class="fr">${[0, 1, 2, 3].map((u) => inp(`mech.upgrades.${u}`, `UPGRADE ${u + 1}`)).join('')}</div>
-      </div></section>
-      <section class="sec"><h3>INVENTORY <small>loot, trophies, &amp; additional items</small></h3><div class="in">
-        <div class="fr">${inp('wallet', 'WALLET $', { max: 20 })}${inp('scrap', 'SCRAP (PCS)', { max: 20 })}${inp('supplies', 'SUPPLIES', { max: 20 })}</div>
-        ${inp('inventory', 'ITEMS', { type: 'textarea' })}
-      </div></section>
-      <section class="sec"><h3>WHO THEY ARE</h3><div class="in">
-        ${inp('disposition', 'DISPOSITION — ATTITUDE, WORRIES, & WISHES', { type: 'textarea', max: 1000 })}
-        ${inp('appearance', 'APPEARANCE — AGE, BUILD, & ATTIRE', { type: 'textarea', max: 1000 })}
-      </div></section>
-      <section class="sec w12"><h3>HISTORY <small>how your legend began</small></h3><div class="in">${inp('history', '', { type: 'textarea' })}</div></section>
+          <li><b>2</b> Practice Skill — swap one Black die for Gold</li><li><b>2</b> Increase Health — +1 max Health (max 5 times)</li>
+          <li><b>4</b> Develop Talent — reroll Spurs with a Talent</li><li><b>4</b> Unlock Ability — a new Trade ability</li>
+          <li><b>6</b> Master Skill — +1B to a Skill (max 3 times)</li><li><b>6</b> Ace-in-the-Hole! 2</li></ul>`, 'prestige')}
+      ${box('TALENTS', 'reroll Spurs when using marked items', `<div class="talents">${meta.talents.map((tl) =>
+          `<label><input type="checkbox" data-toggle="talents" value="${esc(tl)}"><span>${esc(tl)} <small>(${esc(TALENT_INFO[tl] || '')})</small></span></label>`).join('')}</div>`, 'talents')}
+      ${box('DISPOSITION', 'attitude, worries, &amp; wishes', inp('disposition', '', { type: 'textarea', max: 1000 }), 'disposition')}
+      ${box('APPEARANCE', 'age, build, &amp; attire', inp('appearance', '', { type: 'textarea', max: 1000 }), 'appearance')}
+      ${box('REPUTATION', 'alters Charm rolls made against a faction', `<div class="reps">${[0, 1, 2, 3].map((i) =>
+          `<div class="rep">${inp(`reputation.${i}.faction`, 'Faction')}${inp(`reputation.${i}.level`, '', { type: 'select', options: REP_OPTIONS })}</div>`).join('')}</div>`, 'reputation')}
+      ${box('HISTORY', 'how your legend began', inp('history', '', { type: 'textarea' }), 'history')}
+      ${box('GEAR ITEMS', 'first aid, explosives, &amp; traps', [0, 1, 2].map(gear).join(''), 'gear')}
+      ${box('INVENTORY', 'loot, trophies, &amp; additional items', `
+          <div class="w-grid">${inp('wallet', 'Wallet $', { max: 20 })}${inp('scrap', 'Scrap (pcs)', { max: 20 })}${inp('supplies', 'Supplies', { max: 20 })}</div>
+          <div data-dyn="items"></div>${inp('inventory', 'Other items', { type: 'textarea' })}`, 'inventory')}
+      ${box('FORSTALL', 'emits energy waves that disturb &amp; repel monstrous creatures', `
+          <div class="w-top">${pick('forstall', 0, [['Forstall models', forstalls]], '— pick a model —')}${spurBox('Forstalls')}</div>
+          <div class="w-grid">${inp('forstall.model', 'Model')}${inp('forstall.slots', 'Total upgrade slots', { max: 4, cls: 'narrow2' })}${inp('forstall.range', 'Range', { cls: 'narrow2' })}</div>
+          <div class="w-grid">${inp('forstall.grit', 'Grit', { max: 4, cls: 'narrow' })}${inp('forstall.duration', 'Duration (hrs)', { max: 6, cls: 'narrow2' })}
+            <div class="range-in"><span class="rl">Sweep</span>${poolHTML('data-pool="forstall.sweep"', 'Sweep')}<button type="button" class="roll-mini" data-roll-path="forstall.sweep" data-roll-label="Forstall Sweep" data-talent="Forstalls" aria-label="Roll Sweep">🎲</button></div></div>
+          <div class="row2" data-dyn="charges"></div>
+          <div class="w-grid">${[0, 1, 2, 3].map((u) => inp(`forstall.upgrades.${u}`, `${u + 1}.`)).join('')}</div>
+          <div class="w-grid">${[0, 1, 2, 3].map((u) => inp(`forstall.kz.${u}`, 'Kurtz Frequency (Kz)', { list: 'kz-list', ph: '0-0-0000' })).join('')}</div>
+          <datalist id="kz-list"></datalist>`, 'forstall')}
+      ${box('HORSE', 'you’re only as good as your loyal steed', `
+          <div class="w-top">${pick('horse', 0, [['Horse breeds', horses]], '— pick a breed —')}</div>
+          <div class="w-grid">${inp('horse.name', 'Name')}${inp('horse.breed', 'Breed')}${inp('horse.breakingPoint', 'Breaking point', { cls: 'narrow2' })}</div>
+          <div class="w-grid">${inp('horse.maxHealth', 'Max health', { max: 4, cls: 'narrow' })}${inp('horse.health', 'Health', { max: 4, cls: 'narrow' })}${inp('horse.bond', 'Bond', { type: 'select', options: meta.reputationLevels })}</div>
+          ${inp('horse.breedAbility', 'Breed ability', { max: 300 })}${inp('horse.disposition', 'Disposition', { max: 300 })}${inp('horse.appearance', 'Appearance', { max: 300 })}`, 'horse')}
+      ${box('MECH', 'carts, wagons, &amp; cabins given the chance at a new life', `
+          <div class="w-top">${pick('mech', 0, [['Mech classes', mechs]], '— pick a class —')}${spurBox('Mechs')}</div>
+          <div class="w-grid">${inp('mech.class', 'Class')}${inp('mech.slots', 'Upgrade slots', { max: 4, cls: 'narrow2' })}${inp('mech.speed', 'Speed', { cls: 'narrow2' })}</div>
+          <div class="w-grid">${inp('mech.maxHealth', 'Max health', { max: 4, cls: 'narrow' })}${inp('mech.health', 'Health', { max: 4, cls: 'narrow' })}
+            ${inp('mech.state', 'Condition', { type: 'select', options: meta.mechStates })}</div>
+          <div class="range-in mech-def"><span class="rl">Defense</span>${poolHTML('data-pool="mech.defense"', 'Mech defense')}<button type="button" class="roll-mini" data-roll-path="mech.defense" data-roll-label="Mech Defense" data-talent="Mechs" aria-label="Roll mech defense">🎲</button></div>
+          <div class="w-grid">${inp('mech.supplies', 'Supply slots', { cls: 'narrow2' })}${inp('mech.cover', 'Player cover', { cls: 'narrow2' })}</div>
+          <div class="w-grid">${[0, 1, 2, 3].map((u) => inp(`mech.upgrades.${u}`, `${u + 1}.`)).join('')}</div>`, 'mech')}
     </div>
     <div class="danger-zone"><button class="btn small secondary danger" id="delete-pc" type="button">Delete this character</button></div>`;
 
+  wireSheet(p);
+}
+
+function wireSheet(p) {
   const view = $('#sheet-view');
   const timers = new Map();
   saveField = (path, value, el) => {
@@ -192,98 +225,182 @@ function buildSheet(p) {
   const fieldValue = (el) => {
     const dp = el.closest('.dp[data-pool]');
     if (dp) return { path: dp.dataset.pool, value: readPool(dp) };
-    if (el.dataset.path) return { path: el.dataset.path, value: el.type === 'number' ? Number(el.value) : el.value };
-    if (el.dataset.vpath) return { path: el.dataset.vpath, value: el.type === 'number' ? Number(el.value) : el.value };
+    const path = el.dataset.path || el.dataset.vpath;
+    if (path) return { path, value: el.type === 'number' ? Number(el.value) : el.value };
     return null;
   };
   view.addEventListener('input', (e) => {
     const f = fieldValue(e.target);
-    if (!f || e.target.type === 'checkbox') return;
+    if (!f || e.target.type === 'checkbox' || e.target.tagName === 'SELECT') return;
     clearTimeout(timers.get(f.path));
     timers.set(f.path, setTimeout(() => saveField(f.path, fieldValue(e.target).value, e.target), 600));
   });
   view.addEventListener('change', (e) => {
+    if (e.target.matches('.pick')) return pickItem(p, e.target);
     const f = fieldValue(e.target);
     if (f && e.target.type !== 'checkbox') saveField(f.path, f.value, e.target);
   });
+  view.addEventListener('click', (e) => {
+    const s = e.target.closest('[data-spur]');
+    if (s) act({ action: 'sheet', id: p.id, list: 'talents', item: s.dataset.spur });
+  });
   view.querySelectorAll('[data-toggle]').forEach((el) => el.addEventListener('change', () => act({ action: 'sheet', id: p.id, list: el.dataset.toggle, item: el.value })));
   view.querySelectorAll('[data-bool]').forEach((el) => el.addEventListener('change', () => act({ action: 'sheet', id: p.id, path: el.dataset.bool, value: el.checked })));
-  view.querySelectorAll('[data-roll-path]').forEach((b) => b.addEventListener('click', async () => {
+
+  // rolls: always use the dice on screen (and save them), with Spur rerolls from the linked Talent
+  view.addEventListener('click', async (e) => {
+    const b = e.target.closest('[data-roll-path], [data-gear-roll]');
+    if (!b) return;
     const pc = pcById(p.id);
-    const dp = b.parentElement.querySelector(`.dp[data-pool="${b.dataset.rollPath}"]`);
-    const pool = dp ? readPool(dp) : get(pc, b.dataset.rollPath);
+    let pool, label, talent = b.dataset.talent;
+    if (b.dataset.gearRoll !== undefined) {
+      const g = pc.gear[b.dataset.gearRoll];
+      pool = firstPool(b.closest('.g-row').querySelector('input').value);
+      label = g.item || 'Gear';
+      talent = GEAR_TALENT[g.type] || null;
+    } else {
+      const dp = b.parentElement.querySelector(`.dp[data-pool="${b.dataset.rollPath}"]`);
+      pool = dp ? readPool(dp) : get(pc, b.dataset.rollPath);
+      if (dp && pool !== String(get(pc, b.dataset.rollPath) || '').toUpperCase()) saveField(dp.dataset.pool, pool, null);
+      const w = b.dataset.weapon !== undefined ? pc.weapons[b.dataset.weapon] : null;
+      label = w ? `${w.model || w.manufacturer || 'Weapon'} — ${b.dataset.rollLabel}` : b.dataset.rollLabel;
+      if (w) talent = weaponTalent(w);
+    }
     if (!isPool(pool)) return toast('Set how many Black and Gold dice first.', true);
-    if (dp && pool !== String(get(pc, b.dataset.rollPath) || '').toUpperCase()) saveField(dp.dataset.pool, pool, null);
-    const weapon = b.dataset.weapon !== undefined ? pc.weapons[b.dataset.weapon] : null;
-    const label = weapon ? `${weapon.model || weapon.manufacturer || 'Weapon'} — ${b.dataset.rollLabel}` : b.dataset.rollLabel;
-    const r = await act({ action: 'roll', who: pc.id, pool, label, spur: b.dataset.talent ? pc.talents.includes(b.dataset.talent) : false });
-    if (r?.hits !== undefined) toast(`${label}: ${r.hits} hit${r.hits === 1 ? '' : 's'}${r.aces ? ` (${r.aces} Ace${r.aces > 1 ? 's' : ''})` : ''} — it’s in the Table Log.`);
-  }));
+    const spur = !!talent && pc.talents.includes(talent);
+    const r = await act({ action: 'roll', who: pc.id, pool, label, spur });
+    if (r?.hits !== undefined) toast(`${label}: ${r.hits} hit${r.hits === 1 ? '' : 's'}${r.aces ? ` (${r.aces} Ace${r.aces > 1 ? 's' : ''})` : ''}${spur ? ' · Spurs rerolled' : ''} — it’s in the Table Log.`);
+  });
+
   $('#delete-pc').addEventListener('click', async () => {
     if (!confirm(`Delete ${pcById(p.id).name}’s sheet for everyone? This can’t be undone.`)) return;
     if (await act({ action: 'pc', id: p.id, op: 'remove' })) location.hash = '';
   });
 }
 
+const weaponTalent = (w) => {
+  const it = w.itemId && itemById(w.itemId);
+  return WEAPON_TALENT[it?.sub] || (Object.values(WEAPON_TALENT).includes(w.type) ? w.type : null);
+};
+
+// Picking from a dropdown fills the matching section in one save.
+function pickItem(p, sel) {
+  const it = itemById(sel.value);
+  const i = sel.dataset.i;
+  if (!it) return;
+  const f = {};
+  const set = (path, v) => { f[path] = v == null ? '' : v; };
+  const pool = (v) => (isPool(v) ? String(v).toUpperCase() : '');
+  if (sel.dataset.pick === 'weapon') {
+    const [manu, ...rest] = it.name.includes(' - ') ? it.name.split(' - ') : ['', it.name];
+    set(`weapons.${i}.itemId`, it.id); set(`weapons.${i}.type`, WEAPON_TALENT[it.sub] || it.sub || '');
+    set(`weapons.${i}.manufacturer`, manu.trim()); set(`weapons.${i}.model`, rest.join(' - ').trim() || it.name);
+    set(`weapons.${i}.slots`, it.slots != null ? String(it.slots) : ''); set(`weapons.${i}.grit`, it.grit2 ? `${it.grit} | ${it.grit2}` : String(it.grit ?? ''));
+    ['arms', 'short', 'long', 'distant'].forEach((k) => set(`weapons.${i}.${k}`, pool(it[k])));
+  } else if (sel.dataset.pick === 'gear') {
+    const notes = [it.benefit, it.effect, it.pool && `Roll ${it.pool}`, it.arms && `Arm’s Reach: ${it.arms}`, it.short && `Short: ${it.short}`, it.defense && `Defense ${it.defense}`].filter(Boolean).join(' · ').slice(0, 80);
+    set(`gear.${i}.itemId`, it.id); set(`gear.${i}.item`, it.name.slice(0, 80)); set(`gear.${i}.type`, it.sub === 'Trap' ? 'Trap' : it.sub);
+    set(`gear.${i}.grit`, String(it.grit ?? '')); set(`gear.${i}.notes`, notes);
+  } else if (sel.dataset.pick === 'forstall') {
+    set('forstall.itemId', it.id); set('forstall.model', it.name); set('forstall.slots', String(it.slots ?? '')); set('forstall.range', it.range || '');
+    set('forstall.grit', String(it.grit ?? '')); set('forstall.duration', (it.duration || '').replace(/\s*hours?/, '')); set('forstall.sweep', pool(it.sweep));
+  } else if (sel.dataset.pick === 'mech') {
+    set('mech.itemId', it.id); set('mech.class', it.name.replace(/ Mech$/, '')); set('mech.slots', String(it.slots ?? '')); set('mech.speed', it.speed || '');
+    set('mech.maxHealth', String(it.health ?? '')); set('mech.health', String(it.health ?? '')); set('mech.defense', pool(it.defense));
+    set('mech.supplies', String(it.supply ?? '')); set('mech.cover', it.cover || '');
+  } else if (sel.dataset.pick === 'horse') {
+    set('horse.itemId', it.id); set('horse.breed', it.name); set('horse.breakingPoint', String(it.breaking ?? '')); set('horse.breedAbility', it.bond || '');
+    set('horse.maxHealth', '12'); set('horse.health', '12');
+  }
+  sel.value = '';
+  act({ action: 'sheet', id: p.id, fields: f }).then((ok) => ok && toast(`${it.name} filled in.`));
+}
+
 const pipRow = (label, n, max, attr) => `<span class="lbl">${label}</span><span class="pips">${Array.from({ length: max }, (_, i) =>
   `<button type="button" class="pip${attr === 'aces' ? ' ace' : ''}${i < n ? ' on' : ''}" data-${attr}="${i + 1}" aria-label="${label} ${i + 1}"></button>`).join('')}</span>`;
 const nextVal = (b, n) => (b.classList.contains('on') && !b.nextElementSibling?.classList.contains('on') ? n - 1 : n);
 
+// Revolver cylinder for Grit, like the sheet: six chambers, loaded = Grit left.
+function cylinder(grit) {
+  const ch = Array.from({ length: 6 }, (_, i) => {
+    const a = (Math.PI * 2 * i) / 6 - Math.PI / 2, x = 50 + Math.cos(a) * 29, y = 50 + Math.sin(a) * 29;
+    return `<g class="chamber${i < grit ? ' on' : ''}" data-grit="${i + 1}" role="button" tabindex="0" aria-label="${i + 1} Grit"><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="12"/><text x="${x.toFixed(1)}" y="${(y + 4).toFixed(1)}">${i + 1}</text></g>`;
+  }).join('');
+  return `<svg class="cyl" viewBox="0 0 100 100" aria-label="Grit ${grit} of 6"><circle class="cyl-body" cx="50" cy="50" r="47"/><circle class="cyl-hub" cx="50" cy="50" r="8"/>${ch}</svg>`;
+}
+
 // Re-render the live bits (and fill inputs nobody is typing in).
 function hydrate(p) {
   const view = $('#sheet-view');
-  view.querySelectorAll('[data-path]').forEach((el) => {
+  view.querySelectorAll('[data-path]').forEach((el) => { if (el !== document.activeElement) el.value = get(p, el.dataset.path) ?? ''; });
+  view.querySelectorAll('select.pick').forEach((el) => {
     if (el === document.activeElement) return;
-    const v = get(p, el.dataset.path);
-    el.value = v ?? '';
+    const k = el.dataset.pick;
+    const id = k === 'weapon' ? p.weapons[el.dataset.i]?.itemId : k === 'gear' ? p.gear[el.dataset.i]?.itemId : p[k]?.itemId;
+    el.value = id && el.querySelector(`option[value="${CSS.escape(id)}"]`) ? id : '';
   });
   view.querySelectorAll('[data-toggle]').forEach((el) => { el.checked = p[el.dataset.toggle].includes(el.value); });
   view.querySelectorAll('[data-ab]').forEach((el) => el.classList.toggle('locked', !p.abilities.includes(el.dataset.ab)));
   view.querySelectorAll('[data-bool]').forEach((el) => { el.checked = !!p[el.dataset.bool]; });
   view.querySelector('[data-ace2]')?.classList.toggle('locked', !p.aceTwo);
-
   const send = (o) => act({ action: 'pc', id: p.id, ...o });
+
+  // weapon & gear Spur boxes follow each item's Talent
+  p.weapons.forEach((w, i) => {
+    const t = weaponTalent(w);
+    view.querySelector(`[data-wspur="${i}"]`).innerHTML = spurBox(t);
+    const it = w.itemId && itemById(w.itemId);
+    view.querySelector(`[data-winfo="${i}"]`).innerHTML = it ? `${it.quality ? `<span class="q ${esc(it.quality)}">${esc(it.quality.toUpperCase())}</span> ` : ''}${it.note ? esc(it.note) : ''} <span class="muted">Guidebook p. ${it.page ?? '—'}</span>` : '';
+  });
+  p.gear.forEach((g, i) => { view.querySelector(`[data-gspur="${i}"]`).innerHTML = spurBox(GEAR_TALENT[g.type] || null); });
+  view.querySelectorAll('.spur[data-spur]').forEach((b) => b.classList.toggle('on', p.talents.includes(b.dataset.spur)));
+
   const vitals = view.querySelector('[data-dyn="vitals"]');
-  // Only hold off re-rendering while someone is typing in a box (checkbox/button focus doesn't count).
   const typing = vitals.contains(document.activeElement) && document.activeElement.matches('input:not([type=checkbox]), textarea, select');
   const pct = Math.max(0, Math.min(100, (p.health / Math.max(1, p.maxHealth)) * 100));
   if (typing) {
     vitalsStale = true;
     vitals.querySelector('.bar i').style.width = `${pct}%`;
-    vitals.querySelector('.hp .num').textContent = `${p.health}/${p.maxHealth}`;
+    vitals.querySelector('.hp-big').textContent = p.health;
   } else {
     vitalsStale = false;
     vitals.innerHTML = `
-      <div class="hp"><span class="lbl">HEALTH</span><span class="bar"><i style="width:${pct}%"></i></span><span class="num">${p.health}/${p.maxHealth}</span>
-        <span class="pm"><button type="button" data-hp="-1" aria-label="Lose 1 Health">−</button><button type="button" data-hp="1" aria-label="Gain 1 Health">+</button></span></div>
-      <div class="fr"><label class="f">MAX HEALTH<input data-vpath="maxHealth" type="number" min="1" max="99" value="${p.maxHealth}"></label>
-        <div class="f">DEFENSE${poolHTML('data-pool="defense"', 'Defense')}</div></div>
-      <div class="row2">${pipRow('GRIT', p.grit, Math.max(6, p.grit), 'grit')}</div>
-      <div class="status-list"><div class="lbl">STATUSES <span class="muted">— relieved by rolling with the associated Skill</span></div>
-        ${SHEET_STATUSES.map(([s, sk, txt]) => { const v = p.statuses?.[s] || 0; return `<div class="st-row${v ? ' on' : ''}">
-          <label class="st-check"><input type="checkbox" data-stc="${s}"${v ? ' checked' : ''}><span class="st-sk">${sk}</span><b>${s}</b></label>
-          <span class="st-desc">${esc(txt)}</span>
-          <span class="sev">${v ? `<button type="button" data-st="${s}" data-v="${v - 1}" aria-label="Lower ${s}">−</button><b title="Severity">${v}</b><button type="button" data-st="${s}" data-v="${v + 1}" aria-label="Raise ${s}">+</button>` : ''}</span>
-        </div>`; }).join('')}
-      </div>
+      <div class="hp-top"><label class="f narrow"><span>max</span><input data-vpath="maxHealth" type="number" min="1" max="99" value="${p.maxHealth}"></label>
+        <div class="hp-mid"><button type="button" class="pmb" data-hp="-1" aria-label="Lose 1 Health">−</button><span class="hp-big">${p.health}</span><button type="button" class="pmb" data-hp="1" aria-label="Gain 1 Health">+</button></div>
+        <div class="f narrow"><span>def</span>${poolHTML('data-pool="defense"', 'Defense')}</div></div>
+      <div class="hp"><span class="bar"><i style="width:${pct}%"></i></span></div>
+      <div class="def-spur">${spurBox('Defense')}<span class="muted">Defense Talent (dodge &amp; cover)</span></div>
+      <h4>GRIT <small>action points reload on your next turn</small></h4>
+      ${cylinder(p.grit)}
       ${p.bleeding ? '<p class="bleed"><b>BLEEDING OUT</b> — handle it on the Combat &amp; Dice page.</p>' : ''}
       ${p.dead ? '<p class="bleed"><b>FALLEN</b></p>' : ''}
-      <div><button class="btn small secondary" type="button" data-rest>🔥 Rest at camp / town</button> <span class="muted" style="font-size:13px">full Health, clear Statuses, reset Ace meter</span></div>`;
+      <button class="btn small secondary rest" type="button" data-rest>🔥 Rest at camp / town</button>`;
     vitals.querySelectorAll('[data-hp]').forEach((b) => b.addEventListener('click', () => send({ op: 'health', delta: Number(b.dataset.hp) })));
-    vitals.querySelectorAll('[data-grit]').forEach((b) => b.addEventListener('click', () => send({ op: 'grit', value: nextVal(b, Number(b.dataset.grit)) })));
-    vitals.querySelectorAll('[data-st]').forEach((b) => b.addEventListener('click', () => send({ op: 'status', status: b.dataset.st, value: Number(b.dataset.v) })));
-    vitals.querySelectorAll('[data-stc]').forEach((c) => c.addEventListener('change', () => send({ op: 'status', status: c.dataset.stc, value: c.checked ? 1 : 0 })));
+    vitals.querySelectorAll('[data-grit]').forEach((g) => {
+      const go = () => send({ op: 'grit', value: g.classList.contains('on') && Number(g.dataset.grit) === p.grit ? p.grit - 1 : Number(g.dataset.grit) });
+      g.addEventListener('click', go);
+      g.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); } });
+    });
     vitals.querySelector('[data-rest]').addEventListener('click', () => { if (confirm('Rest up? Health refills, Statuses clear, Ace meter resets.')) send({ op: 'rest' }); });
   }
+  vitals.querySelectorAll('.spur[data-spur]').forEach((b) => b.classList.toggle('on', p.talents.includes(b.dataset.spur)));
+
+  const stBox = view.querySelector('[data-dyn="statuses"]');
+  stBox.innerHTML = SHEET_STATUSES.map(([s, sk, txt]) => { const v = p.statuses?.[s] || 0; return `<div class="st-row${v ? ' on' : ''}">
+      <label class="st-check"><span class="st-sk">${sk}</span><input type="checkbox" data-stc="${s}"${v ? ' checked' : ''}><b>${s}</b></label>
+      <span class="st-desc">${esc(txt)}</span>
+      <span class="sev">${v ? `<button type="button" data-st="${s}" data-v="${v - 1}" aria-label="Lower ${s}">−</button><b title="Severity">${v}</b><button type="button" data-st="${s}" data-v="${v + 1}" aria-label="Raise ${s}">+</button>` : ''}</span>
+    </div>`; }).join('');
+  stBox.querySelectorAll('[data-st]').forEach((b) => b.addEventListener('click', () => send({ op: 'status', status: b.dataset.st, value: Number(b.dataset.v) })));
+  stBox.querySelectorAll('[data-stc]').forEach((c) => c.addEventListener('change', () => send({ op: 'status', status: c.dataset.stc, value: c.checked ? 1 : 0 })));
 
   const aces = view.querySelector('[data-dyn="aces"]');
   aces.innerHTML = `${pipRow('ACES', p.aces, 6, 'aces')}<span class="muted" style="font-size:14px">${p.aces >= 6 ? 'Ready! Play an Ace-in-the-Hole below.' : 'Roll 6 Aces in combat to unlock your Ace-in-the-Hole.'}</span>`;
   aces.querySelectorAll('[data-aces]').forEach((b) => b.addEventListener('click', () => act({ action: 'sheet', id: p.id, path: 'aces', value: nextVal(b, Number(b.dataset.aces)) })));
 
   view.querySelectorAll('[data-uses]').forEach((el) => {
-    const name = el.dataset.uses;
-    const used = p.abilityUses?.[name] || 0;
-    el.innerHTML = `USED TODAY ${Array.from({ length: 2 }, (_, i) => `<button type="button" class="pip${i < used ? ' on' : ''}" data-use="${i + 1}" aria-label="Use ${i + 1}"></button>`).join('')}`;
+    const name = el.dataset.uses, used = p.abilityUses?.[name] || 0;
+    el.innerHTML = `USES ${Array.from({ length: 2 }, (_, i) => `<button type="button" class="pip${i < used ? ' on' : ''}" data-use="${i + 1}" aria-label="Use ${i + 1}"></button>`).join('')}`;
     el.querySelectorAll('[data-use]').forEach((b) => b.addEventListener('click', () => act({ action: 'sheet', id: p.id, path: `abilityUses.${name}`, value: nextVal(b, Number(b.dataset.use)) })));
   });
   [0, 1, 2].forEach((i) => {
@@ -292,8 +409,27 @@ function hydrate(p) {
     el.querySelectorAll('[data-guse]').forEach((b) => b.addEventListener('click', () => act({ action: 'sheet', id: p.id, path: `gear.${i}.uses`, value: nextVal(b, Number(b.dataset.guse)) })));
   });
   const ch = view.querySelector('[data-dyn="charges"]');
-  ch.innerHTML = `${pipRow('CHARGES', p.forstall.charges ?? 0, Math.max(2, p.forstall.charges ?? 0), 'chg')}<span class="muted" style="font-size:14px">battery charges (of 2)</span>`;
+  ch.innerHTML = `${pipRow('CHARGES', p.forstall.charges ?? 0, Math.max(2, p.forstall.charges ?? 0), 'chg')}<span class="muted" style="font-size:13px">of 2</span>`;
   ch.querySelectorAll('[data-chg]').forEach((b) => b.addEventListener('click', () => act({ action: 'sheet', id: p.id, path: 'forstall.charges', value: nextVal(b, Number(b.dataset.chg)) })));
+
+  // bought items (from the Store)
+  const itemsBox = view.querySelector('[data-dyn="items"]');
+  const items = p.items || [];
+  itemsBox.innerHTML = items.length ? `<div class="items-list">${items.map((it, i) => `<div class="inv-item"><span>${esc(it.name)}<small>${esc(it.sub || it.cat || '')}</small></span>
+      <span class="qty"><button type="button" data-q="${i}" data-d="-1" aria-label="One fewer">−</button><b>${it.qty}</b><button type="button" data-q="${i}" data-d="1" aria-label="One more">+</button></span>
+      <button type="button" class="btn small secondary" data-sell="${esc(it.uid)}">Sell…</button></div>`).join('')}</div>`
+    : '<p class="muted" style="margin:4px 0;font-size:14px">Nothing from the <a href="/store">Store</a> yet.</p>';
+  itemsBox.querySelectorAll('[data-q]').forEach((b) => b.addEventListener('click', () => {
+    const it = items[b.dataset.q];
+    act({ action: 'sheet', id: p.id, path: `items.${b.dataset.q}.qty`, value: it.qty + Number(b.dataset.d) });
+  }));
+  itemsBox.querySelectorAll('[data-sell]').forEach((b) => b.addEventListener('click', async () => {
+    const it = items.find((x) => x.uid === b.dataset.sell);
+    const qty = it.qty > 1 ? Number(prompt(`Sell how many? (they have ${it.qty})`, '1')) : 1;
+    if (!qty) return;
+    try { await api('POST', { action: 'request', kind: 'sell', pc: p.id, uid: it.uid, qty }, '', '/api/shop'); toast('Sale request sent — the Warden sets the price.'); }
+    catch (e) { toast(e.message, true); }
+  }));
 
   view.querySelectorAll('.dp[data-pool]').forEach((dp) => fillPool(dp, get(p, dp.dataset.pool)));
   const dl = view.querySelector('#kz-list');
@@ -308,6 +444,7 @@ function render() {
   const p = id && pcById(id);
   $('#list-view').hidden = !!p;
   $('#sheet-view').hidden = !p;
+  document.body.classList.toggle('on-sheet', !!p);
   if (!p) {
     builtFor = null;
     document.title = 'Posse Sheets · Wild Imaginary West';
@@ -323,6 +460,10 @@ $('#sheet-view').addEventListener('focusout', () => setTimeout(() => { if (vital
 
 (async () => {
   meta = await api('GET', null, '?view=meta', EP);
+  try {
+    const [c, shop] = await Promise.all([api('GET', null, '?view=catalog', '/api/shop'), api('GET', null, '?view=player', '/api/shop')]);
+    catalog = [...c.catalog, ...(shop.custom || [])];
+  } catch { catalog = []; }
   // Decoded frequencies from the Forstall notebook make handy suggestions for the sheet's Kz boxes.
   try {
     const scan = await api('GET', null, '?view=player');
