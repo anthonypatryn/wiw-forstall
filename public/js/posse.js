@@ -269,6 +269,9 @@ function wireSheet(p) {
     clearTimeout(timers.get(f.path));
     timers.set(f.path, setTimeout(() => saveField(f.path, fieldValue(e.target).value, e.target), 600));
   });
+  view.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && e.target.matches('[data-ks-other]')) { e.preventDefault(); view.querySelector('[data-start="ks-other"]').click(); }
+  });
   view.addEventListener('change', (e) => {
     if (e.target.matches('.pick')) return pickItem(p, e.target);
     if (e.target.matches('[data-pack]')) return choosePack(p, e.target.dataset.pack === '2' ? 'pack2' : 'pack', e.target.value);
@@ -283,7 +286,7 @@ function wireSheet(p) {
       if (k.startsWith('x')) lo.extras[Number(k.slice(1))] = e.target.value; else lo[k] = e.target.value;
       return;
     }
-    if (e.target.matches('[data-keepsake]')) return addKeepsake(p, e.target);
+    if (e.target.matches('[data-ks]')) { e.target.blur(); return toggleKeepsake(p, e.target.value, e.target.checked); }
     if (e.target.matches('[data-faction-select]') && e.target.value === '__other') {
       const v = (prompt('Faction name:') || '').trim().slice(0, 40);
       if (!v) { e.target.value = get(pcById(p.id), e.target.dataset.path) ?? ''; return; }
@@ -338,6 +341,11 @@ function wireSheet(p) {
       if (await act({ action: 'pc', id: p.id, op: 'startKit' })) toast('Used Pistol and Pocket Knife added to Weapons.');
     } else if (b.dataset.start === 'wallet') {
       if (await act({ action: 'sheet', id: p.id, path: 'wallet', value: '5' })) toast('$5 in the Wallet.');
+    } else if (b.dataset.start === 'pack') {
+      b.blur(); tapPack(p, b.dataset.packName, tierOf(pc)?.packs || 1);
+    } else if (b.dataset.start === 'ks-other') {
+      const box = view.querySelector('[data-ks-other]');
+      toggleKeepsake(p, box.value, true); box.value = ''; box.blur();
     } else if (b.dataset.start === 'tier') {
       const lo = tierLoadout[p.id] || { extras: [] };
       const r = await act({ action: 'pc', id: p.id, op: 'tierKit', tier: pc.tier, ranged: lo.ranged, melee: lo.melee, extras: lo.extras.filter(Boolean) });
@@ -365,13 +373,23 @@ function choosePack(p, key, pack) {
   if (!String(pc.supplies || '').trim()) f.supplies = '1';
   act({ action: 'sheet', id: p.id, fields: f }).then((ok) => ok && toast(pack ? `${pack} written into Inventory.` : 'Pack removed from Inventory.'));
 }
-function addKeepsake(p, sel) {
-  const k = sel.value; sel.value = '';
+// Keepsakes live in Other items as "Keepsake: …" lines.
+const keepsakesOf = (inv) => [...String(inv || '').matchAll(/^Keepsake: (.+)$/gm)].map((m) => m[1].trim());
+function toggleKeepsake(p, k, on) {
+  k = String(k || '').replace(/[<>\n]/g, '').trim().slice(0, 120);
   if (!k) return;
+  const pc = pcById(p.id), inv = String(pc.inventory || '');
+  if (on === keepsakesOf(inv).includes(k)) return;
+  const next = on ? `${inv.trim()}\nKeepsake: ${k}`.trim() : inv.split('\n').filter((l) => l.trim() !== `Keepsake: ${k}`).join('\n');
+  act({ action: 'sheet', id: p.id, path: 'inventory', value: next }).then((ok) => ok && toast(on ? 'Keepsake added to Inventory.' : 'Keepsake removed.'));
+}
+// Pack cards in the checklist: tap to pick (tap again to remove; 2-pack tiers fill both).
+function tapPack(p, name, max) {
   const pc = pcById(p.id);
-  const line = `Keepsake: ${k}`;
-  if (String(pc.inventory || '').includes(line)) return toast('They already carry that one.', true);
-  act({ action: 'sheet', id: p.id, path: 'inventory', value: `${String(pc.inventory || '').trim()}\n${line}`.trim() }).then((ok) => ok && toast('Keepsake added to Inventory.'));
+  const cur = [pc.pack || '', pc.pack2 || ''];
+  if (cur.includes(name)) return choosePack(p, cur[0] === name ? 'pack' : 'pack2', '');
+  if (max < 2 || !cur[0]) return choosePack(p, 'pack', name);
+  return choosePack(p, 'pack2', name);
 }
 
 // Picking from a dropdown fills the matching section in one save.
@@ -428,7 +446,8 @@ function renderStarter(view, p) {
   const dice = Object.values(p.skills).reduce((n, v) => n + diceCount(v), 0);
   const skillsOk = dice === 12 && Object.values(p.skills).every((v) => diceCount(v) >= 1 && diceCount(v) <= 6);
   const hasStart = ['pistols-used-pistol', 'melee-pocket-knife'].every((id) => p.weapons.some((w) => w.itemId === id));
-  const keepsakes = (String(p.inventory || '').match(/^Keepsake: /gm) || []).length;
+  const ks = keepsakesOf(p.inventory), keepsakes = ks.length;
+  const ksList = [...meta.keepsakes, ...ks.filter((k) => !meta.keepsakes.includes(k))];
   const named = p.name && p.name !== `The ${p.trade}`;
   const story = [p.appearance, p.disposition, p.history].filter((x) => String(x || '').trim()).length;
   const wallet = String(p.wallet || '').trim();
@@ -455,12 +474,16 @@ function renderStarter(view, p) {
     [skillsOk, 'Step 3 · Assign your Skills', `<b>${dice}/12</b> Black dice assigned, 1–6 per Skill. ${skillsOk ? '' : `<button type="button" class="btn small secondary" data-start="quick">Use quick build (${Object.values(t.quickBuild).join(' · ')})</button>`}`],
     high ? [applied, 'Step 4 · Starting weapons', applied ? `Your ${tier.name} weapons are on the sheet.` : 'Comes from your tier loadout in Step 0.']
       : [hasStart, 'Step 4 · Starting weapons', hasStart ? 'Used Pistol and Pocket Knife are in Weapons.' : '<button type="button" class="btn small secondary" data-start="weapons">Add Used Pistol + Pocket Knife</button>'],
-    [!!p.pack && (packs < 2 || !!p.pack2), `Step 4 · Equipment Pack${packs > 1 ? 's (2)' : ''}`, `${packSelect('data-pack')}${packs > 1 ? packSelect('data-pack="2"') : ''} <span class="muted">Gear goes into Inventory, plus 1 Supplies slot.</span>`],
+    [!!p.pack && (packs < 2 || !!p.pack2), `Step 4 · Equipment Pack${packs > 1 ? 's (2)' : ''}`, `<span class="muted">${packs > 1 ? 'Your tier gets two, so tap two packs.' : 'Tap one.'} Its gear goes into Inventory, plus 1 Supplies slot.</span>
+      <div class="pack-cards">${Object.entries(meta.packs).map(([n, items]) => { const on = n === p.pack || n === p.pack2;
+        return `<button type="button" class="pack-card${on ? ' on' : ''}" data-start="pack" data-pack-name="${esc(n)}" aria-pressed="${on}"><b>${on ? '✓ ' : ''}${esc(n)}</b><ul>${items.map((it) => `<li>${esc(it)}</li>`).join('')}</ul></button>`; }).join('')}</div>`],
     high ? [applied, 'Step 5 · Wallet', applied ? `<b>$${esc(wallet)}</b> in the Wallet (${tier.name}).` : `Your tier starts with $${tier.wallet}.`]
       : [wallet !== '', 'Step 5 · Wallet', wallet ? `<b>$${esc(wallet)}</b> in the Wallet.` : '<button type="button" class="btn small" data-start="wallet">Set the Wallet to $5</button> <span class="muted">A Tenderfoot starts with $5 (p. 33).</span>'],
     [p.maxHealth >= 10 && String(p.supplies || '').trim() !== '', 'Step 5 · Health, Prestige &amp; Supplies', `Max Health <b>${p.maxHealth}</b> · Prestige <b>${p.prestige.total}</b> (${high ? `a ${tier.name} starts at ${tier.prestige}` : 'a Tenderfoot starts at 0'}) · Supplies <b>${esc(p.supplies || '—')}</b>
       ${p.maxHealth < 10 || !String(p.supplies || '').trim() ? '<button type="button" class="btn small secondary" data-start="basics">Set the starting values</button>' : ''}`],
-    [keepsakes > 0, 'Step 5 · Keepsakes', `<select data-keepsake aria-label="Add a keepsake"><option value="">+ add a keepsake…</option>${meta.keepsakes.map((k) => `<option>${esc(k)}</option>`).join('')}</select> <span class="muted">${keepsakes ? `${keepsakes} carried.` : 'Pick one or two, or write your own under Other items.'}</span>`],
+    [keepsakes > 0, 'Step 5 · Keepsakes', `<span class="muted">${keepsakes ? `${keepsakes} carried.` : 'Check one or two, or write your own.'}</span>
+      <div class="ks-grid">${ksList.map((k) => `<label><input type="checkbox" data-ks value="${esc(k)}"${ks.includes(k) ? ' checked' : ''}><span>${esc(k)}</span></label>`).join('')}</div>
+      <div class="ks-other"><input data-ks-other maxlength="120" placeholder="Other keepsake…" aria-label="Other keepsake"><button type="button" class="btn small secondary" data-start="ks-other">Add</button></div>`],
   ];
   const done = steps.filter((st) => st[0]).length;
   box.innerHTML = `<ol>${steps.map(([ok, title, body]) => `<li class="${ok ? 'ok' : ''}"><span class="tick">${ok ? '✓' : ''}</span><div><b>${title}</b><div class="sb">${body}</div></div></li>`).join('')}</ol>`;
