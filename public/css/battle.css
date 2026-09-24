@@ -84,3 +84,37 @@
   .battle-wrap { grid-template-columns: 1fr; height: auto; }
   .viewport { height: 62vh; min-height: 380px; border-right: 0; border-bottom: 3px solid var(--ink); }
 }
+
+/* token art, stand-ins, Health */
+.btoken.art { color: transparent; }
+.btoken.stand-in.enemy { background-image: radial-gradient(circle at 50% 35%, rgba(255,255,255,.18), transparent 60%) !important; }
+.btoken.stand-in.enemy::before { /* size ring: bigger monsters get a heavier ring */
+  content: ''; position: absolute; inset: 8%; border-radius: 50%; border: 2px dashed rgba(244,234,214,.45);
+}
+.btoken[data-size="Large"].stand-in::before { border-width: 3px; }
+.btoken[data-size="Huge"].stand-in::before { border-width: 4px; border-style: solid; }
+.btoken[data-size="Titan"].stand-in::before { border: 5px double rgba(255,221,138,.8); }
+.btoken.frenzied { box-shadow: 0 0 0 4px #c8372d, 0 0 22px 6px rgba(200,55,45,.7); }
+.btoken .lab { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.btoken .lab em { font-style: normal; font-size: .8em; opacity: .9; }
+.btoken .hpbar { display: block; width: 100%; min-width: 2.6em; height: .35em; background: #3a1f19; border-radius: 3px; overflow: hidden; }
+.btoken .hpbar i { display: block; height: 100%; background: linear-gradient(90deg, #d0553a, #f07a4a); }
+.btoken .st-dot { position: absolute; top: -6%; right: -6%; min-width: 1.4em; height: 1.4em; border-radius: 50%; background: var(--rust); color: #fff; border: 2px solid #f4ead6; display: grid; place-items: center; line-height: 1; }
+.sel-art { width: 72px; height: 72px; border-radius: 50%; float: right; margin: 0 0 6px 8px; box-shadow: 0 2px 6px rgba(0,0,0,.35); }
+.d-hp { display: flex; align-items: center; gap: 8px; margin-top: 8px; }
+.d-hp .bar { flex: 1; height: 12px; background: #e4dac9; border: 1px solid var(--ink); border-radius: 2px; overflow: hidden; }
+.d-hp .bar i { display: block; height: 100%; background: linear-gradient(180deg, #d0553a, #9c2f1c); }
+.d-hp b { font: 20px var(--display); font-weight: 400; }
+.d-tags { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; }
+.d-tags .tag { font: 12px/1 var(--display); letter-spacing: .1em; padding: 4px 6px 2px; border-radius: 2px; background: var(--ink); color: var(--paper); }
+.d-tags .tag.turn { background: var(--brass); color: var(--ink); }
+.d-tags .tag.red { background: var(--red); color: #fff; }
+.d-st { display: flex; gap: 4px; flex-wrap: wrap; margin-top: 6px; }
+.d-st .st { display: inline-flex; gap: 4px; align-items: center; padding: 2px 8px 1px; border-radius: 12px; background: var(--ink); color: var(--paper); font: 14px/1.4 var(--display); letter-spacing: .05em; }
+.d-st .st b { background: var(--rust); border-radius: 10px; padding: 0 6px; font-weight: 400; }
+.d-row { display: flex; flex-wrap: wrap; gap: 4px 12px; margin-top: 8px; font-size: 14px; clear: both; }
+.d-row b { font: 12px var(--display); letter-spacing: .12em; color: var(--ink-faint); font-weight: 400; }
+.d-note { margin-top: 6px; font-size: 13px; background: rgba(200,55,45,.1); border-left: 3px solid var(--red); padding: 4px 8px; }
+.d-atk summary { cursor: pointer; font: 13px var(--display); letter-spacing: .12em; color: var(--rust); margin-top: 6px; }
+.d-atk p { margin: 3px 0; font-size: 13px; }
+.d-h { margin: 12px 0 4px !important; font-size: 15px !important; }
