@@ -138,3 +138,21 @@
 .bnpc .acts { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: auto; }
 .bnpc .acts input { flex: 1 1 120px; min-width: 0; padding: 6px 8px; border: 1px solid var(--ink-faint); border-radius: 3px; font-size: 15px; }
 .bnpc .acts .btn { font-size: 14px; padding: 6px 9px 4px; box-shadow: none; }
+
+/* accordions */
+section[data-acc] .section-title { cursor: pointer; user-select: none; display: flex; align-items: center; gap: 10px; }
+section[data-acc] .section-title::after { content: '▾'; font-size: .7em; color: var(--rust); transition: transform .2s; }
+section[data-acc].collapsed .section-title::after { transform: rotate(-90deg); }
+section[data-acc].collapsed > :not(.section-title):not(.head-row),
+section[data-acc].collapsed .head-row > :not(.section-title) { display: none !important; }
+section[data-acc] .section-title:focus-visible { outline: 2px solid var(--brass); outline-offset: 4px; }
+.acc-all { display: flex; gap: 6px; justify-content: flex-end; margin-bottom: 8px; }
+details.faction > summary { list-style: none; cursor: pointer; display: flex; align-items: center; gap: 10px; }
+details.faction > summary::-webkit-details-marker { display: none; }
+details.faction > summary::before { content: '▸'; color: var(--rust); font-size: 20px; transition: transform .2s; }
+details.faction[open] > summary::before { transform: rotate(90deg); }
+details.faction > summary h3 { margin: 0; font: 400 26px/1 var(--western); }
+details.faction > summary h3 small { font: 13px var(--display); letter-spacing: .14em; color: var(--ink-faint); margin-left: 8px; }
+details.faction[open] > summary { margin-bottom: 10px; }
+details.faction { padding: 12px 0; }
+details.faction:first-of-type { border-top: 0; }

@@ -263,6 +263,30 @@ function statBlock(p) {
       ${p.talents ? `<p><b>Talents:</b> ${esc(p.talents)}</p>` : ''}${p.abilities.map((a) => `<p>${esc(a)}</p>`).join('')}${atk}${p.items ? `<p><b>Items:</b> ${esc(p.items)}</p>` : ''}
     </details>`;
 }
+const openFactions = new Set();
+
+// Every titled section folds open/closed; the choice is remembered on this device.
+const ACC_KEY = 'wiw-names-closed';
+function readClosed() { try { return new Set(JSON.parse(localStorage.getItem(ACC_KEY) || '[]')); } catch { return new Set(); } }
+function initAccordions() {
+  const closed = readClosed();
+  document.querySelectorAll('section.card[data-acc]').forEach((sec) => {
+    const title = sec.querySelector('.section-title');
+    title.setAttribute('role', 'button'); title.tabIndex = 0;
+    const set = (shut) => { sec.classList.toggle('collapsed', shut); title.setAttribute('aria-expanded', String(!shut)); };
+    set(closed.has(sec.dataset.acc));
+    const flip = () => {
+      set(!sec.classList.contains('collapsed'));
+      const now = readClosed();
+      if (sec.classList.contains('collapsed')) now.add(sec.dataset.acc); else now.delete(sec.dataset.acc);
+      try { localStorage.setItem(ACC_KEY, JSON.stringify([...now])); } catch {}
+    };
+    title.addEventListener('click', flip);
+    title.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); flip(); } });
+  });
+}
+initAccordions();
+
 function renderBook() {
   if (!book) return;
   const person = (pp, faction, prof) => `<article class="bnpc" data-name="${esc(pp.name)}" data-faction="${esc(faction)}">
@@ -271,13 +295,21 @@ function renderBook() {
       ${prof ? statBlock(prof) : ''}
       <div class="acts"><button class="btn small secondary" data-ledger type="button">+ NPC ledger</button>${prof ? '<button class="btn small" data-fight type="button">⚔ Add to Combat</button>' : ''}</div>
     </article>`;
-  $('#book').innerHTML = book.factions.map((f) => `<div class="faction"><h3>${esc(f.faction)}<small>P. ${f.page}</small></h3><div class="book-grid">
-      ${f.people.map((pp) => person(pp, f.faction, pp.name === f.profile.name ? f.profile : null)).join('')}</div></div>`).join('')
-    + `<div class="faction"><h3>Ready-Made Enemies<small>P. 191 · JUST ADD A NAME</small></h3><div class="book-grid">${book.generic.map((g) => `<article class="bnpc" data-generic="${esc(g.name)}">
+  const openAttr = (k) => (openFactions.has(k) ? ' open' : '');
+  $('#book').innerHTML = `<div class="acc-all"><button class="btn small secondary" type="button" data-acc-all="1">Open all</button><button class="btn small secondary" type="button" data-acc-all="0">Close all</button></div>`
+    + book.factions.map((f) => `<details class="faction" data-k="${esc(f.faction)}"${openAttr(f.faction)}><summary><h3>${esc(f.faction)}<small>P. ${f.page} · ${f.people.length} ${f.people.length === 1 ? 'PERSON' : 'PEOPLE'}</small></h3></summary><div class="book-grid">
+      ${f.people.map((pp) => person(pp, f.faction, pp.name === f.profile.name ? f.profile : null)).join('')}</div></details>`).join('')
+    + `<details class="faction" data-k="generic"${openAttr('generic')}><summary><h3>Ready-Made Enemies<small>P. 191 · JUST ADD A NAME</small></h3></summary><div class="book-grid">${book.generic.map((g) => `<article class="bnpc" data-generic="${esc(g.name)}">
       <div class="hd"><div><div class="nm">${esc(g.name.replace('Human - ', ''))}</div><div class="tag">HUMAN ENEMY PROFILE</div></div></div>
       ${statBlock(g)}
       <div class="acts"><input placeholder="Name them…" maxlength="40" data-gname><button class="btn small secondary" data-roll type="button" title="Random name from the card table">🎲</button>
-        <button class="btn small secondary" data-ledger type="button">+ Ledger</button><button class="btn small" data-fight type="button">⚔ Combat</button></div></article>`).join('')}</div></div>`;
+        <button class="btn small secondary" data-ledger type="button">+ Ledger</button><button class="btn small" data-fight type="button">⚔ Combat</button></div></article>`).join('')}</div></details>`;
+  $('#book').querySelectorAll('details.faction').forEach((d) => d.addEventListener('toggle', () => {
+    if (d.open) openFactions.add(d.dataset.k); else openFactions.delete(d.dataset.k);
+  }));
+  $('#book').querySelectorAll('[data-acc-all]').forEach((b) => b.addEventListener('click', () => {
+    $('#book').querySelectorAll('details.faction').forEach((d) => { d.open = b.dataset.accAll === '1'; });
+  }));
 
   $('#book').querySelectorAll('.bnpc').forEach((card) => {
     const generic = card.dataset.generic;

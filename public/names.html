@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Rye&family=Special+Elite&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css?v=9">
-  <link rel="stylesheet" href="/css/names.css?v=5">
+  <link rel="stylesheet" href="/css/names.css?v=6">
 </head>
 <body>
   <header class="masthead">
@@ -59,7 +59,7 @@
       </div>
     </section>
 
-    <section class="card corner warden-only" id="manual-card" hidden>
+    <section class="card corner warden-only" id="manual-card" data-acc="manual" hidden>
       <h2 class="section-title">Write One Yourself</h2>
       <form class="manual" id="manual">
         <label>FIRST NAME<input name="first" maxlength="30" required></label>
@@ -72,19 +72,19 @@
       <datalist id="dl-pers"></datalist><datalist id="dl-phys"></datalist>
     </section>
 
-    <section class="card corner warden-only" id="book-card" hidden>
+    <section class="card corner warden-only" id="book-card" data-acc="book" hidden>
       <h2 class="section-title">Book NPCs</h2>
       <p class="muted" style="margin-top:0">Faction figures from the Guidebook (pp. 120–133) and ready-made human enemies (p. 191). Warden eyes only.</p>
       <div id="book"></div>
     </section>
 
-    <section class="card corner">
+    <section class="card corner" data-acc="ledger">
       <div class="head-row"><h2 class="section-title">NPC Ledger</h2><input class="search" id="npc-search" type="search" placeholder="Search names, notes, places…" aria-label="Search NPCs"></div>
       <p class="muted" style="margin-top:6px">Shared with the whole posse. Anyone can jot posse notes; Warden notes stay secret.</p>
       <div class="ledger" id="ledger"></div>
     </section>
   </main>
 
-  <script type="module" src="/js/names.js?v=11"></script>
+  <script type="module" src="/js/names.js?v=12"></script>
 </body>
 </html>
