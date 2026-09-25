@@ -2,7 +2,7 @@
 .gate { max-width: 520px; margin: 30px auto; text-align: center; }
 
 .sess-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
-.sess-tab { display: flex; flex-direction: column; align-items: flex-start; padding: 6px 12px 4px; border: 1.5px solid var(--ink-faint); border-radius: 5px; background: #fffdf7; cursor: pointer; font: 15px var(--display); letter-spacing: .06em; color: var(--ink); }
+.sess-tab { display: flex; flex-direction: column; align-items: flex-start; padding: 6px 12px 4px; border: 1.5px solid var(--ink-faint); border-radius: 5px; background: var(--surface); cursor: pointer; font: 15px var(--display); letter-spacing: .06em; color: var(--ink); }
 .sess-tab small { font: italic 12px var(--body); letter-spacing: 0; color: var(--ink-soft); }
 .sess-tab.on { border-color: var(--ink); background: var(--ink); color: #fff; }
 .sess-tab.on small { color: rgba(255,255,255,.8); }
@@ -12,7 +12,7 @@
 .sess-head label, .sess-notes { display: flex; flex-direction: column; gap: 4px; font: 13px var(--display); letter-spacing: .12em; color: var(--ink-soft); min-width: 0; }
 .sess-notes { margin-bottom: 12px; }
 .sess-notes small { font: italic 12px var(--body); letter-spacing: 0; }
-.sess-head input, .sess-notes textarea { padding: 8px 10px; border: 1px solid var(--ink-faint); border-radius: 3px; background: #fffdf7; font: 16px var(--body); letter-spacing: 0; color: var(--ink); min-width: 0; width: 100%; box-sizing: border-box; }
+.sess-head input, .sess-notes textarea { padding: 8px 10px; border: 1px solid var(--ink-faint); border-radius: 3px; background: var(--surface); font: 16px var(--body); letter-spacing: 0; color: var(--ink); min-width: 0; width: 100%; box-sizing: border-box; }
 .sess-notes textarea { min-height: 340px; resize: vertical; line-height: 1.45; }
 .sess-notes textarea.short { min-height: 110px; }
 .sess-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
@@ -33,9 +33,9 @@
 .ck-body .gl { width: 1.1em; height: 1.1em; vertical-align: -3px; color: var(--rust); }
 .ck-who { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
 .run-st.wait { background: rgba(0,0,0,.05); font-style: italic; }
-.run-st.ok { background: #3d6b3a; color: #fff; }
-.run-st.no { background: #8f1d17; color: #fff; }
-.ck-win { margin-top: 5px; font-weight: 700; color: #3d6b3a; }
+.run-st.ok { background: var(--success); color: #fff; }
+.run-st.no { background: var(--danger); color: #fff; }
+.ck-win { margin-top: 5px; font-weight: 700; color: var(--success); }
 .sess-note { margin: 0 0 8px; font-size: 14px; }
 .run-grit small { font: 11px var(--body); letter-spacing: 0; }
 .gl-duel { font-size: 14px; }

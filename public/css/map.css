@@ -16,17 +16,17 @@
   background: none; border: 0; padding: 0; cursor: pointer;
 }
 .place .dot {
-  display: block; width: 26px; height: 26px; border-radius: 50%; background: radial-gradient(circle, #f4ead6 0 28%, var(--rust) 30% 60%, #3a1509 62%);
+  display: block; width: 26px; height: 26px; border-radius: 50%; background: radial-gradient(circle, var(--surface-2) 0 28%, var(--rust) 30% 60%, #3a1509 62%);
   box-shadow: 0 0 0 2px rgba(244,234,214,.9), 0 2px 6px rgba(0,0,0,.5); transition: transform .15s;
 }
-.place.rail .dot { width: 20px; height: 20px; background: radial-gradient(circle, #f4ead6 0 28%, var(--ink) 30% 60%, #000 62%); }
-.place.settlement .dot, .place.pin .dot { width: 16px; height: 16px; background: radial-gradient(circle, #f4ead6 0 30%, var(--teal) 32%); }
-.place.pin.secret .dot { background: radial-gradient(circle, #f4ead6 0 30%, #7a2c9e 32%); }
+.place.rail .dot { width: 20px; height: 20px; background: radial-gradient(circle, var(--surface-2) 0 28%, var(--ink) 30% 60%, #000 62%); }
+.place.settlement .dot, .place.pin .dot { width: 16px; height: 16px; background: radial-gradient(circle, var(--surface-2) 0 30%, var(--teal) 32%); }
+.place.pin.secret .dot { background: radial-gradient(circle, var(--surface-2) 0 30%, #7a2c9e 32%); }
 .place:hover .dot, .place.sel .dot { transform: scale(1.35); }
 .place.sel .dot { box-shadow: 0 0 0 3px var(--brass), 0 0 16px 4px rgba(201,164,92,.8); }
 .place .tag {
   position: absolute; left: 50%; top: 100%; transform: translateX(-50%); margin-top: 4px; white-space: nowrap;
-  font: 15px/1 var(--display); letter-spacing: .08em; color: #f4ead6; background: rgba(34,31,31,.82); padding: 4px 6px 2px; border-radius: 2px;
+  font: 15px/1 var(--display); letter-spacing: .08em; color: var(--surface-2); background: rgba(34,31,31,.82); padding: 4px 6px 2px; border-radius: 2px;
   opacity: 0; transition: opacity .15s; pointer-events: none;
 }
 .place:hover .tag, .place.sel .tag, .show-labels .place .tag { opacity: 1; }
@@ -47,9 +47,9 @@
 }
 .token .disc {
   width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; color: #fff; font: 18px/1 var(--display); letter-spacing: .04em;
-  border: 3px solid #f4ead6; box-shadow: 0 3px 8px rgba(0,0,0,.55); padding-top: 3px;
+  border: 3px solid var(--surface-2); box-shadow: 0 3px 8px rgba(0,0,0,.55); padding-top: 3px;
 }
-.token .stem { width: 3px; height: 10px; background: #f4ead6; box-shadow: 0 2px 3px rgba(0,0,0,.4); }
+.token .stem { width: 3px; height: 10px; background: var(--surface-2); box-shadow: 0 2px 3px rgba(0,0,0,.4); }
 .token .nm { font: 14px/1 var(--display); letter-spacing: .06em; color: #fff; background: rgba(34,31,31,.85); padding: 3px 5px 1px; border-radius: 2px; margin-bottom: 3px; white-space: nowrap; }
 .token.dragging { cursor: grabbing; z-index: 5; }
 .token.dragging .disc { transform: scale(1.15); }
@@ -74,7 +74,7 @@
 .kind { font: 14px var(--display); letter-spacing: .16em; color: var(--ink-faint); }
 .book-text p { margin: 0 0 10px; font-size: 16px; line-height: 1.5; }
 .book-text .src { font: italic 13px var(--body); color: var(--ink-faint); }
-.note-box { background: #fffaf0; border: 1.5px solid var(--ink); border-radius: var(--radius); padding: 10px 12px; }
+.note-box { background: var(--surface); border: 1.5px solid var(--ink); border-radius: var(--radius); padding: 10px 12px; }
 .note-box .who { font: 14px var(--display); letter-spacing: .14em; color: var(--rust); }
 .note-box p { margin: 6px 0 0; white-space: pre-wrap; font-size: 16px; }
 .note-box textarea { width: 100%; min-height: 120px; margin-top: 6px; padding: 8px; border: 1px solid rgba(34,31,31,.35); border-radius: 3px; font: 16px/1.4 var(--body); background: #fff; resize: vertical; }

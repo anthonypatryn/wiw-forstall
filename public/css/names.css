@@ -1,6 +1,4 @@
 /* NPC Names — saloon card table */
-.head-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
-.head-row .section-title { margin: 0; }
 
 .table-felt {
   position: relative; border-radius: 26px; padding: 28px 24px 18px; margin-bottom: 22px;
@@ -45,7 +43,7 @@
   box-shadow: 0 4px 10px rgba(0,0,0,.45);
 }
 .back, .dcard {
-  border-radius: 10px; border: 5px solid #f4ead6;
+  border-radius: 10px; border: 5px solid var(--surface-2);
   background:
     url('../img/logo-light.svg') center / 72% no-repeat,
     radial-gradient(circle at center, rgba(0,0,0,0) 30%, rgba(0,0,0,.35) 100%),
@@ -75,11 +73,11 @@
 .table-ctrls { grid-column: 1 / -1; display: flex; gap: 12px; align-items: center; justify-content: center; flex-wrap: wrap; }
 .btn.deal { font-size: 26px; padding: 12px 26px 10px; background: var(--rust); border-color: #3a1509; }
 .btn.deal:hover { background: #bf5329; }
-.btn.light { color: #f4ead6; border-color: rgba(244,234,214,.6); }
+.btn.light { color: var(--surface-2); border-color: rgba(244,234,214,.6); }
 .btn.light:hover { background: rgba(0,0,0,.3); color: #fff; }
 .seg { display: inline-flex; border: 1.5px solid rgba(244,234,214,.6); border-radius: var(--radius); overflow: hidden; }
 .seg button { background: transparent; border: 0; color: #cfe3d3; font: 15px var(--display); letter-spacing: .1em; padding: 8px 12px 6px; }
-.seg button[aria-checked="true"] { background: #f4ead6; color: #1d4a2e; }
+.seg button[aria-checked="true"] { background: var(--surface-2); color: #1d4a2e; }
 .table-tip { grid-column: 1 / -1; text-align: center; margin: 0; font: italic 15px var(--body); color: #cfe3d3; }
 
 .result-card { text-align: center; }
@@ -88,7 +86,7 @@
 .npc-actions { display: flex; gap: 10px; justify-content: center; margin-top: 14px; }
 .head-row .search { max-width: 280px; }
 .ledger { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; margin-top: 12px; }
-.npc { background: #fffaf0; border: 1.5px solid var(--ink); border-radius: var(--radius); padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; box-shadow: 2px 2px 0 rgba(34,31,31,.15); }
+.npc { background: var(--surface); border: 1.5px solid var(--ink); border-radius: var(--radius); padding: 12px 14px; display: flex; flex-direction: column; gap: 8px; box-shadow: 2px 2px 0 rgba(34,31,31,.15); }
 .npc.hidden-npc { border-style: dashed; background: #f3ecf6; }
 .npc-top { display: flex; justify-content: space-between; gap: 8px; align-items: flex-start; }
 .npc-name { font: 400 24px/1.1 var(--western); }
@@ -115,7 +113,7 @@
 /* manual NPC + book NPCs */
 .manual { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
 .manual label { display: flex; flex-direction: column; gap: 3px; font: 13px var(--display); letter-spacing: .12em; color: var(--ink-soft); }
-.manual input:not([type=checkbox]) { padding: 7px 9px; border: 1px solid var(--ink-faint); border-radius: 3px; background: #fffdf7; font: 16px var(--body); letter-spacing: 0; color: var(--ink); }
+.manual input:not([type=checkbox]) { padding: 7px 9px; border: 1px solid var(--ink-faint); border-radius: 3px; background: var(--surface); font: 16px var(--body); letter-spacing: 0; color: var(--ink); }
 .manual-go { grid-column: 1 / -1; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
 @media (max-width: 760px) { .manual { grid-template-columns: 1fr 1fr; } }
 .faction { border-top: 2px solid var(--ink); padding: 14px 0 6px; }
@@ -123,7 +121,7 @@
 .faction > h3 { margin: 0 0 10px; font: 400 26px/1 var(--western); }
 .faction > h3 small { font: 13px var(--display); letter-spacing: .14em; color: var(--ink-faint); margin-left: 8px; }
 .book-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
-.bnpc { background: #fffaf0; border: 1.5px solid var(--ink); border-radius: var(--radius); padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; }
+.bnpc { background: var(--surface); border: 1.5px solid var(--ink); border-radius: var(--radius); padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; }
 .bnpc .hd { display: flex; gap: 10px; align-items: center; }
 .bnpc .hd img { width: 58px; height: 58px; border-radius: 50%; flex: none; box-shadow: 0 2px 4px rgba(0,0,0,.35); }
 .bnpc .nm { font: 400 20px/1.1 var(--western); }
@@ -160,7 +158,7 @@ details.faction:first-of-type { border-top: 0; }
 /* factions */
 .faction-new { display: grid; grid-template-columns: 1fr 2fr; gap: 10px 14px; margin-bottom: 14px; }
 .faction-new label { display: flex; flex-direction: column; gap: 4px; font: 13px var(--display); letter-spacing: .12em; color: var(--ink-soft); }
-.faction-new input:not([type=checkbox]) { padding: 7px 9px; border: 1px solid var(--ink-faint); border-radius: 3px; background: #fffdf7; font: 16px var(--type); }
+.faction-new input:not([type=checkbox]) { padding: 7px 9px; border: 1px solid var(--ink-faint); border-radius: 3px; background: var(--surface); font: 16px var(--type); }
 .faction-new .manual-go { grid-column: 1 / -1; }
 @media (max-width: 600px) { .faction-new { grid-template-columns: 1fr; } }
 details.fac { border-top: 2px solid var(--ink); padding: 10px 0; }
@@ -177,14 +175,14 @@ details.fac[open] > summary { margin-bottom: 8px; }
 .fac-members .mem { display: inline-flex; align-items: center; gap: 6px; padding: 3px 4px 3px 10px; border-radius: 14px; background: var(--ink); color: var(--paper); font-size: 14px; }
 .fac-members .mem i { opacity: .7; }
 .fac-members .mem button { border: 0; background: rgba(255,255,255,.18); color: inherit; width: 20px; height: 20px; border-radius: 50%; line-height: 1; cursor: pointer; }
-.fac-add select, .npc select[data-faction] { width: 100%; max-width: 420px; padding: 6px 8px; border: 1px solid var(--ink-faint); border-radius: 3px; background: #fffdf7; font-size: 15px; }
+.fac-add select, .npc select[data-faction] { width: 100%; max-width: 420px; padding: 6px 8px; border: 1px solid var(--ink-faint); border-radius: 3px; background: var(--surface); font-size: 15px; }
 .npc-faction { display: inline-block; margin: 4px 0 2px; padding: 3px 8px 1px; border-radius: 2px; background: var(--ink); color: var(--paper); font: 12px var(--display); letter-spacing: .12em; }
 
 /* custom traits on a dealt stranger */
 .npc-extra { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; max-width: 760px; margin: 14px auto 4px; text-align: left; }
 .npc-extra label { display: flex; flex-direction: column; gap: 3px; font: 13px var(--display); letter-spacing: .12em; color: var(--ink-soft); }
 .npc-extra label small { font: italic 12px var(--body); letter-spacing: 0; }
-.npc-extra input { padding: 7px 9px; border: 1px solid var(--ink-faint); border-radius: 3px; background: #fffdf7; font: 16px var(--body); color: var(--ink); }
+.npc-extra input { padding: 7px 9px; border: 1px solid var(--ink-faint); border-radius: 3px; background: var(--surface); font: 16px var(--body); color: var(--ink); }
 @media (max-width: 600px) { .npc-extra { grid-template-columns: 1fr; } }
 
 .table-felt[hidden], .result-card[hidden] { display: none !important; }

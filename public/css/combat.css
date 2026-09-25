@@ -1,13 +1,11 @@
 /* Combat & Dice */
 .combat-grid { grid-template-columns: minmax(0, 1fr) 360px; }
 @media (max-width: 1080px) { .combat-grid { grid-template-columns: 1fr; } }
-.head-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 10px; }
-.head-row .section-title { margin: 0; }
 .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 14px; }
 .empty-note a { color: var(--rust); }
 
 /* ---------- turn banner ---------- */
-.turn-card { background: var(--iron) url('../img/forstall.jpg') center 30% / cover; color: #f4ead6; border-color: var(--iron); }
+.turn-card { background: var(--iron) url('../img/forstall.jpg') center 30% / cover; color: var(--surface-2); border-color: var(--iron); }
 .turn-card::after { content: ''; position: absolute; inset: 0; background: rgba(15,11,9,.86); border-radius: var(--radius); }
 .turn-card > * { position: relative; z-index: 1; }
 .turn-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
@@ -15,7 +13,7 @@
 .turn-top .who { font: 400 clamp(26px, 4vw, 38px)/1.05 var(--western); }
 .turn-top .who small { display: block; font: 15px var(--type); color: #cbbda4; margin-top: 4px; }
 .turn-actions { display: flex; gap: 8px; flex-wrap: wrap; }
-.turn-actions .btn { color: #f4ead6; border-color: rgba(244,234,214,.55); background: rgba(0,0,0,.35); }
+.turn-actions .btn { color: var(--surface-2); border-color: rgba(244,234,214,.55); background: rgba(0,0,0,.35); }
 .turn-actions .btn.go { background: var(--rust); border-color: var(--rust); }
 .turn-actions .btn:hover { background: var(--rust); }
 .order { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 14px; }
@@ -32,7 +30,7 @@
 
 /* ---------- combatant cards ---------- */
 .fighter {
-  position: relative; background: #fffaf0; border: 1.5px solid var(--ink); border-radius: var(--radius); padding: 12px 12px 10px;
+  position: relative; background: var(--surface); border: 1.5px solid var(--ink); border-radius: var(--radius); padding: 12px 12px 10px;
   box-shadow: 2px 2px 0 rgba(34,31,31,.18); display: flex; flex-direction: column; gap: 8px;
 }
 .fighter.now { outline: 3px solid var(--brass); outline-offset: 2px; }
@@ -108,13 +106,13 @@ details.more p { font-size: 14px; margin: 6px 0; }
 .frenzy-row b { font: 15px var(--display); letter-spacing: .08em; }
 
 .add-enemy { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
-.add-enemy select, .add-enemy input { padding: 8px 10px; border: 1.5px solid var(--ink); border-radius: var(--radius); background: #fffdf7; font-size: 15px; }
+.add-enemy select, .add-enemy input { padding: 8px 10px; border: 1.5px solid var(--ink); border-radius: var(--radius); background: var(--surface); font-size: 15px; }
 .add-enemy select { flex: 1 1 240px; font-family: var(--type); }
 .add-enemy input[type=number] { width: 64px; }
 .custom-enemy { display: grid; grid-template-columns: 2fr 80px auto auto auto; gap: 8px; margin-bottom: 14px; align-items: end; }
 .ce-pool { display: flex; flex-direction: column; gap: 2px; font: 12px var(--display); letter-spacing: .12em; color: var(--ink-soft); }
 .custom-enemy .dp input { width: 42px; }
-.custom-enemy input, .custom-enemy select { padding: 7px 8px; border: 1px solid var(--ink-faint); border-radius: 3px; background: #fffdf7; font-size: 14px; min-width: 0; }
+.custom-enemy input, .custom-enemy select { padding: 7px 8px; border: 1px solid var(--ink-faint); border-radius: 3px; background: var(--surface); font-size: 14px; min-width: 0; }
 @media (max-width: 640px) { .custom-enemy { grid-template-columns: 1fr 1fr; } }
 
 /* ---------- dice ---------- */
@@ -125,13 +123,13 @@ details.more p { font-size: 14px; margin: 6px 0; }
 .mini-step b { flex: 1; text-align: center; font: 28px/1 var(--display); }
 .mini-step button { width: 28px; height: 28px; border-radius: 50%; border: 1.5px solid var(--ink); background: var(--paper); font: 18px/1 var(--display); padding: 0; }
 .field { display: flex; flex-direction: column; gap: 3px; font: 14px var(--display); letter-spacing: .12em; color: var(--ink-soft); }
-.field input, .field select { padding: 8px 10px; border: 1.5px solid var(--ink); border-radius: var(--radius); background: #fffdf7; font: 15px var(--body); letter-spacing: 0; color: var(--ink); }
+.field input, .field select { padding: 8px 10px; border: 1.5px solid var(--ink); border-radius: var(--radius); background: var(--surface); font: 15px var(--body); letter-spacing: 0; color: var(--ink); }
 .small-tray { min-height: 70px; padding: 10px; gap: 6px 8px; }
 .small-tray .die { width: 88px; }
 
 /* High Noon Duel */
 .duel-pick { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
-.duel-pick select { flex: 1; min-width: 140px; padding: 7px 9px; border: 1px solid var(--ink-faint); border-radius: 3px; background: #fffdf7; font-size: 16px; }
+.duel-pick select { flex: 1; min-width: 140px; padding: 7px 9px; border: 1px solid var(--ink-faint); border-radius: 3px; background: var(--surface); font-size: 16px; }
 .duel-pick b { font: 20px var(--western, var(--display)); color: var(--rust); }
 .duel-table { width: 100%; border-collapse: collapse; margin-bottom: 10px; table-layout: fixed; }
 .duel-table th, .duel-table td { padding: 6px; border-bottom: 1px dotted rgba(34,31,31,.3); text-align: left; vertical-align: middle; }
@@ -143,11 +141,11 @@ details.more p { font-size: 14px; margin: 6px 0; }
 .duel-table .duel-tray .die { width: 34px; }
 .duel-table .duel-tray .rr { display: none; }
 .duel-table .dh { font: 14px var(--display); letter-spacing: .06em; }
-.duel-table .plus { color: #3d6b3a; font: 14px var(--display); }
+.duel-table .plus { color: var(--success); font: 14px var(--display); }
 .duel-result { display: grid; gap: 6px; margin: 8px 0; }
-.duel-result .dr { padding: 8px 10px; border-radius: 4px; border: 1.5px solid var(--ink); background: #fffaf0; }
+.duel-result .dr { padding: 8px 10px; border-radius: 4px; border: 1.5px solid var(--ink); background: var(--surface); }
 .duel-result .dr.minor { border-color: #b7791f; }
-.duel-result .dr.severe, .duel-result .dr.dead { border-color: #8f1d17; background: #fbe9e4; }
+.duel-result .dr.severe, .duel-result .dr.dead { border-color: var(--danger); background: #fbe9e4; }
 .duel-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 
 .add-npc select#add-npc { flex: 2; min-width: 0; }
@@ -166,15 +164,15 @@ details.more p { font-size: 14px; margin: 6px 0; }
 }
 
 /* loot (p. 79) */
-.loot { margin: 10px 0 4px; padding: 8px 10px; border: 1.5px dashed var(--brass, #c89b3c); border-radius: 6px; background: #fffaf0; }
+.loot { margin: 10px 0 4px; padding: 8px 10px; border: 1.5px dashed var(--brass, #c89b3c); border-radius: 6px; background: var(--surface); }
 .loot-h { font: 16px var(--display); letter-spacing: .1em; font-weight: 400; color: var(--rust); }
 .loot-tro { font-size: 14px; line-height: 1.35; margin: 6px 0; }
 .loot-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin: 6px 0; }
-.loot-row select { padding: 5px 7px; border: 1px solid var(--ink-faint); border-radius: 3px; background: #fffdf7; font-size: 14px; min-width: 0; max-width: 100%; }
+.loot-row select { padding: 5px 7px; border: 1px solid var(--ink-faint); border-radius: 3px; background: var(--surface); font-size: 14px; min-width: 0; max-width: 100%; }
 .loot-guide { display: flex; flex-direction: column; gap: 1px; font-size: 12px; color: var(--ink-soft); margin: 4px 0; }
 
-.ea { margin: 10px 0 4px; padding: 8px 10px; border: 1.5px dashed var(--rust); border-radius: 6px; background: #fffaf0; }
+.ea { margin: 10px 0 4px; padding: 8px 10px; border: 1.5px dashed var(--rust); border-radius: 6px; background: var(--surface); }
 
 .f-name .rename { border: 0; background: none; color: var(--ink-faint); font-size: 15px; cursor: pointer; padding: 0 2px; vertical-align: middle; }
 .f-name .rename:hover { color: var(--rust); }
-#add-mon-name, #add-npc-name { flex: 1 1 140px; min-width: 0; padding: 8px 10px; border: 1.5px solid var(--ink); border-radius: var(--radius); background: #fffdf7; font-size: 15px; }
+#add-mon-name, #add-npc-name { flex: 1 1 140px; min-width: 0; padding: 8px 10px; border: 1.5px solid var(--ink); border-radius: var(--radius); background: var(--surface); font-size: 15px; }

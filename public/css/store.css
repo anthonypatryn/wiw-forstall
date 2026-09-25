@@ -1,8 +1,6 @@
 /* General Store */
 .store-grid { display: grid; grid-template-columns: minmax(0, 1fr) 360px; gap: 22px; align-items: start; }
 @media (max-width: 1000px) { .store-grid { grid-template-columns: 1fr; } .side { order: -1; } }
-.head-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
-.head-row .section-title { margin: 0; }
 .small-note { font-size: 14px; margin: 8px 0 0; }
 
 .cat-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
@@ -14,12 +12,12 @@
 .cat-tabs button small { font: 12px var(--type); opacity: .7; margin-left: 4px; }
 .filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 6px; }
 .filters .search { flex: 1 1 220px; }
-.filters select { padding: 7px 10px; border: 1px solid var(--ink-faint); border-radius: var(--radius); background: #fffdf7; font-size: 15px; }
+.filters select { padding: 7px 10px; border: 1px solid var(--ink-faint); border-radius: var(--radius); background: var(--surface); font-size: 15px; }
 .count { margin: 4px 0 10px; font-size: 14px; }
 
 .items { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
 .item {
-  position: relative; background: #fffaf0; border: 1.5px solid var(--ink); border-radius: var(--radius); padding: 12px 12px 10px;
+  position: relative; background: var(--surface); border: 1.5px solid var(--ink); border-radius: var(--radius); padding: 12px 12px 10px;
   box-shadow: 2px 2px 0 rgba(34,31,31,.15); display: flex; flex-direction: column; gap: 6px;
 }
 .item.custom { border-style: dashed; }
@@ -31,7 +29,7 @@
 .item .price { font: 24px/1 var(--display); color: var(--rust); white-space: nowrap; }
 .item .price.none { font-size: 15px; color: var(--ink-faint); }
 .q { display: inline-block; font: 12px/1 var(--display); letter-spacing: .1em; padding: 3px 6px 1px; border-radius: 2px; background: var(--ink-faint); color: #fff; }
-.q.Basic { background: #6b625a; } .q.Premium { background: var(--teal); } .q.Elite { background: var(--rust); } .q.Used { background: #8a7f76; }
+.q.Basic { background: #6b625a; } .q.Premium { background: var(--teal); } .q.Elite { background: var(--rust); } .q.Used { background: var(--ink-faint); }
 .stats { display: grid; grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); gap: 4px 8px; font-size: 14px; }
 .stats div { display: flex; flex-direction: column; }
 .stats span { font: 11px var(--display); letter-spacing: .12em; color: var(--ink-faint); }
@@ -42,7 +40,7 @@
 .item .actions input { width: 52px; padding: 5px; border: 1px solid var(--ink-faint); border-radius: 3px; font: 15px var(--type); text-align: center; }
 .item .actions .btn { font-size: 15px; padding: 7px 10px 5px; box-shadow: none; }
 
-.shopper select { width: 100%; padding: 8px 10px; border: 1.5px solid var(--ink); border-radius: var(--radius); background: #fffdf7; font: 17px var(--body); }
+.shopper select { width: 100%; padding: 8px 10px; border: 1.5px solid var(--ink); border-radius: var(--radius); background: var(--surface); font: 17px var(--body); }
 .wallet { display: flex; align-items: baseline; justify-content: space-between; margin-top: 10px; font: 16px var(--display); letter-spacing: .12em; color: var(--ink-soft); }
 .wallet b { font: 32px/1 var(--display); color: var(--green); font-weight: 400; letter-spacing: .04em; }
 .req { border-bottom: 1px dotted rgba(34,31,31,.3); padding: 8px 0; font-size: 15px; display: flex; flex-direction: column; gap: 4px; }
@@ -61,7 +59,7 @@
 .create { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .create .full { grid-column: 1 / -1; }
 .create label { display: flex; flex-direction: column; gap: 2px; font: 12px var(--display); letter-spacing: .12em; color: var(--ink-soft); }
-.create input, .create select, .create textarea { padding: 6px 8px; border: 1px solid var(--ink-faint); border-radius: 3px; background: #fffdf7; font: 15px var(--body); letter-spacing: 0; color: var(--ink); }
+.create input, .create select, .create textarea { padding: 6px 8px; border: 1px solid var(--ink-faint); border-radius: 3px; background: var(--surface); font: 15px var(--body); letter-spacing: 0; color: var(--ink); }
 .create textarea { min-height: 60px; resize: vertical; }
 .create .dp input { width: 44px; }
 
