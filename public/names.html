@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>NPC Names · Wild Imaginary West</title>
+  <title>NPCs · Wild Imaginary West</title>
   <meta name="description" content="Deal a hand from the saloon deck to name an NPC — Wild Imaginary West RPG.">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🂡</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -17,9 +17,9 @@
     <div class="masthead-inner">
       <img class="brand-logo" src="/img/logo-light.svg" alt="Wild Imaginary West">
       <div class="brand-title">
-        <div class="kicker">PICK A CARD OR ROLL THEM BONES</div>
-        <h1>NPC Names</h1>
-        <div class="sub">Deal from the saloon deck — Official Guidebook, pages 203–204</div>
+        <div class="kicker">WHO’S WHO IN THE WEST</div>
+        <h1>NPCs</h1>
+        <div class="sub">Everyone the posse has met, and what you know about them</div>
       </div>
       <button class="btn small warden-link" id="warden-btn" type="button">⭐ Warden</button>
     </div>
@@ -96,11 +96,11 @@
 
     <section class="card corner" data-acc="ledger">
       <div class="head-row"><h2 class="section-title">NPC Ledger</h2><input class="search" id="npc-search" type="search" placeholder="Search names, notes, places…" aria-label="Search NPCs"></div>
-      <p class="muted" style="margin-top:6px">Shared with the whole posse. Anyone can jot posse notes; Warden notes stay secret.</p>
+      <p class="muted" id="ledger-blurb" style="margin-top:6px">Everyone the posse has met. Jot down what you learn about them — the whole posse sees your notes.</p>
       <div class="ledger" id="ledger"></div>
     </section>
   </main>
 
-  <script type="module" src="/js/names.js?v=25"></script>
+  <script type="module" src="/js/names.js?v=26"></script>
 </body>
 </html>

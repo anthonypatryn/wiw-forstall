@@ -280,7 +280,11 @@ function setWarden() {
   $('#faction-card').hidden = !warden;
   // dealing strangers is the Warden's job; the posse just sees the NPC ledger
   $('.table-felt').hidden = !warden;
-  document.querySelector('.masthead .sub').textContent = warden ? 'Deal from the saloon deck — Official Guidebook, pages 203–204' : 'Everyone the posse has met — jot your own notes on each one';
+  document.querySelector('.masthead .sub').textContent = warden ? 'Deal from the saloon deck — Official Guidebook, pages 203–204' : 'Everyone the posse has met, and what you know about them';
+  document.querySelector('.masthead .kicker').textContent = warden ? 'PICK A CARD OR ROLL THEM BONES' : 'WHO’S WHO IN THE WEST';
+  $('#ledger-blurb').textContent = warden
+    ? 'Shared with the whole posse once they’ve met someone. Posse notes are for everyone; your Warden notes stay secret.'
+    : 'Everyone the posse has met. Jot down what you learn about them — the whole posse sees your notes.';
   if (!warden) $('#result').hidden = true;
   if (warden) loadBook(); else { book = null; $('#book').innerHTML = ''; }
 }

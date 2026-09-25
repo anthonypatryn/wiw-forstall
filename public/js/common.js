@@ -203,7 +203,7 @@ export function timeAgo(t) {
 const NAV = [
   ['/', 'Forstall Scanner'],
   ['/posse', 'Posse Sheets'],
-  ['/names', 'NPC Names'],
+  ['/names', 'NPCs'],
   ['/map', 'Map'],
   ['/battle', 'Battle Map'],
   ['/store', 'Store'],

@@ -264,7 +264,7 @@ function renderTurnBar() {
   if (!c?.active) {
     bar.hidden = !warden;
     const n = (combat?.enemies || []).filter((e) => !e.defeated).length, pcs = (combat?.posse || []).filter((p) => !p.dead).length;
-    bar.innerHTML = warden ? `<div class="turn-bar"><div><small>NO COMBAT RUNNING</small><span class="muted">${pcs} in the posse · ${n} enem${n === 1 ? 'y' : 'ies'} ready${n ? '' : ' — add them on the Combat page'}</span></div>
+    bar.innerHTML = warden ? `<div class="turn-bar"><div><small>NO COMBAT RUNNING</small><span class="muted">${pcs} in the posse · ${n} enem${n === 1 ? 'y' : 'ies'} ready${n ? '' : ' — add them in Combat Control'}</span></div>
       <button type="button" class="btn" data-startfight${pcs + n ? '' : ' disabled'}>${gl('revolver')} Start combat</button></div>` : '';
     bar.querySelector('[data-startfight]')?.addEventListener('click', async () => { if (await tpAct({ action: 'start' }, 'Combat begins — tokens placed.')) poller?.now?.(); });
     return;
@@ -422,7 +422,7 @@ function wireTurnBar(bar, cur, tok) {
   bar.querySelector('[data-endmine]')?.addEventListener('click', () => { tp.open = ''; tpAct({ action: 'pc', id: c.current, op: 'endTurn' }); });
   bar.querySelector('[data-endfight]')?.addEventListener('click', async () => {
     if (!confirm('End combat? Grit refills and Dodge/Aim clear. Health and Statuses stay as they are.')) return;
-    if (await tpAct({ action: 'end' }, 'Combat is over. Loot the fallen on the Combat page.')) poller?.now?.();
+    if (await tpAct({ action: 'end' }, 'Combat is over. Loot the fallen in Combat Control.')) poller?.now?.();
   });
   bar.querySelector('[data-goto]')?.addEventListener('click', () => {
     const t = data?.tokens.find((x) => x.ref === c.current);
