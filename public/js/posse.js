@@ -265,7 +265,6 @@ function buildSheet(p) {
       <span class="save-state" data-save-state></span>
       <button type="button" class="me-star" data-me-bar>☆ This is me</button>
       <span class="mode-tag" data-mode-tag></span>
-      <a class="mode-tag turn-tag" data-turn-tag data-jump="fight" href="#${p.id}" hidden>⚔ YOUR TURN</a>
       <a class="mode-tag bleed-tag" data-bleed-tag data-jump="health" href="#${p.id}" hidden>🩸 BLEEDING OUT</a>
       <button class="btn small" type="button" data-mode="edit" hidden>✎ Edit</button>
       <button class="btn small" type="button" data-mode="view" hidden>✓ Done editing</button>
@@ -796,7 +795,6 @@ function renderRides(view, p) {
 const checkSeen = new Set(); let checksPrimed = false;
 const RANGES = [['arms', 'Arm’s Reach'], ['short', 'Short Range'], ['long', 'Long Range'], ['distant', 'Distant']];
 const fightSel = {}; // per sheet: { w, r, t, ammo, aim, dodge }
-let turnSeen = '';
 function whoseName(key) {
   if (!key) return '—';
   if (key === 'enemies') return 'the enemies';
@@ -806,13 +804,6 @@ function renderFight(view, p) {
   const box = view.querySelector('[data-dyn="fight"]');
   const c = data.combat || {};
   const mine = c.active && c.current === p.id;
-  // turn alert: banner in the bar + a buzz/toast when the turn comes round
-  view.querySelector('[data-turn-tag]').hidden = !mine;
-  const key = `${c.round}:${c.current}`;
-  if (mine && turnSeen !== key) {
-    if (turnSeen) { toast(`⚔ ${p.name}, it’s your turn!`); try { navigator.vibrate?.([120, 60, 120]); } catch {} }
-    turnSeen = key;
-  } else if (!mine) turnSeen = key;
   document.title = `${mine ? '⚔ ' : ''}${p.name} · Posse Sheets`;
   const statuses = Object.entries(p.statuses || {}).filter(([, v]) => v);
   const checks = (data.checks || []).filter((ck) => (ck.who.includes(p.id) ? !ck.rolls[p.id] && !ck.winner : ck.kind !== 'challenge' && !ck.helps[p.id]));
@@ -821,7 +812,7 @@ function renderFight(view, p) {
     if (!checkSeen.has(ck.id)) { if (checkSeen.size || checksPrimed) { toast(`🎯 The Warden wants a ${ck.skill} roll from ${p.name}!`); try { navigator.vibrate?.(150); } catch {} } checkSeen.add(ck.id); }
   });
   checksPrimed = true;
-  const show = (c.active || statuses.length || checks.length || p.hold) && !p.dead;
+  const show = ((statuses.length && !c.active) || checks.length) && !p.dead;
   box.hidden = !show;
   if (!show || box.contains(document.activeElement)) return;
   const foes = (data.enemies || []).filter((e) => !e.defeated);
@@ -844,10 +835,6 @@ function renderFight(view, p) {
       return `<div class="ck-prompt${mineCk ? ' mine' : ''}"><div><small>${ck.kind === 'challenge' ? `CHALLENGE${ck.round > 1 ? ` · ROUND ${ck.round} (TIE)` : ''} — MOST HITS WINS` : mineCk ? 'THE WARDEN ASKS YOU TO ROLL' : 'SOMEONE ELSE IS ROLLING — YOU CAN HELP'}</small>
         <b>${esc(ck.skill)}</b> · ${ck.kind === 'challenge' ? `vs ${esc(vs)}` : `${esc(ck.diff)} — ${ck.target} Hit${ck.target === 1 ? '' : 's'}`}${ck.note ? ` · <i>${esc(ck.note)}</i>` : ''}</div>
         <button type="button" class="btn small${mineCk ? '' : ' secondary'}" data-ck-roll="${ck.id}">${mineCk ? `🎲 Roll ${esc(ck.skill)} (${skillPool(ck.skill)})` : '🤝 Help (½ dice)'}</button></div>`; }).join('')}
-    ${c.active ? `<div class="turn-banner${mine ? ' mine' : ''}"><span>${mine ? `⚔ YOUR TURN · <b>${p.grit}</b> Grit` : `Round ${c.round || 1} · <b>${esc(whoseName(c.current))}</b>’s turn${ahead ? ` · you’re up in ${ahead}` : ''}`}${p.dodge ? ` · ${p.dodge} Dodge ready` : ''}</span>
-      <span class="tb-btns"><a class="btn small${mine ? '' : ' secondary'}" href="/battle">Go to Battle Map ›</a>${mine ? '<button type="button" class="btn small secondary" data-endturn>End my turn</button>' : ''}</span></div>
-      ${mine ? '<p class="muted fp-note">Move, attack, dodge, use abilities and relieve Statuses on the Battle Map.</p>' : ''}
-      ${p.hold ? `<p class="muted fp-note">⏳ Holding <b>${esc(p.hold.label)}</b> — when ${esc(p.hold.when)}. It pops up on any page when it’s set off.</p>` : ''}` : ''}
     ${statuses.length && !c.active ? `<div class="fp-relieve"><b class="fp-h">RELIEVE A STATUS</b> <span class="muted">${c.active ? '1 Grit per die, once per Status per turn, on your turn.' : 'Out of combat: no Grit, try as often as you like.'}</span>
       ${statuses.map(([st, v]) => {
         const skills = (meta.statuses[st]?.skill || '').split(' or ');

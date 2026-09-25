@@ -233,23 +233,28 @@ function mountDice() {
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape') box.hidden = true; });
 }
 
-// ---------- "your turn" banner on pages other than the Battle Map ----------
+// ---------- "your turn" banner on every page but the Battle Map (the only turn alert off the map) ----------
 let turnEl = null;
-function myTurn(h) {
+addEventListener('resize', () => setTurnH());
+const setTurnH = () => document.documentElement.style.setProperty('--turnbar-h', turnEl && !turnEl.hidden ? `${turnEl.offsetHeight}px` : '0px');
+function myTurn(h) { myTurnInner(h); setTurnH(); }
+function myTurnInner(h) {
   const mine = me();
-  const here = location.pathname.startsWith('/battle') || (location.pathname.startsWith('/posse') && location.hash.slice(1).split('/')[0] === mine);
+  const here = location.pathname.startsWith('/battle');
   const cur = h.active && mine && h.current === mine ? h.order.find((o) => o.key === mine) : null;
-  if (!turnEl) { turnEl = document.createElement('div'); turnEl.className = 'hud-myturn'; turnEl.hidden = true; document.body.append(turnEl); }
+  if (!turnEl) { turnEl = document.createElement('div'); turnEl.className = 'hud-myturn'; turnEl.hidden = true; document.body.prepend(turnEl); }
   if (!cur || here) { turnEl.hidden = true; turnEl.dataset.k = ''; return; }
   const k = `${h.round}:${h.current}`;
+  if (seen('wiw.turnHid') === k) { turnEl.hidden = true; return; }
   if (turnEl.dataset.k === k && !turnEl.hidden) return;
   turnEl.dataset.k = k; turnEl.hidden = false;
   try { navigator.vibrate?.([120, 60, 120]); } catch {}
   turnEl.innerHTML = `<div>${gl('revolver')} <b>${esc(cur.name)}, it’s your turn!</b></div>
-    <div class="hud-ck-btns"><a class="btn" href="/battle">Go to Battle Map ›</a><button type="button" class="btn small secondary" data-end>End my turn</button></div>`;
+    <div class="hud-ck-btns"><a class="btn small" href="/battle">Go to Battle Map ›</a><button type="button" class="btn small secondary" data-end>End my turn</button></div><button type="button" class="hud-myturn-x" data-hide aria-label="Hide until my next turn" title="Hide until my next turn">×</button>`;
+  turnEl.querySelector('[data-hide]').addEventListener('click', () => { setSeen('wiw.turnHid', k); turnEl.hidden = true; setTurnH(); });
   turnEl.querySelector('[data-end]').addEventListener('click', async (e) => {
     e.target.disabled = true;
-    try { await api('POST', { action: 'pc', id: mine, op: 'endTurn' }, '', '/api/combat'); turnEl.hidden = true; toast('Turn ended.'); }
+    try { await api('POST', { action: 'pc', id: mine, op: 'endTurn' }, '', '/api/combat'); turnEl.hidden = true; setTurnH(); toast('Turn ended.'); }
     catch (err) { toast(err.message, true); e.target.disabled = false; }
   });
 }

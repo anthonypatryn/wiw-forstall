@@ -362,7 +362,7 @@ button { cursor: pointer; }
 .dia.input.locked span { color: #b9f0c0; }
 
 /* ---------- site nav ---------- */
-.sitenav { background: var(--ink); border-bottom: 3px solid var(--rust); position: sticky; top: 0; z-index: 20; }
+.sitenav { background: var(--ink); border-bottom: 3px solid var(--rust); position: sticky; top: var(--turnbar-h, 0px); z-index: 20; }
 .sitenav-inner { max-width: 1240px; margin: 0 auto; padding: 0 12px; display: flex; gap: 2px; overflow-x: auto; scrollbar-width: none; }
 .sitenav-inner::-webkit-scrollbar { display: none; }
 .sitenav a {
@@ -434,7 +434,7 @@ button { cursor: pointer; }
 /* ---------- Warden mode indicator ---------- */
 .warden-strip {
   background: repeating-linear-gradient(45deg, #7a2c14 0 12px, #8e3218 12px 24px); color: #fff; text-align: center;
-  font: 15px var(--display); letter-spacing: .14em; padding: 7px 12px 5px; position: sticky; top: 44px; z-index: 19;
+  font: 15px var(--display); letter-spacing: .14em; padding: 7px 12px 5px; position: sticky; top: calc(44px + var(--turnbar-h, 0px)); z-index: 19;
 }
 .warden-strip button { margin-left: 10px; background: rgba(0,0,0,.3); border: 1px solid #fff; color: #fff; font: 13px var(--display); letter-spacing: .08em; padding: 3px 8px 1px; border-radius: 3px; }
 .warden-strip button:hover { background: #fff; color: var(--rust-dark); }
@@ -538,9 +538,10 @@ button { cursor: pointer; }
 @media (max-width: 560px) { .dice-fab { right: auto; left: 12px; bottom: 64px; padding: 9px 13px; font-size: 14px; } .hud-strip { bottom: 12px; } }
 
 /* it's your turn (pages other than the Battle Map) */
-.hud-myturn { position: fixed; left: 50%; top: 12px; transform: translateX(-50%); z-index: 70; width: min(520px, calc(100vw - 24px)); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px;
-  padding: 10px 14px; border-radius: 8px; background: var(--rust); color: #fff; font: 17px var(--display); letter-spacing: .06em; box-shadow: 0 10px 26px rgba(0,0,0,.4); }
+.hud-myturn { position: sticky; top: 0; z-index: 30; width: 100%; box-sizing: border-box; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px;
+  padding: 8px 46px 8px 16px; background: var(--rust); color: #fff; font: 17px var(--display); letter-spacing: .06em; box-shadow: 0 4px 12px rgba(0,0,0,.3); }
 .hud-myturn b { font-weight: 400; }
 .hud-myturn .gl { width: 1.2em; height: 1.2em; vertical-align: -3px; }
 .hud-myturn .btn { background: #fff; color: var(--ink); border-color: #fff; text-decoration: none; }
 .hud-myturn .btn.secondary { background: transparent; color: #fff; }
+.hud-myturn-x { position: absolute; top: 50%; margin-top: -13px; right: 8px; width: 26px; height: 26px; border: 1px solid rgba(255,255,255,.6); border-radius: 50%; background: transparent; color: #fff; font-size: 16px; line-height: 1; cursor: pointer; }

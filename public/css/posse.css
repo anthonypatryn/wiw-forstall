@@ -251,7 +251,7 @@ body.on-sheet .masthead { display: none; }
 .starter-in .pack-card li { display: list-item; padding: 0; border: 0; gap: 0; }
 
 /* sheet toolbar */
-.sheet-bar { position: sticky; top: 0; z-index: 20; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 0 0 12px; padding: 8px 12px;
+.sheet-bar { position: sticky; top: var(--turnbar-h, 0px); z-index: 20; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin: 0 0 12px; padding: 8px 12px;
   background: var(--paper); border: 2px solid var(--ink); border-radius: 6px; box-shadow: 0 4px 10px rgba(0,0,0,.15); }
 .sheet-bar .btn { text-decoration: none; }
 .sheet-bar .save-state { flex: 1; text-align: center; font: 14px var(--display); letter-spacing: .08em; color: var(--ink-soft); }
