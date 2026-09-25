@@ -306,3 +306,13 @@ test('lock loot and traps: hidden until it opens, then handed over once', async 
   lockAction(s2, { action: 'start', to: ['a'], difficulty: 1, loot: { kind: 'item' }, trap: { damage: 0 } }, { warden: true, names });
   assert.equal(s2.list[0].loot, null); assert.equal(s2.list[0].trap, null);
 });
+
+test('End Session: a late-started session reaches back over the night, then ends', async () => {
+  const { freshSession, sessionAction } = await import('../lib/session.js');
+  const st = freshSession(), now = Date.now();
+  const s = sessionAction(st, { action: 'add', created: now - 5 * 3600e3 });
+  assert.ok(Math.abs(s.created - (now - 5 * 3600e3)) < 1000);
+  assert.ok(sessionAction(st, { action: 'add', created: now - 9 * 86400e3 }).created >= now - 2 * 86400e3 - 1000);
+  assert.ok(sessionAction(st, { action: 'add', created: now + 86400e3 }).created <= Date.now());
+  assert.ok(sessionAction(st, { action: 'end', id: s.id }).ended);
+});

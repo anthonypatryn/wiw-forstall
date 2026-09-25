@@ -8,6 +8,7 @@ import { mountHandout } from './handout-send.js';
 import { mountWardenWhisper } from './whisper.js';
 import { mountLockSend } from './lockpick.js';
 import { mountDesk, renderChecks, renderRecent } from './desk.js';
+import { openEndSession } from './endsession.js';
 
 mountTableLog();
 mountNav('/run');
@@ -160,6 +161,7 @@ document.addEventListener('click', async (e) => {
     if (r) { toast(`Jackpot for ${r.name}!`); aw.jp = ''; $('#jp-why').value = ''; renderRewards(); }
   }
 });
+$('#end-session').addEventListener('click', () => openEndSession({ getCombat: () => combat, refresh: () => { poller?.now?.(); refreshNeeds(); } }));
 $('#town-all').addEventListener('click', async () => {
   if (!await ask('Town Rest for the whole posse?')) return;
   const r = await act({ action: 'townRestAll' });

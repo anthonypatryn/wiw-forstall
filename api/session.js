@@ -66,12 +66,18 @@ export default async function handler(req, res) {
       const text = String(s?.recap || '').replace(/[<>]/g, '').trim();
       if (!text) throw new Error('Write a recap first.');
       const combat = (await load('combat')) || freshCombat();
-      addLog(combat, { type: 'event', text: `📜 ${s.title}${s.date ? ` (${s.date})` : ''} — ${text}` });
+      addLog(combat, { type: 'event', text: `${s.title}${s.date ? ` (${s.date})` : ''} — ${text}` });
       combat.v = (combat.v || 0) + 1;
       await save(combat, 'combat');
       return send(res, 200, { result: true, state });
     }
     const result = sessionAction(state, body) ?? null;
+    if (body.action === 'end') { // tell the table it's a wrap
+      const combat = (await load('combat')) || freshCombat();
+      addLog(combat, { type: 'event', text: `That’s the end of ${result.title}. Thanks for riding, posse.` });
+      combat.v = (combat.v || 0) + 1;
+      await save(combat, 'combat');
+    }
     state.v = (state.v || 0) + 1;
     await save(state, KEY);
     return send(res, 200, { result, state });

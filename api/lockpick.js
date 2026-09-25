@@ -31,11 +31,14 @@ export default async function handler(req, res) {
     const rollFinesse = (pid) => {
       const pc = combat.posse.find((p) => p.id === pid);
       const p = parsePool(pc?.skills?.finesse || '1B');
+      // Locksmith (Trapper, 2/day): +2B to Finesse rolls made to pick locks
+      const smith = (pc?.abilities || []).includes('Locksmith') && (pc.abilityUses?.Locksmith || 0) < 2;
+      if (smith) { p.black += 2; pc.abilityUses = { ...(pc.abilityUses || {}), Locksmith: (pc.abilityUses?.Locksmith || 0) + 1 }; }
       let n = p.black + p.gold;
       if (pc?.statuses?.Poisoned) n = Math.max(0, n - 2);
       const g = Math.min(p.gold, n), b = n - g, spur = (pc?.talents || []).includes('Finesse');
       const r = n ? rollPool(b, g, spur) : { dice: [], hits: 0, aces: 0 };
-      addLog(combat, { type: 'roll', who: pc?.name || '?', label: 'Finesse · lock pick (peeks)', pool: poolLabel({ black: b, gold: g }), spur, dice: r.dice, hits: r.hits, aces: r.aces });
+      addLog(combat, { type: 'roll', who: pc?.name || '?', label: `Finesse · lock pick (peeks)${smith ? ' + Locksmith' : ''}`, pool: poolLabel({ black: b, gold: g }), spur, dice: r.dice, hits: r.hits, aces: r.aces });
       logged = true;
       return { ...r, pool: poolLabel({ black: b, gold: g }) };
     };
@@ -62,6 +65,17 @@ export default async function handler(req, res) {
       pc.updated = Date.now();
       logged = true;
     };
+    // a retry that costs a lockpick takes one out of their inventory
+    if (body.action === 'retry') {
+      const a = state.list.find((l) => l.id === body.id), pc = a && combat.posse.find((p) => p.id === a.pc);
+      if (pc && /lock ?picks?/i.test(a.retryCost || '') && a.status === 'failed' && a.retriesLeft > 0) {
+        const pick = (pc.items || []).find((i) => /lock ?pick/i.test(i.name) && (Number(i.qty) || 0) > 0);
+        if (!pick) throw new Error('You’re out of lockpicks — buy more at the Store.');
+        pick.qty = (Number(pick.qty) || 1) - 1;
+        if (!pick.qty) pc.items = pc.items.filter((i) => i !== pick);
+        pc.updated = Date.now(); logged = true;
+      }
+    }
     const result = lockAction(state, body, { warden, names, rollFinesse, log, onOpen }) ?? null;
     state.v = (state.v || 0) + 1;
     await save(state, KEY);

@@ -66,7 +66,7 @@ function itemCard(i) {
       <div class="price${i.cost == null ? ' none' : ''}">${i.cost == null ? 'not for sale' : money(i.cost)}</div></div>
     ${stats ? `<div class="stats">${stats}</div>` : ''}
     ${text.map((t) => `<p>${esc(t)}</p>`).join('')}
-    <div class="src">${i.custom ? 'Warden-made' : `Guidebook p. ${i.page}`}</div>
+    <div class="src">${i.custom ? 'Warden-made' : i.house ? 'House item' : `Guidebook p. ${i.page}`}</div>
     <div class="actions">
       ${i.cost != null ? `<input type="number" min="1" max="99" value="1" aria-label="Quantity" data-qty><button class="btn small" data-buy type="button"${shopper ? '' : ' disabled'}>Ask to buy</button>` : ''}
       ${warden ? `<button class="btn small secondary" data-give type="button"${shopper ? '' : ' disabled'} title="Hand it over free — loot, rewards">Give</button>` : ''}
