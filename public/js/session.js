@@ -1,4 +1,4 @@
-import { $, esc, api, startPolling, toast, mountNav, tryWarden, forgetWarden, savedPin, wardenModal, timeAgo } from './common.js';
+import { $, esc, api, startPolling, toast, mountNav, tryWarden, forgetWarden, savedPin, wardenModal, timeAgo , ask, askText } from './common.js';
 import { renderLogInto, mountTableLog } from './tablelog.js';
 
 const EP = '/api/session';
@@ -58,7 +58,7 @@ function renderEditor(force) {
     if (await act({ action: 'postRecap', id: s.id })) toast('Recap posted — the players can see it in the Table Log.');
   });
   $('#del-session').addEventListener('click', async () => {
-    if (!confirm(`Delete “${s.title}” and its notes? This can’t be undone.`)) return;
+    if (!await ask(`Delete “${s.title}” and its notes? This can’t be undone.`)) return;
     if (await act({ action: 'remove', id: s.id })) { current = null; toast('Session deleted.'); }
   });
 }
@@ -173,7 +173,7 @@ async function loadHomebrew() {
     ${items.length ? `<ul class="hb-list">${items.map((i) => row(i.name, [i.cat, i.cost != null ? `$${i.cost}` : ''].filter(Boolean).join(' · '), `data-hb="item" data-key="${esc(i.id)}"`)).join('')}</ul>` : '<p class="muted">None yet.</p>'}`;
   box.querySelectorAll('[data-hb]').forEach((b) => b.addEventListener('click', async () => {
     const name = b.closest('li').querySelector('b').textContent;
-    if (!confirm(`Delete ${name} for good?`)) return;
+    if (!await ask(`Delete ${name} for good?`)) return;
     const kind = b.dataset.hb, key = b.dataset.key;
     try {
       if (kind === 'monster') await api('POST', { action: 'removeCustom', name: key }, '', '/api/scan');
@@ -186,7 +186,7 @@ async function loadHomebrew() {
 }
 $('#hb-refresh').addEventListener('click', loadHomebrew);
 $('#clear-log').addEventListener('click', async () => {
-  if (!confirm('Clear the Table Log for everyone? This can’t be undone. (Download a backup first if you want a record.)')) return;
+  if (!await ask('Clear the Table Log for everyone? This can’t be undone. (Download a backup first if you want a record.)')) return;
   if (await combatAct({ action: 'clearLog' })) { toast('Table Log cleared.'); renderGlance(); }
 });
 

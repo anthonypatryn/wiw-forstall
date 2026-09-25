@@ -547,3 +547,12 @@ button { cursor: pointer; }
 .hud-myturn .btn { background: #fff; color: var(--ink); border-color: #fff; text-decoration: none; }
 .hud-myturn .btn.secondary { background: transparent; color: #fff; }
 .hud-myturn-x { position: absolute; top: 50%; margin-top: -13px; right: 8px; width: 26px; height: 26px; border: 1px solid rgba(255,255,255,.6); border-radius: 50%; background: transparent; color: #fff; font-size: 16px; line-height: 1; cursor: pointer; }
+
+/* styled confirm / prompt dialogs */
+.ask-back { z-index: 200; }
+.modal.ask h2 { font-size: 24px; line-height: 1.15; }
+.ask-body { margin: -4px 0 14px; white-space: pre-line; line-height: 1.45; }
+.modal.ask form { flex-direction: column; gap: 14px; }
+.modal.ask .ask-input { font: 18px var(--body); letter-spacing: 0; }
+.ask-btns { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
+.ask-btns .btn.danger { background: var(--red, #8e2a1a); border-color: var(--red, #8e2a1a); color: #fff; }

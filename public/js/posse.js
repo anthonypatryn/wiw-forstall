@@ -1,5 +1,5 @@
 import {
-  $, esc, api, startPolling, abilityOptions, abilityTargetsHTML, abilityBody, tryWarden, forgetWarden, savedPin, wardenModal, store, injectDefs, toast, mountNav, poolHTML, readPool, fillPool, rollPopup, bleedPanel,
+  $, esc, api, startPolling, abilityOptions, abilityTargetsHTML, abilityBody, tryWarden, forgetWarden, savedPin, wardenModal, store, injectDefs, toast, mountNav, poolHTML, readPool, fillPool, rollPopup, bleedPanel, ask, askText,
 } from './common.js';
 import { mountTableLog } from './tablelog.js';
 import { ICONS } from './icons.js';
@@ -104,7 +104,7 @@ $('#aw-go').addEventListener('click', async () => {
   if (r) { toast(`Awarded ${r.what} to ${r.count} character${r.count > 1 ? 's' : ''}.`); ['#aw-prestige', '#aw-dollars', '#aw-scrap', '#aw-item', '#aw-reason'].forEach((id) => { $(id).value = ''; }); }
 });
 $('#town-all').addEventListener('click', async () => {
-  if (!confirm('Town Rest for the whole posse?')) return;
+  if (!await ask('Town Rest for the whole posse?')) return;
   const r = await act({ action: 'townRestAll' });
   if (r) toast(`${r.count} character${r.count === 1 ? '' : 's'} rested up in town.`);
 });
@@ -124,7 +124,7 @@ $('#warden-btn').addEventListener('click', async () => {
 
 async function deletePc(id) {
   const pc = pcById(id);
-  if (!pc || !confirm(`Delete ${pc.name}’s sheet for everyone? This can’t be undone.`)) return;
+  if (!pc || !await ask(`Delete ${pc.name}’s sheet for everyone? This can’t be undone.`)) return;
   if (await act({ action: 'pc', id, op: 'remove' })) { toast(`${pc.name} deleted.`); if (location.hash) location.hash = ''; }
 }
 const pcById = (id) => data?.posse.find((p) => p.id === id);
@@ -398,7 +398,7 @@ function wireSheet(p) {
   on('keydown', (e) => {
     if (e.key === 'Enter' && e.target.matches('[data-ks-other]')) { e.preventDefault(); view.querySelector('[data-start="ks-other"]').click(); }
   });
-  on('change', (e) => {
+  on('change', async (e) => {
     if (e.target.matches('.pick')) return pickItem(p, e.target);
     if (e.target.matches('[data-pack]')) return choosePack(p, e.target.dataset.pack === '2' ? 'pack2' : 'pack', e.target.value);
     if (e.target.matches('[data-dyn="fight"] [data-abp], [data-dyn="fight"] [data-ab]')) {
@@ -432,7 +432,7 @@ function wireSheet(p) {
     }
     if (e.target.matches('[data-ks]')) { e.target.blur(); return toggleKeepsake(p, e.target.value, e.target.checked); }
     if (e.target.matches('[data-faction-select]') && e.target.value === '__other') {
-      const v = (prompt('Faction name:') || '').trim().slice(0, 40);
+      const v = (await askText('Faction name:') || '').trim().slice(0, 40);
       if (!v) { e.target.value = get(pcById(p.id), e.target.dataset.path) ?? ''; return; }
       if (![...e.target.options].some((o) => o.value === v)) e.target.add(new Option(v, v), e.target.options[e.target.options.length - 1]);
       e.target.value = v;
@@ -512,7 +512,7 @@ function wireSheet(p) {
       go.blur();
       if (await act({ action: 'pc', id: p.id, op: 'installUpgrade', target: ub.dataset.upgBox, index: ub.dataset.i, item, pay })) toast('Upgrade installed — it’s in the Table Log.');
     } else if (rm && ub) {
-      if (confirm('Take this upgrade off? (No refund.)')) act({ action: 'pc', id: p.id, op: 'removeUpgrade', target: ub.dataset.upgBox, index: ub.dataset.i, slot: rm.dataset.upgRm });
+      if (await ask('Take this upgrade off? (No refund.)')) act({ action: 'pc', id: p.id, op: 'removeUpgrade', target: ub.dataset.upgBox, index: ub.dataset.i, slot: rm.dataset.upgRm });
     } else if (e.target.closest('[data-attack]')) {
       e.target.closest('[data-attack]').blur();
       const s = fightSel[p.id];
@@ -541,7 +541,7 @@ function wireSheet(p) {
       const pc = pcById(p.id), i = Number(b.dataset.i);
       const label = t === 'weapon' ? (pc.weapons[i].model || pc.weapons[i].manufacturer) : t === 'gear' ? pc.gear[i].item : t === 'horse' ? (pc.horse.name || pc.horse.breed) : t === 'mech' ? pc.mech.class : pc.forstall.model;
       if (!label) return toast('That slot is already empty.');
-      if (!confirm(`Remove ${label}? Everything in that section is cleared (upgrades, ammo, notes).`)) return;
+      if (!await ask(`Remove ${label}? Everything in that section is cleared (upgrades, ammo, notes).`)) return;
       if (await act({ action: 'pc', id: p.id, op: 'removeThing', target: t, index: i })) toast(`${label} removed.`);
     } else if (e.target.closest('[data-ck-roll]')) {
       const b = e.target.closest('[data-ck-roll]'); b.blur();
@@ -559,7 +559,7 @@ function wireSheet(p) {
       if (r) toast(r.dmg != null ? `🔥 ${r.dmg ? `${r.dmg} damage to ${r.target}` : `${r.target} shrugs it off`}` : `🔥 ${r.fired}!`);
     } else if (e.target.closest('[data-sheet-undo]')) {
       const b = e.target.closest('[data-sheet-undo]'); b.blur();
-      if (b.dataset.sheetUndo === 'turn' && !confirm('Restart this turn? Everything done this turn is undone.')) return;
+      if (b.dataset.sheetUndo === 'turn' && !await ask('Restart this turn? Everything done this turn is undone.')) return;
       const r = await act({ action: 'undo', mode: b.dataset.sheetUndo });
       if (r) toast(`↶ Undone: ${r.labels.join(' · ')}`);
     } else if (e.target.closest('[data-endturn]')) {
@@ -588,7 +588,7 @@ function wireSheet(p) {
     if (!b) return;
     b.blur();
     const pc = pcById(p.id);
-    if (b.dataset.mode === 'edit') { if (unlockSheet(p)) { hydrate(pc); toast('Editing — tap Done editing when finished.'); } }
+    if (b.dataset.mode === 'edit') { if (await unlockSheet(p)) { hydrate(pc); toast('Editing — tap Done editing when finished.'); } }
     else if (b.dataset.mode === 'view') { editMode.delete(p.id); hydrate(pc); toast('Sheet locked.'); }
     else if (b.dataset.mode === 'finish') {
       renderStarter(view, pc);
@@ -722,7 +722,7 @@ async function spendPrestige(view, p, what) {
   if (what === 'talent') { body.talent = val('talent'); label += ` (${body.talent})`; }
   if (what === 'ability') { body.ability = val('ability'); label += ` (${body.ability})`; }
   const cost = SPEND.find((x) => x[0] === what)[1];
-  if (!confirm(`Spend ${cost} Prestige on ${label} for ${pc.name}?`)) return;
+  if (!await ask(`Spend ${cost} Prestige on ${label} for ${pc.name}?`)) return;
   if (await act(body)) toast(`${label} — done. It’s in the Table Log.`);
 }
 
@@ -888,8 +888,8 @@ function applyMode(view, p) {
   star.textContent = mine ? '★ ME' : '☆ This is me'; star.setAttribute('aria-pressed', String(mine));
   view.querySelector('[data-mode-tag]').dataset.m = creating ? 'create' : locked ? 'view' : 'edit';
 }
-function unlockSheet(p) {
-  if (!confirm(`Edit ${pcById(p.id)?.name || 'this character'}’s sheet? Changes save as you type.`)) return false;
+async function unlockSheet(p) {
+  if (!await ask(`Edit ${pcById(p.id)?.name || 'this character'}’s sheet? Changes save as you type.`)) return false;
   editMode.add(p.id);
   return true;
 }
@@ -1028,8 +1028,8 @@ function hydrate(p) {
         <button class="btn small secondary" type="button" data-town title="Full Health, Statuses cleared, Supplies reset, Forstall recharged (p. 54)">🏨 Town</button></div>`}`;
     vitals.querySelectorAll('[data-hp]').forEach((b) => b.addEventListener('click', () => send({ op: 'health', delta: Number(b.dataset.hp) })));
     vitals.querySelectorAll('[data-bleed-roll]').forEach((b) => b.addEventListener('click', () => bleedRoll(p, b.dataset.bleedRoll)));
-    vitals.querySelectorAll('.bleed-panel [data-op]').forEach((b) => b.addEventListener('click', () => {
-      if (b.dataset.op === 'die' && !confirm(`Mark ${p.name} as dead?`)) return;
+    vitals.querySelectorAll('.bleed-panel [data-op]').forEach((b) => b.addEventListener('click', async () => {
+      if (b.dataset.op === 'die' && !await ask(`Mark ${p.name} as dead?`)) return;
       send({ op: b.dataset.op });
     }));
     vitals.querySelectorAll('[data-grit]').forEach((g) => {
@@ -1042,8 +1042,8 @@ function hydrate(p) {
       const r = await send({ op: 'campRest', skill });
       if (r?.dice) { rollPopup(r, `${p.name} · Campfire rest · ${skill} · ${r.pool}`); toast(`Regained ${r.healed} Health by the fire.`); }
     });
-    vitals.querySelector('[data-town]')?.addEventListener('click', () => {
-      if (confirm('Town Rest? Full Health, Statuses cleared, Supplies reset, Forstall recharged.')) send({ op: 'townRest' });
+    vitals.querySelector('[data-town]')?.addEventListener('click', async () => {
+      if (await ask('Town Rest? Full Health, Statuses cleared, Supplies reset, Forstall recharged.')) send({ op: 'townRest' });
     });
   }
   vitals.querySelectorAll('.spur[data-spur]').forEach((b) => b.classList.toggle('on', p.talents.includes(b.dataset.spur)));
@@ -1086,13 +1086,13 @@ function hydrate(p) {
     const it = items[b.dataset.q];
     act({ action: 'sheet', id: p.id, path: `items.${b.dataset.q}.qty`, value: it.qty + Number(b.dataset.d) });
   }));
-  itemsBox.querySelectorAll('[data-rm-item]').forEach((b) => b.addEventListener('click', () => {
+  itemsBox.querySelectorAll('[data-rm-item]').forEach((b) => b.addEventListener('click', async () => {
     const it = items[Number(b.dataset.rmItem)];
-    if (confirm(`Remove ${it.name} from ${p.name}’s inventory?`)) act({ action: 'sheet', id: p.id, path: `items.${b.dataset.rmItem}.qty`, value: 0 });
+    if (await ask(`Remove ${it.name} from ${p.name}’s inventory?`)) act({ action: 'sheet', id: p.id, path: `items.${b.dataset.rmItem}.qty`, value: 0 });
   }));
   itemsBox.querySelectorAll('[data-sell]').forEach((b) => b.addEventListener('click', async () => {
     const it = items.find((x) => x.uid === b.dataset.sell);
-    const qty = it.qty > 1 ? Number(prompt(`Sell how many? (they have ${it.qty})`, '1')) : 1;
+    const qty = it.qty > 1 ? Number(await askText(`Sell how many? (they have ${it.qty})`, '1')) : 1;
     if (!qty) return;
     try { await api('POST', { action: 'request', kind: 'sell', pc: p.id, uid: it.uid, qty }, '', '/api/shop'); toast('Sale request sent — the Warden sets the price.'); }
     catch (e) { toast(e.message, true); }
@@ -1119,7 +1119,7 @@ function render() {
     return;
   }
   if (builtFor !== p.id) { editMode.clear(); buildSheet(p); builtFor = p.id; window.scrollTo(0, 0); }
-  if (wants === 'edit') { history.replaceState(null, '', `#${p.id}`); if (p.done !== false) unlockSheet(p); }
+  if (wants === 'edit') { history.replaceState(null, '', `#${p.id}`); if (p.done !== false) unlockSheet(p).then((ok) => { if (ok) hydrate(pcById(p.id)); }); }
   hydrate(p);
 }
 window.addEventListener('hashchange', render);

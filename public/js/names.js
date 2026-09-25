@@ -1,4 +1,4 @@
-import { $, esc, api, toast, store, mountNav, startPolling, timeAgo, tryWarden, forgetWarden, savedPin, wardenModal } from './common.js';
+import { $, esc, api, toast, store, mountNav, startPolling, timeAgo, tryWarden, forgetWarden, savedPin, wardenModal , ask, askText } from './common.js';
 import { NPC } from './npc-data.js';
 import { mountTableLog } from './tablelog.js';
 
@@ -205,8 +205,8 @@ function renderFactions() {
       desc.addEventListener('change', () => { if (desc.value !== sent) { sent = desc.value; npcAct({ action: 'editFaction', id: fid, desc: desc.value }, desc); } });
     }
     d.querySelector('[data-fknown]')?.addEventListener('change', (e) => npcAct({ action: 'editFaction', id: fid, known: e.target.checked }));
-    d.querySelector('[data-fremove]')?.addEventListener('click', () => {
-      if (confirm(`Delete ${f.name}? NPCs in it keep their notes but lose the faction.`)) npcAct({ action: 'removeFaction', id: fid });
+    d.querySelector('[data-fremove]')?.addEventListener('click', async () => {
+      if (await ask(`Delete ${f.name}? NPCs in it keep their notes but lose the faction.`)) npcAct({ action: 'removeFaction', id: fid });
     });
   });
 }
@@ -246,7 +246,7 @@ function renderLedger() {
     });
     card.querySelector('[data-faction]')?.addEventListener('change', (e) => npcAct({ action: 'setFaction', id, faction: e.target.value }, e.target));
     card.querySelector('[data-known]')?.addEventListener('change', (e) => npcAct({ action: 'known', id, value: e.target.checked }));
-    card.querySelector('[data-remove]')?.addEventListener('click', () => { if (confirm('Remove this NPC from the ledger?')) npcAct({ action: 'remove', id }); });
+    card.querySelector('[data-remove]')?.addEventListener('click', async () => { if (await ask('Remove this NPC from the ledger?')) npcAct({ action: 'remove', id }); });
   });
 }
 $('#ledger').addEventListener('focusout', () => setTimeout(() => { if (pendingLedger) renderLedger(); }, 60));

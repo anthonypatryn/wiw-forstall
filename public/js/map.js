@@ -1,4 +1,4 @@
-import { $, esc, api, startPolling, toast, mountNav, tryWarden, forgetWarden, savedPin, wardenModal } from './common.js';
+import { $, esc, api, startPolling, toast, mountNav, tryWarden, forgetWarden, savedPin, wardenModal , ask, askText } from './common.js';
 import { mountTableLog } from './tablelog.js';
 
 const EP = '/api/map';
@@ -177,7 +177,7 @@ function renderPanel() {
 
   $('#note-save')?.addEventListener('click', () => act({ action: 'note', place: p.id, text: $('#note-text').value, shared: $('#note-shared').checked }, 'Notes saved.'));
   $('#pin-shared')?.addEventListener('change', (e) => act({ action: 'pinEdit', id: p.id, shared: e.target.checked }));
-  $('#pin-remove')?.addEventListener('click', () => { if (confirm(`Delete ${p.name}?`)) { selected = null; act({ action: 'pinRemove', id: p.id }); } });
+  $('#pin-remove')?.addEventListener('click', async () => { if (await ask(`Delete ${p.name}?`)) { selected = null; act({ action: 'pinRemove', id: p.id }); } });
   $('#pin-move')?.addEventListener('click', () => startPlacing(p.id));
   $('#send-posse').addEventListener('click', async () => {
     const alive = (data?.posse || []).filter((c) => !c.dead);
@@ -264,7 +264,7 @@ function startPlacing(pinId = null) {
 function stopPlacing() { placing = false; movingPin = null; vp.classList.remove('placing'); $('#banner').hidden = true; }
 async function dropPin(pt) {
   if (movingPin) { await act({ action: 'pinEdit', id: movingPin, x: pt.x, y: pt.y }, 'Pin moved.'); stopPlacing(); return; }
-  const name = prompt('Name this place:');
+  const name = await askText('Name this place:');
   stopPlacing();
   if (!name) return;
   const pin = await act({ action: 'pin', name, x: pt.x, y: pt.y, shared: true }, `${name} added.`);

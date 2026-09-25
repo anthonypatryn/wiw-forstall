@@ -1,6 +1,6 @@
 import {
   $, esc, api, setPin, startPolling, injectDefs, staticDice, diamondsHTML, chipsHTML, toast, store, timeAgo,
-  mountNav, tryWarden, forgetWarden, savedPin,
+  mountNav, tryWarden, forgetWarden, savedPin, ask, askText,
 } from './common.js';
 import { renderNotebook } from './notebook.js';
 import { mountTableLog } from './tablelog.js';
@@ -118,11 +118,11 @@ function renderTarget() {
   el.querySelector('[data-act="jam"]')?.addEventListener('click', () => {
     act({ action: 'setJam', value: !data.jammed }, data.jammed ? 'Signal restored.' : 'Forstall jammed — players can’t Scan or guess.');
   });
-  el.querySelector('[data-act="solve"]').addEventListener('click', () => {
-    if (confirm(`Reveal ${a.name}'s full frequency to the posse?`)) act({ action: 'solve', name: a.name });
+  el.querySelector('[data-act="solve"]').addEventListener('click', async () => {
+    if (await ask(`Reveal ${a.name}'s full frequency to the posse?`)) act({ action: 'solve', name: a.name });
   });
-  el.querySelector('[data-act="reset"]').addEventListener('click', () => {
-    if (confirm(`Wipe all scan progress for ${a.name}? This clears its notebook entry.`)) act({ action: 'reset', name: a.name }, 'Progress wiped.');
+  el.querySelector('[data-act="reset"]').addEventListener('click', async () => {
+    if (await ask(`Wipe all scan progress for ${a.name}? This clears its notebook entry.`)) act({ action: 'reset', name: a.name }, 'Progress wiped.');
   });
 }
 
@@ -212,8 +212,8 @@ function renderCustom() {
   $('#custom-list').innerHTML = list.map((m) => `<div class="custom-row"><span>${esc(m.name)} · ${m.kz}${
     (m.traits?.length || m.sweep) ? `<span class="traits-line">${[m.sweep ? `Sweep ${esc(m.sweep)}` : '', ...(m.traits || []).map((id) => esc(traitById(id)?.name || id))].filter(Boolean).join(' · ')}</span>` : ''}</span>
     <button class="btn small secondary danger" data-rm="${esc(m.name)}" type="button">Remove</button></div>`).join('');
-  $('#custom-list').querySelectorAll('[data-rm]').forEach((b) => b.addEventListener('click', () => {
-    if (confirm(`Remove ${b.dataset.rm} and its notebook entry?`)) act({ action: 'removeCustom', name: b.dataset.rm });
+  $('#custom-list').querySelectorAll('[data-rm]').forEach((b) => b.addEventListener('click', async () => {
+    if (await ask(`Remove ${b.dataset.rm} and its notebook entry?`)) act({ action: 'removeCustom', name: b.dataset.rm });
   }));
 }
 
@@ -229,10 +229,10 @@ function renderNb() {
       ${e.solved ? '' : `<button class="btn small secondary" data-nb="solve" data-name="${esc(e.name)}" type="button">Mark decoded</button>`}
       <button class="btn small secondary danger" data-nb="reset" data-name="${esc(e.name)}" type="button">Delete entry</button></div>`,
   });
-  nbBody.querySelectorAll('[data-nb]').forEach((b) => b.addEventListener('click', () => {
+  nbBody.querySelectorAll('[data-nb]').forEach((b) => b.addEventListener('click', async () => {
     const name = b.dataset.name;
     if (b.dataset.nb === 'solve') act({ action: 'solve', name }, `${name} marked decoded.`);
-    else if (confirm(`Delete the notebook entry for ${name}?`)) act({ action: 'reset', name }, 'Entry deleted.');
+    else if (await ask(`Delete the notebook entry for ${name}?`)) act({ action: 'reset', name }, 'Entry deleted.');
   }));
 }
 nbSearch.addEventListener('input', renderNb);

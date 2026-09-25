@@ -1,5 +1,5 @@
 // The shared Table Log: every roll from any page (combat, sheets, Forstall scans) in one place.
-import { esc, api, startPolling, staticDice, timeAgo, injectDefs, savedPin, toast, store, rollPopup, animateRoll } from './common.js';
+import { esc, api, startPolling, staticDice, timeAgo, injectDefs, savedPin, toast, store, rollPopup, animateRoll , ask, askText } from './common.js';
 import { gl } from './glyphs.js';
 
 export function logHTML(log) {
@@ -52,7 +52,7 @@ export function mountTableLog() {
   panel.querySelector('.log-close').addEventListener('click', () => setOpen(false));
   // Warden only (the server checks the PIN too)
   panel.querySelector('.log-clear').addEventListener('click', async () => {
-    if (!confirm('Clear the Table Log for everyone? This can’t be undone.')) return;
+    if (!await ask('Clear the Table Log for everyone? This can’t be undone.')) return;
     try { await api('POST', { action: 'clearLog' }, '', '/api/combat'); latest = []; renderLogInto(panel.querySelector('.log'), latest); toast('Table Log cleared.'); }
     catch (e) { toast(e.message, true); }
   });

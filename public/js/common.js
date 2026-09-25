@@ -293,6 +293,41 @@ export function wardenModal(endpoint) {
   });
 }
 
+// ---------- styled dialogs (instead of the browser's confirm / prompt) ----------
+// A short leading question becomes the heading; the rest is the body.
+function splitMsg(msg) {
+  const s = String(msg), i = s.indexOf('?');
+  if (i > -1 && i < 80) return [s.slice(0, i + 1), s.slice(i + 1).trim()];
+  return ['Are you sure?', s];
+}
+const DANGER = /delete|remove|wipe|clear|dead|can.t be undone|call off|end combat|let the prepared/i;
+function dialog({ msg, input = null, ok = 'Yes', cancel = 'Cancel', danger }) {
+  return new Promise((resolve) => {
+    const [title, body] = input ? [String(msg), ''] : splitMsg(msg);
+    const back = document.createElement('div');
+    back.className = 'modal-back ask-back';
+    back.innerHTML = `<div class="modal ask" role="alertdialog" aria-modal="true" aria-label="${esc(title)}">
+      <h2>${esc(title)}</h2>${body ? `<p class="ask-body">${esc(body)}</p>` : ''}
+      <form>${input ? `<input class="ask-input" type="text" value="${esc(input.value ?? '')}" maxlength="80" aria-label="${esc(title)}">` : ''}
+        <div class="ask-btns"><button type="button" class="btn secondary" data-no>${esc(cancel)}</button><button type="submit" class="btn${(danger ?? DANGER.test(msg)) ? ' danger' : ''}">${esc(ok)}</button></div></form></div>`;
+    document.body.appendChild(back);
+    const prev = document.activeElement;
+    const field = back.querySelector('.ask-input');
+    (field || back.querySelector('[type=submit]')).focus();
+    field?.select();
+    const close = (v) => { back.remove(); document.removeEventListener('keydown', onKey, true); prev?.focus?.(); resolve(v); };
+    const onKey = (e) => { if (e.key === 'Escape') { e.stopPropagation(); close(input ? null : false); } };
+    document.addEventListener('keydown', onKey, true);
+    back.addEventListener('click', (e) => { if (e.target === back) close(input ? null : false); });
+    back.querySelector('[data-no]').addEventListener('click', () => close(input ? null : false));
+    back.querySelector('form').addEventListener('submit', (e) => { e.preventDefault(); close(input ? field.value : true); });
+  });
+}
+// await ask('Delete this?') → true / false
+export const ask = (msg, opts = {}) => dialog({ msg, ...opts });
+// await askText('Name this place:', 'default') → the text, or null if cancelled
+export const askText = (msg, value = '', opts = {}) => dialog({ msg, input: { value }, ok: 'OK', danger: false, ...opts });
+
 // ---------- tiny bullet icons (Black / Gold dice) ----------
 export const miniBullet = (c) => `<svg class="mini-bullet" viewBox="0 0 180 60" aria-hidden="true">
   <rect x="3" y="6" width="11" height="48" rx="2" fill="url(#rim${c})"/><rect x="19" y="7" width="98" height="46" rx="3" fill="url(#case${c})"/>

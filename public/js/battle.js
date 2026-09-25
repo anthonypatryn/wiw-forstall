@@ -1,4 +1,4 @@
-import { $, esc, api, startPolling, toast, mountNav, tryWarden, forgetWarden, savedPin, wardenModal, rollPopup, abilityOptions, abilityTargetsHTML, abilityBody } from './common.js';
+import { $, esc, api, startPolling, toast, mountNav, tryWarden, forgetWarden, savedPin, wardenModal, rollPopup, abilityOptions, abilityTargetsHTML, abilityBody , ask, askText } from './common.js';
 import { gl } from './glyphs.js';
 let meta = null;
 api('GET', null, '?view=meta', '/api/combat').then((m) => { meta = m; }).catch(() => {});
@@ -409,7 +409,7 @@ function wireHolds(box) {
     if (r?.dice) rollPopup(r, `${p.name} · prepared ${r.fired} · ${r.pool}`);
     if (r) toast(r.dmg != null ? (r.dmg ? `${r.dmg} damage to ${r.target}` : `${r.target} shrugs it off`) : `${r.fired} — done!`);
   }));
-  box.querySelectorAll('[data-hold-drop]').forEach((b) => b.addEventListener('click', () => { if (confirm('Let the prepared Action go? The Grit isn’t refunded.')) tpAct({ action: 'pc', id: b.dataset.holdDrop, op: 'dropHold' }); }));
+  box.querySelectorAll('[data-hold-drop]').forEach((b) => b.addEventListener('click', async () => { if (await ask('Let the prepared Action go? The Grit isn’t refunded.')) tpAct({ action: 'pc', id: b.dataset.holdDrop, op: 'dropHold' }); }));
 }
 async function tpAct(body, msg) {
   const r = await combatAct(body);
@@ -421,7 +421,7 @@ function wireTurnBar(bar, cur, tok) {
   bar.querySelector('[data-nextturn]')?.addEventListener('click', () => { tp.open = ''; tpAct({ action: 'next' }); });
   bar.querySelector('[data-endmine]')?.addEventListener('click', () => { tp.open = ''; tpAct({ action: 'pc', id: c.current, op: 'endTurn' }); });
   bar.querySelector('[data-endfight]')?.addEventListener('click', async () => {
-    if (!confirm('End combat? Grit refills and Dodge/Aim clear. Health and Statuses stay as they are.')) return;
+    if (!await ask('End combat? Grit refills and Dodge/Aim clear. Health and Statuses stay as they are.')) return;
     if (await tpAct({ action: 'end' }, 'Combat is over. Loot the fallen in Combat Control.')) poller?.now?.();
   });
   bar.querySelector('[data-goto]')?.addEventListener('click', () => {
@@ -429,7 +429,7 @@ function wireTurnBar(bar, cur, tok) {
     if (t) { select(t.id); const p = center(t.col, t.row); pz.centerOn(p.x, p.y, Math.max(pz.view.s, 0.45)); }
   });
   bar.querySelectorAll('[data-undo]').forEach((b) => b.addEventListener('click', async () => {
-    if (b.dataset.undo === 'turn' && !confirm('Restart this turn? Everything done this turn is undone.')) return;
+    if (b.dataset.undo === 'turn' && !await ask('Restart this turn? Everything done this turn is undone.')) return;
     const r = await tpAct({ action: 'undo', mode: b.dataset.undo });
     if (r) toast(`↶ Undone: ${r.labels.join(' · ')}`);
   }));
@@ -438,7 +438,7 @@ function wireTurnBar(bar, cur, tok) {
   const base = isPc ? { action: 'pc', id: a.id } : { action: 'enemy', id: a.id };
   bar.querySelectorAll('[data-open]').forEach((b) => b.addEventListener('click', async () => {
     const k = b.dataset.open;
-    if (k === 'fool') { if (confirm('Fool’s Grit: +1 Grit for 1 Health?')) tpAct({ ...base, op: 'fool' }, '+1 Grit, −1 Health.'); return; }
+    if (k === 'fool') { if (await ask('Fool’s Grit: +1 Grit for 1 Health?')) tpAct({ ...base, op: 'fool' }, '+1 Grit, −1 Health.'); return; }
     tp.open = tp.open === k ? '' : k;
     if (k === 'move' && tp.open && tok) { select(tok.id); const p = center(tok.col, tok.row); pz.centerOn(p.x, p.y, Math.max(pz.view.s, 0.45)); }
     renderTurnBar();
@@ -522,7 +522,7 @@ function wireAttack(box, sel) {
     try { const res = await api('POST', { action: 'enemyAttack', enemy: sel.ref, attack: s.a, pc: tgt.ref, cover: s.cover || 0 }, '', '/api/combat'); combat = res.state || combat; r = res.result; }
     catch (err) {
       if (!/^OUT_OF_RANGE: /.test(err.message)) { toast(err.message, true); return; }
-      if (!confirm(`${err.message.slice(14)}\n\nRoll it anyway?`)) return;
+      if (!await ask(`${err.message.slice(14)}\n\nRoll it anyway?`)) return;
       r = await combatAct({ action: 'enemyAttack', enemy: sel.ref, attack: s.a, pc: tgt.ref, cover: s.cover || 0, force: true });
     }
     if (r?.atk?.dice) rollPopup(r.atk, `${r.atk.label} · ${r.atk.pool}`);
@@ -611,7 +611,7 @@ $('#npc-add').addEventListener('submit', async (e) => {
   if (!name) return;
   if (await act({ action: 'addToken', kind: 'npc', name })) $('#npc-name').value = '';
 });
-$('#clear').addEventListener('click', () => { if (confirm('Remove every token from the board?')) { selected = null; act({ action: 'clearTokens' }); } });
+$('#clear').addEventListener('click', async () => { if (await ask('Remove every token from the board?')) { selected = null; act({ action: 'clearTokens' }); } });
 
 // Shrink uploads in the browser so they fit comfortably in the database.
 $('#upload').addEventListener('change', async (e) => {

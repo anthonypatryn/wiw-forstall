@@ -1,6 +1,6 @@
 import {
   $, esc, api, startPolling, toast, store, mountNav, tryWarden, forgetWarden, savedPin, wardenModal, injectDefs,
-  poolIcons, poolHTML, readPool,
+  poolIcons, poolHTML, readPool, ask, askText,
 } from './common.js';
 import { mountTableLog } from './tablelog.js';
 
@@ -83,7 +83,7 @@ function renderItems() {
     const qty = () => Number(card.querySelector('[data-qty]')?.value) || 1;
     card.querySelector('[data-buy]')?.addEventListener('click', () => act({ action: 'request', kind: 'buy', pc: $('#shopper').value, itemId: iid, qty: qty() }, 'Request sent to the Warden.'));
     card.querySelector('[data-give]')?.addEventListener('click', () => act({ action: 'give', pc: $('#shopper').value, itemId: iid, qty: qty() }, 'Given.'));
-    card.querySelector('[data-rm]')?.addEventListener('click', () => { if (confirm('Remove this item from the store?')) act({ action: 'removeCustom', id: iid }); });
+    card.querySelector('[data-rm]')?.addEventListener('click', async () => { if (await ask('Remove this item from the store?')) act({ action: 'removeCustom', id: iid }); });
     card.querySelector('[data-edit]')?.addEventListener('click', () => fillCreate(items().find((i) => i.id === iid)));
   });
 }
@@ -125,9 +125,9 @@ function renderSide() {
     : inv.length ? inv.map((i) => `<div class="inv-row" data-uid="${i.uid}"><span>${i.qty > 1 ? `${i.qty}× ` : ''}${esc(i.name)}<small>${esc(i.sub || i.cat || '')}</small></span>
         <button class="btn small secondary" data-sell type="button">Sell…</button></div>`).join('')
     : '<p class="empty-note">Nothing bought here yet. (Their sheet’s free-text inventory still works too.)</p>';
-  $('#inventory').querySelectorAll('[data-sell]').forEach((b) => b.addEventListener('click', () => {
+  $('#inventory').querySelectorAll('[data-sell]').forEach((b) => b.addEventListener('click', async () => {
     const row = b.closest('.inv-row'); const it = inv.find((x) => x.uid === row.dataset.uid);
-    const qty = it.qty > 1 ? Number(prompt(`Sell how many? (they have ${it.qty})`, '1')) : 1;
+    const qty = it.qty > 1 ? Number(await askText(`Sell how many? (they have ${it.qty})`, '1')) : 1;
     if (!qty) return;
     act({ action: 'request', kind: 'sell', pc: pc.id, uid: it.uid, qty }, 'Sale request sent — the Warden sets the price.');
   }));

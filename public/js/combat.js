@@ -1,6 +1,6 @@
 import {
   $, esc, api, startPolling, injectDefs, bulletSVG, animateRoll, staticDice, toast, store, timeAgo,
-  mountNav, tryWarden, forgetWarden, savedPin, poolHTML, readPool, rollPopup, bleedPanel,
+  mountNav, tryWarden, forgetWarden, savedPin, poolHTML, readPool, rollPopup, bleedPanel, ask, askText,
 } from './common.js';
 import { NPC } from './npc-data.js';
 import { renderLogInto, mountHud } from './tablelog.js';
@@ -75,9 +75,9 @@ function renderTurn() {
       </div>
       <div class="order">${orderChips}</div>`;
   }
-  el.querySelectorAll('[data-act]').forEach((b) => b.addEventListener('click', () => {
+  el.querySelectorAll('[data-act]').forEach((b) => b.addEventListener('click', async () => {
     const k = b.dataset.act;
-    if (k === 'end' && !confirm('End combat? Turn order will be cleared.')) return;
+    if (k === 'end' && !await ask('End combat? Turn order will be cleared.')) return;
     act({ action: k === 'enemyInit' ? 'enemyInitiative' : k });
   }));
   el.querySelectorAll('[data-surprise]').forEach((b) => b.addEventListener('click', () => act({ action: 'surprise', key: b.dataset.surprise })));
@@ -169,8 +169,8 @@ function renderPosse() {
       const r = await send({ op: 'bleedRoll', skill: b.dataset.bleedRoll });
       if (r?.dice) rollPopup(r, `${r.who} · Bleeding Out · ${b.dataset.bleedRoll} · ${r.pool}${r.outcome === 'dead' ? ' · DIED' : ''}`);
     }));
-    card.querySelectorAll('[data-op]').forEach((b) => b.addEventListener('click', () => {
-      if (b.dataset.op === 'die' && !confirm('Mark this character as dead?')) return;
+    card.querySelectorAll('[data-op]').forEach((b) => b.addEventListener('click', async () => {
+      if (b.dataset.op === 'die' && !await ask('Mark this character as dead?')) return;
       send({ op: b.dataset.op });
     }));
     card.querySelector('[data-init]')?.addEventListener('click', () => {
@@ -264,10 +264,10 @@ function renderEnemies() {
     wireCommon(card, send);
     card.querySelectorAll('[data-rollpool]').forEach((b) => b.addEventListener('click', () =>
       doRoll({ pool: b.dataset.rollpool, who: eid, label: b.dataset.label, hidden: card.querySelector('[data-secret]').checked })));
-    card.querySelector('[data-remove]').addEventListener('click', () => { if (confirm('Remove this enemy?')) send({ op: 'remove' }); });
-    card.querySelector('[data-rename]')?.addEventListener('click', () => {
+    card.querySelector('[data-remove]').addEventListener('click', async () => { if (await ask('Remove this enemy?')) send({ op: 'remove' }); });
+    card.querySelector('[data-rename]')?.addEventListener('click', async () => {
       const cur = card.querySelector('.f-name').firstChild.textContent.trim();
-      const n = prompt('New name:', cur);
+      const n = await askText('New name:', cur);
       if (n && n.trim() && n.trim() !== cur) send({ op: 'rename', name: n.trim() });
     });
     const es = eaSel[eid] ||= { atk: 0, pc: '', cover: 0 };
@@ -278,7 +278,7 @@ function renderEnemies() {
       try { r = (await api('POST', { action: 'enemyAttack', enemy: eid, attack: es.atk, pc: es.pc, cover: es.cover }, '', EP)); poller.push(r.state); r = r.result; }
       catch (err) {
         if (!/^OUT_OF_RANGE: /.test(err.message)) { toast(err.message, true); return; }
-        if (!confirm(`${err.message.slice(14)}\n\nRoll it anyway?`)) return;
+        if (!await ask(`${err.message.slice(14)}\n\nRoll it anyway?`)) return;
         r = await act({ action: 'enemyAttack', enemy: eid, attack: es.atk, pc: es.pc, cover: es.cover, force: true });
       }
       if (r?.atk?.dice) rollPopup(r.atk, `${r.atk.label} · ${r.atk.pool}`);
@@ -363,7 +363,7 @@ function renderEnemyTools() {
     if (ok !== null) { $('#ce-name').value = ''; $('#ce-hp').value = ''; document.querySelectorAll('.custom-enemy .dp input').forEach((i) => { i.value = ''; }); }
   });
   $('#show-hp').addEventListener('change', (e) => act({ action: 'setting', key: 'showEnemyHealth', value: e.target.checked }));
-  $('#clear-enemies').addEventListener('click', () => { if (confirm('Remove every enemy?')) act({ action: 'clearEnemies' }); });
+  $('#clear-enemies').addEventListener('click', async () => { if (await ask('Remove every enemy?')) act({ action: 'clearEnemies' }); });
 }
 
 // ---------- dice roller ----------
@@ -460,9 +460,9 @@ function renderDuel() {
     duelSeen = d.rounds.length;
   }
   $('#duel-roll')?.addEventListener('click', (e) => { e.target.disabled = true; act({ action: 'duelRoll' }); });
-  $('#duel-end').addEventListener('click', () => { if (d.done || confirm('Call off the Duel?')) act({ action: 'duelEnd' }); });
+  $('#duel-end').addEventListener('click', async () => { if (d.done || await ask('Call off the Duel?')) act({ action: 'duelEnd' }); });
 }
-$('#clear-log').addEventListener('click', () => { if (confirm('Clear the table log?')) act({ action: 'clearLog' }); });
+$('#clear-log').addEventListener('click', async () => { if (await ask('Clear the table log?')) act({ action: 'clearLog' }); });
 
 // ---------- render & boot ----------
 function render() {
