@@ -3,13 +3,13 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Combat &amp; Dice · Wild Imaginary West</title>
+  <title>Combat Control · Wild Imaginary West</title>
   <meta name="description" content="Shared combat tracker and bullet-dice roller for the Wild Imaginary West RPG.">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎲</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Rye&family=Special+Elite&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=17">
+  <link rel="stylesheet" href="/css/style.css?v=18">
   <link rel="stylesheet" href="/css/combat.css?v=10">
 </head>
 <body>
@@ -18,8 +18,8 @@
       <img class="brand-logo" src="/img/logo-light.svg" alt="Wild Imaginary West">
       <div class="brand-title">
         <div class="kicker">WHEN RUNNIN’ AIN’T AN OPTION</div>
-        <h1>Combat &amp; Dice</h1>
-        <div class="sub">Turn order, Grit, Statuses &amp; Frenzy — Official Guidebook, pages 39–51</div>
+        <h1>Combat Control</h1>
+        <div class="sub">For the Warden: enemies, turn order, duels &amp; loot — the posse plays from the Battle Map and their sheets</div>
       </div>
       <button class="btn small warden-link" id="warden-btn" type="button">⭐ Warden</button>
     </div>
@@ -27,7 +27,12 @@
   <nav class="sitenav" data-nav aria-label="Site"></nav>
 
   <main class="wrap">
-    <div class="grid combat-grid">
+    <section class="card corner gate" id="gate" hidden>
+      <h2 class="section-title">Warden only</h2>
+      <p class="muted">Combat Control is where the Warden runs the fight. The posse plays from the <a href="/battle">Battle Map</a> and their <a href="/posse">Posse Sheets</a> — and can roll dice from any page with the “Roll dice” button.</p>
+      <button class="btn" id="gate-unlock" type="button">Enter the Warden PIN</button>
+    </section>
+    <div class="grid combat-grid" id="combat-main" hidden>
       <div>
         <section class="card turn-card" id="turn-card" aria-live="polite"></section>
 
@@ -85,6 +90,6 @@
     <div class="footer"><span class="conn" id="conn">Connected</span> · A fan-made table tool for the <em>Wild Imaginary West</em> RPG by Rune Foundry &amp; Boylei Hobby Time.</div>
   </main>
 
-  <script type="module" src="/js/combat.js?v=23"></script>
+  <script type="module" src="/js/combat.js?v=24"></script>
 </body>
 </html>

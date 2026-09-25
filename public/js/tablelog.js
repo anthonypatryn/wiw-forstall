@@ -33,8 +33,9 @@ export function mountTableLog() {
   panel.className = 'log-drawer';
   panel.setAttribute('aria-label', 'Table Log');
   panel.hidden = true;
-  panel.innerHTML = `<div class="log-drawer-head"><b>TABLE LOG</b><a href="/combat">Combat &amp; Dice ›</a><button type="button" class="log-clear" hidden>Clear</button><button type="button" class="log-close" aria-label="Close">✕</button></div><div class="log"></div>`;
+  panel.innerHTML = `<div class="log-drawer-head"><b>TABLE LOG</b><a href="/battle">Battle Map ›</a><button type="button" class="log-clear" hidden>Clear</button><button type="button" class="log-close" aria-label="Close">✕</button></div><div class="log"></div>`;
   document.body.append(btn, panel);
+  mountDice();
 
   let seenTop = null, unread = 0, latest = [];
   const badge = btn.querySelector('.log-badge');
@@ -180,4 +181,52 @@ function holdPopup(h) {
       toast(r?.dmg != null ? (r.dmg ? `${r.dmg} damage to ${r.target}` : `${r.target} shrugs it off`) : `${r?.fired || 'Fired'} — done!`);
     } catch (err) { toast(err.message, true); e.target.disabled = false; }
   });
+}
+
+// ---------- quick dice roller on every page (any mix of Black & Gold, logged for everyone) ----------
+function mountDice() {
+  const fab = document.createElement('button');
+  fab.type = 'button'; fab.className = 'dice-fab';
+  fab.innerHTML = `${gl('bullet')} Roll dice`;
+  const box = document.createElement('aside');
+  box.className = 'dice-drawer'; box.hidden = true;
+  box.setAttribute('aria-label', 'Roll dice');
+  document.body.append(fab, box);
+  const pool = { B: store.get('wiw.rollB', 2), G: store.get('wiw.rollG', 0) };
+  let posse = [];
+  const draw = () => {
+    const me = store.get('wiw.me', null), who = box.dataset.who ?? (me || '');
+    box.innerHTML = `<div class="dd-head"><b>ROLL DICE</b><button type="button" class="dd-x" aria-label="Close">×</button></div>
+      <div class="dd-pool">${[['B', 'Black'], ['G', 'Gold']].map(([c, n]) => `<div class="dd-step"><span class="dd-die" data-c="${c}">${n}</span>
+        <button type="button" data-d="${c}" data-n="-1" aria-label="One fewer ${n}">−</button><b>${pool[c]}</b><button type="button" data-d="${c}" data-n="1" aria-label="One more ${n}">+</button></div>`).join('')}</div>
+      <label>ROLLING AS<select data-who><option value="">— nobody in particular —</option>${posse.map((p) => `<option value="${p.id}"${p.id === who ? ' selected' : ''}>${esc(p.name)}</option>`).join('')}</select></label>
+      <label>FOR<input data-for maxlength="80" placeholder="e.g. climbing the water tower" value="${esc(box.dataset.for || '')}"></label>
+      <label class="dd-check"><input type="checkbox" data-spur${box.dataset.spur === '1' ? ' checked' : ''}> Reroll Spurs (you have the Talent)</label>
+      <button type="button" class="btn" data-roll>Roll ${pool.B ? pool.B + 'B' : ''}${pool.G ? pool.G + 'G' : ''}${pool.B + pool.G ? '' : '—'}</button>`;
+    box.querySelector('.dd-x').addEventListener('click', () => { box.hidden = true; });
+    box.querySelectorAll('[data-d]').forEach((b) => b.addEventListener('click', () => {
+      const c = b.dataset.d; pool[c] = Math.max(0, Math.min(12, pool[c] + Number(b.dataset.n))); store.set(`wiw.roll${c}`, pool[c]); draw();
+    }));
+    box.querySelector('[data-who]').addEventListener('change', (e) => { box.dataset.who = e.target.value; });
+    box.querySelector('[data-for]').addEventListener('input', (e) => { box.dataset.for = e.target.value; });
+    box.querySelector('[data-spur]').addEventListener('change', (e) => { box.dataset.spur = e.target.checked ? '1' : ''; });
+    box.querySelector('[data-roll]').addEventListener('click', async (e) => {
+      if (!pool.B && !pool.G) return toast('Add at least one die.', true);
+      e.target.disabled = true;
+      const whoId = box.dataset.who ?? (store.get('wiw.me', null) || '');
+      try {
+        const res = await api('POST', { action: 'roll', black: pool.B, gold: pool.G, who: whoId, whoName: 'Someone', label: box.dataset.for || '', spur: box.dataset.spur === '1' }, '', '/api/combat');
+        const r = res.result;
+        box.hidden = true; box.dataset.for = '';
+        if (r?.dice) rollPopup(r, `${r.who}${r.label ? ` · ${r.label}` : ''} · ${r.pool}`);
+      } catch (err) { toast(err.message, true); }
+      e.target.disabled = false;
+    });
+  };
+  fab.addEventListener('click', async () => {
+    if (!box.hidden) { box.hidden = true; return; }
+    try { posse = ((await api('GET', null, '?view=player', '/api/combat')).posse || []).filter((p) => !p.dead); } catch {}
+    draw(); box.hidden = false;
+  });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') box.hidden = true; });
 }

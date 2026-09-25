@@ -234,7 +234,7 @@ function renderLedger() {
       ${warden ? `<label class="f secret-note">WARDEN NOTES — SECRET<textarea data-f="wardenNote" maxlength="3000" placeholder="Secrets, motives, stats…">${esc(n.wardenNotes || '')}</textarea></label>
         <div class="npc-tools"><label class="check"><input type="checkbox" data-known${n.known ? ' checked' : ''}> Posse has met them</label>
           <button class="btn small secondary danger" data-remove type="button">Remove</button></div>` : ''}
-    </article>`).join('') : `<p class="empty-note">${q ? 'Nobody matches.' : 'Nobody yet — deal a stranger and add them.'}</p>`;
+    </article>`).join('') : `<p class="empty-note">${q ? 'Nobody matches.' : (warden ? 'Nobody yet — deal a stranger and add them.' : 'Nobody yet — folks show up here as the posse meets them.')}</p>`;
   box.querySelectorAll('.npc').forEach((card) => {
     const id = card.dataset.id;
     card.querySelectorAll('[data-f]').forEach((el) => {
@@ -278,6 +278,10 @@ function setWarden() {
   $('#manual-card').hidden = !warden;
   $('#book-card').hidden = !warden;
   $('#faction-card').hidden = !warden;
+  // dealing strangers is the Warden's job; the posse just sees the NPC ledger
+  $('.table-felt').hidden = !warden;
+  document.querySelector('.masthead .sub').textContent = warden ? 'Deal from the saloon deck — Official Guidebook, pages 203–204' : 'Everyone the posse has met — jot your own notes on each one';
+  if (!warden) $('#result').hidden = true;
   if (warden) loadBook(); else { book = null; $('#book').innerHTML = ''; }
 }
 $('#warden-btn').addEventListener('click', async () => {
@@ -381,7 +385,7 @@ function renderBook() {
       const name = nameOf();
       try {
         await api('POST', { action: 'addEnemy', profile: `npc:${generic || name}`, name: generic ? name : undefined }, '', '/api/combat');
-        toast(`${name} joins the fight — see Combat & Dice.`);
+        toast(`${name} joins the fight — see Combat Control.`);
       } catch (err) { toast(err.message, true); }
     });
   });

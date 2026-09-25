@@ -186,3 +186,5 @@ details.fac[open] > summary { margin-bottom: 8px; }
 .npc-extra label small { font: italic 12px var(--body); letter-spacing: 0; }
 .npc-extra input { padding: 7px 9px; border: 1px solid var(--ink-faint); border-radius: 3px; background: #fffdf7; font: 16px var(--body); color: var(--ink); }
 @media (max-width: 600px) { .npc-extra { grid-template-columns: 1fr; } }
+
+.table-felt[hidden], .result-card[hidden] { display: none !important; }

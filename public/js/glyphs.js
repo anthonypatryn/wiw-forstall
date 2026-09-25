@@ -32,6 +32,8 @@ const G = {
   claws: `<path ${S} stroke-width="2.1" d="M6.2 3.5c3.4 4.4 4.7 10 3.2 17"/><path ${S} stroke-width="2.1" d="M11.4 3c3 4.8 3.7 10.4 2 17.2"/><path ${S} stroke-width="2.1" d="M16.6 3.5c2.6 4.6 2.9 9.6 1.3 15.6"/>`,
   // a horseshoe
   horseshoe: `<path ${S} stroke-width="3" d="M6 20.5V11a6 6 0 0 1 12 0v9.5"/><circle ${F} cx="6" cy="12" r=".75" style="fill:var(--paper,#f4ead6)"/><circle cx="18" cy="12" r=".75" style="fill:var(--paper,#f4ead6)"/><circle cx="7.4" cy="7.4" r=".75" style="fill:var(--paper,#f4ead6)"/><circle cx="16.6" cy="7.4" r=".75" style="fill:var(--paper,#f4ead6)"/>`,
+  // a bullet (dice)
+  bullet: `<path ${F} d="M9 9.5h6v10.5H9z"/><path ${F} d="M9 9c0-3.6 1.3-5.9 3-6.5 1.7.6 3 2.9 3 6.5z"/><rect ${F} x="8.2" y="19.4" width="7.6" height="2.1" rx=".5"/>`,
   // a scroll (the Table Log)
   scroll: `<path ${S} d="M6 4.5h11.5a2 2 0 0 1 2 2v12"/><path ${S} d="M6 4.5a2 2 0 0 0-2 2v1.5h3.8V6.5A2 2 0 0 0 6 4.5z"/><path ${S} d="M7.8 8v11a1.6 1.6 0 0 0 1.6 1.6h10.1a1.6 1.6 0 0 0 1.6-1.6v-.6H11v.6a1.6 1.6 0 0 1-3.2 0"/><path ${S} d="M10.6 9.5h5.8M10.6 12.5h5.8M10.6 15.5h3.8"/>`,
 };

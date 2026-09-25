@@ -467,7 +467,8 @@ function wireTurnBar(bar, cur, tok) {
   bar.querySelectorAll('[data-pp]').forEach((el) => el.addEventListener('change', () => {
     const k = el.dataset.pp, pp = tp.pp;
     if (k === 'aim') pp.aim = el.checked; else if (k === 'weapon' || k === 'gear' || k === 'grit') pp[k] = Number(el.value); else if (k === 'abname') pp.ab = { name: el.value }; else pp[k] = el.value;
-    if (k !== 'text') renderTurnBar();
+    // let go of the dropdown first — the panel won't redraw while a field is focused
+    if (k !== 'text' && k !== 'itext') { el.blur(); renderTurnBar(); }
   }));
   bar.querySelector('input[data-pp="text"]')?.addEventListener('input', (e) => { tp.pp.text = e.target.value; });
   bar.querySelector('input[data-pp="itext"]')?.addEventListener('input', (e) => { tp.pp.itext = e.target.value; });
@@ -484,7 +485,7 @@ function wireTurnBar(bar, cur, tok) {
     if (r?.dice) rollPopup(r, `${a.name} · Relieve ${tp.rl} · ${r.pool}`);
   });
   bar.querySelectorAll('[data-abp], [data-ab]').forEach((el) => el.addEventListener('change', () => {
-    if (el.dataset.abp) { tp.ab = { name: el.value }; renderTurnBar(); return; }
+    if (el.dataset.abp) { tp.ab = { name: el.value }; el.blur(); renderTurnBar(); return; }
     tp.ab[el.dataset.ab] = el.value;
   }));
   bar.querySelector('[data-tp-ab]')?.addEventListener('click', async () => {

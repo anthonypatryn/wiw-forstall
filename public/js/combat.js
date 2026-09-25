@@ -483,6 +483,7 @@ document.addEventListener('focusout', () => setTimeout(() => { if (pendingRender
 
 function connect() {
   poller?.stop();
+  if (!warden) return; // Warden only
   poller = startPolling(warden ? 'warden' : 'player', (d) => { data = d; render(); }, (ok, e) => {
     if (e?.status === 401) { warden = false; forgetWarden(); connect(); return; }
     $('#conn').classList.toggle('off', !ok);
@@ -492,9 +493,11 @@ function connect() {
 
 function setWardenBtn() {
   $('#warden-btn').textContent = warden ? '⭐ Warden mode · lock' : '⭐ Warden';
+  $('#gate').hidden = warden; $('#combat-main').hidden = !warden;
 }
+$('#gate-unlock').addEventListener('click', () => $('#warden-btn').click());
 $('#warden-btn').addEventListener('click', () => {
-  if (warden) { warden = false; forgetWarden(); setWardenBtn(); $('#enemy-tools').dataset.ready = ''; connect(); return; }
+  if (warden) { warden = false; forgetWarden(); setWardenBtn(); $('#enemy-tools').dataset.ready = ''; poller?.stop(); return; }
   const back = document.createElement('div');
   back.className = 'modal-back';
   back.innerHTML = `<div class="modal" role="dialog" aria-label="Warden PIN"><h2>Warden PIN</h2>

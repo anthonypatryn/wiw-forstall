@@ -202,7 +202,6 @@ export function timeAgo(t) {
 // ---------- site nav ----------
 const NAV = [
   ['/', 'Forstall Scanner'],
-  ['/combat', 'Combat & Dice'],
   ['/posse', 'Posse Sheets'],
   ['/names', 'NPC Names'],
   ['/map', 'Map'],
@@ -213,7 +212,7 @@ export function mountNav(active) {
   const el = document.querySelector('[data-nav]');
   if (!el) return;
   // the Warden's Session page only shows up in the nav for the Warden
-  const items = pinStore.get() ? [...NAV, ['/session', '⭐ Session']] : NAV;
+  const items = pinStore.get() ? [...NAV, ['/combat', '⭐ Combat Control'], ['/session', '⭐ Session']] : NAV;
   el.innerHTML = `<div class="sitenav-inner">${items.map(([href, label]) =>
     `<a href="${href}"${href === active ? ' aria-current="page"' : ''}>${label}</a>`).join('')}</div>`;
 }
@@ -239,8 +238,8 @@ try { localStorage.removeItem('wiw.pin'); } catch {}
 export function markWarden(on) {
   let bar = document.querySelector('.warden-strip');
   const inner = document.querySelector('.sitenav-inner');
-  if (inner && on && !inner.querySelector('a[href="/session"]')) inner.insertAdjacentHTML('beforeend', '<a href="/session">⭐ Session</a>');
-  if (inner && !on) inner.querySelector('a[href="/session"]')?.remove();
+  if (inner && on && !inner.querySelector('a[href="/session"]')) inner.insertAdjacentHTML('beforeend', '<a href="/combat">⭐ Combat Control</a><a href="/session">⭐ Session</a>');
+  if (inner && !on) { inner.querySelector('a[href="/session"]')?.remove(); inner.querySelector('a[href="/combat"]')?.remove(); }
   if (on && !bar) {
     bar = document.createElement('div');
     bar.className = 'warden-strip';
