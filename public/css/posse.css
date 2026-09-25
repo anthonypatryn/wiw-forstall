@@ -31,7 +31,6 @@
 .new-pc input { flex: 1 1 220px; padding: 10px 12px; border: 1.5px solid var(--ink); border-radius: var(--radius); background: var(--surface); font-size: var(--fs-lg); }
 
 /* ---------- the sheet (modelled on the official Trade sheets) ---------- */
-body.on-sheet .masthead { display: none; }
 .sheet-head {
   position: relative; display: grid; grid-template-columns: auto 1fr auto 1fr auto; align-items: end; gap: 14px;
   background: radial-gradient(ellipse at 30% 40%, var(--iron-2), var(--iron) 75%);
