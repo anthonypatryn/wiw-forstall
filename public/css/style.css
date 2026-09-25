@@ -368,7 +368,7 @@ a.btn { text-decoration: none; }
 .toast {
   position: fixed; left: 50%; bottom: 22px; transform: translateX(-50%) translateY(20px); opacity: 0;
   background: var(--ink); color: var(--paper); padding: 10px 18px; border-radius: var(--radius);
-  font: var(--fs-md) var(--body); transition: .25s; z-index: 50; max-width: calc(100vw - 32px); pointer-events: none;
+  font: var(--fs-md) var(--body); transition: .25s; z-index: 600; max-width: calc(100vw - 32px); pointer-events: none;
 }
 .toast.show { opacity: 1; transform: translateX(-50%); }
 .toast.err { background: var(--red); }
@@ -635,7 +635,7 @@ body.nav-open .fab-row, body.nav-open .hud-strip { display: none; }
 .hud-myturn-x { position: absolute; top: 50%; margin-top: -13px; right: 8px; width: 26px; height: 26px; border: 1px solid rgba(255,255,255,.6); border-radius: 50%; background: transparent; color: #fff; font-size: var(--fs-md); line-height: 1; cursor: pointer; }
 
 /* styled confirm / prompt dialogs */
-.ask-back { z-index: 200; }
+.ask-back { z-index: 450; } /* confirmations always sit on top of game screens (lock, duel, saloon, End Session) */
 .modal.ask h2 { font-size: var(--fs-xl); line-height: 1.15; }
 .ask-body { margin: -4px 0 14px; white-space: pre-line; line-height: 1.45; }
 .modal.ask form { flex-direction: column; gap: 14px; }

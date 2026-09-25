@@ -640,3 +640,10 @@ test('Liar’s Dice skill moves: a peek shows one NPC die; a stare-down makes th
   const v = saloonView(st, { pc: 'a' }).table.liars;
   assert.equal(v.bid.by, 'npc:0'); assert.equal(v.turn, 'pc:a');
 });
+
+test('Saloon Skill moves: Poisoned rolls 2 fewer dice (gold kept last)', async () => {
+  const { poolFor } = await import('../lib/routes/saloon.js');
+  assert.deepEqual(poolFor({ skills: { charm: '3B1G' }, statuses: {} }, 'charm'), { black: 3, gold: 1 });
+  assert.deepEqual(poolFor({ skills: { charm: '3B1G' }, statuses: { Poisoned: 2 } }, 'charm'), { black: 1, gold: 1 });
+  assert.deepEqual(poolFor({ skills: { charm: '1B' }, statuses: { Poisoned: 1 } }, 'charm'), { black: 0, gold: 0 });
+});

@@ -10,7 +10,7 @@ const PHASE = { bet1: 'First betting round', draw: 'The draw', bet2: 'Second bet
 const $$ = (n) => `$${Number(n || 0).toFixed(2)}`;
 export function saloonStyles() {
   if (document.getElementById('saloon-css')) return;
-  document.head.insertAdjacentHTML('beforeend', '<link id="saloon-css" rel="stylesheet" href="/css/saloon.css?v=4">');
+  document.head.insertAdjacentHTML('beforeend', '<link id="saloon-css" rel="stylesheet" href="/css/saloon.css?v=5">');
 }
 // "A♠" → a playing card (same look as the lock-picking cards)
 const RANKV = { A: 'A', K: 'K', Q: 'Q', J: 'J' };
@@ -19,6 +19,80 @@ function card(lbl, cls = '') {
   const s = lbl.slice(-1), r = lbl.slice(0, -1), red = s === '♥' || s === '♦';
   return `<div class="lk-card ${red ? 'red' : ''} ${cls}"><span class="pc-tl">${RANKV[r] || r}<br>${s}</span><span class="pc-mid">${s}</span><span class="pc-br">${RANKV[r] || r}<br>${s}</span></div>`;
 }
+
+// ---------- rules + the Skill key (what each move rolls, against what, and what winning gets you) ----------
+const SK = { charm: 'Charm', finesse: 'Finesse', intuition: 'Intuition' };
+const myPool = (t, k) => (t.me ? t.me.skills?.[k] || 'no dice' : '—');
+const npcPool = (s, k) => s?.skills?.[k] || '?';
+// "your 3B vs Doc 1B 2G" for a move button
+function matchup(t, mine, theirs, seat) { return `your ${myPool(t, mine)} vs ${seat ? esc(seat.name) : 'them'} ${npcPool(seat, theirs)}`; }
+const MOVES = {
+  poker: [
+    { key: 'tell', name: 'Read a tell', mine: 'intuition', theirs: 'charm', who: 'the NPC you pick', when: 'Any time during a hand you’re still in. Once a hand.', win: 'You see one of that NPC’s cards (it’s outlined in gold).', lose: 'Nothing, but you’ve used it for this hand.' },
+    { key: 'bluff', name: 'Bluff', mine: 'charm', theirs: 'intuition', who: 'every NPC still in the hand', when: 'On your turn to bet, before you bet. Once a hand.', win: 'Each NPC you beat plays scared for the rest of the hand: folds to bets and stops betting. An NPC holding two pair or better isn’t fooled.', lose: 'Nothing. They just don’t buy it.' },
+    { key: 'palm', name: 'Palm a card', mine: 'finesse', theirs: 'intuition', who: 'the sharpest-eyed NPC at the table', when: 'On your draw, with exactly one card picked. Once a hand.', win: 'That card is swapped for the better of two cards off the deck.', lose: 'You’re caught cheating. Your hand is thrown in (you lose what you bet) and the whole table hears about it.' },
+  ],
+  faro: [
+    { key: 'watch', name: 'Watch the dealer', mine: 'intuition', theirs: 'finesse', who: 'the dealer', when: 'Any time during a deal. Once a deal.', win: 'If the dealing box is crooked, you catch it: everyone hears, and the game goes straight from there. If it’s honest, you know it’s honest.', lose: 'You can’t tell either way.' },
+  ],
+  liars: [
+    { key: 'peek', name: 'Peek under a cup', mine: 'intuition', theirs: 'finesse', who: 'the NPC you pick', when: 'Any time you still have dice. Once a round.', win: 'You see one of that NPC’s dice for the rest of the round.', lose: 'Nothing.' },
+    { key: 'stare', name: 'Stare them down', mine: 'charm', theirs: 'intuition', who: 'the NPC who plays after you', when: 'On your turn, before you bid. Once a round.', win: 'They can’t call you a liar on their next turn. They have to raise, however wild your bid is.', lose: 'Nothing. They play as normal.' },
+  ],
+};
+const RULES = {
+  poker: `<h3>Five-card draw</h3>
+    <ol><li>Everyone puts in the <b>ante</b> and gets five cards.</li>
+    <li><b>First bets.</b> On your turn: <i>check</i> (if nobody has bet), <i>bet</i>, <i>call</i> (match the bet), <i>raise</i>, or <i>fold</i> (throw in your hand). Bets are a set size; three raises a round at most.</li>
+    <li><b>The draw.</b> Swap up to 3 cards for new ones, or 4 if you keep an Ace. Tap the cards you want gone.</li>
+    <li><b>Second bets</b>, at double the size.</li>
+    <li><b>Showdown.</b> The best hand still in takes the pot; ties split it. If everyone else folds, you win without showing.</li></ol>
+    <h3>Hands, best to worst</h3>
+    <p class="sl-ranks">Straight flush (five in a row, same suit) · Four of a kind · Full house (three + a pair) · Flush (same suit) · Straight (five in a row; Ace can be low) · Three of a kind · Two pair · One pair · High card</p>`,
+  faro: `<h3>Faro — bet against the bank</h3>
+    <ol><li>The dealer banks. Put money on any card on the <b>layout</b> (Ace to King); the suit doesn’t matter.</li>
+    <li>The first card out, the <b>soda</b>, has no action.</li>
+    <li>Each <b>turn</b> deals two cards. The first is the <b>bank’s card</b>: bets on that rank <i>lose</i>. The second is the <b>player’s card</b>: bets on that rank <i>win</i> even money, and your stake stays down.</li>
+    <li><b>Copper</b> a bet to flip it: it wins as the bank’s card and loses as the player’s card.</li>
+    <li>A <b>split</b> (both cards the same rank) costs half of any bet on that rank.</li>
+    <li><b>Calling the turn:</b> with three cards left, call their exact order (bank’s card, player’s card, then the last card, the <b>hock</b>). Pays 4 to 1, or 2 to 1 if two of them pair.</li>
+    <li>You can move or take back a bet between turns. When the deal runs out, everything still on the layout comes home.</li></ol>
+    <p>The <b>casekeeper</b> beads show how many of each rank are already out. A rank with all four gone is dead.</p>`,
+  liars: `<h3>Liar’s Dice</h3>
+    <ol><li>Everyone puts in and rolls <b>five dice</b> under a cup. Only you see yours.</li>
+    <li>Take turns <b>bidding</b> on how many of one face are showing across <i>every</i> cup on the table, like “four fives”. <b>Ones are wild</b>: they count as any face.</li>
+    <li>Each bid must go <b>higher</b>: more dice, or the same number of a higher face.</li>
+    <li>Instead of bidding, call <b>“Liar!”</b>. Every cup lifts. If there are fewer than the bid, the bidder loses a die; if the bid holds, the caller loses one.</li>
+    <li>The loser starts the next round, and everyone rolls again.</li>
+    <li>Out of dice, out of the game. The last one holding dice takes the pot.</li></ol>`,
+};
+function keyHTML(t) {
+  const npcs = t.seats.filter((s) => s.kind === 'npc');
+  const moves = MOVES[t.game] || [];
+  const on = (m) => (t.hooks?.[m.key] ?? true);
+  return `<h3>Skill moves — the key</h3>
+    <p>Every Skill move is a <b>Challenge Roll</b> (p. 13). There’s no fixed number to hit: you roll your Skill, they roll theirs, and <b>more Hits wins</b>. A tie rolls again. ${t.me?.poisoned ? '<b>You’re Poisoned: 2 fewer dice</b> (already counted below).' : 'Poisoned rolls 2 fewer dice.'} A Talent in that Skill rerolls Spurs as usual.</p>
+    ${moves.map((m) => `<div class="sl-key${on(m) ? '' : ' off'}"><b>${m.name}</b>${on(m) ? '' : ' <i>(the Warden isn’t using this one tonight)</i>'}
+      <div class="sl-key-roll">You roll <b>${SK[m.mine]} ${myPool(t, m.mine)}</b> against ${m.who}’s <b>${SK[m.theirs]}</b>${npcs.length ? `: ${npcs.map((s) => `${esc(s.name)} ${npcPool(s, m.theirs)}`).join(' · ')}` : ''}</div>
+      <div><small>WHEN</small> ${m.when}</div><div><small>WIN</small> ${m.win}</div><div><small>LOSE</small> ${m.lose}</div></div>`).join('') || '<p>No Skill moves at this game.</p>'}`;
+}
+function openRules(t, tab = 'rules') {
+  const back = document.createElement('div');
+  back.className = 'modal-back sl-rules-back';
+  const draw = () => {
+    back.innerHTML = `<div class="modal sl-rules" role="dialog" aria-modal="true" aria-label="How to play">
+      <div class="sl-rules-tabs"><button type="button" class="chip-btn${tab === 'rules' ? ' on' : ''}" data-rt="rules">How to play</button><button type="button" class="chip-btn${tab === 'key' ? ' on' : ''}" data-rt="key">Skill moves</button><button type="button" class="sl-x dark" data-rx aria-label="Close">×</button></div>
+      <div class="sl-rules-body">${tab === 'rules' ? RULES[t.game] || '' : keyHTML(t)}</div></div>`;
+  };
+  draw();
+  document.body.append(back);
+  back.addEventListener('click', (e) => {
+    if (e.target === back || e.target.closest('[data-rx]')) { back.remove(); return; }
+    const b = e.target.closest('[data-rt]');
+    if (b) { tab = b.dataset.rt; draw(); }
+  });
+}
+const rulesBtn = '<button type="button" class="btn small secondary sl-rulesbtn" data-sl="rules">Rules &amp; key</button>';
 
 // ---------- the table (players and the Warden) ----------
 let scene = null, view = null, sel = new Set(), busy = false, asWarden = false, lastLog = 0;
@@ -46,15 +120,15 @@ function controls(t) {
     else moves.push('<button type="button" class="btn" data-mv="check">Check</button>');
     if (h.raises < 3) moves.push(`<button type="button" class="btn" data-mv="${h.owe > 0 || h.high > 0 ? 'raise' : 'bet'}">${h.owe > 0 || h.high > 0 ? 'Raise' : 'Bet'} ${$$(h.betSize)}</button>`);
     moves.push('<button type="button" class="btn secondary" data-mv="fold">Fold</button>');
-    if (t.hooks.bluff && !used.has('bluff')) moves.push(`<button type="button" class="btn small secondary skill" data-sl="bluff">${gl('hat')} Bluff (Charm)</button>`);
+    if (t.hooks.bluff && !used.has('bluff')) moves.push(`<button type="button" class="btn small secondary skill" data-sl="bluff">${gl('hat')} Bluff<small>Charm ${myPool(t, 'charm')} vs each NPC’s Intuition</small></button>`);
   }
   if (myTurn && h.phase === 'draw') {
     moves.push(`<button type="button" class="btn" data-sl="draw">${sel.size ? `Swap ${sel.size} card${sel.size > 1 ? 's' : ''}` : 'Stand pat'}</button>`);
-    if (t.hooks.palm && !used.has('palm') && sel.size === 1) moves.push(`<button type="button" class="btn small secondary skill" data-sl="palm">${gl('flash')} Palm it instead (Finesse)</button>`);
+    if (t.hooks.palm && !used.has('palm') && sel.size === 1) moves.push(`<button type="button" class="btn small secondary skill" data-sl="palm">${gl('flash')} Palm it instead<small>Finesse ${myPool(t, 'finesse')} vs the sharpest eye’s Intuition</small></button>`);
   }
   if (t.hooks.tell && !used.has('tell')) {
     const npcs = t.seats.filter((s) => s.kind === 'npc' && h.order.includes(s.key) && !h.folded[s.key]);
-    if (npcs.length) moves.push(`<span class="sl-tell">${gl('target')} Read a tell (Intuition): ${npcs.map((s) => `<button type="button" class="linkish" data-tell="${esc(s.key)}">${esc(s.name)}</button>`).join(' ')}</span>`);
+    if (npcs.length) moves.push(`<span class="sl-tell">${gl('target')} Read a tell (Intuition vs Charm): ${npcs.map((s) => `<button type="button" class="linkish" data-tell="${esc(s.key)}">${esc(s.name)} <small>(${matchup(t, 'intuition', 'charm', s)})</small></button>`).join(' ')}</span>`);
   }
   const tip = !myTurn ? `<p class="muted">Waiting on ${esc(t.seats.find((s) => s.key === h.turn)?.name || '…')}…</p>`
     : h.phase === 'draw' ? `<p class="sl-tip">Tap up to ${h.drawLimit} card${h.drawLimit > 1 ? 's' : ''} to throw away${h.drawLimit === 4 ? ' (4 only if you keep your Ace)' : ''}, then draw.</p>` : '';
@@ -71,7 +145,7 @@ function render() {
   const mine = asWarden ? null : h?.mine;
   scene.innerHTML = `<div class="sl-table" role="dialog" aria-modal="true" aria-label="Poker at ${esc(t.where)}">
     <div class="sl-top"><div><small>FIVE-CARD DRAW · ${esc(t.where.toUpperCase())}</small><b>${h ? `Hand ${h.no} — ${PHASE[h.phase] || ''}` : t.status === 'closed' ? 'The game has broken up' : 'Waiting for the deal'}</b></div>
-      <span class="sl-stakes">Ante ${$$(t.stakes.ante)} · bets ${$$(t.stakes.bet)} / ${$$(t.stakes.bet * 2)}</span><button type="button" class="sl-x" data-sl="hide" aria-label="Step away">×</button></div>
+      <span class="sl-stakes">Ante ${$$(t.stakes.ante)} · bets ${$$(t.stakes.bet)} / ${$$(t.stakes.bet * 2)}</span>${rulesBtn}<button type="button" class="sl-x" data-sl="hide" aria-label="Step away">×</button></div>
     <div class="sl-felt">
       <div class="sl-seats">${[...npcs, ...pcs].map((s) => seatHTML(t, s)).join('')}</div>
       <div class="sl-pot">${h ? `<span class="chips" aria-hidden="true">${'<i></i>'.repeat(Math.min(12, Math.ceil((h.pot || 0) / Math.max(1, t.stakes.bet))))}</span><b>POT ${$$(h.pot)}</b>` : ''}${h?.result ? `<p class="sl-result">${esc(h.result)}</p>` : ''}</div>
@@ -82,8 +156,10 @@ function render() {
     ${h?.log?.length ? `<ol class="sl-log">${h.log.slice(-6).map((l) => `<li>${esc(l)}</li>`).join('')}</ol>` : ''}
   </div>`;
 }
+let lastRolls = [];
 async function act(body) {
   const r = await api('POST', { ...body, pc: me() }, '', EP);
+  lastRolls = r.rolls || [];
   view = r.state; render();
   return r.result;
 }
@@ -130,20 +206,24 @@ function renderLiars(t) {
     btns.push(`<button type="button" class="btn" data-ld="bid"${ok ? '' : ' disabled'}>Bid ${esc(bidText({ qty: lb.qty, face: lb.face }))}</button>`);
     if (L.bid) btns.push('<button type="button" class="btn danger" data-ld="call">Liar!</button>');
     const used = new Set(L.used || []);
-    if (t.hooks.stare && !used.has('stare')) btns.push(`<button type="button" class="btn small secondary skill" data-ld="stare">${gl('hat')} Stare them down (Charm)</button>`);
-  } else btns.push(`<span class="muted">Waiting on ${esc(t.seats.find((s) => s.key === L.turn)?.name || '…')}…</span>`);
+    const nextNpc = (() => { const i = L.order.indexOf(key); for (let n = 1; n <= L.order.length; n++) { const k = L.order[(i + n) % L.order.length]; if (L.counts[k] > 0) return t.seats.find((x) => x.key === k); } return null; })();
+    if (t.hooks.stare && !used.has('stare') && nextNpc?.kind === 'npc') btns.push(`<button type="button" class="btn small secondary skill" data-ld="stare">${gl('hat')} Stare down ${esc(nextNpc.name)}<small>Charm: ${matchup(t, 'charm', 'intuition', nextNpc)}</small></button>`);
+  } else {
+    btns.push(`<span class="muted">Waiting on ${esc(t.seats.find((s) => s.key === L.turn)?.name || '…')}…</span>`);
+    if (!inGame) btns.push('<button type="button" class="btn secondary" data-sl="leave">You’re out of dice — leave the table</button>');
+  }
   const peekable = inGame && t.hooks.peek && !(L.used || []).includes('peek') ? t.seats.filter((s) => s.kind === 'npc' && L.counts[s.key] > 0) : [];
   const title = L ? (L.over ? `Game ${L.game} is over` : `Game ${L.game} — round ${L.round} · ${L.total} dice on the table`) : t.status === 'closed' ? 'The game has broken up' : 'Waiting for the first roll';
   scene.innerHTML = `<div class="sl-table" role="dialog" aria-modal="true" aria-label="Liar’s Dice at ${esc(t.where)}">
     <div class="sl-top"><div><small>LIAR’S DICE · ${esc(t.where.toUpperCase())}</small><b>${title}</b></div>
-      <span class="sl-stakes">${$$(t.stakes.ante)} a head · ones are wild</span><button type="button" class="sl-x" data-sl="hide" aria-label="Step away">×</button></div>
+      <span class="sl-stakes">${$$(t.stakes.ante)} a head · ones are wild</span>${rulesBtn}<button type="button" class="sl-x" data-sl="hide" aria-label="Step away">×</button></div>
     <div class="sl-felt">
       <div class="sl-seats">${others.map(seatBox).join('')}</div>
       <div class="sl-pot">${L ? `<b>POT ${$$(L.pot)}</b>` : ''}${L?.bid && !L.over ? `<p class="ld-bid">The bid: <b>${esc(bidText(L.bid))}</b> <small>by ${esc(t.seats.find((s) => s.key === L.bid.by)?.name || '?')}</small></p>` : ''}${L?.over && L.winner ? `<p class="sl-result">${esc(t.seats.find((s) => s.key === L.winner)?.name || '')} takes the pot.</p>` : ''}</div>
       ${reveal}
       ${L?.mine?.length && inGame ? `<div class="sl-mine"><small class="ld-lbl">UNDER YOUR CUP</small><div class="ld-mine">${L.mine.map((n) => die(n)).join('')}</div></div>` : ''}
     </div>
-    ${peekable.length ? `<p class="sl-tell">${gl('target')} Peek under a cup (Intuition): ${peekable.map((s) => `<button type="button" class="linkish" data-lpeek="${esc(s.key)}">${esc(s.name)}</button>`).join(' ')}</p>` : ''}
+    ${peekable.length ? `<p class="sl-tell">${gl('target')} Peek under a cup (Intuition vs Finesse): ${peekable.map((s) => `<button type="button" class="linkish" data-lpeek="${esc(s.key)}">${esc(s.name)} <small>(${matchup(t, 'intuition', 'finesse', s)})</small></button>`).join(' ')}</p>` : ''}
     <div class="sl-controls"><div class="btn-row sl-moves">${btns.join('')}</div></div>
     ${L?.log?.length ? `<ol class="sl-log">${L.log.slice(-6).map((l) => `<li>${esc(l)}</li>`).join('')}</ol>` : ''}
   </div>`;
@@ -176,14 +256,14 @@ function renderFaro(t) {
     else {
       btns.push(`<button type="button" class="btn" data-fr="turn">${gl('die')} Deal the turn</button>`);
       if (f.canCall) btns.push('<button type="button" class="btn secondary" data-fr="call">Call the turn (4 to 1)</button>');
-      if (!f.watched) btns.push(`<button type="button" class="btn small secondary skill" data-fr="watch">${gl('target')} Watch the dealer (Intuition)</button>`);
+      if (!f.watched) btns.push(`<button type="button" class="btn small secondary skill" data-fr="watch">${gl('target')} Watch the dealer<small>Intuition: ${matchup(t, 'intuition', 'finesse', dealer)}</small></button>`);
     }
     btns.push('<button type="button" class="btn secondary" data-sl="leave">Cash out &amp; leave</button>');
   }
   const title = f ? (f.over ? `Deal ${f.deal} is done` : `Deal ${f.deal} — ${f.left} card${f.left === 1 ? '' : 's'} in the box`) : t.status === 'closed' ? 'The bank is closed' : 'Waiting for the shuffle';
   scene.innerHTML = `<div class="sl-table" role="dialog" aria-modal="true" aria-label="Faro at ${esc(t.where)}">
     <div class="sl-top"><div><small>FARO · ${esc(t.where.toUpperCase())}</small><b>${title}</b></div>
-      <span class="sl-stakes">${esc(dealer?.name || 'The dealer')} banks ${$$(dealer?.bank)} · bets ${$$(t.stakes.ante)}–${$$(t.stakes.bet * 5)} a card</span><button type="button" class="sl-x" data-sl="hide" aria-label="Step away">×</button></div>
+      <span class="sl-stakes">${esc(dealer?.name || 'The dealer')} banks ${$$(dealer?.bank)} · bets ${$$(t.stakes.ante)}–${$$(t.stakes.bet * 5)} a card</span>${rulesBtn}<button type="button" class="sl-x" data-sl="hide" aria-label="Step away">×</button></div>
     ${asWarden && f ? `<p class="fr-secret">${f.crooked ? `Crooked box: on${f.cheats ? ` (stacked ${f.cheats} turn${f.cheats > 1 ? 's' : ''} so far)` : ''}` : 'The box is square.'}</p>` : ''}
     <div class="sl-felt fr-felt">
       <div class="fr-box">
@@ -254,8 +334,12 @@ function callDialog(t) {
 }
 
 async function onClick(e) {
-  const b = e.target.closest('button'); if (!b || busy) return;
+  const b = e.target.closest('button'); if (!b) return;
   const d = b.dataset;
+  // stepping away and the rules always work, even mid-action
+  if (d.sl === 'rules') { openRules(view.table); return; }
+  if (d.sl === 'hide') { busy = false; hideTable(); return; }
+  if (busy) return;
   if (d.card !== undefined) {
     const h = view.table.hand, i = Number(d.card);
     if (h?.phase !== 'draw' || h.turn !== `pc:${me()}`) return;
@@ -264,7 +348,6 @@ async function onClick(e) {
   }
   busy = true;
   try {
-    if (d.sl === 'hide') { hideTable(); return; }
     if (d.lq) { lb.qty = Math.max(1, Math.min(view.table.liars?.total || 30, lb.qty + Number(d.lq))); render(); return; }
     if (d.lf) { lb.face = Number(d.lf); render(); return; }
     if (d.ld === 'bid') { await act({ action: 'liarsBid', qty: lb.qty, face: lb.face }); play('dice'); return; }
@@ -323,11 +406,10 @@ async function onClick(e) {
 }
 // show your own Challenge roll (the Table Log has both sides)
 async function showRoll(skill) {
-  try {
-    const log = (await api('GET', null, '?view=log', '/api/combat')).log || [];
-    const mine = log.find((l) => l.type === 'roll' && l.label === `Poker · ${skill}` && l.at > lastLog);
-    if (mine) { lastLog = mine.at; await rollPopup(mine, `${mine.who} · ${skill}`); }
-  } catch { /* the toast still says how it went */ }
+  const mine = lastRolls.filter((r) => r.key === `pc:${me()}`).pop(), theirs = lastRolls.filter((r) => r.key !== `pc:${me()}`).pop();
+  if (!mine) return;
+  const again = lastRolls.length > 2 ? ' (after a tie)' : '';
+  await rollPopup(mine, `Your ${skill}: ${mine.hits} vs ${theirs ? `${theirs.who} ${theirs.hits}` : '—'}${again}`).catch(() => {});
 }
 function openTable(warden = false) {
   saloonStyles();
