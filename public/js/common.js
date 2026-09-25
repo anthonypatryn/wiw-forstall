@@ -304,3 +304,27 @@ export function poolIcons(pool) {
   if (!pool || !m || (!m[1] && !m[2])) return esc(pool || '—');
   return `<span class="pool-icons" title="${esc(pool)}">${m[1] ? `<b>${m[1]}</b>${miniBullet('B')}` : ''}${m[2] ? `<b>${m[2]}</b>${miniBullet('G')}` : ''}</span>`;
 }
+
+// ---------- Trade abilities: pick one, spend its Grit, roll its dice (2/day tracked; Town rest resets) ----------
+export function abilityOptions(pc, meta) {
+  const t = meta.trades[pc.trade], I = meta.abilityInfo || {};
+  const list = t.abilities.filter((a) => pc.abilities.includes(a.name)).map((a) => ({ a, ace: false }));
+  if ((pc.aces || 0) >= 6) t.aces.forEach((a, i) => { if (i === 0 || pc.aceTwo) list.push({ a, ace: true }); });
+  return list.filter(({ a }) => I[a.name]?.usable).map(({ a, ace }) => {
+    const info = I[a.name], used = pc.abilityUses?.[a.name] || 0;
+    const out = info.daily && a.name !== 'Fired Up 2' && used >= 2;
+    const bits = [info.cost ? `${info.cost} Grit` : a.name === 'Fired Up' ? '+3 Grit now' : 'no Grit', info.dice ? `roll ${info.dice}` : '', info.daily ? `${Math.min(used, 2)}/2 today` : '', ace ? 'Ace-in-the-Hole' : ''].filter(Boolean);
+    return { name: a.name, info, out, label: `${a.name} · ${bits.join(' · ')}${out ? ' (used up)' : ''}` };
+  });
+}
+export function abilityTargetsHTML(name, pc, posse, foes, sel) {
+  const allies = posse.filter((x) => x.id !== pc.id && !x.dead);
+  const opt = (list, v) => list.map((x) => `<option value="${x.id}"${x.id === v ? ' selected' : ''}>${esc(x.name)}</option>`).join('');
+  if (name === 'Crippling Precision') return `<select data-ab="target" aria-label="Target">${opt(foes, sel.target)}</select>`;
+  if (name === 'Biological Amplification') return `<select data-ab="target" aria-label="Ally">${opt(allies, sel.target)}</select><select data-ab="option" aria-label="Gift"><option value="aim"${sel.option !== 'dodge' ? ' selected' : ''}>free Aim</option><option value="dodge"${sel.option === 'dodge' ? ' selected' : ''}>free Dodge [1B]</option></select>`;
+  if (name === 'Fired Up 2') return `<select data-ab="t1" aria-label="Ally 1"><option value="">— ally —</option>${opt(allies, sel.t1)}</select><select data-ab="t2" aria-label="Ally 2"><option value="">— ally —</option>${opt(allies, sel.t2)}</select>`;
+  return '';
+}
+export function abilityBody(pc, sel) {
+  return { action: 'pc', id: pc.id, op: 'useAbility', name: sel.name, target: sel.target, option: sel.option, targets: [sel.t1, sel.t2].filter(Boolean) };
+}

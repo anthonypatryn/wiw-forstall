@@ -1,4 +1,6 @@
-import { $, esc, api, startPolling, toast, mountNav, tryWarden, forgetWarden, savedPin, wardenModal, rollPopup } from './common.js';
+import { $, esc, api, startPolling, toast, mountNav, tryWarden, forgetWarden, savedPin, wardenModal, rollPopup, abilityOptions, abilityTargetsHTML, abilityBody } from './common.js';
+let meta = null;
+api('GET', null, '?view=meta', '/api/combat').then((m) => { meta = m; }).catch(() => {});
 import { mountTableLog } from './tablelog.js';
 import { panZoom } from './panzoom.js';
 
@@ -231,7 +233,7 @@ function moveReadout(t, d) {
   return `${t.name} moves ${d}″ · ${m.cost} Grit (${m.speed}${tp.rough ? ', rough' : ''})${m.cost > (actor.grit || 0) ? ` · ⚠ only ${actor.grit || 0} left` : ''}`;
 }
 // ---------- turn panel: whose turn, Grit left, this turn's actions (pp. 40–43) ----------
-const tp = { rough: false, dodge: 1, gear: 0, imp: 1, impLabel: '', impSkill: '', prep: 1, prepLabel: '', rl: '', rlDice: 1 };
+const tp = { ab: {}, rough: false, dodge: 1, gear: 0, imp: 1, impLabel: '', impSkill: '', prep: 1, prepLabel: '', rl: '', rlDice: 1 };
 const myId = () => { try { return JSON.parse(localStorage.getItem('wiw.me') || 'null'); } catch { return null; } };
 function currentActor() {
   const c = combat?.combat;
@@ -297,6 +299,11 @@ function renderTurnBar() {
         ${isPc ? `<select data-tp="impSkill"><option value="">no roll</option>${['Charm', 'Finesse', 'Intuition', 'Nerve'].map((k) => `<option${k === tp.impSkill ? ' selected' : ''}>${k}</option>`).join('')}</select>` : ''}<button type="button" class="btn small secondary" data-tp-imp>Do it</button>`)}
       ${isPc ? row('PREPARE', `<input type="number" min="0" max="12" data-tp="prep" value="${tp.prep}"> Grit <input data-tp="prepLabel" maxlength="60" placeholder="e.g. shoot whoever comes round the corner" value="${esc(tp.prepLabel)}"><button type="button" class="btn small secondary" data-tp-prep${a.prepared ? ' disabled' : ''}>${a.prepared ? 'Prepared' : 'Prepare'}</button>`) : ''}
       ${isPc && sts.length ? row('RELIEVE', `<select data-tp="rl">${sts.map(([st, v]) => `<option value="${st}"${st === tp.rl ? ' selected' : ''}>${st} [${v}]</option>`).join('')}</select><input type="number" min="1" max="12" data-tp="rlDice" value="${tp.rlDice}"> dice (1 Grit each)<button type="button" class="btn small secondary" data-tp-rl>Roll</button>`) : ''}
+      ${isPc && meta ? (() => { const opts = abilityOptions(a, meta); if (!opts.length) return '';
+        if (!opts.some((o) => o.name === tp.ab.name)) tp.ab.name = opts.find((o) => !o.out)?.name || opts[0].name;
+        return row('ABILITIES', `<select data-abp="name">${opts.map((o) => `<option value="${esc(o.name)}"${o.name === tp.ab.name ? ' selected' : ''}${o.out ? ' disabled' : ''}>${esc(o.label)}</option>`).join('')}</select>
+          ${abilityTargetsHTML(tp.ab.name, a, combat.posse, combat.enemies.filter((e) => !e.defeated), tp.ab)}<button type="button" class="btn small" data-tp-ab>✨ Use</button>`); })() : ''}
+      ${isPc && /arabian/i.test(a.horse?.breed || '') && a.horse?.bond === 'Revered' && a.mounted === 'horse' ? row('ARABIAN', `<button type="button" class="btn small secondary" data-tp-horse${(a.horseGrit || 0) >= 2 ? ' disabled' : ''}>🐎 +1 Grit</button><span class="muted">${a.horseGrit || 0}/2 today</span>`) : ''}
       ${isPc ? row('FOOL’S GRIT', `<button type="button" class="btn small secondary" data-tp-fool${a.foolUsed ? ' disabled' : ''}>+1 Grit for 1 Health</button><span class="muted">once per turn</span>`) : ''}
       <div class="tp-end">${warden ? '<button type="button" class="btn small secondary" data-endfight>End combat</button><button type="button" class="btn" data-nextturn>Next turn ⏭</button>' : '<button type="button" class="btn" data-endmine>End my turn ⏭</button>'}</div>`
     : `<p class="muted tp-empty">${isPc ? 'Only that player (or the Warden) acts on this turn.' : 'The enemies are acting.'}</p>`}
@@ -360,6 +367,17 @@ function wireTurnBar(bar, cur) {
     if (r?.dice) rollPopup(r, `${a.name} · Relieve ${tp.rl} · ${r.pool}`);
   });
   bar.querySelector('[data-tp-fool]')?.addEventListener('click', () => tpAct({ ...base, op: 'fool' }, '+1 Grit, −1 Health.'));
+  bar.querySelectorAll('[data-abp], [data-ab]').forEach((el) => el.addEventListener('change', () => {
+    if (el.dataset.abp) { tp.ab = { name: el.value }; renderTurnBar(); return; }
+    tp.ab[el.dataset.ab] = el.value;
+  }));
+  bar.querySelector('[data-tp-ab]')?.addEventListener('click', async () => {
+    bar.querySelectorAll('[data-ab]').forEach((el) => { tp.ab[el.dataset.ab] = el.value; });
+    const r = await tpAct(abilityBody(a, tp.ab));
+    if (r?.dice) rollPopup(r, `${a.name} · ${r.ability} · ${r.pool}`);
+    if (r) toast(`✨ ${r.ability}${r.extra ? ` — ${r.extra}` : ''}`);
+  });
+  bar.querySelector('[data-tp-horse]')?.addEventListener('click', () => tpAct({ ...base, op: 'horseGrit' }, '+1 Grit.'));
 }
 
 function wireAttack(box, sel) {

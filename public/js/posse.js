@@ -1,5 +1,5 @@
 import {
-  $, esc, api, startPolling, tryWarden, forgetWarden, savedPin, wardenModal, store, injectDefs, toast, mountNav, poolHTML, readPool, fillPool, rollPopup, bleedPanel,
+  $, esc, api, startPolling, abilityOptions, abilityTargetsHTML, abilityBody, tryWarden, forgetWarden, savedPin, wardenModal, store, injectDefs, toast, mountNav, poolHTML, readPool, fillPool, rollPopup, bleedPanel,
 } from './common.js';
 import { mountTableLog } from './tablelog.js';
 import { ICONS } from './icons.js';
@@ -402,6 +402,11 @@ function wireSheet(p) {
   on('change', (e) => {
     if (e.target.matches('.pick')) return pickItem(p, e.target);
     if (e.target.matches('[data-pack]')) return choosePack(p, e.target.dataset.pack === '2' ? 'pack2' : 'pack', e.target.value);
+    if (e.target.matches('[data-dyn="fight"] [data-abp], [data-dyn="fight"] [data-ab]')) {
+      const s = (fightSel[p.id] ||= {}); s.ab ||= {};
+      if (e.target.dataset.abp) { s.ab = { name: e.target.value }; e.target.blur(); renderFight(view, pcById(p.id)); } else s.ab[e.target.dataset.ab] = e.target.value;
+      return;
+    }
     if (e.target.matches('[data-fs]')) {
       const s = fightSel[p.id] ||= {}, k = e.target.dataset.fs;
       s[k] = k === 'aim' ? e.target.checked : k === 'w' ? Number(e.target.value) : k === 'dodge' ? Math.max(1, Number(e.target.value) || 1) : e.target.value;
@@ -522,6 +527,12 @@ function wireSheet(p) {
       e.target.closest('[data-dodge]').blur();
       const r = await act({ action: 'pc', id: p.id, op: 'dodge', grit: fightSel[p.id]?.dodge || 1 });
       if (r?.dice) { rollPopup(r, `${pcById(p.id).name} · Dodge · ${r.pool}`); toast(`🛡 ${r.banked} Dodge ready for the next hit.`); }
+    } else if (e.target.closest('[data-use-ab]')) {
+      e.target.closest('[data-use-ab]').blur();
+      const s = fightSel[p.id]; view.querySelectorAll('[data-dyn="fight"] [data-ab]').forEach((el) => { s.ab[el.dataset.ab] = el.value; });
+      const r = await act(abilityBody(pcById(p.id), s.ab));
+      if (r?.dice) rollPopup(r, `${pcById(p.id).name} · ${r.ability} · ${r.pool}`);
+      if (r) toast(`✨ ${r.ability}${r.extra ? ` — ${r.extra}` : ''}`);
     } else if (e.target.closest('[data-rl]')) {
       const b = e.target.closest('[data-rl]'), st = b.dataset.rl; b.blur();
       const r = await act({ action: 'pc', id: p.id, op: 'relieve', status: st, dice: view.querySelector(`[data-rl-dice="${st}"]`)?.value, skill: view.querySelector(`[data-rl-skill="${st}"]`)?.value });
@@ -832,6 +843,11 @@ function renderFight(view, p) {
       <select data-fs="ammo" aria-label="Ammo"><option value="">regular ammo</option>${loaded.map(([a, k]) => `<option value="${k}"${String(k) === String(sel.ammo) ? ' selected' : ''}>${esc(a.name)} (${a.rds})</option>`).join('')}</select>
       <label class="check"><input type="checkbox" data-fs="aim"${sel.aim ? ' checked' : ''}${p.aimed ? ' disabled' : ''}> Aim +1 Grit${p.aimed ? ' (used)' : ''}</label>
       <button type="button" class="btn small" data-attack${sel.r ? '' : ' disabled'}>⚔ Attack · ${cost} Grit</button></div>` : c.active ? '<p class="muted fp-note">No enemies standing.</p>' : ''}
+    ${c.active ? (() => { const opts = abilityOptions(p, meta); if (!opts.length) return '';
+      const s = (fightSel[p.id] ||= {}); s.ab ||= {};
+      if (!opts.some((o) => o.name === s.ab.name)) s.ab.name = opts.find((o) => !o.out)?.name || opts[0].name;
+      return `<div class="fp-row"><b class="fp-h">ABILITY</b><select data-abp="name" aria-label="Ability">${opts.map((o) => `<option value="${esc(o.name)}"${o.name === s.ab.name ? ' selected' : ''}${o.out ? ' disabled' : ''}>${esc(o.label)}</option>`).join('')}</select>
+        ${abilityTargetsHTML(s.ab.name, p, data.posse, (data.enemies || []).filter((e) => !e.defeated), s.ab)}<button type="button" class="btn small" data-use-ab>✨ Use</button></div>`; })() : ''}
     ${c.active ? `<div class="fp-row"><b class="fp-h">DODGE</b><input type="number" min="1" max="12" value="${sel.dodge}" data-fs="dodge" aria-label="Grit to spend on Dodge"> Grit → roll that many B <button type="button" class="btn small secondary" data-dodge>🛡 Dodge</button><span class="muted">Soaks the next hit; gone at your next turn.</span></div>` : ''}
     ${statuses.length ? `<div class="fp-relieve"><b class="fp-h">RELIEVE A STATUS</b> <span class="muted">${c.active ? '1 Grit per die, once per Status per turn, on your turn.' : 'Out of combat: no Grit, try as often as you like.'}</span>
       ${statuses.map(([st, v]) => {
