@@ -553,6 +553,11 @@ function wireSheet(p) {
         else if (r.outcome) toast(r.outcome.ok ? `✅ Success — ${r.outcome.total}/${r.target} Hits!` : `❌ Short — ${r.outcome.total}/${r.target} Hits.`, !r.outcome.ok);
         else toast(`${r.hits} Hit${r.hits === 1 ? '' : 's'} — see the Table Log for who won.`);
       }
+    } else if (e.target.closest('[data-sheet-undo]')) {
+      const b = e.target.closest('[data-sheet-undo]'); b.blur();
+      if (b.dataset.sheetUndo === 'turn' && !confirm('Restart this turn? Everything done this turn is undone.')) return;
+      const r = await act({ action: 'undo', mode: b.dataset.sheetUndo });
+      if (r) toast(`↶ Undone: ${r.labels.join(' · ')}`);
     } else if (e.target.closest('[data-endturn]')) {
       e.target.closest('[data-endturn]').blur();
       if (await act({ action: 'pc', id: p.id, op: 'endTurn' })) toast('Turn ended.');
@@ -834,7 +839,9 @@ function renderFight(view, p) {
       return `<div class="ck-prompt${mineCk ? ' mine' : ''}"><div><small>${ck.kind === 'challenge' ? `CHALLENGE${ck.round > 1 ? ` · ROUND ${ck.round} (TIE)` : ''} — MOST HITS WINS` : mineCk ? 'THE WARDEN ASKS YOU TO ROLL' : 'SOMEONE ELSE IS ROLLING — YOU CAN HELP'}</small>
         <b>${esc(ck.skill)}</b> · ${ck.kind === 'challenge' ? `vs ${esc(vs)}` : `${esc(ck.diff)} — ${ck.target} Hit${ck.target === 1 ? '' : 's'}`}${ck.note ? ` · <i>${esc(ck.note)}</i>` : ''}</div>
         <button type="button" class="btn small${mineCk ? '' : ' secondary'}" data-ck-roll="${ck.id}">${mineCk ? `🎲 Roll ${esc(ck.skill)} (${skillPool(ck.skill)})` : '🤝 Help (½ dice)'}</button></div>`; }).join('')}
-    ${c.active ? (mine ? `<div class="turn-banner mine">⚔ YOUR TURN · <b>${p.grit}</b> Grit${p.dodge ? ` · 🛡 ${p.dodge} Dodge ready` : ''}<button type="button" class="btn small" data-endturn>End my turn ⏭</button></div>`
+    ${c.active ? (mine ? `<div class="turn-banner mine">⚔ YOUR TURN · <b>${p.grit}</b> Grit${p.dodge ? ` · 🛡 ${p.dodge} Dodge ready` : ''}<button type="button" class="btn small" data-endturn>End my turn ⏭</button></div>
+      ${(p.turnLog || []).length ? `<div class="fp-log">${p.turnLog.map((l) => `<span>${esc(l.text)}${l.grit > 0 ? ` <i>−${l.grit}</i>` : ''}</span>`).join('')}</div>` : ''}
+      ${data.undo?.lastIsThisTurn ? `<div class="fp-row"><b class="fp-h">UNDO</b><button type="button" class="btn small secondary" data-sheet-undo="last">↶ Undo: ${esc(data.undo.last)}</button>${data.undo.thisTurn ? '<button type="button" class="btn small secondary" data-sheet-undo="turn">⟲ Restart turn</button>' : ''}</div>` : ''}`
       : `<div class="turn-banner">Round ${c.round || 1} · <b>${esc(whoseName(c.current))}</b>’s turn${ahead ? ` · you’re up in ${ahead}` : ''}${p.dodge ? ` · 🛡 ${p.dodge} Dodge ready` : ''}</div>`) : ''}
     ${c.active && foes.length ? `<div class="fp-row"><b class="fp-h">ATTACK</b>
       <select data-fs="w" aria-label="Weapon">${weapons.map(([x, i]) => `<option value="${i}"${i === sel.w ? ' selected' : ''}>${esc(x.model || x.manufacturer)}</option>`).join('')}</select>

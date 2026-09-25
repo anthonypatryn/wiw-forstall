@@ -1,7 +1,7 @@
 import { load, save } from '../lib/store.js';
 import { pinOk, send, readBody } from '../lib/http.js';
 import { freshBattle, battleAction, battleView, hexDist, clampHex, autoSync } from '../lib/battle.js';
-import { chargeMove, undoMove, freshCombat } from '../lib/combat.js';
+import { chargeMove, undoMove, pushUndo } from '../lib/combat.js';
 
 const KEY = 'battle';
 const IMG_KEY = 'battle-img';
@@ -52,8 +52,9 @@ export default async function handler(req, res) {
       const t = state.tokens.find((x) => x.id === body.id);
       if (t && t.ref && (t.kind === 'pc' || t.kind === 'enemy')) {
         const from = { col: t.col, row: t.row }, to = clampHex(state, body.col, body.row);
+        pushUndo(combat, `${t.name}: move ${hexDist(from, to)}″`, { token: { id: t.id, col: from.col, row: from.row } });
         moveResult = chargeMove(combat, { kind: t.kind, ref: t.ref, inches: hexDist(from, to), rough: !!body.rough, warden, tokenId: t.id, from, to });
-        combatDirty = moveResult.cost > 0;
+        if (moveResult.cost > 0) combatDirty = true; else combat.undoStack.pop(); // free Warden repositioning isn't an action
       }
     }
     if (body.action === 'undoMove') {

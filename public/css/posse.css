@@ -439,3 +439,7 @@ body.on-sheet .masthead { display: none; }
 @media (max-width: 860px) { .sh-player { grid-column: 1; grid-row: 3; margin-top: 0; } }
 .tile-player { font: italic 14px var(--body); color: var(--ink-soft); }
 .new-pc #new-player { flex: 1; min-width: 0; }
+
+.fp-log { display: flex; flex-wrap: wrap; gap: 5px; margin: 0 0 6px; }
+.fp-log span { padding: 2px 8px; border-radius: 12px; background: rgba(34,31,31,.08); font-size: 13px; }
+.fp-log i { font-style: normal; color: var(--rust); }

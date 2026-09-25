@@ -1,6 +1,6 @@
 import { load, save, storeKind } from '../lib/store.js';
 import { pinOk, send, readBody, sinceParam } from '../lib/http.js';
-import { freshCombat, publicAction, playerCombatView, wardenCombatView, logView, META, autoAchievements } from '../lib/combat.js';
+import { freshCombat, publicAction, playerCombatView, wardenCombatView, logView, META, autoAchievements, isUndoable, pushUndo, undoLabel, undoCombat } from '../lib/combat.js';
 
 const KEY = 'combat';
 
@@ -22,7 +22,24 @@ export default async function handler(req, res) {
 
     const body = await readBody(req);
     if (body.action === 'auth') return send(res, warden ? 200 : 401, warden ? { ok: true } : { error: 'Wrong PIN.' });
+    if (body.action === 'undo') { // step back one action, or restart the whole turn (token moves go back too)
+      const r = undoCombat(state, { warden, mode: body.mode === 'turn' ? 'turn' : 'last' });
+      if (r.tokens.length) {
+        const battle = await load('battle');
+        if (battle) {
+          r.tokens.forEach((t) => { const tok = battle.tokens.find((x) => x.id === t.id); if (tok) { tok.col = t.col; tok.row = t.row; } });
+          battle.v = (battle.v || 0) + 1;
+          await save(battle, 'battle');
+        }
+      }
+      state.v = (state.v || 0) + 1;
+      await save(state, KEY);
+      return send(res, 200, { result: r, state: view() });
+    }
+    const undoable = isUndoable(state, body);
+    if (undoable) pushUndo(state);
     const result = publicAction(state, body, { warden }) ?? null;
+    if (undoable) state.undoStack[state.undoStack.length - 1].label = undoLabel(state, body);
     autoAchievements(state);
     state.v = (state.v || 0) + 1;
     await save(state, KEY);
