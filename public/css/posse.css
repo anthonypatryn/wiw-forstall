@@ -409,7 +409,10 @@ body.on-sheet .masthead { display: none; }
 .fight-panel { margin: 0 0 14px; padding: 10px 12px; background: #fffaf0; border: 2px solid var(--rust); border-radius: 6px; scroll-margin-top: 110px; }
 .turn-banner { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 6px 10px; margin-bottom: 8px; border-radius: 4px; background: rgba(34,31,31,.08); font: 15px var(--display); letter-spacing: .08em; }
 .turn-banner.mine { background: var(--rust); color: #fff; animation: bleedPulse 1.8s ease-in-out infinite; }
-.turn-banner.mine .btn { margin-left: auto; background: #fff; color: var(--ink); border-color: #fff; }
+.turn-banner .tb-btns { margin-left: auto; display: flex; flex-wrap: wrap; gap: 6px; }
+.turn-banner .tb-btns .btn { text-decoration: none; }
+.turn-banner.mine .tb-btns .btn { background: #fff; color: var(--ink); border-color: #fff; }
+.turn-banner.mine .tb-btns .btn.secondary { background: transparent; color: #fff; }
 .fp-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; padding: 6px 0; border-top: 1px dotted rgba(34,31,31,.3); font-size: 14px; }
 .fp-h { font: 13px var(--display); letter-spacing: .12em; color: var(--rust); font-weight: 400; min-width: 64px; }
 .fp-row select, .fp-row input[type=number] { min-width: 0; max-width: 100%; padding: 4px 6px; border: 1px solid var(--ink-faint); border-radius: 3px; background: #fffdf7; font-size: 14px; }

@@ -536,3 +536,11 @@ button { cursor: pointer; }
 .dice-drawer label.dd-check { flex-direction: row; align-items: center; gap: 6px; font: 14px var(--body); letter-spacing: 0; color: var(--ink); }
 .dice-drawer select, .dice-drawer input:not([type=checkbox]) { padding: 7px 9px; border: 1px solid var(--ink-faint); border-radius: 3px; background: #fffdf7; font: 15px var(--body); letter-spacing: 0; color: var(--ink); }
 @media (max-width: 560px) { .dice-fab { right: auto; left: 12px; bottom: 64px; padding: 9px 13px; font-size: 14px; } .hud-strip { bottom: 12px; } }
+
+/* it's your turn (pages other than the Battle Map) */
+.hud-myturn { position: fixed; left: 50%; top: 12px; transform: translateX(-50%); z-index: 70; width: min(520px, calc(100vw - 24px)); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px;
+  padding: 10px 14px; border-radius: 8px; background: var(--rust); color: #fff; font: 17px var(--display); letter-spacing: .06em; box-shadow: 0 10px 26px rgba(0,0,0,.4); }
+.hud-myturn b { font-weight: 400; }
+.hud-myturn .gl { width: 1.2em; height: 1.2em; vertical-align: -3px; }
+.hud-myturn .btn { background: #fff; color: var(--ink); border-color: #fff; text-decoration: none; }
+.hud-myturn .btn.secondary { background: transparent; color: #fff; }

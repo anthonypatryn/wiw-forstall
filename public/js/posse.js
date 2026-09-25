@@ -844,27 +844,11 @@ function renderFight(view, p) {
       return `<div class="ck-prompt${mineCk ? ' mine' : ''}"><div><small>${ck.kind === 'challenge' ? `CHALLENGE${ck.round > 1 ? ` · ROUND ${ck.round} (TIE)` : ''} — MOST HITS WINS` : mineCk ? 'THE WARDEN ASKS YOU TO ROLL' : 'SOMEONE ELSE IS ROLLING — YOU CAN HELP'}</small>
         <b>${esc(ck.skill)}</b> · ${ck.kind === 'challenge' ? `vs ${esc(vs)}` : `${esc(ck.diff)} — ${ck.target} Hit${ck.target === 1 ? '' : 's'}`}${ck.note ? ` · <i>${esc(ck.note)}</i>` : ''}</div>
         <button type="button" class="btn small${mineCk ? '' : ' secondary'}" data-ck-roll="${ck.id}">${mineCk ? `🎲 Roll ${esc(ck.skill)} (${skillPool(ck.skill)})` : '🤝 Help (½ dice)'}</button></div>`; }).join('')}
-    ${c.active ? (mine ? `<div class="turn-banner mine">⚔ YOUR TURN · <b>${p.grit}</b> Grit${p.dodge ? ` · 🛡 ${p.dodge} Dodge ready` : ''}<button type="button" class="btn small" data-endturn>End my turn ⏭</button></div>
-      ${(p.turnLog || []).length ? `<div class="fp-log">${p.turnLog.map((l) => `<span>${esc(l.text)}${l.grit > 0 ? ` <i>−${l.grit}</i>` : ''}</span>`).join('')}</div>` : ''}
-      ${data.undo?.lastIsThisTurn ? `<div class="fp-row"><b class="fp-h">UNDO</b><button type="button" class="btn small secondary" data-sheet-undo="last">↶ Undo: ${esc(data.undo.last)}</button>${data.undo.thisTurn ? '<button type="button" class="btn small secondary" data-sheet-undo="turn">⟲ Restart turn</button>' : ''}</div>` : ''}`
-      : `<div class="turn-banner">Round ${c.round || 1} · <b>${esc(whoseName(c.current))}</b>’s turn${ahead ? ` · you’re up in ${ahead}` : ''}${p.dodge ? ` · 🛡 ${p.dodge} Dodge ready` : ''}</div>`) : ''}
-    ${c.active && foes.length ? `<div class="fp-row"><b class="fp-h">ATTACK</b>
-      <select data-fs="w" aria-label="Weapon">${weapons.map(([x, i]) => `<option value="${i}"${i === sel.w ? ' selected' : ''}>${esc(x.model || x.manufacturer)}</option>`).join('')}</select>
-      <select data-fs="r" aria-label="Range">${ranges.map(([k, l]) => `<option value="${k}"${k === sel.r ? ' selected' : ''}>${l} · ${esc(String(w[k]).toUpperCase())}</option>`).join('') || '<option value="">no dice set</option>'}</select>
-      <select data-fs="t" aria-label="Target">${foes.map((e) => `<option value="${e.id}"${e.id === sel.t ? ' selected' : ''}>→ ${esc(e.name)}</option>`).join('')}</select>
-      <select data-fs="ammo" aria-label="Ammo"><option value="">regular ammo</option>${loaded.map(([a, k]) => `<option value="${k}"${String(k) === String(sel.ammo) ? ' selected' : ''}>${esc(a.name)} (${a.rds})</option>`).join('')}</select>
-      <label class="check"><input type="checkbox" data-fs="aim"${sel.aim ? ' checked' : ''}${p.aimed ? ' disabled' : ''}> Aim +1 Grit${p.aimed ? ' (used)' : ''}</label>
-      <button type="button" class="btn small" data-attack${sel.r ? '' : ' disabled'}>⚔ Attack · ${cost} Grit</button></div>` : c.active ? '<p class="muted fp-note">No enemies standing.</p>' : ''}
-    ${p.hold ? `<div class="fp-row hold-row"><b class="fp-h">⏳ HOLDING</b><span>${esc(p.hold.label)} — when ${esc(p.hold.when)}${p.hold.triggeredBy ? ` · <b>${esc(p.hold.triggeredBy.text)}!</b>` : ''}</span>
-      ${p.hold.kind === 'attack' ? `<select data-hold-target aria-label="Target">${(data.enemies || []).filter((e) => !e.defeated).map((e) => `<option value="${e.id}"${e.id === (p.hold.triggeredBy?.enemy || p.hold.trigger?.enemy) ? ' selected' : ''}>→ ${esc(e.name)}</option>`).join('')}</select>` : ''}
-      <button type="button" class="btn small" data-hold-fire>🔥 Fire now</button></div>` : ''}
-    ${c.active ? (() => { const opts = abilityOptions(p, meta); if (!opts.length) return '';
-      const s = (fightSel[p.id] ||= {}); s.ab ||= {};
-      if (!opts.some((o) => o.name === s.ab.name)) s.ab.name = opts.find((o) => !o.out)?.name || opts[0].name;
-      return `<div class="fp-row"><b class="fp-h">ABILITY</b><select data-abp="name" aria-label="Ability">${opts.map((o) => `<option value="${esc(o.name)}"${o.name === s.ab.name ? ' selected' : ''}${o.out ? ' disabled' : ''}>${esc(o.label)}</option>`).join('')}</select>
-        ${abilityTargetsHTML(s.ab.name, p, data.posse, (data.enemies || []).filter((e) => !e.defeated), s.ab)}<button type="button" class="btn small" data-use-ab>✨ Use</button></div>`; })() : ''}
-    ${c.active ? `<div class="fp-row"><b class="fp-h">DODGE</b><input type="number" min="1" max="12" value="${sel.dodge}" data-fs="dodge" aria-label="Grit to spend on Dodge"> Grit → roll that many B <button type="button" class="btn small secondary" data-dodge>🛡 Dodge</button><span class="muted">Soaks the next hit; gone at your next turn.</span></div>` : ''}
-    ${statuses.length ? `<div class="fp-relieve"><b class="fp-h">RELIEVE A STATUS</b> <span class="muted">${c.active ? '1 Grit per die, once per Status per turn, on your turn.' : 'Out of combat: no Grit, try as often as you like.'}</span>
+    ${c.active ? `<div class="turn-banner${mine ? ' mine' : ''}"><span>${mine ? `⚔ YOUR TURN · <b>${p.grit}</b> Grit` : `Round ${c.round || 1} · <b>${esc(whoseName(c.current))}</b>’s turn${ahead ? ` · you’re up in ${ahead}` : ''}`}${p.dodge ? ` · ${p.dodge} Dodge ready` : ''}</span>
+      <span class="tb-btns"><a class="btn small${mine ? '' : ' secondary'}" href="/battle">Go to Battle Map ›</a>${mine ? '<button type="button" class="btn small secondary" data-endturn>End my turn</button>' : ''}</span></div>
+      ${mine ? '<p class="muted fp-note">Move, attack, dodge, use abilities and relieve Statuses on the Battle Map.</p>' : ''}
+      ${p.hold ? `<p class="muted fp-note">⏳ Holding <b>${esc(p.hold.label)}</b> — when ${esc(p.hold.when)}. It pops up on any page when it’s set off.</p>` : ''}` : ''}
+    ${statuses.length && !c.active ? `<div class="fp-relieve"><b class="fp-h">RELIEVE A STATUS</b> <span class="muted">${c.active ? '1 Grit per die, once per Status per turn, on your turn.' : 'Out of combat: no Grit, try as often as you like.'}</span>
       ${statuses.map(([st, v]) => {
         const skills = (meta.statuses[st]?.skill || '').split(' or ');
         const sk = skills[0], max = Math.max(0, skillDice(sk) - (p.statuses.Poisoned && st !== 'Poisoned' ? 2 : 0));
