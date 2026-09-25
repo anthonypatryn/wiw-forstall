@@ -418,3 +418,9 @@ body.on-sheet .masthead { display: none; }
 .fp-note { margin: 4px 0; font-size: 14px; }
 .turn-tag { background: var(--rust) !important; text-decoration: none; animation: bleedPulse 1.8s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) { .turn-banner.mine, .turn-tag { animation: none; } }
+
+/* Warden's Skill check prompt */
+.ck-prompt { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px; padding: 8px 10px; margin-bottom: 8px; border-radius: 5px; border: 1.5px dashed var(--ink-faint); font-size: 15px; }
+.ck-prompt.mine { border: 2px solid var(--rust); background: rgba(164,64,31,.08); }
+.ck-prompt small { display: block; font: 11px var(--display); letter-spacing: .12em; color: var(--rust); }
+.ck-prompt b { font: 18px var(--display); letter-spacing: .06em; font-weight: 400; }

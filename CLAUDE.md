@@ -11,6 +11,7 @@
   - p. 34: Achievements (`ACHIEVEMENTS` in sheets.js; Warden action `achieve`); pp. 52/54: campfire vs town rest (pcOps `campRest`/`townRest`, Warden `townRestAll`)
   - p. 79: trophies & loot (`lib/trophies.js`, all 59 bestiary trophies; Warden actions `loot`/`search`); pp. 93–100: upgrades (`upgradeFits`/`upgradeType`, pcOps `installUpgrade`/`removeUpgrade`), p. 76: Special Ammo (pcOp `ammo`); pp. 104–108: horse Bond/breaking (pcOp `breakHorse`); p. 92/94: mech Condition from Health (`mechState`), repairs (pcOp `mechRepair`)
   - pp. 41–43, 49: combat helpers — pcOps `attack` (weapon Grit, Aim reroll, Special Ammo fx, auto target Defense), `dodge` (banked `pc.dodge`, cleared in startTurn), `relieve` (1 Grit/die, once per Status per turn), `endTurn`; Warden `enemyAttack` (damage vs Defense+Cover+Dodge, Piercing, statuses). Sheet `renderFight` panel + turn alert.
+  - pp. 12–13: Skill checks — Warden `checkStart`/`checkClose` (Session page card), pcOp `checkRoll` (Helping = half dice, best helper added), `state.checks` in the player view, prompt on the sheet's fight panel. Health never exceeds Max (changeHealth + setSheetField); rests refill Grit.
   - p. 33: Prestige tiers + Starting at Higher Prestige loadouts (`TIERS` in lib/sheets.js, pcOp `tierKit`)
   - p. 85: ranges
   - pp. 83–84: scanning

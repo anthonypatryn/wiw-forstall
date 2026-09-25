@@ -525,6 +525,14 @@ function wireSheet(p) {
       const b = e.target.closest('[data-rl]'), st = b.dataset.rl; b.blur();
       const r = await act({ action: 'pc', id: p.id, op: 'relieve', status: st, dice: view.querySelector(`[data-rl-dice="${st}"]`)?.value, skill: view.querySelector(`[data-rl-skill="${st}"]`)?.value });
       if (r?.dice) { rollPopup(r, `${pcById(p.id).name} · Relieve ${st} · ${r.pool}`); toast(r.left ? `${st} down to [${r.left}].` : `${st} is gone!`); }
+    } else if (e.target.closest('[data-ck-roll]')) {
+      const b = e.target.closest('[data-ck-roll]'); b.blur();
+      const r = await act({ action: 'pc', id: p.id, op: 'checkRoll', check: b.dataset.ckRoll });
+      if (r?.dice) {
+        await rollPopup(r, `${pcById(p.id).name} · ${r.label}`);
+        if (r.helping) toast(`🤝 You added ${r.hits} Hit${r.hits === 1 ? '' : 's'} of help.`);
+        else toast(r.outcome.ok ? `✅ Success — ${r.outcome.total}/${r.target} Hits!` : `❌ Short — ${r.outcome.total}/${r.target} Hits.`, !r.outcome.ok);
+      }
     } else if (e.target.closest('[data-endturn]')) {
       e.target.closest('[data-endturn]').blur();
       if (await act({ action: 'pc', id: p.id, op: 'endTurn' })) toast('Turn ended.');
@@ -755,6 +763,7 @@ function renderRides(view, p) {
 }
 
 // ---------- in the fight: attack, Dodge, relieve Statuses, end turn (pp. 41–49) ----------
+const checkSeen = new Set(); let checksPrimed = false;
 const RANGES = [['arms', 'Arm’s Reach'], ['short', 'Short Range'], ['long', 'Long Range'], ['distant', 'Distant']];
 const fightSel = {}; // per sheet: { w, r, t, ammo, aim, dodge }
 let turnSeen = '';
@@ -776,7 +785,13 @@ function renderFight(view, p) {
   } else if (!mine) turnSeen = key;
   document.title = `${mine ? '⚔ ' : ''}${p.name} · Posse Sheets`;
   const statuses = Object.entries(p.statuses || {}).filter(([, v]) => v);
-  const show = (c.active || statuses.length) && !p.dead;
+  const checks = (data.checks || []).filter((ck) => ck.who.includes(p.id) ? !ck.rolls[p.id] : !ck.helps[p.id]);
+  // a new roll called for this character: buzz once
+  checks.filter((ck) => ck.who.includes(p.id)).forEach((ck) => {
+    if (!checkSeen.has(ck.id)) { if (checkSeen.size || checksPrimed) { toast(`🎯 The Warden wants a ${ck.skill} roll from ${p.name}!`); try { navigator.vibrate?.(150); } catch {} } checkSeen.add(ck.id); }
+  });
+  checksPrimed = true;
+  const show = (c.active || statuses.length || checks.length) && !p.dead;
   box.hidden = !show;
   if (!show || box.contains(document.activeElement)) return;
   const foes = (data.enemies || []).filter((e) => !e.defeated);
@@ -792,7 +807,12 @@ function renderFight(view, p) {
   const order = c.turnList || [];
   const ahead = c.active && !mine && order.includes(p.id) ? (order.indexOf(p.id) - order.indexOf(c.current) + order.length) % order.length : 0;
   const skillDice = (sk) => { const m = String(p.skills[sk.toLowerCase()] || '').toUpperCase(); return [...m.matchAll(/(\d+)[BG]/g)].reduce((n, x) => n + Number(x[1]), 0); };
+  const skillPool = (sk) => String(p.skills[sk.toLowerCase()] || '—').toUpperCase();
   box.innerHTML = `
+    ${checks.map((ck) => { const mineCk = ck.who.includes(p.id);
+      return `<div class="ck-prompt${mineCk ? ' mine' : ''}"><div><small>${mineCk ? 'THE WARDEN ASKS YOU TO ROLL' : 'SOMEONE ELSE IS ROLLING — YOU CAN HELP'}</small>
+        <b>${esc(ck.skill)}</b> · ${esc(ck.diff)} — ${ck.target} Hit${ck.target === 1 ? '' : 's'}${ck.note ? ` · <i>${esc(ck.note)}</i>` : ''}</div>
+        <button type="button" class="btn small${mineCk ? '' : ' secondary'}" data-ck-roll="${ck.id}">${mineCk ? `🎲 Roll ${esc(ck.skill)} (${skillPool(ck.skill)})` : '🤝 Help (½ dice)'}</button></div>`; }).join('')}
     ${c.active ? (mine ? `<div class="turn-banner mine">⚔ YOUR TURN · <b>${p.grit}</b> Grit${p.dodge ? ` · 🛡 ${p.dodge} Dodge ready` : ''}<button type="button" class="btn small" data-endturn>End my turn ⏭</button></div>`
       : `<div class="turn-banner">Round ${c.round || 1} · <b>${esc(whoseName(c.current))}</b>’s turn${ahead ? ` · you’re up in ${ahead}` : ''}${p.dodge ? ` · 🛡 ${p.dodge} Dodge ready` : ''}</div>`) : ''}
     ${c.active && foes.length ? `<div class="fp-row"><b class="fp-h">ATTACK</b>

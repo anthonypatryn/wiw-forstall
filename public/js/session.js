@@ -99,6 +99,51 @@ function renderGlance() {
   renderLogInto($('#glance-log'), (combat.log || []).slice(0, 12));
 }
 
+// ---------- Skill checks (pp. 12–13) ----------
+const DIFF = [['Very Easy', 1], ['Easy', 2], ['Medium', 3], ['Difficult', 4], ['Very Difficult', 5]];
+const ckSel = { who: new Set(), skill: 'Nerve', diff: 'Medium', target: 6, note: '' };
+async function combatAct(body) {
+  try { const res = await api('POST', body, '', '/api/combat'); combat = res.state || combat; renderChecks(true); return res.result ?? true; }
+  catch (e) { toast(e.message, true); return null; }
+}
+function renderChecks(force) {
+  if (!combat) return;
+  const form = $('#check-form');
+  const alive = (combat.posse || []).filter((p) => !p.dead && p.done !== false);
+  if (force || !form.contains(document.activeElement)) {
+    form.innerHTML = `<div class="ck-who">${alive.map((p) => `<label class="check"><input type="checkbox" data-ck-who value="${p.id}"${ckSel.who.has(p.id) ? ' checked' : ''}> ${esc(p.name)}</label>`).join('') || '<span class="muted">No characters yet.</span>'}</div>
+      <div class="ck-row">
+        <label>SKILL<select data-ck="skill">${['Charm', 'Finesse', 'Intuition', 'Nerve'].map((s) => `<option${s === ckSel.skill ? ' selected' : ''}>${s}</option>`).join('')}</select></label>
+        <label>DIFFICULTY<select data-ck="diff">${DIFF.map(([n, t]) => `<option value="${n}"${n === ckSel.diff ? ' selected' : ''}>${n} · ${t} Hit${t > 1 ? 's' : ''}</option>`).join('')}<option value="custom"${ckSel.diff === 'custom' ? ' selected' : ''}>Custom…</option></select></label>
+        ${ckSel.diff === 'custom' ? `<label>HITS<input type="number" min="1" max="20" data-ck="target" value="${ckSel.target}"></label>` : ''}
+        <label class="wide">FOR WHAT <input data-ck="note" maxlength="80" placeholder="e.g. climb the cliff" value="${esc(ckSel.note)}"></label>
+      </div>
+      <button type="button" class="btn" data-ck-go>🎯 Call for a roll</button>
+      <span class="muted ck-tip">Lower the difficulty for clever ideas (p. 12). Anyone not called can Help with half their dice (p. 13).</span>`;
+  }
+  const nm = (pid) => combat.posse.find((p) => p.id === pid)?.name || '—';
+  $('#check-list').innerHTML = (combat.checks || []).map((ck) => {
+    const help = Math.max(0, ...Object.values(ck.helps || {}).map((h) => h.hits));
+    return `<div class="ck-item"><div class="ck-head"><b>${esc(ck.skill)}</b> · ${esc(ck.diff)} (${ck.target})${ck.note ? ` · <i>${esc(ck.note)}</i>` : ''}<button type="button" class="btn small secondary" data-ck-close="${ck.id}">Done</button></div>
+      <ul>${ck.who.map((pid) => { const r = ck.rolls[pid]; const tot = r ? r.hits + help : null;
+        return `<li>${esc(nm(pid))}: ${r ? `<b class="${tot >= ck.target ? 'ok' : 'no'}">${tot >= ck.target ? '✓' : '✗'} ${tot}/${ck.target}</b>${help ? ` <small>(+${help} help)</small>` : ''}` : '<span class="muted">waiting…</span>'}</li>`; }).join('')}
+      ${Object.values(ck.helps || {}).map((h) => `<li class="muted">🤝 ${esc(h.name)} helped: ${h.hits}</li>`).join('')}</ul></div>`;
+  }).join('');
+  $('#check-list').querySelectorAll('[data-ck-close]').forEach((b) => b.addEventListener('click', () => combatAct({ action: 'checkClose', id: b.dataset.ckClose })));
+}
+$('#check-form').addEventListener('change', (e) => {
+  const el = e.target;
+  if (el.matches('[data-ck-who]')) { if (el.checked) ckSel.who.add(el.value); else ckSel.who.delete(el.value); return; }
+  if (el.dataset.ck) { ckSel[el.dataset.ck] = el.dataset.ck === 'target' ? Number(el.value) : el.value; if (el.dataset.ck === 'diff') renderChecks(true); }
+});
+$('#check-form').addEventListener('input', (e) => { if (e.target.dataset.ck === 'note') ckSel.note = e.target.value; });
+$('#check-form').addEventListener('click', async (e) => {
+  if (!e.target.closest('[data-ck-go]')) return;
+  if (!ckSel.who.size) return toast('Tick who rolls.', true);
+  const r = await combatAct({ action: 'checkStart', who: [...ckSel.who], skill: ckSel.skill, diff: ckSel.diff === 'custom' ? '' : ckSel.diff, target: ckSel.target, note: ckSel.note });
+  if (r) { toast('Roll called — it’s on their sheets.'); ckSel.note = ''; renderChecks(true); }
+});
+
 // ---------- homebrew: monsters (scanner), NPC ledger, store items ----------
 async function loadHomebrew() {
   const box = $('#homebrew');
@@ -139,7 +184,7 @@ function open() {
   poller?.stop(); combatPoller?.stop();
   poller = startPolling('warden', onSessions, (ok, e) => { if (e?.status === 401) lockUp(); }, EP);
   loadHomebrew();
-  combatPoller = startPolling('warden', (d) => { combat = d; renderGlance(); }, (ok) => { $('#glance-conn').textContent = ok ? '● live' : 'reconnecting…'; }, '/api/combat');
+  combatPoller = startPolling('warden', (d) => { combat = d; renderGlance(); renderChecks(); }, (ok) => { $('#glance-conn').textContent = ok ? '● live' : 'reconnecting…'; }, '/api/combat');
 }
 function lockUp() {
   poller?.stop(); combatPoller?.stop();
