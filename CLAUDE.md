@@ -43,7 +43,7 @@
   - The PIN is kept in `sessionStorage` key `wiw.pin`, per tab.
   - Helpers in `public/js/common.js`: `tryWarden`, `forgetWarden`, `wardenModal`, `markWarden`.
   - A red strip shows while the page is in Warden mode; its "Switch to player view" is the only way out.
-  - It sticks across pages: with a PIN, the nav's Forstall Scanner link points to `/warden`, and `/` (player.js) redirects to `/run`. Nav adds star Combat Control + Session links.
+  - It sticks across pages: with a PIN, the nav's Forstall Scanner link points to `/warden`, and `/` (player.js) redirects to `/run`. Nav adds star Run the Game + Combat Control links.
   - **Run the Game** `/run` (public/run.html, js/run.js, css/run.css) is the Warden's home: first in the Warden nav, and `/` (player.js) redirects a Warden there. One page with Needs you (store requests get inline Approve/Deny via /api/shop `decide`), the fight (turn, order, Next turn, Start/End combat), enemies + posse rows with Health ± and Grit, and a Jump To grid. Reuses the combat warden view + `?view=needs`.
   - **Needs you** (Warden strip, every page): `GET /api/combat?view=needs` → `wardenNeeds` (pending store requests, open Skill checks, triggered holds, Bleeding Out, Edison clashes, whose turn), polled every 6 s by `pollNeeds` in common.js; the dropdown also links Session / Combat Control / Battle Map / Store / NPCs.
   - `/combat` = **Combat Control**, Warden-only (gate card for players; not in the player nav). Players fight from the Battle Map + sheets.
@@ -73,8 +73,8 @@
   - **Every page** (`mountTableLog`): Table Log + Roll dice buttons share `.fab-row` (bottom-right; stacked on phones); `mountDice` rolls any B/G pool as anyone; first visit asks "Who are you playing?" (`askWhoIAm`, sets `wiw.me`, `wiw.meAsked`), skipped in Warden mode.
   - `/howto` = How to Play Online (static guide for players, in the nav). Update it when player-facing flows change.
 
-- Session page uses Run the Game's look (loads css/run.css: `run-grid`/`run-col`, `run-row` rows, `need` rows for open rolls, `run-links` Jump To). Keep Warden pages in that style.
-- Session page: `/session` + `api/session.js` + `lib/session.js` (Redis key `session`), every request needs the PIN; `mountNav` adds the Session link only when a PIN is saved.
+- The old Session page is merged into Run the Game: `/session` redirects to `/run` (vercel.json + a tiny session.html). Session notes, open rolls, homebrew, backup and the recent log live in `public/js/desk.js` (+ css/desk.css), mounted by run.js via `mountDesk`. Keep Warden pages in Run the Game's style (`run-grid`, `run-row`, `need`, `run-links`).
+- Session notes: `api/session.js` + `lib/session.js` (Redis key `session`), every request needs the PIN; shown on Run the Game.
 
 ## Conventions
 - **Cache busting:** bump `?v=N` on the page's css/js tags after edits. Pages import `common.js` unversioned, so bump the page scripts when common.js changes.

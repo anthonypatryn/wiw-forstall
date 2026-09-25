@@ -1,12 +1,11 @@
-import { mountRollCaller } from './rollcall.js';
-import { $, esc, api, startPolling, toast, mountNav, tryWarden, forgetWarden, savedPin, wardenModal, timeAgo , ask, askText } from './common.js';
-import { renderLogInto, mountTableLog } from './tablelog.js';
+// The Warden's desk on Run the Game: session notes, open rolls, homebrew, backup and the recent Table Log.
+// (Once the Session page — now one page with Run the Game.)
+import { $, esc, api, startPolling, toast, timeAgo, ask } from './common.js';
+import { renderLogInto } from './tablelog.js';
 import { gl } from './glyphs.js';
 
 const EP = '/api/session';
-mountNav('/session');
-
-let sessions = [], current = null, poller = null, combatPoller = null, combat = null;
+let sessions = [], current = null, poller = null, getCombat = () => null, combatAct = async () => null;
 
 async function act(body) {
   try {
@@ -78,42 +77,11 @@ function onSessions(d) {
   renderEditor(false);
 }
 
-// ---------- at a glance (live from the Combat & sheets data) ----------
-const STATUS_SHORT = (st) => Object.entries(st || {}).filter(([, v]) => v).map(([k, v]) => `${k}${v > 1 ? ` [${v}]` : ''}`).join(', ');
-const hpBar = (h, max) => { const pct = Math.max(0, Math.min(100, (h / Math.max(1, max)) * 100)); return `<span class="run-hp"><i style="width:${pct}%"></i></span>`; };
-const stTags = (st) => Object.entries(st || {}).filter(([, v]) => v).map(([k, v]) => `<span class="run-st">${esc(k)} ${v}</span>`).join('');
-function renderGlance() {
-  if (!combat) return;
-  const posse = combat.posse || [];
-  const c = combat.combat || {};
-  $('#glance').innerHTML = posse.length ? posse.map((p) => {
-    const flag = p.dead ? '<span class="run-st">FALLEN</span>' : p.bleeding ? '<span class="run-st hot">BLEEDING OUT</span>' : p.done === false ? '<span class="run-st">CREATING</span>' : '';
-    return `<div class="run-row${p.dead ? ' sitting' : ''}${c.current === p.id ? ' now' : ''}${p.bleeding ? ' bleed' : ''}">
-      <div class="run-who"><a href="/posse#${esc(p.id)}"><b>${esc(p.name)}</b></a><small>The ${esc(p.trade)}${p.player ? ` · ${esc(p.player)}` : ''}${p.title ? ` · “${esc(p.title)}”` : ''}</small>${flag}${stTags(p.statuses)}</div>
-      <div class="run-nums">${hpBar(p.health, p.maxHealth)}<span class="run-hpn">${p.health}/${p.maxHealth}</span>
-        <span class="run-grit" title="Prestige">${p.prestige?.total ?? 0} P${p.prestige?.unclaimed ? ` <small>(${p.prestige.unclaimed} to spend)</small>` : ''}</span>
-        <span class="run-grit" title="Wallet">$${esc(String(p.wallet || '0'))}</span></div></div>`;
-  }).join('') : '<p class="muted">No characters yet.</p>';
-  const foes = (combat.enemies || []).filter((e) => !e.defeated);
-  const d = combat.duel;
-  $('#glance-foes').innerHTML = `<p class="muted sess-note">${c.active ? `In a fight — Round ${c.round}.` : 'No combat running.'}</p>`
-    + (foes.length ? foes.map((e) => `<div class="run-row${c.current === e.id ? ' now' : ''}${e.out ? ' sitting' : ''}">
-      <div class="run-who"><b>${esc(e.name)}</b>${e.out ? '<small>sitting this fight out</small>' : ''}${e.frenzied?.length ? '<span class="run-st hot">FRENZIED</span>' : ''}${stTags(e.statuses)}</div>
-      <div class="run-nums">${hpBar(e.health ?? 0, e.maxHealth ?? 1)}<span class="run-hpn">${e.health ?? '?'}/${e.maxHealth ?? '?'}</span><span class="run-grit">${e.grit ?? '—'} Grit</span></div></div>`).join('') : '<p class="muted">No enemies on the field.</p>')
-    + (d ? `<p class="gl-duel">${gl('hat')} Duel: <b>${esc(d.names[0])}</b> vs <b>${esc(d.names[1])}</b> — ${d.done ? 'finished' : `next: ${['Charm', 'Finesse', 'Intuition', 'Nerve', 'Draw!'][d.step]}`}</p>` : '');
-  renderLogInto($('#glance-log'), (combat.log || []).slice(0, 12));
-}
 
-// ---------- Skill checks (pp. 12–13) ----------
-async function combatAct(body) {
-  try { const res = await api('POST', body, '', '/api/combat'); combat = res.state || combat; renderChecks(true); return res.result ?? true; }
-  catch (e) { toast(e.message, true); return null; }
-}
-// Call for a roll: tap who → how hard → Skill (js/rollcall.js)
-const caller = mountRollCaller($('#check-form'), () => combat, () => combatPoller?.now?.());
-function renderChecks(force) {
+// ---------- open rolls ----------
+export function renderChecks() {
+  const combat = getCombat();
   if (!combat) return;
-  caller.draw();
   const nm = (pid) => combat.posse.find((p) => p.id === pid)?.name || '—';
   const rows = (combat.checks || []).map((ck) => {
     const help = Math.max(0, ...Object.values(ck.helps || {}).map((h) => h.hits));
@@ -132,6 +100,12 @@ function renderChecks(force) {
   $('#check-list').innerHTML = rows || '<p class="muted">No rolls open. Call one above.</p>';
   $('#check-list').querySelectorAll('[data-ck-close]').forEach((b) => b.addEventListener('click', () => combatAct({ action: 'checkClose', id: b.dataset.ckClose })));
 }
+
+export function renderRecent() {
+  const combat = getCombat();
+  if (combat) renderLogInto($('#glance-log'), (combat.log || []).slice(0, 12));
+}
+
 // ---------- homebrew: monsters (scanner), NPC ledger, store items ----------
 async function loadHomebrew() {
   const box = $('#homebrew');
@@ -167,7 +141,7 @@ async function loadHomebrew() {
 $('#hb-refresh').addEventListener('click', loadHomebrew);
 $('#clear-log').addEventListener('click', async () => {
   if (!await ask('Clear the Table Log for everyone? This can’t be undone. (Download a backup first if you want a record.)')) return;
-  if (await combatAct({ action: 'clearLog' })) { toast('Table Log cleared.'); renderGlance(); }
+  if (await combatAct({ action: 'clearLog' })) { toast('Table Log cleared.'); renderRecent(); }
 });
 
 // ---------- backup ----------
@@ -185,23 +159,11 @@ $('#backup').addEventListener('click', async () => {
   } catch (e) { toast(e.message, true); }
 });
 
-// ---------- boot ----------
-function open() {
-  $('#gate').hidden = true; $('#desk').hidden = false; $('#lock').hidden = false;
-  poller?.stop(); combatPoller?.stop();
-  poller = startPolling('warden', onSessions, (ok, e) => { if (e?.status === 401) lockUp(); }, EP);
+
+// ---------- start ----------
+export function mountDesk(opts) {
+  getCombat = opts.getCombat; combatAct = opts.combatAct;
+  poller?.stop();
+  poller = startPolling('warden', onSessions, null, EP);
   loadHomebrew();
-  combatPoller = startPolling('warden', (d) => { combat = d; renderGlance(); renderChecks(); }, (ok) => { $('#glance-conn').textContent = ok ? '● live' : 'reconnecting…'; }, '/api/combat');
 }
-function lockUp() {
-  poller?.stop(); combatPoller?.stop();
-  forgetWarden();
-  $('#gate').hidden = false; $('#desk').hidden = true; $('#lock').hidden = true;
-}
-$('#unlock').addEventListener('click', async () => { if (await wardenModal(EP)) open(); });
-$('#lock').addEventListener('click', lockUp);
-mountTableLog?.();
-(async () => {
-  const pin = savedPin();
-  if (pin && await tryWarden(pin, EP)) open(); else $('#gate').hidden = false;
-})();

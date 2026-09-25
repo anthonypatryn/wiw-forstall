@@ -1,4 +1,11 @@
 {
   "cleanUrls": true,
-  "outputDirectory": "public"
+  "outputDirectory": "public",
+  "redirects": [
+    {
+      "source": "/session",
+      "destination": "/run",
+      "permanent": false
+    }
+  ]
 }

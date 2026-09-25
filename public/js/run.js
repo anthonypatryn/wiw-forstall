@@ -3,6 +3,7 @@ import { $, esc, api, startPolling, toast, mountNav, tryWarden, savedPin, warden
 import { gl } from './glyphs.js';
 import { mountTableLog } from './tablelog.js';
 import { mountRollCaller } from './rollcall.js';
+import { mountDesk, renderChecks, renderRecent } from './desk.js';
 
 mountTableLog();
 mountNav('/run');
@@ -101,12 +102,13 @@ function renderPosse() {
 }
 function render() {
   if (!combat) return;
-  renderFight(); renderEnemies(); renderPosse(); caller.draw();
+  renderFight(); renderEnemies(); renderPosse(); caller.draw(); renderChecks(); renderRecent();
 }
 
 // ---------- boot ----------
 function open() {
   $('#gate').hidden = true; $('#desk').hidden = false;
+  mountDesk({ getCombat: () => combat, combatAct: (body) => act(body) });
   poller?.stop();
   poller = startPolling('warden', (d) => { combat = d; render(); refreshNeeds(); }, (ok) => { $('#conn').textContent = ok ? '● live' : 'reconnecting…'; }, '/api/combat');
   clearInterval(needsTimer);
