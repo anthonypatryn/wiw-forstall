@@ -52,6 +52,12 @@ export default async function handler(req, res) {
       combat.v = (combat.v || 0) + 1;
       await save(combat, 'combat');
     }
+    // a handout's photo is noted on the handout
+    if (ns === 'handout') {
+      const hs = (await load('handouts')) || { v: 0, list: [] };
+      const h = hs.list.find((x) => x.id === id);
+      if (h) { h.img = v; hs.v = (hs.v || 0) + 1; await save(hs, 'handouts'); }
+    }
     return send(res, 200, { result: { v } });
   } catch (err) {
     return send(res, 400, { error: err.message || String(err) });

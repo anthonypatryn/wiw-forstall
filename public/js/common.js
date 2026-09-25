@@ -208,7 +208,7 @@ export function timeAgo(t) {
 // ---------- site nav: grouped by how often a page is used (see STYLEGUIDE.md → Navigation) ----------
 // An item is [href, label] or { label, items: [[href, label], …] } (a tap-to-open dropdown).
 // `phone: true` items stay on the bar on phones; everything else lives in the Menu there.
-const WORLD = { label: 'World', items: [['/map', 'Map'], ['/names', 'NPCs']] };
+const WORLD = { label: 'World', items: [['/map', 'Map'], ['/names', 'NPCs'], ['/backpack', 'Backpack']] };
 const NAV_PLAYER = [
   { href: '/posse', label: 'Posse', phone: true },
   { href: '/battle', label: 'Battle Map', phone: true },

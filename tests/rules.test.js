@@ -221,3 +221,15 @@ test('session write-up: the archive outlives the Table Log, entries are picked b
   assert.match(notes, /=== SUMMARY ===[\s\S]*=== MY NOTES ===\nthe mine is haunted$/);
   assert.match(withSummary(notes, 'new summary', 'again'), /new summary[\s\S]*=== MY NOTES ===\nthe mine is haunted$/);
 });
+
+test('handouts: Warden-only sending, private until shown, the posse sees shared ones', async () => {
+  const { freshHandouts, handoutAction, handoutView } = await import('../lib/handouts.js');
+  const st = freshHandouts(), names = { a: 'Ada', b: 'Bo' };
+  assert.throws(() => handoutAction(st, { action: 'send', kind: 'note', text: 'x', to: 'all' }, { warden: false, names }), /Warden/);
+  const h = handoutAction(st, { action: 'send', kind: 'note', text: 'Trust no one', to: ['a'] }, { warden: true, names });
+  assert.equal(handoutView(st, { pc: 'b' }).list.length, 0);
+  assert.equal(handoutView(st, { pc: 'a' }).list.length, 1);
+  assert.throws(() => handoutAction(st, { action: 'share', id: h.id, pc: 'b' }, { warden: false, names }), /Only the person/);
+  handoutAction(st, { action: 'share', id: h.id, pc: 'a' }, { warden: false, names });
+  assert.equal(handoutView(st, { pc: 'b' }).list[0].sharedBy, 'Ada');
+});

@@ -4,12 +4,14 @@ import { gl } from './glyphs.js';
 import { mountTableLog } from './tablelog.js';
 import { mountRollCaller } from './rollcall.js';
 import { faceUrl } from './portrait.js';
+import { mountHandout } from './handout-send.js';
 import { mountDesk, renderChecks, renderRecent } from './desk.js';
 
 mountTableLog();
 mountNav('/run');
 
 let combat = null, poller = null, needsTimer = null;
+const handout = mountHandout($('#handout'), () => combat);
 const caller = mountRollCaller($('#rollcall'), () => combat, () => { poller?.now?.(); refreshNeeds(); });
 
 async function act(body, msg) {
@@ -103,7 +105,7 @@ function renderPosse() {
 }
 function render() {
   if (!combat) return;
-  renderFight(); renderEnemies(); renderPosse(); caller.draw(); renderChecks(); renderRecent(); renderRewards();
+  renderFight(); renderEnemies(); renderPosse(); caller.draw(); renderChecks(); renderRecent(); renderRewards(); handout.draw();
 }
 
 // ---------- Rewards: award the posse, Jackpot, Town Rest (moved here from the Posse page) ----------

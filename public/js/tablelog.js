@@ -26,6 +26,7 @@ export function renderLogInto(box, log) {
 // Floating drawer for pages without a built-in log.
 export function mountTableLog() {
   injectDefs();
+  import('./handouts.js').then((m) => m.watchHandouts()).catch(() => {}); // “The Warden hands you…” pop-ups
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.className = 'log-fab';

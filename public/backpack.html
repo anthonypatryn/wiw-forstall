@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Backpack · Wild Imaginary West</title>
+  <meta name="description" content="Items and notes the posse has been handed.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>★</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Rye&family=Special+Elite&family=Reenie+Beanie&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css?v=42">
+</head>
+<body>
+  <header class="masthead">
+    <div class="masthead-inner">
+      <img class="brand-logo" src="/img/logo-light.svg" alt="Wild Imaginary West">
+      <div class="brand-title">
+        <div class="kicker">WHAT THE POSSE CARRIES</div>
+        <h1>Backpack</h1>
+        <div class="sub">Items and notes the Warden has handed out</div>
+      </div>
+    </div>
+  </header>
+  <nav class="sitenav" data-nav aria-label="Site"></nav>
+
+  <main class="wrap">
+    <p class="muted" id="bp-who"></p>
+    <section class="card corner">
+      <h2 class="section-title">The Posse’s Backpack</h2>
+      <div id="bp-shared"></div>
+    </section>
+    <section class="card corner" id="bp-mine-card" hidden>
+      <h2 class="section-title" id="bp-mine-h">Just you</h2>
+      <p class="muted small-text mt-0">Only you (and the Warden) can see these until you show the posse.</p>
+      <div id="bp-mine"></div>
+    </section>
+  </main>
+
+  <script type="module" src="/js/backpack.js?v=2"></script>
+</body>
+</html>

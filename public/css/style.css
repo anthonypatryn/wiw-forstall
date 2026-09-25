@@ -53,6 +53,7 @@
   --western: 'Rye', 'Bebas Neue', serif;
   --body: 'Alegreya', Georgia, serif;
   --type: 'Special Elite', 'Courier New', monospace;
+  --hand: 'Reenie Beanie', 'Segoe Print', 'Bradley Hand', cursive; /* handwritten notes */
 }
 
 * { box-sizing: border-box; }
@@ -796,3 +797,34 @@ input[type=range]::-moz-range-thumb { width: 16px; height: 16px; border-radius: 
 .crop-ring { position: absolute; inset: 0; pointer-events: none; border-radius: 50%; box-shadow: 0 0 0 999px rgba(0,0,0,.55); outline: 2px dashed var(--brass); outline-offset: -2px; }
 .crop-zoom { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; font: var(--fs-xs) var(--display); letter-spacing: var(--track-wide); }
 .crop-zoom input { flex: 1; }
+
+/* =====================================================================
+   HANDOUTS — notes on old paper, item cards, the reveal pop-up, the Backpack
+   ===================================================================== */
+.note-paper { position: relative; padding: 22px 24px 26px; color: #2b1d12; font: 24px/1.25 var(--hand);
+  background: #efe2c4 url('../img/paper.jpg') center / 600px; background-blend-mode: multiply;
+  box-shadow: inset 0 0 40px rgba(120,80,30,.35), 0 3px 10px rgba(0,0,0,.25);
+  clip-path: polygon(0 2%, 4% 0, 10% 1.5%, 18% 0, 30% 1%, 42% 0, 55% 1.8%, 68% 0, 80% 1.2%, 92% 0, 100% 2%, 99% 20%, 100% 45%, 98.6% 70%, 100% 97%, 94% 100%, 82% 98.5%, 70% 100%, 55% 98.8%, 40% 100%, 26% 98.6%, 12% 100%, 0 98%, 1.2% 75%, 0 50%, 1% 25%); }
+.note-paper .note-head { font-size: 1.25em; margin-bottom: 6px; text-decoration: underline; text-decoration-thickness: 1px; }
+.note-paper p { margin: 0 0 .5em; }
+.note-paper.big { font-size: 30px; padding: 30px 32px 34px; max-height: 70vh; overflow-y: auto; }
+.item-card { display: flex; gap: var(--sp-3); align-items: flex-start; text-align: left; }
+.item-card img, .item-noimg { width: 96px; height: 96px; flex: none; object-fit: cover; border-radius: var(--r-sm); border: 1.5px solid var(--ink); background: var(--paper-2); display: grid; place-items: center; }
+.item-noimg .gl { width: 40px; height: 40px; color: var(--ink-faint); }
+.item-body b { display: block; font: var(--fs-xl)/1.1 var(--display); letter-spacing: var(--track-tight); font-weight: 400; margin-bottom: 4px; }
+.item-text { font-size: var(--fs-md); line-height: 1.45; }
+.item-text p { margin: 0 0 .5em; }
+.item-card.big { flex-direction: column; align-items: stretch; }
+.item-card.big img { width: 100%; height: auto; max-height: 50vh; object-fit: contain; background: var(--iron); cursor: zoom-in; }
+.item-card.big .item-body b { font-size: var(--fs-2xl); }
+.ho-back { z-index: 210; }
+.ho-modal { width: min(520px, 100%); max-height: 92vh; overflow-y: auto; overflow-x: hidden; padding: 20px; background: var(--paper) url('../img/paper.jpg') center / 900px; background-blend-mode: multiply; border: 2px solid var(--ink); border-radius: var(--radius); box-shadow: var(--shadow-pop); }
+.ho-kicker { font: var(--fs-sm) var(--display); letter-spacing: var(--track-wide); color: var(--accent); margin-bottom: 12px; }
+.ho-btns { display: flex; flex-wrap: wrap; gap: var(--sp-2); justify-content: flex-end; margin-top: 16px; }
+.bp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
+.bp-tile { display: flex; flex-direction: column; gap: 8px; padding: 12px; border: 1.5px solid var(--ink); border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow-stamp); cursor: pointer; text-align: left; color: var(--ink); font: inherit; }
+.bp-tile:hover { background: var(--accent-tint); }
+.bp-tile.note { background: none; border: 0; box-shadow: none; padding: 0; }
+.bp-tile .note-paper { font-size: 21px; max-height: 220px; overflow: hidden; }
+.bp-tile .item-text { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.bp-meta { font: var(--fs-xs) var(--display); letter-spacing: var(--track); color: var(--ink-faint); }
