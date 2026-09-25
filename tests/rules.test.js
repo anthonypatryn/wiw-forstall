@@ -206,3 +206,18 @@ test('combat roster: only the picked fighters take turns; join and leave mid-fig
   assert.equal(state.combat.party, null);
   assert.equal(bear.out, undefined);
 });
+
+test('session write-up: the archive outlives the Table Log, entries are picked by session, your notes are kept', async () => {
+  const { sessionEntries, withSummary, plainSummary } = await import('../lib/session.js');
+  const state = freshCombat();
+  for (let i = 0; i < 120; i++) publicAction(state, { action: 'roll', pool: '1B', whoName: 'Ada', label: `test ${i}` }, { warden: true });
+  assert.equal(state.log.length, 80);
+  assert.equal(state.archive.length, 120);
+  const now = Date.now();
+  const sess = { sessions: [{ id: 'a', created: now - 1000 }, { id: 'b', created: now + 1e9 }] };
+  assert.equal(sessionEntries(sess, sess.sessions[0], state.archive).length, 120);
+  assert.equal(sessionEntries(sess, sess.sessions[1], state.archive).length, 0);
+  const notes = withSummary('the mine is haunted', plainSummary(state.archive), 'plain');
+  assert.match(notes, /=== SUMMARY ===[\s\S]*=== MY NOTES ===\nthe mine is haunted$/);
+  assert.match(withSummary(notes, 'new summary', 'again'), /new summary[\s\S]*=== MY NOTES ===\nthe mine is haunted$/);
+});

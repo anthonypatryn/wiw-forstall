@@ -39,6 +39,7 @@ function renderEditor(force) {
     <label class="sess-notes">RECAP FOR THE PLAYERS <small>short and spoiler-free</small>
       <textarea data-f="recap" maxlength="2000" class="short" placeholder="Last time, the posse…">${esc(s.recap)}</textarea></label>
     <div class="sess-actions">
+      <button class="btn small" id="summarize" type="button">${gl('star')} Write up this session</button>
       <button class="btn small" id="post-recap" type="button">${gl('scroll')} Post recap to the Table Log</button>
       <span class="muted" id="saved-note">Saves as you type · edited ${timeAgo(s.at)}</span>
       <button class="btn small secondary danger" id="del-session" type="button">Delete session</button>
@@ -52,6 +53,13 @@ function renderEditor(force) {
       if (el.dataset.f === 'title' || el.dataset.f === 'date') renderTabs();
     }, 600);
   }));
+  $('#summarize').addEventListener('click', async (e) => {
+    if (String(s.notes || '').includes('=== SUMMARY ===') && !await ask('Write it up again?\n\nThe summary at the top of your notes is replaced. Your own notes below it stay.', { ok: 'Rewrite', danger: false })) return;
+    e.target.disabled = true; e.target.textContent = 'Reading the Table Log…';
+    const r = await act({ action: 'summarize', id: s.id });
+    if (r) toast(r.ai ? `Summary written from ${r.entries} log entries — add your notes under MY NOTES.` : `Listed ${r.entries} log entries — add an Anthropic API key on Vercel for a written summary.`);
+    renderEditor(true);
+  });
   $('#post-recap').addEventListener('click', async () => {
     const recap = box.querySelector('[data-f="recap"]').value.trim();
     if (!recap) return toast('Write a recap first.', true);

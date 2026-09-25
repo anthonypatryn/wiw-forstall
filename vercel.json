@@ -7,5 +7,10 @@
       "destination": "/run",
       "permanent": false
     }
-  ]
+  ],
+  "functions": {
+    "api/session.js": {
+      "maxDuration": 30
+    }
+  }
 }
