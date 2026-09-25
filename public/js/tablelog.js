@@ -1,5 +1,5 @@
 // The shared Table Log: every roll from any page (combat, sheets, Forstall scans) in one place.
-import { esc, api, startPolling, staticDice, timeAgo, injectDefs } from './common.js';
+import { esc, api, startPolling, staticDice, timeAgo, injectDefs, savedPin, toast } from './common.js';
 
 export function logHTML(log) {
   if (!log.length) return '<p class="empty-note">Rolls and big moments show up here for everyone.</p>';
@@ -32,7 +32,7 @@ export function mountTableLog() {
   panel.className = 'log-drawer';
   panel.setAttribute('aria-label', 'Table Log');
   panel.hidden = true;
-  panel.innerHTML = `<div class="log-drawer-head"><b>TABLE LOG</b><a href="/combat">Combat &amp; Dice ›</a><button type="button" class="log-close" aria-label="Close">✕</button></div><div class="log"></div>`;
+  panel.innerHTML = `<div class="log-drawer-head"><b>TABLE LOG</b><a href="/combat">Combat &amp; Dice ›</a><button type="button" class="log-clear" hidden>Clear</button><button type="button" class="log-close" aria-label="Close">✕</button></div><div class="log"></div>`;
   document.body.append(btn, panel);
 
   let seenTop = null, unread = 0, latest = [];
@@ -40,10 +40,16 @@ export function mountTableLog() {
   const setOpen = (open) => {
     panel.hidden = !open;
     btn.setAttribute('aria-expanded', String(open));
-    if (open) { unread = 0; badge.hidden = true; renderLogInto(panel.querySelector('.log'), latest); }
+    if (open) { unread = 0; badge.hidden = true; renderLogInto(panel.querySelector('.log'), latest); panel.querySelector('.log-clear').hidden = !savedPin(); }
   };
   btn.addEventListener('click', () => setOpen(panel.hidden));
   panel.querySelector('.log-close').addEventListener('click', () => setOpen(false));
+  // Warden only (the server checks the PIN too)
+  panel.querySelector('.log-clear').addEventListener('click', async () => {
+    if (!confirm('Clear the Table Log for everyone? This can’t be undone.')) return;
+    try { await api('POST', { action: 'clearLog' }, '', '/api/combat'); latest = []; renderLogInto(panel.querySelector('.log'), latest); toast('Table Log cleared.'); }
+    catch (e) { toast(e.message, true); }
+  });
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !panel.hidden) setOpen(false); });
 
   startPolling('log', (d) => {

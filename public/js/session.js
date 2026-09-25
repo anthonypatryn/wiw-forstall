@@ -185,6 +185,10 @@ async function loadHomebrew() {
   }));
 }
 $('#hb-refresh').addEventListener('click', loadHomebrew);
+$('#clear-log').addEventListener('click', async () => {
+  if (!confirm('Clear the Table Log for everyone? This can’t be undone. (Download a backup first if you want a record.)')) return;
+  if (await combatAct({ action: 'clearLog' })) { toast('Table Log cleared.'); renderGlance(); }
+});
 
 // ---------- backup ----------
 $('#backup').addEventListener('click', async () => {
