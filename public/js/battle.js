@@ -1,7 +1,8 @@
 import { $, esc, api, startPolling, toast, mountNav, tryWarden, forgetWarden, savedPin, wardenModal, rollPopup, abilityOptions, abilityTargetsHTML, abilityBody , ask, askText } from './common.js';
 import { gl } from './glyphs.js';
 let meta = null;
-api('GET', null, '?view=meta', '/api/combat').then((m) => { meta = m; }).catch(() => {});
+// the Ability button depends on this, so redraw the turn panel once it arrives
+api('GET', null, '?view=meta', '/api/combat').then((m) => { meta = m; renderTurnBar(); }).catch(() => {});
 import { mountTableLog } from './tablelog.js';
 import { panZoom } from './panzoom.js';
 
