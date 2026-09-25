@@ -242,6 +242,7 @@ export function mountNav(active) {
     : link(it.href, `${it.icon ? gl(it.icon) + ' ' : ''}${esc(it.label)}`, it.phone ? '' : ' class="nav-extra"')).join('');
   const all = items.flatMap((it) => (it.items ? [[`<b>${esc(it.label)}</b>`, null], ...it.items] : [[it.href, it.label]]));
   el.classList.toggle('warden', on);
+  document.body.classList.toggle('warden-mode', on); // the dark desk theme (style.css)
   el.innerHTML = `<div class="sitenav-inner">
       <div class="nav-main">${top}</div>
       <div class="nav-side">

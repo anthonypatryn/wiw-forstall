@@ -37,6 +37,7 @@
   --forstall-bg: #1d3b3d; --forstall-ink: #bdf0ee; --forstall-glow: #5cc4c4; /* Forstalls on the map */
   --felt: #1d4a2e; --felt-rail: #5a3420; --felt-ink: #cfe3d3;    /* NPC card table */
   --night: #1c1917;                                              /* Battle Map viewport */
+  --desk: #4b3e35;                                               /* Warden mode: the dark desk the paper cards sit on */
   /* type scale */
   --fs-xs: 12px; --fs-sm: 14px; --fs-md: 16px; --fs-lg: 18px; --fs-xl: 22px; --fs-2xl: 28px; --fs-3xl: 40px;
   --track-tight: .04em; --track: .08em; --track-wide: .14em;
@@ -407,7 +408,7 @@ a.btn { text-decoration: none; }
 .dia.input.locked span { color: #b9f0c0; }
 
 /* ---------- site nav (grouped; see STYLEGUIDE.md → Navigation) ---------- */
-.sitenav { background: var(--ink); border-bottom: 3px solid var(--rust); position: sticky; top: var(--turnbar-h, 0px); z-index: 20; }
+.sitenav { background: var(--ink); border-bottom: 3px solid var(--rust); position: sticky; top: var(--turnbar-h, 0px); z-index: 25; } /* above the sheet bar / contents bars (20, 18) so its menus drop over them */
 .sitenav.warden { border-bottom-color: var(--red); box-shadow: inset 0 -1px 0 rgba(200,55,45,.6); }
 .sitenav-inner { max-width: 1240px; margin: 0 auto; padding: 0 12px; display: flex; align-items: stretch; gap: 2px; }
 .nav-main, .nav-side { display: flex; align-items: stretch; gap: 2px; }
@@ -972,3 +973,15 @@ input[type=range]::-moz-range-thumb { width: 16px; height: 16px; border-radius: 
 .tour-tip p { margin: 0 0 12px; font: var(--fs-sm)/1.45 var(--body); }
 .tour-step { font: var(--fs-xs) var(--display); letter-spacing: .12em; color: var(--rust); }
 .tour-btns { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+
+/* ---------- Warden mode: the Warden's desk at night ----------
+   The page itself goes dark (the paper texture multiplied down); cards stay paper on top, so every form reads the same.
+   Only text that sits straight on the page background changes. body.warden-mode is set by mountNav. */
+body.warden-mode { background-color: var(--desk); }
+/* cards are see-through paper on the day theme; on the desk they're solid paper sheets */
+body.warden-mode .card { background: var(--paper) url('../img/paper.jpg') center / 900px repeat; background-blend-mode: multiply; }
+body.warden-mode .band-h { color: var(--brass); }
+body.warden-mode .band-h::after { border-top-color: rgba(201,164,92,.4); }
+body.warden-mode .footer, body.warden-mode .footer .conn { color: var(--on-dark-dim); }
+body.warden-mode .masthead { box-shadow: inset 0 -4px 0 var(--red); }
+body.warden-mode main > .muted, body.warden-mode main > p:not([class]) { color: var(--on-dark-dim); }

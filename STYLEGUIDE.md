@@ -106,3 +106,7 @@ Small helpers: `.btn-row` (a row of buttons), `.fine` (12px note), `.small-text`
 3. Buttons: one primary `.btn` per card; others `.secondary`; destructive = `.secondary.danger` + an `ask()`.
 4. Sizes/colors/spacing only from tokens. Icons from `glyphs.js`.
 5. Check it at 375px and in Warden + player views; bump the page's `?v=`.
+
+## Warden mode theme
+- In Warden mode (`body.warden-mode`, set by `mountNav`) the page background becomes the dark **desk** (`--desk`, the paper texture multiplied down), cards become solid paper, band labels turn brass, and the masthead gets a red underline. Only text sitting straight on the page background changes, so every card, form and dialog looks the same in both modes. New page-level text outside a card needs a `body.warden-mode` color.
+- The site nav (z 25) sits above the sticky sheet bar and contents bars (20 / 18) so its drop-down menus cover them.
