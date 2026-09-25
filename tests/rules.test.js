@@ -185,3 +185,24 @@ test('the inventory mirrors the sheet: picking from the list adds it, replacing 
   assert.deepEqual(pc.items.map((x) => x.itemId), [r2.id]);
   assert.equal(placedIn(pc, { cat: 'Goods & Services', sub: 'x', itemId: 'y', name: 'Bedroll' }), '');
 });
+
+test('combat roster: only the picked fighters take turns; join and leave mid-fight', () => {
+  const state = freshCombat();
+  const a = publicAction(state, { action: 'addPc', trade: 'Hunter', name: 'Ada' }, { warden: true });
+  const b = publicAction(state, { action: 'addPc', trade: 'Doctor', name: 'Bo' }, { warden: true });
+  publicAction(state, { action: 'addEnemy', profile: 'Chupacabra' }, { warden: true });
+  publicAction(state, { action: 'addEnemy', profile: 'Golden Bear' }, { warden: true });
+  const [chupa, bear] = state.enemies;
+  publicAction(state, { action: 'start', posse: [a.id], enemies: [chupa.id] }, { warden: true });
+  assert.deepEqual(state.combat.slots.filter((s) => s !== 'enemies'), [a.id]);
+  assert.equal(bear.out, true);
+  publicAction(state, { action: 'join', id: b.id }, { warden: true });
+  assert.ok(state.combat.slots.includes(b.id));
+  publicAction(state, { action: 'join', id: bear.id }, { warden: true });
+  assert.equal(bear.out, false);
+  publicAction(state, { action: 'leave', id: a.id }, { warden: true });
+  assert.ok(!state.combat.slots.includes(a.id));
+  publicAction(state, { action: 'end' }, { warden: true });
+  assert.equal(state.combat.party, null);
+  assert.equal(bear.out, undefined);
+});

@@ -360,6 +360,36 @@ function dialog({ msg, input = null, ok = 'Yes', cancel = 'Cancel', danger }) {
 }
 // await ask('Delete this?') → true / false
 export const ask = (msg, opts = {}) => dialog({ msg, ...opts });
+// Start combat: tap who's actually in this fight. Resolves { posse: [ids], enemies: [ids] } or null.
+export function pickFighters(combat) {
+  const posse = (combat?.posse || []).filter((p) => !p.dead), foes = (combat?.enemies || []).filter((e) => !e.defeated);
+  return new Promise((resolve) => {
+    const back = document.createElement('div');
+    back.className = 'modal-back ask-back';
+    const row = (x, kind, sub) => `<label class="fight-pick"><input type="checkbox" data-${kind}="${esc(x.id)}" checked><span><b>${esc(x.name)}</b>${sub ? `<small>${esc(sub)}</small>` : ''}</span></label>`;
+    back.innerHTML = `<div class="modal ask fight-ask" role="dialog" aria-modal="true" aria-label="Who's in this fight?">
+      <h2>Who’s in this fight?</h2>
+      <p class="ask-body">Untick anyone who isn’t here. You can bring people in (or out) once it’s going.</p>
+      <div class="fight-cols">
+        <div><div class="fight-h">THE POSSE <button type="button" data-all="pc">all</button><button type="button" data-none="pc">none</button></div>${posse.map((p) => row(p, 'pc', p.trade)).join('') || '<p class="muted">No characters.</p>'}</div>
+        <div><div class="fight-h">ENEMIES <button type="button" data-all="en">all</button><button type="button" data-none="en">none</button></div>${foes.map((e) => row(e, 'en', e.size)).join('') || '<p class="muted">No enemies yet — add them in Combat Control.</p>'}</div>
+      </div>
+      <div class="ask-btns"><button type="button" class="btn secondary" data-no>Cancel</button><button type="button" class="btn" data-go>Start combat</button></div></div>`;
+    document.body.append(back);
+    const close = (v) => { back.remove(); resolve(v); };
+    back.addEventListener('click', (e) => { if (e.target === back) close(null); });
+    back.querySelector('[data-no]').addEventListener('click', () => close(null));
+    back.querySelectorAll('[data-all], [data-none]').forEach((b) => b.addEventListener('click', () => {
+      back.querySelectorAll(`[data-${b.dataset.all || b.dataset.none}]`).forEach((c) => { c.checked = !!b.dataset.all; });
+    }));
+    back.querySelector('[data-go]').addEventListener('click', () => {
+      const ids = (k) => [...back.querySelectorAll(`[data-${k}]:checked`)].map((c) => c.dataset[k]);
+      const r = { posse: ids('pc'), enemies: ids('en') };
+      if (!r.posse.length && !r.enemies.length) { toast('Pick at least one fighter.', true); return; }
+      close(r);
+    });
+  });
+}
 // await tell('Heads up…') — a notice with just an OK button
 export const tell = (msg, opts = {}) => dialog({ msg, ok: 'OK', cancel: null, danger: false, ...opts });
 // await askText('Name this place:', 'default') → the text, or null if cancelled

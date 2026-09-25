@@ -50,3 +50,10 @@
 .run-links .gl { grid-row: span 2; width: 26px; height: 26px; color: var(--rust); align-self: center; }
 .run-links b { font: 18px/1.1 var(--display); letter-spacing: .05em; font-weight: 400; }
 .run-links small { font-size: 13px; opacity: .7; }
+
+.run-join { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 12px; padding-top: 10px; border-top: 1px dashed rgba(0,0,0,.2); }
+.run-join select { min-width: 0; flex: 1 1 160px; }
+.run-out { font: 12px var(--body); padding: 1px 7px; border-radius: 9px; border: 1px solid rgba(0,0,0,.3); background: transparent; cursor: pointer; opacity: .7; }
+.run-out:hover { opacity: 1; background: rgba(0,0,0,.06); }
+.run-out.in { border-color: var(--rust); color: var(--rust); opacity: 1; }
+.run-row.sitting { opacity: .6; }

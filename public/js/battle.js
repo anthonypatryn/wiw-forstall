@@ -1,4 +1,4 @@
-import { $, esc, api, startPolling, toast, mountNav, tryWarden, forgetWarden, savedPin, wardenModal, rollPopup, abilityOptions, abilityTargetsHTML, abilityBody , ask, askText } from './common.js';
+import { $, esc, api, startPolling, toast, mountNav, tryWarden, forgetWarden, savedPin, wardenModal, rollPopup, abilityOptions, abilityTargetsHTML, abilityBody , ask, askText, pickFighters } from './common.js';
 import { gl } from './glyphs.js';
 let meta = null;
 // the Ability button depends on this, so redraw the turn panel once it arrives
@@ -285,7 +285,7 @@ function renderTurnBar() {
     const n = (combat?.enemies || []).filter((e) => !e.defeated).length, pcs = (combat?.posse || []).filter((p) => !p.dead).length;
     bar.innerHTML = warden ? `<div class="turn-bar"><div><small>NO COMBAT RUNNING</small><span class="muted">${pcs} in the posse · ${n} enem${n === 1 ? 'y' : 'ies'} ready${n ? '' : ' — add them in Combat Control'}</span></div>
       <button type="button" class="btn" data-startfight${pcs + n ? '' : ' disabled'}>${gl('revolver')} Start combat</button></div>` : '';
-    bar.querySelector('[data-startfight]')?.addEventListener('click', async () => { if (await tpAct({ action: 'start' }, 'Combat begins — tokens placed.')) poller?.now?.(); });
+    bar.querySelector('[data-startfight]')?.addEventListener('click', async () => { const who = await pickFighters(combat); if (who && await tpAct({ action: 'start', ...who }, 'Combat begins — tokens placed.')) poller?.now?.(); });
     return;
   }
   bar.hidden = false;

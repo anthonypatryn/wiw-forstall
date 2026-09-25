@@ -1,7 +1,6 @@
 import {
   $, esc, api, startPolling, injectDefs, bulletSVG, animateRoll, staticDice, toast, store, timeAgo,
-  mountNav, tryWarden, forgetWarden, savedPin, poolHTML, readPool, rollPopup, bleedPanel, ask, askText,
-} from './common.js';
+  mountNav, tryWarden, forgetWarden, savedPin, poolHTML, readPool, rollPopup, bleedPanel, ask, askText, pickFighters } from './common.js';
 import { NPC } from './npc-data.js';
 import { renderLogInto, mountHud } from './tablelog.js';
 import { gl } from './glyphs.js';
@@ -79,6 +78,7 @@ function renderTurn() {
   el.querySelectorAll('[data-act]').forEach((b) => b.addEventListener('click', async () => {
     const k = b.dataset.act;
     if (k === 'end' && !await ask('End combat? Turn order will be cleared.')) return;
+    if (k === 'start') { const who = await pickFighters(data); if (who) act({ action: 'start', ...who }); return; }
     act({ action: k === 'enemyInit' ? 'enemyInitiative' : k });
   }));
   el.querySelectorAll('[data-surprise]').forEach((b) => b.addEventListener('click', () => act({ action: 'surprise', key: b.dataset.surprise })));
