@@ -1,7 +1,8 @@
 /* Run the Game — the Warden's one page */
 .run-gate { max-width: 520px; margin: 30px auto; text-align: center; }
-.run-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 18px; align-items: start; }
-.run-col { display: grid; gap: 18px; }
+.run-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 14px; align-items: start; }
+.run-col { display: grid; gap: 14px; align-content: start; }
+.run-grid .card { margin-bottom: 0; }
 @media (max-width: 900px) { .run-grid { grid-template-columns: 1fr; } }
 
 .need { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 8px 10px; margin: 6px 0; border-radius: 6px; background: rgba(0,0,0,.04); }
@@ -57,3 +58,13 @@
 .run-out:hover { opacity: 1; background: rgba(0,0,0,.06); }
 .run-out.in { border-color: var(--rust); color: var(--rust); opacity: 1; }
 .run-row.sitting { opacity: .6; }
+
+/* grouped bands + a sticky contents bar, like the Posse sheet */
+.run-toc { position: sticky; top: var(--run-toc-top, 0px); z-index: 18; display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; margin: 0 0 14px; padding: 8px 10px;
+  background: #f4ead6; border: 1.5px solid var(--ink); border-radius: var(--radius); box-shadow: 0 3px 8px rgba(0,0,0,.12); }
+.run-toc::-webkit-scrollbar { display: none; }
+.run-toc a { flex: none; padding: 4px 12px 2px; border: 1px solid var(--ink-faint); border-radius: 14px; background: #fffdf7; color: var(--ink); text-decoration: none; font: 14px var(--display); letter-spacing: .08em; }
+.run-toc a:hover, .run-toc a.on { border-color: var(--rust); color: #fff; background: var(--rust); }
+.run-group { margin-bottom: 18px; scroll-margin-top: calc(var(--run-toc-top, 0px) + 62px); }
+.run-group-h { margin: 0 0 8px; font: 15px var(--display); letter-spacing: .16em; color: var(--rust); display: flex; align-items: center; gap: 10px; }
+.run-group-h::after { content: ''; flex: 1; border-top: 1.5px solid rgba(164,64,31,.35); }

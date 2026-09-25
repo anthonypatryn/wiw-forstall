@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="/css/style.css?v=30">
   <link rel="stylesheet" href="/css/rollcall.css?v=1">
   <link rel="stylesheet" href="/css/desk.css?v=1">
-  <link rel="stylesheet" href="/css/run.css?v=2">
+  <link rel="stylesheet" href="/css/run.css?v=3">
 </head>
 <body>
   <header class="masthead">
@@ -34,44 +34,84 @@
       <button class="btn" id="unlock" type="button"><span data-gl="star"></span> Enter the Warden PIN</button>
     </section>
 
-    <div class="run-grid" id="desk" hidden>
-      <div class="run-col">
-        <section class="card corner">
+    <div id="desk" hidden>
+      <nav class="run-toc" id="run-toc" aria-label="Jump to">
+        <a href="#grp-now">Right Now</a><a href="#grp-rolls">Rolls</a><a href="#grp-table">At the Table</a><a href="#grp-notes">Notes &amp; Log</a><a href="#grp-tools">Tools</a>
+      </nav>
+      <section class="run-group" id="grp-now">
+        <h2 class="run-group-h">Right Now</h2>
+        <div class="run-grid">
+          <div class="run-col">
+            <section class="card corner">
           <div class="head-row"><h2 class="section-title">Needs You</h2><span class="muted" id="conn"></span></div>
           <div id="needs"></div>
         </section>
-        <section class="card corner">
+          </div>
+          <div class="run-col">
+            <section class="card corner">
+          <div class="head-row"><h2 class="section-title">The Fight</h2><a class="btn small secondary" href="/battle"><span data-gl="pin"></span> Battle Map</a></div>
+          <div id="fight"></div>
+        </section>
+          </div>
+        </div>
+      </section>
+      <section class="run-group" id="grp-rolls">
+        <h2 class="run-group-h">Rolls</h2>
+        <div class="run-grid">
+          <div class="run-col">
+            <section class="card corner">
           <div class="head-row"><h2 class="section-title">Call for a Roll</h2><span class="muted">Task difficulty, p. 12</span></div>
           <div id="rollcall"></div>
         </section>
-        <section class="card corner">
+          </div>
+          <div class="run-col">
+            <section class="card corner">
           <h2 class="section-title">Open Rolls</h2>
           <div id="check-list"></div>
         </section>
-        <section class="card corner">
+          </div>
+        </div>
+      </section>
+      <section class="run-group" id="grp-table">
+        <h2 class="run-group-h">At the Table</h2>
+        <div class="run-grid">
+          <div class="run-col">
+            <section class="card corner">
+          <div class="head-row"><h2 class="section-title">The Posse</h2><a class="btn small secondary" href="/posse"><span data-gl="scroll"></span> Sheets</a></div>
+          <div id="posse"></div>
+        </section>
+          </div>
+          <div class="run-col">
+            <section class="card corner">
+          <div class="head-row"><h2 class="section-title">Enemies</h2><a class="btn small secondary" href="/combat"><span data-gl="claws"></span> Add or loot</a></div>
+          <div id="enemies"></div>
+        </section>
+          </div>
+        </div>
+      </section>
+      <section class="run-group" id="grp-notes">
+        <h2 class="run-group-h">Notes &amp; Log</h2>
+        <div class="run-grid">
+          <div class="run-col">
+            <section class="card corner">
           <div class="head-row"><h2 class="section-title">Session Notes</h2><button class="btn small" id="new-session" type="button"><span data-gl="scroll"></span> New session</button></div>
           <div class="sess-tabs" id="sess-tabs"></div>
           <div id="editor"></div>
         </section>
-      </div>
-      <div class="run-col">
-        <section class="card corner">
-          <div class="head-row"><h2 class="section-title">The Fight</h2><a class="btn small secondary" href="/battle"><span data-gl="pin"></span> Battle Map</a></div>
-          <div id="fight"></div>
-        </section>
-        <section class="card corner">
-          <div class="head-row"><h2 class="section-title">Enemies</h2><a class="btn small secondary" href="/combat"><span data-gl="claws"></span> Add or loot</a></div>
-          <div id="enemies"></div>
-        </section>
-        <section class="card corner">
-          <div class="head-row"><h2 class="section-title">The Posse</h2><a class="btn small secondary" href="/posse"><span data-gl="scroll"></span> Sheets</a></div>
-          <div id="posse"></div>
-        </section>
-        <section class="card corner">
+          </div>
+          <div class="run-col">
+            <section class="card corner">
           <div class="head-row"><h2 class="section-title">Recent at the Table</h2><button class="btn small secondary danger" id="clear-log" type="button">Clear log</button></div>
           <div class="log glance-log" id="glance-log"></div>
         </section>
-        <section class="card corner">
+          </div>
+        </div>
+      </section>
+      <section class="run-group" id="grp-tools">
+        <h2 class="run-group-h">Tools</h2>
+        <div class="run-grid">
+          <div class="run-col">
+            <section class="card corner">
           <h2 class="section-title">Jump To</h2>
           <div class="run-links">
             <a href="/combat"><span data-gl="revolver"></span><b>Combat Control</b><small>add enemies · awards · loot</small></a>
@@ -82,19 +122,23 @@
             <a href="/posse"><span data-gl="scroll"></span><b>Posse Sheets</b><small>every character</small></a>
           </div>
         </section>
-        <section class="card corner">
+          </div>
+          <div class="run-col">
+            <section class="card corner">
           <div class="head-row"><h2 class="section-title">Your Homebrew</h2><button class="btn small secondary" id="hb-refresh" type="button"><span data-gl="die"></span> Refresh</button></div>
           <p class="muted sess-note">Everything you’ve made up, in one place. Deleting can’t be undone.</p>
           <div id="homebrew"></div>
         </section>
-        <section class="card corner">
+            <section class="card corner">
           <div class="head-row"><h2 class="section-title">Backup</h2><button class="btn small" id="backup" type="button"><span data-gl="satchel"></span> Download</button></div>
           <p class="muted sess-note">Saves everything — sheets, NPCs, factions, maps, store, notes and the Table Log — to one file on this device. Do it after each session. <span id="backup-note"></span></p>
         </section>
-      </div>
+          </div>
+        </div>
+      </section>
     </div>
   </main>
 
-  <script type="module" src="/js/run.js?v=6"></script>
+  <script type="module" src="/js/run.js?v=7"></script>
 </body>
 </html>

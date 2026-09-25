@@ -105,9 +105,24 @@ function render() {
   renderFight(); renderEnemies(); renderPosse(); caller.draw(); renderChecks(); renderRecent();
 }
 
+// ---------- contents bar: sticks under the nav + Warden strip, highlights the band you're in ----------
+function tocTop() {
+  const h = [...document.querySelectorAll('.sitenav, .warden-strip, .hud-myturn')].reduce((n, el) => n + (el.offsetHeight || 0), 0);
+  document.documentElement.style.setProperty('--run-toc-top', `${h}px`);
+}
+window.addEventListener('resize', tocTop);
+const bands = () => [...document.querySelectorAll('.run-group')];
+window.addEventListener('scroll', () => {
+  const line = (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--run-toc-top')) || 0) + 80;
+  let cur = bands()[0]?.id;
+  bands().forEach((g) => { if (g.getBoundingClientRect().top <= line) cur = g.id; });
+  document.querySelectorAll('#run-toc a').forEach((a) => a.classList.toggle('on', a.getAttribute('href') === `#${cur}`));
+}, { passive: true });
+
 // ---------- boot ----------
 function open() {
   $('#gate').hidden = true; $('#desk').hidden = false;
+  tocTop(); setTimeout(tocTop, 800);
   mountDesk({ getCombat: () => combat, combatAct: (body) => act(body) });
   poller?.stop();
   poller = startPolling('warden', (d) => { combat = d; render(); refreshNeeds(); }, (ok) => { $('#conn').textContent = ok ? '● live' : 'reconnecting…'; }, '/api/combat');
