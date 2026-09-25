@@ -75,3 +75,14 @@
 .aw-nums label .gl { width: 1em; height: 1em; vertical-align: -2px; color: var(--rust); }
 .aw-nums input { width: 100%; min-width: 0; padding: 8px 10px; border: 1px solid rgba(0,0,0,.3); border-radius: 4px; background: #fffdf7; font: 20px var(--display); letter-spacing: .04em; color: var(--ink); box-sizing: border-box; }
 #award .btn, #jackpot .btn { margin-top: 4px; }
+
+/* card headers: title left, button right (the shared header row wasn't loaded on this page) */
+.run-grid .head-row { display: flex; align-items: center; justify-content: space-between; gap: 8px 10px; flex-wrap: wrap; margin-bottom: 10px; }
+.run-grid .head-row .section-title { margin: 0; }
+.run-grid .head-row > .muted { font-size: 13px; }
+.run-grid a.btn { text-decoration: none; }
+.run-grid .btn .gl { width: 1.05em; height: 1.05em; vertical-align: -2px; }
+.run-fight-btns .run-hint { font-size: 13px; flex: 1 1 0; min-width: 0; line-height: 1.3; }
+.run-fight-btns .danger { margin-left: 0; }
+.run-order { margin: 10px 0 12px; }
+.run-turn b { font-size: 26px; }

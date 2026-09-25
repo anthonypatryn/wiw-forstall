@@ -40,7 +40,9 @@ function renderEditor(force) {
       <textarea data-f="recap" maxlength="2000" class="short" placeholder="Last time, the posse…">${esc(s.recap)}</textarea></label>
     <div class="sess-actions">
       <button class="btn small" id="summarize" type="button">${gl('star')} Write up this session</button>
-      <button class="btn small" id="post-recap" type="button">${gl('scroll')} Post recap to the Table Log</button>
+      <button class="btn small secondary" id="post-recap" type="button">${gl('scroll')} Post recap to the Table Log</button>
+    </div>
+    <div class="sess-foot">
       <span class="muted" id="saved-note">Saves as you type · edited ${timeAgo(s.at)}</span>
       <button class="btn small secondary danger" id="del-session" type="button">Delete session</button>
     </div>`;

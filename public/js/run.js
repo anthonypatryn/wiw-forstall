@@ -58,7 +58,7 @@ function renderFight() {
   const enemyTurn = combat.enemies.some((e) => e.id === c.current);
   box.innerHTML = `<div class="run-turn${enemyTurn ? ' enemy' : ''}"><small>ROUND ${c.round || 1}</small><b>${esc(name(c.current))}</b><span>${enemyTurn ? 'Enemy turn — your move' : 'Posse turn'}</span></div>
     <div class="run-order">${order.map((k) => `<span class="${k === c.current ? 'now' : ''}${combat.enemies.some((e) => e.id === k) ? ' foe' : ''}">${esc(name(k))}</span>`).join('<i>›</i>')}</div>
-    <div class="run-fight-btns"><button type="button" class="btn" data-next>Next turn ›</button><a class="btn secondary" href="/battle">${gl('pin')} Act on the Battle Map</a><button type="button" class="btn small secondary danger" data-end>End combat</button></div>`;
+    <div class="run-fight-btns"><button type="button" class="btn" data-next>Next turn ›</button><span class="muted run-hint">Attacks and moves happen on the Battle Map.</span><button type="button" class="btn small secondary danger" data-end>End combat</button></div>`;
   // bring someone in mid-fight: a posse member sitting it out, or an enemy held back
   const party = c.party;
   const bench = [...combat.posse.filter((p) => !p.dead && party && !party.includes(p.id)).map((p) => [p.id, p.name]),
