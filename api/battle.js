@@ -1,7 +1,7 @@
 import { load, save } from '../lib/store.js';
 import { pinOk, send, readBody } from '../lib/http.js';
 import { freshBattle, battleAction, battleView, hexDist, clampHex, autoSync } from '../lib/battle.js';
-import { chargeMove, undoMove, pushUndo } from '../lib/combat.js';
+import { chargeMove, undoMove, pushUndo, checkHoldTriggers } from '../lib/combat.js';
 
 const KEY = 'battle';
 const IMG_KEY = 'battle-img';
@@ -66,6 +66,17 @@ export default async function handler(req, res) {
       body.action = 'noop';
     }
     const result = body.action === 'noop' ? null : (battleAction(state, body, { warden, combat }) ?? null);
+    // an enemy just moved: does that set off anyone's prepared Action? (p. 42)
+    if (body.action === 'move' && combat?.combat?.active) {
+      const t = state.tokens.find((x) => x.id === body.id);
+      if (t?.kind === 'enemy' && t.ref && (combat.posse || []).some((p) => p.hold)) {
+        const distTo = {};
+        state.tokens.filter((x) => x.kind === 'pc' && x.ref).forEach((x) => { distTo[x.ref] = hexDist(t, x); });
+        const before = JSON.stringify(combat.posse.map((p) => p.hold?.triggeredBy || null));
+        checkHoldTriggers(combat, { type: 'enemyMoved', enemy: t.ref, name: t.name, distTo });
+        if (JSON.stringify(combat.posse.map((p) => p.hold?.triggeredBy || null)) !== before) combatDirty = true;
+      }
+    }
     if (combatDirty) { combat.v = (combat.v || 0) + 1; await save(combat, 'combat'); }
     state.v = (state.v || 0) + 1;
     await save(state, KEY);

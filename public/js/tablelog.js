@@ -119,7 +119,9 @@ export function renderHud(h) {
       setTimeout(close, 25000);
     }
   }
-  // 3) a Skill check / Challenge for this device's character — on any page
+  // 3) your prepared Action has been set off — fire it from any page
+  holdPopup(h);
+  // 4) a Skill check / Challenge for this device's character — on any page
   const mine = me();
   const onMySheet = location.pathname.startsWith('/posse') && location.hash.slice(1).split('/')[0] === mine;
   const open = mine && !onMySheet ? (h.checks || []).find((c) => c.who.some((w) => w.id === mine && !w.rolled) && seen(`wiw.ck.${c.id}.${c.round}`) !== 'later') : null;
@@ -152,4 +154,29 @@ export function renderHud(h) {
 export function mountHud() {
   injectDefs();
   startPolling('log', (d) => renderHud(d.hud), null, '/api/combat');
+}
+
+let holdEl = null;
+function holdPopup(h) {
+  const mine = me();
+  const hot = mine && (h.holds || []).find((x) => x.id === mine && x.triggeredBy && seen(`wiw.hold.${x.at}.${x.triggeredBy.at}`) !== 'no');
+  if (!holdEl) { holdEl = document.createElement('div'); holdEl.className = 'hud-check hud-hold'; holdEl.hidden = true; document.body.append(holdEl); }
+  if (!hot) { holdEl.hidden = true; holdEl.dataset.k = ''; return; }
+  const key = `${hot.at}.${hot.triggeredBy.at}`;
+  if (holdEl.dataset.k === key && !holdEl.hidden) return;
+  holdEl.dataset.k = key; holdEl.hidden = false;
+  try { navigator.vibrate?.([100, 50, 100]); } catch {}
+  holdEl.innerHTML = `<div><small>YOUR PREPARED ACTION CAN GO OFF</small><b>⏳ ${esc(hot.triggeredBy.text)}</b> — fire ${esc(hot.name)}’s ${esc(hot.label)}?</div>
+    <div class="hud-ck-btns"><button type="button" class="btn" data-fire>🔥 Fire now</button><button type="button" class="btn small secondary" data-no>Not yet</button></div>`;
+  holdEl.querySelector('[data-no]').addEventListener('click', () => { setSeen(`wiw.hold.${key}`, 'no'); holdEl.hidden = true; });
+  holdEl.querySelector('[data-fire]').addEventListener('click', async (e) => {
+    e.target.disabled = true;
+    try {
+      const res = await api('POST', { action: 'pc', id: mine, op: 'fireHold', target: hot.triggeredBy.enemy }, '', '/api/combat');
+      const r = res.result;
+      holdEl.hidden = true;
+      if (r?.dice) await rollPopup(r, `${hot.name} · prepared ${r.fired} · ${r.pool}`);
+      toast(r?.dmg != null ? `🔥 ${r.dmg ? `${r.dmg} damage to ${r.target}` : `${r.target} shrugs it off`}` : `🔥 ${r?.fired || 'Fired'}!`);
+    } catch (err) { toast(err.message, true); e.target.disabled = false; }
+  });
 }

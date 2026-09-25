@@ -509,3 +509,4 @@ button { cursor: pointer; }
 @keyframes hudIn { from { transform: translate(-50%, -12px); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .hud-check { animation: none; } }
 @media (max-width: 560px) { .hud-strip { max-width: calc(100vw - 160px); bottom: 12px; } .hud-pop li { grid-template-columns: 26px 1fr auto; } .hud-pop .hud-tray { grid-column: 2 / -1; justify-content: flex-start; } }
+.hud-hold { top: 150px; border-color: #c89b3c; }

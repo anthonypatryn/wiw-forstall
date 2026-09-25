@@ -553,6 +553,11 @@ function wireSheet(p) {
         else if (r.outcome) toast(r.outcome.ok ? `✅ Success — ${r.outcome.total}/${r.target} Hits!` : `❌ Short — ${r.outcome.total}/${r.target} Hits.`, !r.outcome.ok);
         else toast(`${r.hits} Hit${r.hits === 1 ? '' : 's'} — see the Table Log for who won.`);
       }
+    } else if (e.target.closest('[data-hold-fire]')) {
+      e.target.closest('[data-hold-fire]').blur();
+      const r = await act({ action: 'pc', id: p.id, op: 'fireHold', target: view.querySelector('[data-hold-target]')?.value });
+      if (r?.dice) rollPopup(r, `${pcById(p.id).name} · prepared ${r.fired} · ${r.pool}`);
+      if (r) toast(r.dmg != null ? `🔥 ${r.dmg ? `${r.dmg} damage to ${r.target}` : `${r.target} shrugs it off`}` : `🔥 ${r.fired}!`);
     } else if (e.target.closest('[data-sheet-undo]')) {
       const b = e.target.closest('[data-sheet-undo]'); b.blur();
       if (b.dataset.sheetUndo === 'turn' && !confirm('Restart this turn? Everything done this turn is undone.')) return;
@@ -816,7 +821,7 @@ function renderFight(view, p) {
     if (!checkSeen.has(ck.id)) { if (checkSeen.size || checksPrimed) { toast(`🎯 The Warden wants a ${ck.skill} roll from ${p.name}!`); try { navigator.vibrate?.(150); } catch {} } checkSeen.add(ck.id); }
   });
   checksPrimed = true;
-  const show = (c.active || statuses.length || checks.length) && !p.dead;
+  const show = (c.active || statuses.length || checks.length || p.hold) && !p.dead;
   box.hidden = !show;
   if (!show || box.contains(document.activeElement)) return;
   const foes = (data.enemies || []).filter((e) => !e.defeated);
@@ -850,6 +855,9 @@ function renderFight(view, p) {
       <select data-fs="ammo" aria-label="Ammo"><option value="">regular ammo</option>${loaded.map(([a, k]) => `<option value="${k}"${String(k) === String(sel.ammo) ? ' selected' : ''}>${esc(a.name)} (${a.rds})</option>`).join('')}</select>
       <label class="check"><input type="checkbox" data-fs="aim"${sel.aim ? ' checked' : ''}${p.aimed ? ' disabled' : ''}> Aim +1 Grit${p.aimed ? ' (used)' : ''}</label>
       <button type="button" class="btn small" data-attack${sel.r ? '' : ' disabled'}>⚔ Attack · ${cost} Grit</button></div>` : c.active ? '<p class="muted fp-note">No enemies standing.</p>' : ''}
+    ${p.hold ? `<div class="fp-row hold-row"><b class="fp-h">⏳ HOLDING</b><span>${esc(p.hold.label)} — when ${esc(p.hold.when)}${p.hold.triggeredBy ? ` · <b>${esc(p.hold.triggeredBy.text)}!</b>` : ''}</span>
+      ${p.hold.kind === 'attack' ? `<select data-hold-target aria-label="Target">${(data.enemies || []).filter((e) => !e.defeated).map((e) => `<option value="${e.id}"${e.id === (p.hold.triggeredBy?.enemy || p.hold.trigger?.enemy) ? ' selected' : ''}>→ ${esc(e.name)}</option>`).join('')}</select>` : ''}
+      <button type="button" class="btn small" data-hold-fire>🔥 Fire now</button></div>` : ''}
     ${c.active ? (() => { const opts = abilityOptions(p, meta); if (!opts.length) return '';
       const s = (fightSel[p.id] ||= {}); s.ab ||= {};
       if (!opts.some((o) => o.name === s.ab.name)) s.ab.name = opts.find((o) => !o.out)?.name || opts[0].name;
