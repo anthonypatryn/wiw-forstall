@@ -245,3 +245,43 @@ test('whispers: player → Warden, Warden replies or starts one; each only reach
   assert.deepEqual(whisperView(st, { pc: 'a' }).list.map((w) => w.reply), ['noted']);
   assert.deepEqual(whisperView(st, { pc: 'b' }).list.map((w) => [w.reply, w.fromWarden]), [['you hear a click', true]]);
 });
+
+test('lock picking (High/Low): ties lose, Ace rules, win N in a row, peeks, retries', async () => {
+  const { freshLocks, lockAction } = await import('../lib/lockpick.js');
+  const names = { a: 'Ada', b: 'Bo' }, noRoll = () => ({ hits: 1, dice: [] });
+  // deck helper: cards are drawn from the END, so list them in reverse (last = starter)
+  const D = (...cards) => () => cards.map(([r, s]) => ({ r, s: s || '♠' })).reverse();
+  const start = (need, deck, retries = 0) => {
+    const st = freshLocks();
+    const { ids: [id] } = lockAction(st, { action: 'start', to: ['a'], difficulty: need, retries, retryCost: 'one lockpick' }, { warden: true, names });
+    lockAction(st, { action: 'finesse', id, pc: 'a' }, { warden: false, names, rollFinesse: noRoll, deck });
+    return { st, id, go: (x) => lockAction(st, { id, pc: 'a', ...x }, { warden: false, names, rollFinesse: noRoll, deck }) };
+  };
+  // a tie loses
+  let t = start(1, D([7], [7, '♥']));
+  assert.equal(t.go({ action: 'guess', dir: 'higher' }).ok, false);
+  // an Ace as the starter: the player calls it; low → a 2 is higher
+  t = start(1, D([14], [2]));
+  assert.equal(t.st.list[0].status, 'ace');
+  t.go({ action: 'ace', value: 'low' });
+  assert.equal(t.go({ action: 'guess', dir: 'higher' }).ok, true);
+  assert.equal(t.st.list[0].status, 'picked');
+  // an Ace drawn next is always high
+  t = start(2, D([13], [14], [5]));
+  assert.equal(t.go({ action: 'guess', dir: 'higher' }).ok, true);   // K → A(high)
+  assert.equal(t.go({ action: 'guess', dir: 'lower' }).ok, true);    // A(14) → 5
+  assert.equal(t.st.list[0].status, 'picked');
+  // peeks show the next card's color and cost one
+  t = start(3, D([9], [3, '♥'], [10]));
+  assert.equal(t.go({ action: 'peek' }).color, 'red');
+  assert.equal(t.st.list[0].peeks, 0);
+  // failing, then retrying costs a try; with none left it can't
+  t = start(1, D([9], [9]), 1);
+  t.go({ action: 'guess', dir: 'lower' });
+  t.go({ action: 'retry' });
+  assert.equal(t.st.list[0].status, 'finesse');
+  t.go({ action: 'finesse' }); t.go({ action: 'guess', dir: 'lower' });
+  assert.throws(() => t.go({ action: 'retry' }), /No more tries/);
+  // someone else can't touch your lock
+  assert.throws(() => lockAction(t.st, { action: 'peek', id: t.id, pc: 'b' }, { warden: false, names }), /someone else/);
+});

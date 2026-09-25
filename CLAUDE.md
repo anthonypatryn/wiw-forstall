@@ -88,6 +88,9 @@
 ## Whispers
 - `lib/whispers.js` + `api/whispers.js` (doc `whispers`): player `send {pc, text}` → Warden pop-up on any page (`watchWhispers` in public/js/whisper.js, started by `mountTableLog`; also a Needs-you item) with Later / Got it / Reply (`reply` one line). Warden `wardenSend {to: [pcIds]|'all', text}` (Run the Game **Whisper** card, `mountWardenWhisper`) → the player's pop-up "The Warden whispers…" with Reply. Players only ever receive their own unseen replies (`replySeen`). No chat history. The **Whisper** button sits in the fab row for players.
 
+## Lock picking
+- `lib/lockpick.js` + `api/lockpick.js` (doc `locks`): High/Low with a server-side 52-card deck (A = 14). Warden `start {to, difficulty 1–5 = wins in a row, retries, retryCost, what}` → per player status `finesse` → pcOp-like `finesse` (rolls the sheet's Finesse; Poisoned −2, Finesse Talent spurs; each Hit = one `peek` at the next card's color) → deal (`ace` status if the starter is an Ace: player calls high/low) → `guess {dir}` (strictly higher/lower wins, **ties lose**; an Ace drawn next is always high) → `picked` after `need` wins, `failed` on a miss → `retry` (pays the Warden's cost, fresh deck, `retriesLeft`) / `giveUp`. Players only ever see their own attempt, never the deck (`lockView`). Results go to the Table Log.
+
 ## Sound
 - `public/js/sound.js`: `play(name, arg)` synthesizes effects with WebAudio (dice, card, gun, bow, swing, explosion, forstall, zap, lockClick, lockSnap, lockOpen, success, fail, chime); `weaponSound(weapon)` picks gun/bow/swing. Real recordings: put `public/sfx/<name>.mp3` and add the name to `public/sfx/manifest.json`. Mute/volume per device (`wiw.muted`, `wiw.volume`) via the nav speaker / phone Menu. Hooks: `animateRoll` (dice), NPC `flipUp` (card), Battle Map attacks/items/Forstalls, HUD pop-ups (chime), Skill results (success/fail).
 
