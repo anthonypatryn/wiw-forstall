@@ -962,3 +962,13 @@ input[type=range]::-moz-range-thumb { width: 16px; height: 16px; border-radius: 
 .trade-side .item-row { width: 100%; display: flex; align-items: center; gap: 8px; }
 .trade-side .item-row .item-who { flex: 1; min-width: 0; }
 .trade-side .item-row .trade-money { width: auto; }
+
+/* new-player tour: dim everything, spotlight one thing, explain it */
+.tour-back { position: fixed; inset: 0; z-index: 500; }
+.tour-spot { position: fixed; border-radius: var(--radius); box-shadow: 0 0 0 9999px rgba(20, 16, 14, .72); outline: 2px solid var(--brass); transition: all .2s ease; pointer-events: none; }
+.tour-tip { position: fixed; width: min(360px, calc(100vw - 24px)); background: var(--surface); border: 1.5px solid var(--ink); border-radius: var(--radius); padding: 14px 16px; box-shadow: var(--shadow-pop); }
+.tour-tip.docked { left: 12px; right: 12px; bottom: 12px; width: auto; }
+.tour-tip h3 { margin: 2px 0 6px; font: var(--fs-lg) var(--display); letter-spacing: .04em; }
+.tour-tip p { margin: 0 0 12px; font: var(--fs-sm)/1.45 var(--body); }
+.tour-step { font: var(--fs-xs) var(--display); letter-spacing: .12em; color: var(--rust); }
+.tour-btns { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }

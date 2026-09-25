@@ -5,6 +5,7 @@ import { ICONS } from './icons.js';
 import { NPC } from './npc-data.js';
 import { gl } from './glyphs.js';
 import { stashSummary } from './stash.js';
+import { runTour, SHEET_TOUR } from './tour.js';
 import { faceUrl, portraitUrl, pickPortrait, clearPortrait, showImage } from './portrait.js';
 
 const EP = '/api/combat';
@@ -1060,13 +1061,17 @@ function render() {
     builtFor = null;
     document.title = 'Posse Sheets · Wild Imaginary West';
     if (id) toast('That character isn’t in the posse anymore.', true);
+    if (tourAsked && myId() && pcById(myId())) { location.hash = myId(); return; } // "Take the tour" from How to Play
     renderList();
     return;
   }
   if (builtFor !== p.id) { editMode.clear(); buildSheet(p); builtFor = p.id; window.scrollTo(0, 0); }
   if (wants === 'edit') { history.replaceState(null, '', `#${p.id}`); if (p.done !== false) unlockSheet(p).then((ok) => { if (ok) hydrate(pcById(p.id)); }); }
   hydrate(p);
+  // new players: a short tour the first time they open their own finished sheet
+  if (p.id === myId() && p.done !== false) { const force = tourAsked; tourAsked = false; setTimeout(() => runTour(SHEET_TOUR, 'sheet', { force }), 700); }
 }
+let tourAsked = new URLSearchParams(location.search).has('tour');
 window.addEventListener('hashchange', render);
 $('#sheet-view').addEventListener('focusout', () => setTimeout(() => { if (vitalsStale) render(); }, 60));
 
