@@ -5,6 +5,7 @@ The look: **aged paper, black ink, rust accent, brass highlights** — a printed
 Everything below lives in `public/css/style.css`. Page stylesheets (`posse.css`, `battle.css`, …) hold **only** what is unique to that page.
 
 ## Rules
+- **Art is the exception:** gradient stops that *draw* something (keypad keys, lamps, the dice tray's wood, bullet dice, felt) may keep literal colors. Everything else uses tokens.
 - **Use tokens, never raw values.** Colors, font sizes, spacing, corners and shadows come from the `:root` variables. No new hex colors in page CSS; add a token if something is truly new.
 - **Use the shared components** (below) before writing new CSS. If two pages need the same thing, it belongs in `style.css`.
 - **No emoji** — use the line icons: `gl('name')` in JS, `<span data-gl="name"></span>` in HTML (`public/js/glyphs.js`).
