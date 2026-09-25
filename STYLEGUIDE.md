@@ -29,6 +29,7 @@ Everything below lives in `public/css/style.css`. Page stylesheets (`posse.css`,
 | `--danger` / `--danger-tint` (bright: `--red`) | #8f1d17 (#c8372d) | delete, harm, failures, errors |
 | `--info` (`--teal`) / `--info-tint` | #2f6d73 | neutral information, posse turn |
 | `--now` | pale gold | "it's their turn" row highlight |
+| `--secret` / `--secret-tint` / `--secret-line` | purple | Warden-only and hidden-from-players things (hidden tokens, secret NPC notes) |
 
 **Themed screens** keep their own look, but only through these tokens:
 | Screen | Tokens |

@@ -29,6 +29,7 @@
   --danger: #8f1d17;  --danger-tint: rgba(143,29,23,.1);
   --info: var(--teal); --info-tint: rgba(47,109,115,.1);
   --now: rgba(255,221,138,.3); /* whose turn it is */
+  --secret: #7a2c9e; --secret-tint: #f4ecf7; --secret-line: #b58ad0; /* Warden-only / hidden from players */
   /* themed screens (keep them, but only through these) */
   --screen-bg: #0b0f0c; --screen-ink: var(--phosphor);          /* Forstall Scanner display */
   --screen-line: #4d4540; --screen-dim: #6f675e; --screen-mute: #a89c88; --screen-text: #d8ccb6; --screen-alert: #ff7a5c;
