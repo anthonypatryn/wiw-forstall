@@ -6,6 +6,7 @@ let meta = null;
 api('GET', null, '?view=meta', '/api/combat').then((m) => { meta = m; renderTurnBar(); }).catch(() => {});
 import { mountTableLog } from './tablelog.js';
 import { pcCardHTML, enemyCardHTML, wireFighters } from './fighter-card.js';
+import { openAddEnemies } from './enemy-add.js';
 import { panZoom } from './panzoom.js';
 
 const EP = '/api/battle';
@@ -291,8 +292,10 @@ function renderTurnBar() {
   if (!c?.active) {
     bar.hidden = !warden;
     const n = (combat?.enemies || []).filter((e) => !e.defeated).length, pcs = (combat?.posse || []).filter((p) => !p.dead).length;
-    bar.innerHTML = warden ? `<div class="turn-bar"><div><small>NO COMBAT RUNNING</small><span class="muted">${pcs} in the posse · ${n} enem${n === 1 ? 'y' : 'ies'} ready${n ? '' : ' — add them in Combat Control'}</span></div>
+    bar.innerHTML = warden ? `<div class="turn-bar"><div><small>NO COMBAT RUNNING</small><span class="muted">${pcs} in the posse · ${n} enem${n === 1 ? 'y' : 'ies'} ready</span></div>
+      <button type="button" class="btn secondary" data-addenemies>${gl('claws')} Add enemies</button>
       <button type="button" class="btn" data-startfight${pcs + n ? '' : ' disabled'}>${gl('revolver')} Start combat</button></div>` : '';
+    bar.querySelector('[data-addenemies]')?.addEventListener('click', () => openAddEnemies(combat, () => poller?.now?.()));
     bar.querySelector('[data-startfight]')?.addEventListener('click', async () => { const who = await pickFighters(combat); if (who && await tpAct({ action: 'start', ...who }, 'Combat begins — tokens placed.')) poller?.now?.(); });
     return;
   }
@@ -412,7 +415,7 @@ function renderTurnBar() {
       <div class="tp-end">
         <span class="tp-undo">${(warden ? u.last : u.lastIsThisTurn && u.last) ? `<button type="button" class="btn small secondary" data-undo="last" title="Undo: ${esc(u.last)}">↶ Undo <small>${esc(u.last)}</small></button>` : ''}
           ${u.thisTurn ? `<button type="button" class="btn small secondary" data-undo="turn">⟲ Restart turn</button>` : ''}</span>
-        ${warden ? '<button type="button" class="btn small secondary" data-endfight>End combat</button><button type="button" class="btn" data-nextturn>Next turn</button>' : '<button type="button" class="btn" data-endmine>End my turn</button>'}
+        ${warden ? `<button type="button" class="btn small secondary" data-addenemies title="Reinforcements">${gl('claws')} + Enemies</button><button type="button" class="btn small secondary" data-endfight>End combat</button><button type="button" class="btn" data-nextturn>Next turn</button>` : '<button type="button" class="btn" data-endmine>End my turn</button>'}
       </div>`
     : `<p class="muted tp-empty">${isPc ? `Waiting on ${esc(a.name)}’s player (or the Warden).` : 'The enemies are acting.'}</p>`}
   </div>`;
@@ -452,6 +455,7 @@ async function tpAct(body, msg) {
 function wireTurnBar(bar, cur, tok) {
   const c = combat?.combat;
   bar.querySelector('[data-nextturn]')?.addEventListener('click', () => { tp.open = ''; tpAct({ action: 'next' }); });
+  bar.querySelector('[data-addenemies]')?.addEventListener('click', () => openAddEnemies(combat, () => poller?.now?.()));
   bar.querySelector('[data-endmine]')?.addEventListener('click', () => { tp.open = ''; tpAct({ action: 'pc', id: c.current, op: 'endTurn' }); });
   bar.querySelector('[data-endfight]')?.addEventListener('click', async () => {
     if (!await ask('End combat? Grit refills and Dodge/Aim clear. Health and Statuses stay as they are.')) return;
