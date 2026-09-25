@@ -190,3 +190,17 @@ test('"Needs you" lists store requests and enemy turns for the Warden', async ()
   n = wardenNeeds(state, { shop: null, edison: [] });
   assert.match(n.items[0].text, /Chupacabra’s turn/);
 });
+
+test('the inventory mirrors the sheet: picking from the list adds it, replacing drops the old one', async () => {
+  const { placedIn } = await import('../lib/sheets.js');
+  const state = freshCombat();
+  const pc = publicAction(state, { action: 'addPc', trade: 'Hunter', name: 'Mira' }, { warden: true });
+  pc.items = [];
+  const [r1, r2] = firstOf('Rifles', 2);
+  publicAction(state, { action: 'pc', id: pc.id, op: 'pick', kind: 'weapon', i: 2, item: r1 }, { warden: true });
+  assert.deepEqual(pc.items.map((x) => x.itemId), [r1.id]);
+  assert.equal(placedIn(pc, pc.items[0]), 'Weapons');
+  publicAction(state, { action: 'pc', id: pc.id, op: 'pick', kind: 'weapon', i: 2, item: r2 }, { warden: true });
+  assert.deepEqual(pc.items.map((x) => x.itemId), [r2.id]);
+  assert.equal(placedIn(pc, { cat: 'Goods & Services', sub: 'x', itemId: 'y', name: 'Bedroll' }), '');
+});

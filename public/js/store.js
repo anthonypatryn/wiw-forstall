@@ -130,7 +130,7 @@ function renderSide() {
 
   const inv = pc?.items || [];
   $('#inventory').innerHTML = !pc ? '<p class="empty-note">Pick a character to see what they carry.</p>'
-    : inv.length ? inv.map((i) => `<div class="inv-row" data-uid="${i.uid}"><span>${i.qty > 1 ? `${i.qty}× ` : ''}${esc(i.name)}<small>${esc(i.sub || i.cat || '')}</small></span>
+    : inv.length ? inv.map((i) => `<div class="inv-row" data-uid="${i.uid}"><span>${i.qty > 1 ? `${i.qty}× ` : ''}${esc(i.name)}<small>${esc(i.sub || i.cat || '')}${i.placed ? ` · on sheet: ${esc(i.placed)}` : i.placed === null ? ' · not on the sheet yet' : ''}</small></span>
         <button class="btn small secondary" data-sell type="button">Sell…</button></div>`).join('')
     : '<p class="empty-note">Nothing bought here yet. (Their sheet’s free-text inventory still works too.)</p>';
   $('#inventory').querySelectorAll('[data-sell]').forEach((b) => b.addEventListener('click', async () => {

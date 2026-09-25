@@ -1024,19 +1024,9 @@ function hydrate(p) {
   // bought items (from the Store)
   const itemsBox = view.querySelector('[data-dyn="items"]');
   const items = p.items || [];
-  // things that belong in a sheet section but aren't there yet (e.g. bought before the Store filled sheets in)
-  const offSheet = (it) => {
-    const { cat, sub, itemId } = it;
-    if (cat === 'Weapons') return p.weapons.filter((w) => w.itemId === itemId).length < items.filter((x) => x.itemId === itemId).length;
-    if (cat === 'Forstalls' && !/crystal/i.test(it.name)) return p.forstall?.itemId !== itemId && p.forstall?.model !== it.name;
-    if (cat === 'Mechs') return p.mech?.itemId !== itemId;
-    if (sub === 'Horse Breeds' || sub === 'Legendary Steeds') return p.horse?.itemId !== itemId && p.horse?.breed !== it.name;
-    if (sub === 'Special Ammo & Arrows') return !p.weapons.some((w) => (w.ammo || []).some((a) => a.name === it.name));
-    if (cat === 'Upgrades') return sub !== 'Trap Upgrades' && ![...p.weapons, p.forstall, p.mech].some((t) => (t?.upgradeIds || []).includes(itemId));
-    if (cat === 'Gear' || cat === 'Traps' || cat === 'Forstalls') return !p.gear.some((g) => g.itemId === itemId);
-    return false;
-  };
-  itemsBox.innerHTML = items.length ? `<div class="items-list">${items.map((it, i) => `<div class="inv-item"><span>${esc(it.name)}<small>${esc(it.sub || it.cat || '')}</small></span>
+  // the server says where each item sits on the sheet (null = it belongs in a section but isn't there yet)
+  const offSheet = (it) => it.placed === null;
+  itemsBox.innerHTML = items.length ? `<div class="items-list">${items.map((it, i) => `<div class="inv-item"><span>${esc(it.name)}<small>${esc(it.sub || it.cat || '')}${it.placed ? ` · <b class="inv-where">on sheet: ${esc(it.placed)}</b>` : it.placed === null ? ' · <b class="inv-off">not on the sheet yet</b>' : ''}</small></span>
       <span class="qty"><button type="button" data-q="${i}" data-d="-1" aria-label="One fewer">−</button><b>${it.qty}</b><button type="button" data-q="${i}" data-d="1" aria-label="One more">+</button></span>
       ${offSheet(it) ? `<button type="button" class="btn small" data-equip="${esc(it.uid)}" title="Fill it into the right section of the sheet">Put on sheet</button>` : ''}<button type="button" class="btn small secondary" data-sell="${esc(it.uid)}">Sell…</button><button type="button" class="rm-btn" data-rm-item="${i}" title="Remove this item" aria-label="Remove ${esc(it.name)}">✕</button></div>`).join('')}</div>`
     : '<p class="muted" style="margin:4px 0;font-size:14px">Nothing from the <a href="/store">Store</a> yet.</p>';

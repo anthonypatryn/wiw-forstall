@@ -470,3 +470,5 @@ body.on-sheet .masthead { display: none; }
 #sheet-view.table-view #sec-abilities { order: 12; }
 #sheet-view.table-view .sbox { margin-bottom: 12px; }
 #sheet-view.table-view .sk-name :is(small, em) { display: none; }
+.inv-item .inv-where { font-weight: 400; color: #2f6d73; }
+.inv-item .inv-off { font-weight: 700; color: var(--rust); }
