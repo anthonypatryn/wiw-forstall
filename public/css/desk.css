@@ -6,7 +6,7 @@
 .sess-tab small { font: italic var(--fs-xs) var(--body); letter-spacing: 0; color: var(--ink-soft); }
 .sess-tab.on { border-color: var(--ink); background: var(--ink); color: #fff; }
 .sess-tab.on small { color: rgba(255,255,255,.8); }
-.sess-tab { border-radius: var(--r-pill); padding: 5px 14px 3px; }
+.sess-tab { border-radius: 18px; padding: 8px 18px 10px; gap: 2px; } /* two lines (title + date): room under the date so the corner doesn't crowd it */
 
 .sess-head { display: grid; grid-template-columns: minmax(0, 1fr) 170px; gap: 10px 14px; margin-bottom: 10px; }
 .sess-head label, .sess-notes { display: flex; flex-direction: column; gap: 4px; font: var(--fs-xs) var(--display); letter-spacing: .12em; color: var(--ink-soft); min-width: 0; }
