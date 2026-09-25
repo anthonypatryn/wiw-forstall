@@ -3,23 +3,22 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Wanted · Wild Imaginary West</title>
-  <meta name="description" content="Wanted posters, town by town.">
+  <title>Posse Stash · Wild Imaginary West</title>
+  <meta name="description" content="The money and gear the posse shares.">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>★</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Rye&family=Special+Elite&family=Reenie+Beanie&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css?v=61">
-  <link rel="stylesheet" href="/css/wanted.css?v=2">
 </head>
 <body>
   <header class="masthead">
     <div class="masthead-inner">
       <img class="brand-logo" src="/img/logo-light.svg" alt="Wild Imaginary West">
       <div class="brand-title">
-        <div class="kicker">NAILED UP ON EVERY POST</div>
-        <h1>Wanted</h1>
-        <div class="sub">Bounties and outlaws, town by town</div>
+        <div class="kicker">WHAT THE POSSE SHARES</div>
+        <h1>Posse Stash</h1>
+        <div class="sub">Money and gear anyone in the posse can put in or take out</div>
       </div>
     </div>
   </header>
@@ -27,13 +26,12 @@
 
   <main class="wrap">
     <section class="card corner">
-      <div class="head-row"><h2 class="section-title">The Posting Board</h2><span id="wt-tools"></span></div>
-      <nav class="wt-towns" id="wt-towns" aria-label="Towns"></nav>
-      <p class="muted small-text" id="wt-here"></p>
-      <div class="wt-board" id="wt-board"></div>
+      <div class="head-row"><h2 class="section-title">In the Stash</h2><button class="btn small" type="button" data-stash><span data-gl="satchel"></span> Put in or take out</button></div>
+      <div id="st-list"><p class="muted">Opening the strongbox…</p></div>
+      <p class="fine muted">Every move shows up in the Table Log. A gun keeps its upgrades and a horse its Bond while it’s in here.</p>
     </section>
   </main>
 
-  <script type="module" src="/js/wanted.js?v=13"></script>
+  <script type="module" src="/js/stash-page.js?v=1"></script>
 </body>
 </html>
