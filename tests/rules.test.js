@@ -534,3 +534,58 @@ test('Poker skill moves: a tell shows one NPC card, a bluff rattles weak hands, 
     assert.equal(g.st.table.hand.phase, 'over', 'caught cheating: folded, the NPC takes the pot');
   }
 });
+
+test('Faro: soda and hock have no action, losers pay the bank, winners get even money, coppered bets reverse, splits cost half, calling the turn', async () => {
+  const { freshSaloon, saloonAction, saloonView } = await import('../lib/saloon.js');
+  const C = (x) => ({ r: { A: 14, K: 13, Q: 12, J: 11, T: 10 }[x[0]] || Number(x[0]), s: x[1] });
+  // the box, top first: soda, then (banker, player) pairs … and at the end three cards: banker, player, hock
+  const top = ['2♠', '7♥', 'K♣', '5♦', '5♣', '9♠', '3♥'], bottom = ['Q♥', 'A♠', 'J♦'];
+  const all = [];
+  for (const su of ['♠', '♥', '♦', '♣']) for (const r of ['A', '2', '3', '4', '5', '6', '7', '8', '9', 'T', 'J', 'Q', 'K']) all.push(r + su);
+  const box = [...top, ...all.filter((c) => !top.includes(c) && !bottom.includes(c)), ...bottom];
+  assert.equal(box.length, 52);
+  const posse = [{ id: 'a', name: 'Lila', wallet: '50.00', skills: { intuition: '3B' } }];
+  const st = freshSaloon(), logs = [];
+  const ctx = { posse, rand: () => 0.99, deck: () => box.map(C).reverse(), npcSkills: () => ({ finesse: '1B' }), roll: (seat) => ({ hits: seat.kind === 'npc' ? 0 : 2 }), log: (t) => logs.push(t) };
+  saloonAction(st, { action: 'open', game: 'faro', ante: 1, bet: 2, npcs: [{ name: 'Faro Pete', bank: 100 }, { name: 'extra' }] }, { ...ctx, warden: true });
+  assert.equal(st.table.seats.length, 1, 'one dealer banks faro');
+  saloonAction(st, { action: 'join', pc: 'a' }, ctx);
+  saloonAction(st, { action: 'deal' }, { ...ctx, warden: true });
+  assert.equal(st.table.faro.soda.r, 2);
+  saloonAction(st, { action: 'faroBet', pc: 'a', rank: 7, amount: 2 }, ctx);                // on the banker's card → loses
+  saloonAction(st, { action: 'faroBet', pc: 'a', rank: 13, amount: 2 }, ctx);               // on the player's card → wins even money
+  assert.equal(posse[0].wallet, '46.00');
+  saloonAction(st, { action: 'faroTurn' }, { ...ctx, warden: true });                        // 7♥ loses, K♣ wins
+  assert.equal(posse[0].wallet, '48.00', 'lost the 7 stake, won $2 on the King (stake still down)');
+  assert.ok(!st.table.faro.bets['pc:a'][7]); assert.equal(st.table.faro.bets['pc:a'][13].amt, 2);
+  saloonAction(st, { action: 'faroBet', pc: 'a', rank: 13, amount: 0 }, ctx);               // take the King bet back
+  saloonAction(st, { action: 'faroBet', pc: 'a', rank: 5, amount: 4 }, ctx);
+  saloonAction(st, { action: 'faroTurn' }, { ...ctx, warden: true });                        // 5♦ 5♣: a split
+  assert.equal(posse[0].wallet, '48.00', 'split: half back');
+  saloonAction(st, { action: 'faroBet', pc: 'a', rank: 9, amount: 2, copper: true }, ctx);  // coppered on the banker's 9 → wins
+  saloonAction(st, { action: 'faroTurn' }, { ...ctx, warden: true });                        // 9♠ loses, 3♥ wins
+  assert.equal(posse[0].wallet, '48.00', 'coppered 9 won $2, stake still down (48 − 2 + 2)');
+  while (st.table.faro.deck.length > 3) saloonAction(st, { action: 'faroTurn' }, { ...ctx, warden: true });
+  assert.ok(saloonView(st, { pc: 'a' }).table.faro.canCall);
+  const before = Number(posse[0].wallet);
+  saloonAction(st, { action: 'faroCall', pc: 'a', order: [12, 14, 11], amount: 1 }, ctx);    // Q, A, J
+  saloonAction(st, { action: 'faroTurn' }, { ...ctx, warden: true });
+  assert.ok(st.table.faro.over); assert.equal(st.table.faro.hock, 'J♦');
+  assert.ok(Number(posse[0].wallet) >= before + 4, 'called the turn: 4 to 1, and the stakes left on the layout come home');
+  assert.throws(() => saloonAction(st, { action: 'faroBet', pc: 'a', rank: 4, amount: 1 }, ctx), /next deal/);
+});
+
+test('Faro: a crooked box can be spotted with Intuition', async () => {
+  const { freshSaloon, saloonAction, saloonView } = await import('../lib/saloon.js');
+  const posse = [{ id: 'a', name: 'Lila', wallet: '50.00', skills: {} }];
+  const st = freshSaloon(), caught = [];
+  const ctx = { posse, rand: () => 0.1, npcSkills: () => ({}), roll: (seat) => ({ hits: seat.kind === 'npc' ? 0 : 1 }), log: () => {}, caught: (d) => caught.push(d.name) };
+  saloonAction(st, { action: 'open', game: 'faro', crooked: true, npcs: [{ name: 'Slick Sam' }] }, { ...ctx, warden: true });
+  saloonAction(st, { action: 'join', pc: 'a' }, ctx);
+  saloonAction(st, { action: 'deal' }, { ...ctx, warden: true });
+  assert.equal(saloonView(st, { pc: 'a' }).table.faro.crooked, undefined, 'players never see the flag');
+  const r = saloonAction(st, { action: 'faroWatch', pc: 'a' }, ctx);
+  assert.deepEqual(r, { won: true, crooked: true }); assert.deepEqual(caught, ['Slick Sam']);
+  assert.equal(saloonView(st, { warden: true }).table.faro.crooked, false);
+  assert.throws(() => saloonAction(st, { action: 'faroWatch', pc: 'a' }, ctx), /look/);
+});
