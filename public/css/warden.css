@@ -76,3 +76,5 @@
 .w-trait.jam { border-left-color: var(--rust); }
 .w-trait.auto { border-left-color: #5fb3b9; }
 .btn.jam-on { background: var(--red) !important; border-color: var(--red) !important; animation: blink 1.4s infinite; }
+
+.w-legend .lg-scan { color: var(--brass); } .w-legend .lg-guess { color: #7fd08a; }

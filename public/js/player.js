@@ -247,7 +247,7 @@ function renderKnown() {
   if (!a) { box.innerHTML = '<b>HOW IT WORKS</b> — the Warden locks on a target, you roll Intuition to recover digits, then guess the six-digit Kurtz Frequency.'; return; }
   if (a.solved) { box.innerHTML = `<b>DECODED</b> — ${esc(a.name)} is ${esc(a.kz)}. Your Forstall now Sweeps it at +1 and can Burst it.`; return; }
   box.innerHTML = `<b>DIGITS RECOVERED (${a.known.length}/6)</b> &nbsp;${a.known.length ? chipsHTML(a.known) : '<span class="muted">none yet — roll to Scan.</span>'}
-    <div class="muted" style="margin-top:6px">${data.settings.easyMode ? 'The Warden is showing where each recovered digit goes.' : 'Shown in numerical order — not necessarily their spot in the frequency.'}</div>`;
+    <div class="muted mt-2">${data.settings.easyMode ? 'The Warden is showing where each recovered digit goes.' : 'Shown in numerical order — not necessarily their spot in the frequency.'}</div>`;
 }
 
 function renderRollArea() {

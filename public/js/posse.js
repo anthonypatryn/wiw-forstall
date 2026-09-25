@@ -996,7 +996,7 @@ function hydrate(p) {
   itemsBox.innerHTML = items.length ? `<div class="items-list">${items.map((it, i) => `<div class="inv-item"><span>${esc(it.name)}<small>${esc(it.sub || it.cat || '')}${it.placed ? ` · <b class="inv-where">on sheet: ${esc(it.placed)}</b>` : it.placed === null ? ' · <b class="inv-off">not on the sheet yet</b>' : ''}</small></span>
       <span class="qty"><button type="button" data-q="${i}" data-d="-1" aria-label="One fewer">−</button><b>${it.qty}</b><button type="button" data-q="${i}" data-d="1" aria-label="One more">+</button></span>
       ${offSheet(it) ? `<button type="button" class="btn small" data-equip="${esc(it.uid)}" title="Fill it into the right section of the sheet">Put on sheet</button>` : ''}<button type="button" class="btn small secondary" data-sell="${esc(it.uid)}">Sell…</button><button type="button" class="rm-btn" data-rm-item="${i}" title="Remove this item" aria-label="Remove ${esc(it.name)}">✕</button></div>`).join('')}</div>`
-    : '<p class="muted" style="margin:4px 0;font-size:14px">Nothing from the <a href="/store">Store</a> yet.</p>';
+    : '<p class="muted small-text empty-inline">Nothing from the <a href="/store">Store</a> yet.</p>';
   itemsBox.querySelectorAll('[data-q]').forEach((b) => b.addEventListener('click', () => {
     const it = items[b.dataset.q];
     act({ action: 'sheet', id: p.id, path: `items.${b.dataset.q}.qty`, value: it.qty + Number(b.dataset.d) });

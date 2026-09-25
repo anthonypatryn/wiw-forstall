@@ -103,7 +103,7 @@ function renderTarget() {
       <div class="meta">${esc(a.size)}${m.page ? ` · Guidebook p. ${m.page}` : ' · Homebrew'} ${a.solved ? '<span class="badge green">DECODED</span>' : ''}
         ${a.scanHalf ? '<span class="badge">SPINAL DEFLECTORS — HALF POOL</span>' : ''}</div>
       <div class="w-kz">${slot(0)}<span class="dash">-</span>${slot(1)}<span class="dash">-</span>${slot(2)}${slot(3)}${slot(4)}${slot(5)}</div>
-      <div class="w-legend"><b style="color:var(--brass)">■</b> given by Scan · <b style="color:#7fd08a">■</b> found by guessing · <b>■</b> still hidden — click to give</div>
+      <div class="w-legend"><b class="lg-scan">■</b> given by Scan · <b class="lg-guess">■</b> found by guessing · <b>■</b> still hidden — click to give</div>
       ${traitsHTML(m)}
       <div class="w-actions">
         ${a.solved ? '' : `<button class="btn small${data.jammed ? ' jam-on' : ''}" data-act="jam" type="button">${data.jammed ? 'Forstall jammed — click to clear' : 'Jam the Forstall'}</button>`}

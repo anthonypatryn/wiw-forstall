@@ -111,11 +111,13 @@
 @media (max-width: 380px) { :root { --cw: 118px; --ch: 166px; } .hand { gap: 12px 14px; } }
 
 /* manual NPC + book NPCs */
-.manual { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.manual { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
+.manual label { min-width: 0; }
+.manual input:not([type=checkbox]) { width: 100%; min-width: 0; }
 .manual label { display: flex; flex-direction: column; gap: 3px; font: var(--fs-xs) var(--display); letter-spacing: .12em; color: var(--ink-soft); }
 .manual input:not([type=checkbox]) { padding: 7px 9px; border: 1px solid var(--ink-faint); border-radius: var(--r-sm); background: var(--surface); font: var(--fs-md) var(--body); letter-spacing: 0; color: var(--ink); }
 .manual-go { grid-column: 1 / -1; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
-@media (max-width: 760px) { .manual { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 760px) { .manual { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
 .faction { border-top: 2px solid var(--ink); padding: 14px 0 6px; }
 .faction:first-child { border-top: 0; padding-top: 0; }
 .faction > h3 { margin: 0 0 10px; font: 400 var(--fs-2xl)/1 var(--western); }
