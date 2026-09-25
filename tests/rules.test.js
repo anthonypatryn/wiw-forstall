@@ -155,3 +155,24 @@ test('game clock: Sweeps burn a charge per 2 hours, then stop; a new day resets 
   assert.deepEqual(pc.abilityUses, {});
   assert.equal(sweepHours({ duration: '2', upgrades: ['Sweeping Duration L2 (6 hours)'] }), 6);
 });
+
+test('Natural EMP stops Sweeps in Long Range and blocks Bursts; Forstall Efficiency adds an Ace', () => {
+  const state = freshCombat();
+  const pc = publicAction(state, { action: 'addPc', trade: 'Mechanic', name: 'Gears' }, { warden: true });
+  Object.assign(pc.forstall, forstallFields(item('models-backpack-forstall')));
+  pc.forstall.upgrades[0] = 'Crystal Burst Fuse';
+  pc.forstall.kz[0] = 'Southern Death Worm';
+  pc.abilities = [...pc.abilities, 'Forstall Efficiency'];
+  publicAction(state, { action: 'addEnemy', profile: 'Southern Death Worm' }, { warden: true });
+  const worm = state.enemies[0];
+  const tokens = [{ kind: 'pc', ref: pc.id, col: 0, row: 0, id: 'p' }, { kind: 'enemy', ref: worm.id, col: 4, row: 0, id: 'e' }];
+  const ctx = () => ({ list: fields({ tokens }, state), tokens, cave: false });
+  const key = `pc:${pc.id}`;
+  publicAction(state, { action: 'forstall', op: 'sweep', key, efficiency: true }, { warden: true, ctx: ctx() });
+  assert.ok(state.sweeps[key]);
+  publicAction(state, { action: 'forstall', op: 'emp', enemy: worm.id }, { warden: true, ctx: ctx() });
+  assert.equal(state.sweeps[key], undefined);
+  assert.equal(worm.empUses, 1);
+  pc.gear[0] = { itemId: 'x', item: 'Refined Crystal', type: '', grit: '', notes: '', uses: 0 };
+  assert.throws(() => publicAction(state, { action: 'forstall', op: 'burst', key, enemy: worm.id }, { warden: true, ctx: ctx() }), /Natural EMP/);
+});

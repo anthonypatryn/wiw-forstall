@@ -66,6 +66,7 @@ export default async function handler(req, res) {
     const turnBefore = state.combat?.active ? state.combat.current : null;
     const result = publicAction(state, body, { warden, ctx: ctx() }) ?? null;
     // a monster starting its turn inside a Sweeping Forstall's Range loses Grit (p. 82)
+    if (state.emp && state.combat?.current === state.emp.by && turnBefore !== state.emp.by) state.emp = null; // EMP lasts one round
     if (battle && state.combat?.active && state.combat.current && state.combat.current !== turnBefore) {
       sweepHit(state, ctx().list, battle.tokens, state.combat.current, 'start');
     }

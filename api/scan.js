@@ -19,13 +19,25 @@ async function tableLog(entry) {
 async function scanRange(state, body) {
   if (!state.active || !body.whoId) return;
   const [combat, battle] = await Promise.all([load('combat'), load('battle')]);
-  if (!combat?.combat?.active || !battle) return;
-  const f = fields(battle, combat).find((x) => x.key === `pc:${body.whoId}` && x.pos);
+  if (!combat?.combat?.active) return;
+  const f = fields(battle || { tokens: [] }, combat).find((x) => x.key === `pc:${body.whoId}` && x.pos);
   const foes = (combat.enemies || []).filter((e) => e.profile === state.active && !e.defeated)
-    .map((e) => battle.tokens.find((t) => t.kind === 'enemy' && t.ref === e.id)).filter(Boolean);
-  if (!f || !foes.length || foes.some((t) => inRange(f, t))) return;
-  const d = Math.min(...foes.map((t) => hexDist(f.pos, t)));
-  throw new Error(`The ${state.active} is ${d}″ away — out of ${f.name}’s ${f.range} Range (${f.rangeIn}″). Get closer to Scan it.`);
+    .map((e) => (battle?.tokens || []).find((t) => t.kind === 'enemy' && t.ref === e.id)).filter(Boolean);
+  if (combat.emp?.keys?.includes(`pc:${body.whoId}`)) throw new Error('Your Forstall is scrambled by a Natural EMP — no Scanning until the monster’s next turn.');
+  // p. 84: one operator per Forstall — only one character can Scan each round
+  const sr = combat.scanRound;
+  if (sr && sr.round === combat.combat.round && sr.by !== body.whoId) throw new Error(`${sr.name} already Scanned this round — only one character can Scan per round.`);
+  if (f && foes.length && !foes.some((t) => inRange(f, t))) {
+    const d = Math.min(...foes.map((t) => hexDist(f.pos, t)));
+    throw new Error(`The ${state.active} is ${d}″ away — out of ${f.name}’s ${f.range} Range (${f.rangeIn}″). Get closer to Scan it.`);
+  }
+  // mark this round's Scan only once the roll actually happens
+  return async () => {
+    const c = (await load('combat')) || combat;
+    c.scanRound = { round: c.combat.round, by: body.whoId, name: c.posse.find((p) => p.id === body.whoId)?.name || 'Someone' };
+    c.v = (c.v || 0) + 1;
+    await save(c, 'combat');
+  };
 }
 
 export default async function handler(req, res) {
@@ -52,7 +64,7 @@ export default async function handler(req, res) {
     switch (body.action) {
       case 'auth':
         return send(res, warden ? 200 : 401, warden ? { ok: true } : { error: 'Wrong PIN.' });
-      case 'roll': await scanRange(state, body); result = doRoll(state, body); break;
+      case 'roll': { const mark = await scanRange(state, body); result = doRoll(state, body); await mark?.(); break; }
       case 'guess': result = doGuess(state, body); break;
       case 'note': doNote(state, body); break;
       default:

@@ -207,6 +207,7 @@ function renderPanel() {
       <div class="d-row">${sel.grit != null ? `<span><b>GRIT</b> ${sel.grit}</span>` : ''}${sel.defense ? `<span><b>DEFENSE</b> ${esc(sel.defense)}</span>` : ''}${sel.speed ? `<span><b>SPEED</b> ${esc(sel.speed)}</span>` : ''}${sel.finesse ? `<span><b>FINESSE</b> ${esc(sel.finesse)}</span>` : ''}${sel.aces ? `<span><b>ACES</b> ${sel.aces}/6</span>` : ''}${sel.size ? `<span><b>SIZE</b> ${esc(sel.size)}</span>` : ''}</div>
       ${sel.frenzyText?.length ? `<div class="d-note">${sel.frenzyText.map(esc).join('<br>')}</div>` : ''}
       ${sel.sweepPreview ? `<div class="d-note fs-prev">${gl('forstall')} ${esc(sel.sweepPreview)}</div>` : ''}
+      ${sel.emp != null ? `<button type="button" class="btn small danger" data-emp="${esc(sel.ref)}"${sel.emp < 1 ? ' disabled' : ''}>${gl('flash')} Natural EMP (${sel.emp}/2 left today)</button>` : ''}
       ${warden && sel.kind === 'enemy' && sel.ref ? `<label class="check"><input type="checkbox" data-submerged="${esc(sel.ref)}"${sel.submerged ? ' checked' : ''}> Submerged — Forstalls can’t reach it</label>` : ''}
       ${(() => { const f = sel.kind === 'pc' && (data.forstalls || []).find((x) => x.owner === sel.ref); return f ? forstallCard(f) : ''; })()}
       ${sel.attacks?.length ? `<details class="d-atk"><summary>Attacks</summary>${sel.attacks.map((a) => `<p>${esc(a)}</p>`).join('')}</details>` : ''}
@@ -218,6 +219,11 @@ function renderPanel() {
         <span class="n">${esc(t.name)}</span><span class="d ${band(d)}">${d}″ · ${BAND_LABEL[band(d)]}</span></div>`).join('') : '<p class="muted">Nobody else on the board.</p>'}</div>`;
   }
   if (sel) wireFs(box);
+  box.querySelector('[data-emp]')?.addEventListener('click', async (e) => {
+    if (!await ask('Natural EMP?\n\nEvery Forstall within Long Range (18″) stops Sweeping, and they can’t Scan or Burst until this monster’s next turn.', { ok: 'Let it rip', danger: true })) return;
+    const r = await fsAct({ action: 'forstall', op: 'emp', enemy: e.target.closest('[data-emp]').dataset.emp });
+    if (r) toast(r.hit.length ? `EMP! ${r.hit.join(', ')} knocked out.` : 'EMP — no Forstall in range.');
+  });
   box.querySelector('[data-submerged]')?.addEventListener('change', (e) => fsAct({ action: 'enemy', id: e.target.dataset.submerged, op: 'submerged' }));
   const list = $('#token-list');
   list.innerHTML = data.tokens.length ? data.tokens.map((t) => `<div class="tok-row${t.id === selected ? ' sel' : ''}" data-pick="${t.id}">
@@ -710,9 +716,12 @@ function forstallCard(f) {
   return `<div class="fs-card${f.sweep ? ' on' : ''}">
     <div class="fs-head"><span class="fs-ic">${gl('forstall')}</span><div><b>${esc(f.name)}</b><small>${esc(f.range)} Range${f.rangeIn < 999 ? ` (${f.rangeIn}″)` : ''} · Sweep ${esc(f.pool)}${data.cave ? ' −1 (cave)' : ''}${f.charges != null ? ` · ${f.charges} charge${f.charges === 1 ? '' : 's'} left` : ''}${f.ownerName ? ` · ${esc(f.ownerName)}` : ''}</small></div></div>
     <p class="fs-state">${f.sweep ? `<b>Sweeping · ${f.sweep.hits} Hit${f.sweep.hits === 1 ? '' : 's'}${f.sweep.untilLabel ? ` · this charge lasts until ${esc(f.sweep.untilLabel)}` : ''}.</b> Monsters in Range lose that much Grit when their turn starts or they come into Range (+1 for programmed frequencies, minus their Sweep Tolerance).` : 'Switched off.'}</p>
+    ${f.jammed ? `<p class="fs-warn">${gl('flash')} Scrambled by a Natural EMP — no Scan or Burst until the monster’s next turn.</p>` : ''}
+    ${f.pulse ? `<p class="fs-state">${gl('heart')} <b>Heartbeat Sensor:</b> ${f.pulse.count ? `${f.pulse.count} monster${f.pulse.count === 1 ? '' : 's'} within ${f.rangeIn + 6}″ — the nearest is ${f.pulse.nearest}″ away.` : `quiet — nothing within ${f.rangeIn + 6}″.`}</p>` : ''}
     ${clashWith.length ? `<p class="fs-warn">${gl('flash')} Edison’s Rule 1: its waves cross ${esc(clashWith.join(' and '))}’s.</p>` : ''}
     ${may ? `<div class="fs-btns"><button type="button" class="btn small" data-fs-sweep="${esc(f.key)}"${f.owner && !f.charges ? ' disabled' : ''}>${gl('forstall')} ${f.sweep ? 'Readjust' : 'Sweep'} · ${cost}</button>
         ${f.sweep ? `<button type="button" class="btn small secondary" data-fs-off="${esc(f.key)}">Switch off</button>` : ''}</div>
+      ${f.efficiency != null ? `<label class="check fs-eff"><input type="checkbox" data-fs-eff="${esc(f.key)}"${f.efficiency < 1 ? ' disabled' : ''}> Forstall Efficiency — turn one Hit into an Ace (${f.efficiency}/2 left today)</label>` : ''}
       <div class="fs-slots"><span>MEMORY SLOTS</span>${[0, 1, 2, 3].map((i) => `<select data-fs-slot="${esc(f.key)}" data-i="${i}" aria-label="Memory slot ${i + 1}">${slotOptions(f.slots[i] || '', f.owner ? kzPosse : kzAll)}</select>`).join('')}</div>
       ${f.fuse ? (f.burst?.length ? `<div class="fs-burst"><select data-fs-bt="${esc(f.key)}" aria-label="Burst target">${f.burst.map((b) => `<option value="${esc(b.ref)}">${esc(b.name)}</option>`).join('')}</select>
           <button type="button" class="btn small danger" data-fs-burst="${esc(f.key)}">${gl('flash')} Burst${f.owner ? ' · 1 crystal' : ''}</button></div>`
@@ -733,7 +742,8 @@ async function fsAct(body) {
 }
 function wireFs(box) {
   box.querySelectorAll('[data-fs-sweep]').forEach((b) => b.addEventListener('click', async () => {
-    const r = await fsAct({ action: 'forstall', op: 'sweep', key: b.dataset.fsSweep });
+    const eff = box.querySelector(`[data-fs-eff="${CSS.escape(b.dataset.fsSweep)}"]`)?.checked;
+    const r = await fsAct({ action: 'forstall', op: 'sweep', key: b.dataset.fsSweep, efficiency: !!eff });
     if (r?.dice) { await rollPopup(r, `${r.label} · ${r.pool}`); toast(`Sweep ${r.hits} — monsters in Range lose ${r.hits} Grit at their turn (+1 if programmed).`); }
     else if (r?.melted) toast('The waves crossed — sparks, Electrocuted, batteries melted.', true);
   }));
