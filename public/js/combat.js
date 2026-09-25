@@ -195,8 +195,11 @@ function enemyCard(e) {
   }
   const p = e.profile ? data.profiles[e.profile] : null;
   const skills = Object.entries(e.skills || {}).filter(([, v]) => isPool(v));
-  return `<article class="fighter${now ? ' now' : ''}${e.defeated ? ' down' : ''}${frenzied ? ' frenzied' : ''}" data-enemy="${e.id}">
+  return `<article class="fighter${now ? ' now' : ''}${e.defeated ? ' down lootable' : ''}${frenzied ? ' frenzied' : ''}" data-enemy="${e.id}">
+    ${e.defeated ? `<div class="loot-flag">${gl('skull')} ${e.fled ? 'Fled' : 'Down'} — ${e.looted ? 'looted' : 'ready to loot'}</div>` : ''}
     <div class="f-head"><div><div class="f-name">${esc(e.name)} <button type="button" class="rename" data-rename title="Rename" aria-label="Rename ${esc(e.name)}">✎</button></div><div class="f-sub">${esc(e.size)}${p ? ` · p. ${p.page}${p.name !== e.name ? ` · ${esc(p.name.replace('Human - ', ''))}` : ''}` : ' · custom'}</div></div><div>${tags}</div></div>
+    ${e.defeated ? lootHTML(e, p) : ''}
+    <div class="f-body">
     ${hpHTML(e, true)}
     ${gritHTML(e, true)}
     <div class="e-stats">
@@ -216,7 +219,7 @@ function enemyCard(e) {
     <div>${p.frenzy.map((f) => `<div class="frenzy-row${e.frenzied.includes(f.name) ? ' hit' : ''}"><b>${esc(f.name)}</b> ${f.event ? '(Event) ' : ''}at ${f.health} Health${e.frenzied.includes(f.name) ? ' — <b>ACTIVE</b>' : ''}<br>${esc(f.text)}</div>`).join('')}</div>
     ${eaHTML(e, p)}
     <details class="more"><summary>Features &amp; tolerances</summary>${p.features.map((f) => `<p>${esc(f)}</p>`).join('')}<p><b>Tolerances:</b> ${esc(p.tolerances)}</p></details>` : ''}
-    ${e.defeated ? lootHTML(e, p) : ''}
+    </div>
     <div class="f-actions">
       <label class="check small-text"><input type="checkbox" data-secret> Secret rolls</label>
       <button class="btn small secondary danger" data-remove type="button">Remove</button>

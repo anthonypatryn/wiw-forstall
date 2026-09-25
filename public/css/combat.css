@@ -176,3 +176,12 @@ details.more p { font-size: var(--fs-sm); margin: 6px 0; }
 .f-name .rename { border: 0; background: none; color: var(--ink-faint); font-size: var(--fs-sm); cursor: pointer; padding: 0 2px; vertical-align: middle; }
 .f-name .rename:hover { color: var(--rust); }
 #add-mon-name, #add-npc-name { flex: 1 1 140px; min-width: 0; padding: 8px 10px; border: 1.5px solid var(--ink); border-radius: var(--radius); background: var(--surface); font-size: var(--fs-sm); }
+
+/* Warden: a downed monster stays readable — only its stats fade; the loot box sits on top, bright */
+.fighter.down.lootable { opacity: 1; filter: none; }
+.fighter.down.lootable .f-body { opacity: .5; filter: grayscale(.8); }
+.fighter.down.lootable .f-head { opacity: .75; }
+.loot-flag { display: flex; align-items: center; gap: 6px; margin: -4px 0 8px; padding: 5px 10px 3px; border-radius: var(--r-sm); background: var(--ink); color: var(--brass); font: var(--fs-sm) var(--display); letter-spacing: var(--track-wide); }
+.loot-flag .gl { width: 1.1em; height: 1.1em; }
+.fighter.lootable .loot { border: 2px solid var(--brass); background: #fbf1d8; box-shadow: 0 0 0 3px rgba(201,164,92,.25); }
+.fighter.lootable .loot .loot-h { font-size: var(--fs-lg); }
