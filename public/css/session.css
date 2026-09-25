@@ -60,6 +60,3 @@
 .ck-item b.ok { color: #3d6b3a; } .ck-item b.no { color: #8f1d17; }
 .ck-win { margin: 6px 0 0; font-weight: 700; color: #3d6b3a; }
 
-/* game clock */
-.clock-now { font: 34px/1.1 var(--display); letter-spacing: .06em; margin: 4px 0 10px; }
-.clock-btns { display: flex; flex-wrap: wrap; gap: 6px; }

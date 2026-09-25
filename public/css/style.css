@@ -566,7 +566,6 @@ button { cursor: pointer; }
 .who-pick b { display: block; font: 19px var(--display); letter-spacing: .06em; font-weight: 400; }
 .who-pick small { display: block; font-size: 13px; opacity: .75; }
 
-.log-drawer-head .log-clock { font-size: 13px; opacity: .75; margin-right: auto; margin-left: 8px; white-space: nowrap; }
 
 /* Warden strip: "Needs you" */
 .warden-strip .needs-btn b { display: inline-block; min-width: 1.4em; margin-left: 4px; padding: 0 4px; border-radius: 8px; background: rgba(0,0,0,.35); }

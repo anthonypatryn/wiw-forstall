@@ -216,7 +216,8 @@ export function mountNav(active) {
   // the Warden's Session page only shows up in the nav for the Warden
   // Warden mode sticks until "Switch to player view": the scanner link goes to the Warden's scanner
   const on = !!pinStore.get();
-  const items = on ? [...NAV.map(([h, l]) => [h === '/' ? '/warden' : h, l]), ['/combat', `${gl('star')} Combat Control`], ['/session', `${gl('star')} Session`]] : NAV;
+  // the Warden's home is Run the Game (first in the nav)
+  const items = on ? [['/run', `${gl('star')} Run the Game`], ...NAV.map(([h, l]) => [h === '/' ? '/warden' : h, l]), ['/combat', `${gl('star')} Combat Control`], ['/session', `${gl('star')} Session`]] : NAV;
   const cur = active === '/warden' ? (on ? '/warden' : '/') : active === '/' && on ? '/warden' : active;
   el.innerHTML = `<div class="sitenav-inner">${items.map(([href, label]) =>
     `<a href="${href}"${href === cur ? ' aria-current="page"' : ''}>${label}</a>`).join('')}</div>`;
@@ -251,8 +252,8 @@ function pollNeeds(bar) {
     try {
       const n = await api('GET', null, '?view=needs', '/api/combat');
       btn.innerHTML = `Needs you <b class="${n.count ? 'hot' : ''}">${n.count}</b>`;
-      list.innerHTML = `<div class="needs-head">${esc(n.clock)}</div>${n.items.length ? n.items.map((x) => `<a class="${x.urgent ? 'urgent' : ''}" href="${esc(x.href)}">${esc(x.text)}</a>`).join('') : '<span class="muted">All quiet — nothing waiting on you.</span>'}
-        <div class="needs-links"><a href="/session">Session</a><a href="/combat">Combat Control</a><a href="/battle">Battle Map</a><a href="/store">Store</a><a href="/names">NPCs</a></div>`;
+      list.innerHTML = `${n.items.length ? n.items.map((x) => `<a class="${x.urgent ? 'urgent' : ''}" href="${esc(x.href)}">${esc(x.text)}</a>`).join('') : '<span class="muted">All quiet — nothing waiting on you.</span>'}
+        <div class="needs-links"><a href="/run"><b>Run the Game</b></a><a href="/session">Session</a><a href="/combat">Combat Control</a><a href="/battle">Battle Map</a><a href="/store">Store</a><a href="/names">NPCs</a></div>`;
     } catch { /* offline for a moment */ }
   };
   clearInterval(needsTimer);
@@ -262,8 +263,11 @@ function pollNeeds(bar) {
 export function markWarden(on) {
   let bar = document.querySelector('.warden-strip');
   const inner = document.querySelector('.sitenav-inner');
-  if (inner && on && !inner.querySelector('a[href="/session"]')) inner.insertAdjacentHTML('beforeend', '<a href="/combat">' + gl('star') + ' Combat Control</a><a href="/session">' + gl('star') + ' Session</a>');
-  if (inner && !on) { inner.querySelector('a[href="/session"]')?.remove(); inner.querySelector('a[href="/combat"]')?.remove(); }
+  if (inner && on && !inner.querySelector('a[href="/session"]')) {
+    inner.insertAdjacentHTML('afterbegin', `<a href="/run"${location.pathname.startsWith('/run') ? ' aria-current="page"' : ''}>${gl('star')} Run the Game</a>`);
+    inner.insertAdjacentHTML('beforeend', `<a href="/combat">${gl('star')} Combat Control</a><a href="/session">${gl('star')} Session</a>`);
+  }
+  if (inner && !on) { ['/session', '/combat', '/run'].forEach((h) => inner.querySelector(`a[href="${h}"]`)?.remove()); }
   const scan = inner?.querySelector('a[href="/"], a[href="/warden"]');
   if (scan) scan.setAttribute('href', on ? '/warden' : '/');
   if (on && !bar) {

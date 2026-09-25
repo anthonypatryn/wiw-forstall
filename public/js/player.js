@@ -7,7 +7,7 @@ import { renderNotebook } from './notebook.js';
 import { mountTableLog } from './tablelog.js';
 import { gl } from './glyphs.js';
 
-if (savedPin()) location.replace('/warden'); // Warden mode stays on until "Switch to player view"
+if (savedPin()) location.replace('/run'); // Warden mode stays on until "Switch to player view"
 injectDefs();
 mountTableLog();
 mountNav('/');
