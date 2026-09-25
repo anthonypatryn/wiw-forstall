@@ -596,34 +596,9 @@ function tapPack(p, name, max) {
 // Picking from a dropdown fills the matching section in one save.
 function pickItem(p, sel) {
   const it = itemById(sel.value);
-  const i = sel.dataset.i;
   if (!it) return;
-  const f = {};
-  const set = (path, v) => { f[path] = v == null ? '' : v; };
-  const pool = (v) => (isPool(v) ? String(v).toUpperCase() : '');
-  if (sel.dataset.pick === 'weapon') {
-    const [manu, ...rest] = it.name.includes(' - ') ? it.name.split(' - ') : ['', it.name];
-    set(`weapons.${i}.itemId`, it.id); set(`weapons.${i}.type`, WEAPON_TALENT[it.sub] || it.sub || '');
-    set(`weapons.${i}.manufacturer`, manu.trim()); set(`weapons.${i}.model`, rest.join(' - ').trim() || it.name);
-    set(`weapons.${i}.slots`, it.slots != null ? String(it.slots) : ''); set(`weapons.${i}.grit`, it.grit2 ? `${it.grit} | ${it.grit2}` : String(it.grit ?? ''));
-    ['arms', 'short', 'long', 'distant'].forEach((k) => set(`weapons.${i}.${k}`, pool(it[k])));
-  } else if (sel.dataset.pick === 'gear') {
-    const notes = [it.benefit, it.effect, it.pool && `Roll ${it.pool}`, it.arms && `Arm’s Reach: ${it.arms}`, it.short && `Short: ${it.short}`, it.defense && `Defense ${it.defense}`].filter(Boolean).join(' · ').slice(0, 80);
-    set(`gear.${i}.itemId`, it.id); set(`gear.${i}.item`, it.name.slice(0, 80)); set(`gear.${i}.type`, it.sub === 'Trap' ? 'Trap' : it.sub);
-    set(`gear.${i}.grit`, String(it.grit ?? '')); set(`gear.${i}.notes`, notes);
-  } else if (sel.dataset.pick === 'forstall') {
-    set('forstall.itemId', it.id); set('forstall.model', it.name); set('forstall.slots', String(it.slots ?? '')); set('forstall.range', it.range || '');
-    set('forstall.grit', String(it.grit ?? '')); set('forstall.duration', (it.duration || '').replace(/\s*hours?/, '')); set('forstall.sweep', pool(it.sweep));
-  } else if (sel.dataset.pick === 'mech') {
-    set('mech.itemId', it.id); set('mech.class', it.name.replace(/ Mech$/, '')); set('mech.slots', String(it.slots ?? '')); set('mech.speed', it.speed || '');
-    set('mech.maxHealth', String(it.health ?? '')); set('mech.health', String(it.health ?? '')); set('mech.defense', pool(it.defense));
-    set('mech.supplies', String(it.supply ?? '')); set('mech.cover', it.cover || '');
-  } else if (sel.dataset.pick === 'horse') {
-    set('horse.itemId', it.id); set('horse.breed', it.name); set('horse.breakingPoint', String(it.breaking ?? '')); set('horse.breedAbility', it.bond || '');
-    set('horse.maxHealth', '12'); set('horse.health', '12');
-  }
   sel.value = '';
-  act({ action: 'sheet', id: p.id, fields: f }).then((ok) => ok && toast(`${it.name} filled in.`));
+  act({ action: 'pc', id: p.id, op: 'pick', kind: sel.dataset.pick, i: Number(sel.dataset.i) || 0, itemId: it.id }).then((ok) => ok && toast(`${it.name} filled in.`));
 }
 
 const pipRow = (label, n, max, attr) => `<span class="lbl">${label}</span><span class="pips">${Array.from({ length: max }, (_, i) =>

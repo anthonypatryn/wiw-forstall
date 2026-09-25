@@ -2,6 +2,7 @@ import { load, save, storeKind } from '../lib/store.js';
 import { pinOk, send, readBody, sinceParam } from '../lib/http.js';
 import { freshCombat, publicAction, playerCombatView, wardenCombatView, logView, META, autoAchievements, isUndoable, pushUndo, undoLabel, undoCombat, applyMapRange, sweepHit } from '../lib/combat.js';
 import { fields, slotMonster } from '../lib/forstall.js';
+import { findItem, freshShop } from '../lib/shop.js';
 
 const KEY = 'combat';
 
@@ -37,6 +38,8 @@ export default async function handler(req, res) {
       await save(state, KEY);
       return send(res, 200, { result: r, state: view() });
     }
+    // picking from the sheet's store list: look the item up here (Warden-made items live in the shop document)
+    if (body.action === 'pc' && body.op === 'pick') body.item = findItem((await load('shop')) || freshShop(), String(body.itemId || ''));
     // a character's Forstall memory slots only take frequencies the posse has fully decoded on the Scanner (p. 83)
     if (body.action === 'sheet') {
       const kz = Object.entries(body.fields && typeof body.fields === 'object' ? body.fields : { [body.path]: body.value })

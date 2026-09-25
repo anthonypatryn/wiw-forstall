@@ -54,7 +54,7 @@
   - Every new sheet field needs a RULES entry.
   - Multi-field saves send `{action:'sheet', id, fields:{path:value}}`.
   - View/edit modes: `done:false` = being created (checklist + Save character → pcOp `finish`). Finished sheets (`done` true or missing) open locked; `applyMode` in posse.js disables fields except `PLAY_PATHS` (wallet/scrap/supplies, horse/mech health, ammo) and the Health/Grit/Status/uses buttons. `#id/edit` opens in edit mode.
-- Store → sheet: `equipItem(pc, item, qty)` in lib/sheets.js places every bought/given item (lib/shop.js `decide`/`give`): weapons → a free weapon slot, Forstall models → `pc.forstall`, mechs, horses, Special Ammo → a matching weapon's ammo slot (arrowheads = bows), upgrades → `attachUpgrade` (shared with pcOp installUpgrade), gear/traps/crystals → gear slots; goods & services stay in `pc.items` only. No room → `{warning}` shown with `tell()` (OK-only dialog) and logged; the item stays in inventory. Sheet inventory rows show **Put on sheet** (shop action `equip`, players allowed) for anything not placed yet. Removal is linked both ways: the section ✕ (pcOp `removeThing`) also drops the inventory entry, and the inventory ✕ (pcOp `dropItem`) also takes it off the sheet (`unequipItem`). Horse/mech pictures only show while the breed/class is filled in.
+- Store → sheet: `equipItem(pc, item, qty)` in lib/sheets.js places every bought/given item (lib/shop.js `decide`/`give`): weapons → a free weapon slot, Forstall models → `pc.forstall`, mechs, horses, Special Ammo → a matching weapon's ammo slot (arrowheads = bows), upgrades → `attachUpgrade` (shared with pcOp installUpgrade), gear/traps/crystals → gear slots; goods & services stay in `pc.items` only. No room → `{warning}` shown with `tell()` (OK-only dialog) and logged; the item stays in inventory. The sheet's store-list pickers send pcOp `pick {kind, i, itemId}` (api/combat.js looks the item up, custom ones included) and the server fills the section with the same `weaponFields`/`gearFields`/`forstallFields`/`mechFields`/`horseFields`. Sheet inventory rows show **Put on sheet** (shop action `equip`, players allowed) for anything not placed yet. Removal is linked both ways: the section ✕ (pcOp `removeThing`) also drops the inventory entry, and the inventory ✕ (pcOp `dropItem`) also takes it off the sheet (`unequipItem`). Horse/mech pictures only show while the breed/class is filled in.
 - Catalog:
   - `lib/catalog.js` holds 307 items, generated from the price list. Item ids look like `pistols-used-pistol`.
   - `img` names a file in `/img/store/<img>.webp`.
@@ -75,6 +75,7 @@
 - **Edits with Python:** write the script to a file in the scratchpad, then run it. Bash heredocs with quotes and backticks break.
 - **Local preview:** config "wiw-forstall" on port 5190, in `mat-headz/.claude/launch.json`. Restart it after any `lib/` change, because the dev server caches modules.
 - **Verify live** by polling `curl https://wiw-forstall.vercel.app/<page>` until the new `?v=` shows up.
+- **Rule checks:** `npm test` (node:test, `tests/rules.test.js`: Scanner scoring, ranges, Sweep/Tolerance/Edison, move cost, Store→sheet, upgrades, a combat Sweep). Run it before every push and add a check when you add a rule.
 - **After each chunk:** commit and push to `main`. Vercel auto-deploys.
 
 ## User preferences
