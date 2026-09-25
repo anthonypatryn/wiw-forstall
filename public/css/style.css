@@ -695,7 +695,7 @@ body.nav-open .fab-row, body.nav-open .hud-strip { display: none; }
 
 /* tap chip — pick one or many; .on = selected */
 .chip-btn { display: inline-flex; flex-direction: column; align-items: center; padding: 6px 12px 4px; border: 1.5px solid rgba(0,0,0,.25); border-radius: var(--r-pill); background: var(--surface); cursor: pointer; font: var(--fs-md)/1.1 var(--display); letter-spacing: var(--track-tight); color: var(--ink); }
-.chip-btn:has(small) { padding: 12px 22px 10px; gap: 5px; min-width: 104px; line-height: 1.15; }
+.chip-btn:has(small) { padding: 12px 24px 14px; gap: 5px; min-width: 104px; line-height: 1.15; border-radius: 22px; } /* two-line chips: softer corners and room under the small line so the curve doesn't crowd it */
 .chip-btn:has(small) > .gl { margin-bottom: 2px; }
 .chip-btn small { font: var(--fs-xs)/1.2 var(--body); letter-spacing: 0; opacity: .7; }
 .chip-btn.on { background: var(--ink); color: #fff; border-color: var(--ink); }
