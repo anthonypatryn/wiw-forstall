@@ -10,6 +10,7 @@ import lockpick from '../lib/routes/lockpick.js';
 import map from '../lib/routes/map.js';
 import npcs from '../lib/routes/npcs.js';
 import papers from '../lib/routes/papers.js';
+import saloon from '../lib/routes/saloon.js';
 import scan from '../lib/routes/scan.js';
 import scenes from '../lib/routes/scenes.js';
 import session from '../lib/routes/session.js';
@@ -17,7 +18,7 @@ import shop from '../lib/routes/shop.js';
 import wanted from '../lib/routes/wanted.js';
 import whispers from '../lib/routes/whispers.js';
 
-const ROUTES = { backup, battle, combat, handouts, image, journal, lockpick, map, npcs, papers, scan, scenes, session, shop, wanted, whispers };
+const ROUTES = { backup, battle, combat, handouts, image, journal, lockpick, map, npcs, papers, saloon, scan, scenes, session, shop, wanted, whispers };
 
 export default function handler(req, res) {
   const area = new URL(req.url, 'http://x').pathname.split('/')[2] || '';

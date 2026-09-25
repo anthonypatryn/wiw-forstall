@@ -443,3 +443,94 @@ test('Scene prep: Warden-only, tidy fields, beats marked used, done clears tonig
   const c = sceneAction(st, { action: 'copy', id: s.id }, W);
   assert.deepEqual(c.used, {}); assert.equal(c.done, false);
 });
+
+test('Poker (five-card draw): hand ranks and tie-breaks', async () => {
+  const { rankHand, compareHands } = await import('../lib/saloon.js');
+  const H = (s) => s.split(' ').map((x) => ({ r: { A: 14, K: 13, Q: 12, J: 11, T: 10 }[x[0]] || Number(x[0]), s: x[1] }));
+  const cat = (s) => rankHand(H(s)).cat;
+  assert.equal(cat('A♠ K♠ Q♠ J♠ T♠'), 8); assert.equal(rankHand(H('A♠ K♠ Q♠ J♠ T♠')).name, 'Royal Flush');
+  assert.equal(cat('9♥ 9♠ 9♦ 9♣ 2♠'), 7);
+  assert.equal(cat('3♥ 3♠ 3♦ 7♣ 7♠'), 6);
+  assert.equal(cat('2♥ 7♥ 9♥ J♥ K♥'), 5);
+  assert.equal(cat('A♥ 2♠ 3♦ 4♣ 5♠'), 4); assert.equal(rankHand(H('A♥ 2♠ 3♦ 4♣ 5♠')).name, 'Straight to the Five');
+  assert.equal(cat('8♥ 8♠ 8♦ K♣ 2♠'), 3);
+  assert.equal(cat('8♥ 8♠ 4♦ 4♣ 2♠'), 2);
+  assert.equal(cat('8♥ 8♠ 5♦ 4♣ 2♠'), 1);
+  assert.equal(cat('A♥ 9♠ 5♦ 4♣ 2♠'), 0);
+  assert.ok(compareHands(rankHand(H('A♥ A♠ 5♦ 4♣ 2♠')), rankHand(H('K♥ K♠ Q♦ J♣ 9♠'))) > 0, 'aces beat kings');
+  assert.ok(compareHands(rankHand(H('A♥ A♠ 9♦ 4♣ 2♠')), rankHand(H('A♦ A♣ 8♦ 7♣ 6♠'))) > 0, 'kicker decides');
+  assert.equal(compareHands(rankHand(H('2♥ 3♠ 4♦ 5♣ 6♠')), rankHand(H('2♦ 3♣ 4♥ 5♠ 6♥'))), 0);
+});
+
+test('Poker: a fold wins the pot; a full hand runs to the showdown with real wallet money', async () => {
+  const { freshSaloon, saloonAction, saloonView } = await import('../lib/saloon.js');
+  const C = (x) => ({ r: { A: 14, K: 13, Q: 12, J: 11, T: 10 }[x[0]] || Number(x[0]), s: x[1] });
+  // cards come off the top: NPC 1st, Lila 1st, NPC 2nd, … then the draw
+  const stack = (dealt, rest = []) => () => [...dealt, ...rest].map(C).reverse();
+  const make = (style, deck, rand = 0.99) => {
+    const st = freshSaloon(), logs = [];
+    const posse = [{ id: 'a', name: 'Lila', wallet: '20.00', skills: { intuition: '3B', charm: '3B', finesse: '3B' } }];
+    const ctx = { posse, rand: () => rand, deck, npcSkills: () => ({ charm: '1B', intuition: '1B', finesse: '1B' }), roll: (seat) => ({ hits: seat.kind === 'npc' ? 0 : 3 }), log: (t) => logs.push(t) };
+    saloonAction(st, { action: 'open', ante: 1, bet: 2, npcs: [{ name: 'Doc', style, bank: 50 }] }, { ...ctx, warden: true });
+    saloonAction(st, { action: 'join', pc: 'a' }, ctx);
+    return { st, ctx, posse, logs };
+  };
+  // 1) Lila bets pair of aces; a tight NPC holding junk folds
+  let g = make('tight', stack(['2♠', 'A♠', '7♦', 'A♦', '9♣', '3♣', 'J♥', '5♥', '4♠', '8♠']));
+  saloonAction(g.st, { action: 'deal' }, { ...g.ctx, warden: true });
+  let v = saloonView(g.st, { pc: 'a' });
+  assert.equal(v.table.hand.turn, 'pc:a', 'the NPC checked to Lila');
+  assert.equal(v.table.hand.mine.length, 5);
+  assert.throws(() => saloonAction(g.st, { action: 'move', pc: 'a', move: 'call' }, g.ctx), /check/);
+  saloonAction(g.st, { action: 'move', pc: 'a', move: 'bet' }, g.ctx);
+  assert.equal(g.st.table.hand.phase, 'over');
+  assert.equal(g.posse[0].wallet, '21.00');
+  assert.match(g.logs.at(-1), /Lila takes the pot \(\$4\.00\)/);
+  // 2) a loose NPC with kings bets both rounds; Lila calls with aces and wins at the showdown
+  g = make('loose', stack(['K♠', 'A♠', 'K♦', 'A♦', '9♣', '3♣', '6♥', '5♥', '2♠', '8♠'], ['4♣', '7♣', 'J♦', '2♦', '4♦', '7♦']));
+  saloonAction(g.st, { action: 'deal' }, { ...g.ctx, warden: true });
+  assert.equal(g.st.table.hand.turn, 'pc:a');
+  saloonAction(g.st, { action: 'move', pc: 'a', move: 'call' }, g.ctx);
+  assert.equal(g.st.table.hand.phase, 'draw');
+  assert.throws(() => saloonAction(g.st, { action: 'draw', pc: 'a', discard: [0, 1, 2, 3] }, g.ctx), /Ace/, 'four cards only while keeping an Ace');
+  saloonAction(g.st, { action: 'draw', pc: 'a', discard: [2, 3, 4] }, g.ctx);
+  assert.equal(g.st.table.hand.phase, 'bet2');
+  saloonAction(g.st, { action: 'move', pc: 'a', move: 'call' }, g.ctx);
+  assert.equal(g.st.table.hand.phase, 'over');
+  v = saloonView(g.st, { pc: 'a' });
+  assert.deepEqual(v.table.hand.winners, ['pc:a']);
+  assert.match(v.table.hand.shown['npc:0'].name, /Kings/);
+  assert.equal(g.posse[0].wallet, '27.00'); // 20 − 1 ante − 2 − 4 + 14 pot
+  assert.equal(g.st.table.seats[0].bank, 43);
+  // the NPC's cards were never in Lila's view before the showdown; the Warden sees them
+  assert.ok(saloonView(g.st, { warden: true }).table.hand.all['npc:0']);
+});
+
+test('Poker skill moves: a tell shows one NPC card, a bluff rattles weak hands, a caught palm folds you', async () => {
+  const { freshSaloon, saloonAction, saloonView } = await import('../lib/saloon.js');
+  const C = (x) => ({ r: { A: 14, K: 13, Q: 12, J: 11, T: 10 }[x[0]] || Number(x[0]), s: x[1] });
+  const deck = () => ['2♠', 'A♠', '7♦', 'A♦', '9♣', '3♣', 'J♥', '5♥', '4♠', '8♠', 'K♣', 'K♦', 'Q♠', 'Q♥'].map(C).reverse();
+  const make = (lilaHits) => {
+    const st = freshSaloon(), caught = [];
+    const posse = [{ id: 'a', name: 'Lila', wallet: '20.00', skills: {} }];
+    const ctx = { posse, rand: () => 0.99, deck, npcSkills: () => ({}), roll: (seat) => ({ hits: seat.kind === 'npc' ? 1 : lilaHits }), log: () => {}, caught: (s) => caught.push(s.name) };
+    saloonAction(st, { action: 'open', npcs: [{ name: 'Doc', style: 'loose' }] }, { ...ctx, warden: true });
+    saloonAction(st, { action: 'join', pc: 'a' }, ctx);
+    saloonAction(st, { action: 'deal' }, { ...ctx, warden: true });
+    return { st, ctx, caught };
+  };
+  let g = make(3);
+  const r = saloonAction(g.st, { action: 'tell', pc: 'a', target: 'npc:0' }, g.ctx);
+  assert.ok(r.won && r.card);
+  assert.equal(saloonView(g.st, { pc: 'a' }).table.hand.peeks.length, 1);
+  assert.throws(() => saloonAction(g.st, { action: 'tell', pc: 'a', target: 'npc:0' }, g.ctx), /One tell/);
+  const b = saloonAction(g.st, { action: 'bluff', pc: 'a' }, g.ctx);
+  assert.deepEqual(b.rattled, ['Doc'], 'junk hand is rattled');
+  g = make(0); // Lila can't palm to save her life
+  saloonAction(g.st, { action: 'move', pc: 'a', move: 'check' }, g.ctx);
+  if (g.st.table.hand.phase === 'draw' && g.st.table.hand.turn === 'pc:a') {
+    const p = saloonAction(g.st, { action: 'palm', pc: 'a', card: 2 }, g.ctx);
+    assert.equal(p.won, false); assert.deepEqual(g.caught, ['Lila']);
+    assert.equal(g.st.table.hand.phase, 'over', 'caught cheating: folded, the NPC takes the pot');
+  }
+});
