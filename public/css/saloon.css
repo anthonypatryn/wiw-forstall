@@ -185,3 +185,15 @@
 .bj-amt { margin: 0; }
 .bj-amt .pm-btn { color: var(--ink); }
 .bj-amt .pm-btn:hover { color: #fff; }
+
+/* drinking contest */
+.dk-bar { background: linear-gradient(#5a3a22, #3d2716); }
+.dk-glasses { display: flex; gap: 4px; justify-content: center; color: #f2d58a; }
+.dk-glass svg { width: 16px; height: 20px; display: block; }
+.dk-glass.tipped { color: #b9552f; transform: rotate(-35deg); }
+.dk-seat.me { outline: 2px solid rgba(255, 214, 120, 0.7); }
+.dk-grit { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; color: #fff4dc; width: 100%; justify-content: center; }
+.dk-grit > span { font: var(--fs-xs) var(--display); letter-spacing: .1em; text-transform: uppercase; }
+.dk-grit .pm-btn { color: var(--ink); }
+.dk-grit .pm-btn:hover { color: #fff; }
+.dk-grit small { width: 100%; text-align: center; }

@@ -813,3 +813,57 @@ test('Posse stash: money and things go in and come out whole (a gun keeps its up
   assert.equal(combat.stash.money, 15);
   assert.ok(combat.log.some((l) => /Lila put \$8\.00/.test(l.text)) && combat.log.some((l) => /Doc took \$3\.00/.test(l.text)));
 });
+
+test('Drinking contest: Nerve vs a rising number, Grit adds dice, a miss is Drunk + 1 Health, 3 Drunk passes out Dazed, the first out pays the tab', async () => {
+  const { freshSaloon, saloonAction, saloonView } = await import('../lib/saloon.js');
+  const { shotPool } = await import('../lib/drinking.js');
+  assert.deepEqual(shotPool({ black: 2, gold: 2 }, { drunk: 1, grit: 2 }), { black: 3, gold: 2 }, 'Drunk takes a Black die first; Grit adds Black');
+  assert.deepEqual(shotPool({ black: 0, gold: 3 }, { drunk: 1, needled: 2 }), { black: 0, gold: 0 });
+  const st = freshSaloon(), logs = [], dazed = [];
+  const posse = [{ id: 'a', name: 'Lila', wallet: '10.00', grit: 6, health: 10, statuses: {}, skills: { nerve: '3B', finesse: '3B', charm: '3B' } }];
+  // Lila's rolls come from a script: [hits…]; NPC rolls are scripted too
+  let mine = [], theirs = [];
+  const ctx = { posse, rand: () => 0.5, log: (t) => logs.push(t), npcSkills: () => ({ nerve: '2B', intuition: '2B', charm: '2B', finesse: '2B' }), npcHealth: () => 6,
+    poolOf: (seat) => (seat.kind === 'pc' ? { black: 3, gold: 0 } : { black: 2, gold: 0 }), status: (pc, n, s) => { pc.statuses[n] = s; dazed.push(pc.name); },
+    roll: (seat, skill, pool) => ({ hits: seat.kind === 'npc' ? theirs.shift() ?? 0 : mine.shift() ?? 0, pool }) };
+  const W = { ...ctx, warden: true };
+  saloonAction(st, { action: 'open', game: 'drinking', ante: 2, npcs: [{ name: 'Big Sal', profile: 'npc:Human - Weak Combatant', bank: 20 }] }, W);
+  saloonAction(st, { action: 'join', pc: 'a' }, ctx);
+  saloonAction(st, { action: 'deal' }, W);
+  assert.equal(posse[0].wallet, '8.00'); assert.equal(st.table.drink.pot, 4);
+  // round 1 (need 1): Sal makes it; Lila spends 2 Grit and makes it
+  theirs = [1]; saloonAction(st, { action: 'drinkPour', pc: 'a' }, ctx);
+  mine = [2]; let r = saloonAction(st, { action: 'drink', pc: 'a', grit: 2 }, ctx);
+  assert.equal(r.ok, true); assert.equal(posse[0].grit, 4, 'Grit comes off the sheet');
+  assert.throws(() => saloonAction(st, { action: 'drink', pc: 'a' }, ctx), /pour/);
+  // round 2 (need 2): Sal misses; Lila misses → Drunk 1, Health 9
+  theirs = [1]; saloonAction(st, { action: 'drinkPour', pc: 'a' }, ctx);
+  mine = [1]; r = saloonAction(st, { action: 'drink', pc: 'a' }, ctx);
+  assert.equal(r.drunk, 1); assert.equal(posse[0].health, 9);
+  assert.throws(() => saloonAction(st, { action: 'drink', pc: 'a', grit: 9 }, ctx), /pour|Grit/);
+  // round 3: needle Sal (−2 dice), then Sal misses again; Lila keeps it down
+  theirs = [0]; mine = [3];
+  assert.equal(saloonAction(st, { action: 'drinkNeedle', pc: 'a', target: 'npc:0' }, ctx).won, true);
+  theirs = [0]; saloonAction(st, { action: 'drinkPour', pc: 'a' }, ctx);
+  mine = [3]; saloonAction(st, { action: 'drink', pc: 'a' }, ctx);
+  // round 4: Sal misses a third time and passes out; Lila wins the pot and Sal pays the tab
+  theirs = [0]; saloonAction(st, { action: 'drinkPour', pc: 'a' }, ctx);
+  mine = [4]; r = saloonAction(st, { action: 'drink', pc: 'a' }, ctx);
+  const v = saloonView(st, { pc: 'a' }).table.drink;
+  assert.equal(v.over, true); assert.deepEqual(r.end.winners, ['Lila']);
+  assert.equal(posse[0].wallet, '12.00', 'Lila takes the $4 pot');
+  assert.equal(st.table.seats[0].bank, cents(20 - 2 - 0.8), 'Sal pays in and pays 8 shots of tab');
+  assert.ok(logs.some((l) => /drinks everyone under the table/.test(l)));
+  // a new contest: the spittoon — caught means a double; Lila passes out at 3 Drunk and wakes Dazed
+  saloonAction(st, { action: 'deal' }, W);
+  theirs = [5]; saloonAction(st, { action: 'drinkPour', pc: 'a' }, ctx);
+  mine = [0]; theirs = [3];
+  assert.equal(saloonAction(st, { action: 'drinkSpit', pc: 'a' }, ctx).won, false);
+  mine = [1, 0]; r = saloonAction(st, { action: 'drink', pc: 'a' }, ctx);
+  assert.equal(r.rolls.length, 2, 'a double'); assert.equal(r.ok, false);
+  for (let n = 0; n < 2; n++) { theirs = [9]; saloonAction(st, { action: 'drinkPour', pc: 'a' }, ctx); mine = [0]; r = saloonAction(st, { action: 'drink', pc: 'a' }, ctx); }
+  assert.equal(r.out, true); assert.deepEqual(dazed, ['Lila']); assert.equal(posse[0].statuses.Dazed, 1);
+  assert.ok(posse[0].health >= 1);
+  assert.equal(saloonView(st, { pc: 'a' }).table.drink.firstOut, 'pc:a');
+});
+function cents(n) { return Math.round(n * 100) / 100; }
