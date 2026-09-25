@@ -1,6 +1,6 @@
 import { load, save, storeKind } from '../lib/store.js';
 import { pinOk, send, readBody, sinceParam } from '../lib/http.js';
-import { freshCombat, publicAction, playerCombatView, wardenCombatView, logView, META, autoAchievements, isUndoable, pushUndo, undoLabel, undoCombat } from '../lib/combat.js';
+import { freshCombat, publicAction, playerCombatView, wardenCombatView, logView, META, autoAchievements, isUndoable, pushUndo, undoLabel, undoCombat, applyMapRange } from '../lib/combat.js';
 
 const KEY = 'combat';
 
@@ -35,6 +35,11 @@ export default async function handler(req, res) {
       state.v = (state.v || 0) + 1;
       await save(state, KEY);
       return send(res, 200, { result: r, state: view() });
+    }
+    // attacks use the real distance when both tokens are on the battle map
+    if (state.combat?.active && ((body.action === 'pc' && (body.op === 'attack' || body.op === 'fireHold')) || body.action === 'enemyAttack')) {
+      const battle = await load('battle');
+      applyMapRange(state, battle?.tokens, body, warden);
     }
     const undoable = isUndoable(state, body);
     if (undoable) pushUndo(state);

@@ -274,7 +274,13 @@ function renderEnemies() {
     card.querySelectorAll('[data-ea]').forEach((el) => el.addEventListener('change', () => { es[el.dataset.ea] = el.dataset.ea === 'pc' ? el.value : Number(el.value); }));
     card.querySelector('[data-ea-go]')?.addEventListener('click', async () => {
       if (!es.pc) return toast('Pick who it targets.', true);
-      const r = await act({ action: 'enemyAttack', enemy: eid, attack: es.atk, pc: es.pc, cover: es.cover });
+      let r;
+      try { r = (await api('POST', { action: 'enemyAttack', enemy: eid, attack: es.atk, pc: es.pc, cover: es.cover }, '', EP)); poller.push(r.state); r = r.result; }
+      catch (err) {
+        if (!/^OUT_OF_RANGE: /.test(err.message)) { toast(err.message, true); return; }
+        if (!confirm(`${err.message.slice(14)}\n\nRoll it anyway?`)) return;
+        r = await act({ action: 'enemyAttack', enemy: eid, attack: es.atk, pc: es.pc, cover: es.cover, force: true });
+      }
       if (r?.atk?.dice) rollPopup(r.atk, `${r.atk.label} · ${r.atk.pool}`);
       if (r) toast(`${r.dmg ? `${r.dmg} damage` : 'No damage'}${r.notes.length ? ` · ${r.notes.join(', ')}` : ''}`);
     });

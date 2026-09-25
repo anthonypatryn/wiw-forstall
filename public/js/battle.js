@@ -513,7 +513,13 @@ function wireAttack(box, sel) {
   });
   box.querySelector('[data-map-eattack]')?.addEventListener('click', async () => {
     const tgt = data.tokens.find((t) => t.id === s.t);
-    const r = await combatAct({ action: 'enemyAttack', enemy: sel.ref, attack: s.a, pc: tgt.ref, cover: s.cover || 0 });
+    let r;
+    try { const res = await api('POST', { action: 'enemyAttack', enemy: sel.ref, attack: s.a, pc: tgt.ref, cover: s.cover || 0 }, '', '/api/combat'); combat = res.state || combat; r = res.result; }
+    catch (err) {
+      if (!/^OUT_OF_RANGE: /.test(err.message)) { toast(err.message, true); return; }
+      if (!confirm(`${err.message.slice(14)}\n\nRoll it anyway?`)) return;
+      r = await combatAct({ action: 'enemyAttack', enemy: sel.ref, attack: s.a, pc: tgt.ref, cover: s.cover || 0, force: true });
+    }
     if (r?.atk?.dice) rollPopup(r.atk, `${r.atk.label} · ${r.atk.pool}`);
     if (r) { toast(`${r.dmg ? `${r.dmg} damage` : 'No damage'}${r.notes?.length ? ` · ${r.notes.join(', ')}` : ''}`); poller?.now?.(); }
   });
@@ -561,6 +567,7 @@ function wireToken(el) {
     const d = dist(t, dragging.hex);
     const ro = $('#readout');
     ro.hidden = false;
+    ro.style.left = `${e.clientX}px`; ro.style.top = `${e.clientY}px`;
     // Normal speed: 1 Grit per Short Range distance (6"); Long needs 2+, Distant 6 over two turns.
     ro.textContent = d === 0 ? 'Drop to stay put' : moveReadout(t, d);
   });
