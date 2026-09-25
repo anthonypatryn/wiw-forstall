@@ -265,12 +265,13 @@ function buildSheet(p) {
       <span class="save-state" data-save-state></span>
       <button type="button" class="me-star" data-me-bar>☆ This is me</button>
       <span class="mode-tag" data-mode-tag></span>
+      <a class="mode-tag turn-tag" data-turn-tag data-jump="fight" href="#${p.id}" hidden>⚔ YOUR TURN</a>
       <a class="mode-tag bleed-tag" data-bleed-tag data-jump="health" href="#${p.id}" hidden>🩸 BLEEDING OUT</a>
       <button class="btn small" type="button" data-mode="edit" hidden>✎ Edit</button>
       <button class="btn small" type="button" data-mode="view" hidden>✓ Done editing</button>
       <button class="btn small" type="button" data-mode="finish" hidden>Save character</button>
       <button class="btn small secondary danger" id="delete-pc" type="button">Delete</button>
-      <nav class="sheet-toc" aria-label="Jump to">${[['starter', 'Checklist'], ['skills', 'Skills'], ['health', 'Health'], ['statuses', 'Statuses'], ['weapons', 'Weapons'], ['abilities', 'Abilities'], ['prestige', 'Prestige'], ['talents', 'Talents'], ['achievements', 'Titles'], ['disposition', 'Story'], ['reputation', 'Reputation'], ['gear', 'Gear'], ['inventory', 'Inventory'], ['forstall', 'Forstall'], ['horse', 'Horse'], ['mech', 'Mech']].map(([id, label]) => `<a href="#${p.id}" data-jump="${id}">${label}</a>`).join('')}</nav>
+      <nav class="sheet-toc" aria-label="Jump to">${[['starter', 'Checklist'], ['fight', 'Fight'], ['skills', 'Skills'], ['health', 'Health'], ['statuses', 'Statuses'], ['weapons', 'Weapons'], ['abilities', 'Abilities'], ['prestige', 'Prestige'], ['talents', 'Talents'], ['achievements', 'Titles'], ['disposition', 'Story'], ['reputation', 'Reputation'], ['gear', 'Gear'], ['inventory', 'Inventory'], ['forstall', 'Forstall'], ['horse', 'Horse'], ['mech', 'Mech']].map(([id, label]) => `<a href="#${p.id}" data-jump="${id}">${label}</a>`).join('')}</nav>
     </div>
     <div class="sheet-head">
       <div class="sh-trade"><small>THE</small>${esc(p.trade.toUpperCase())}</div>
@@ -279,6 +280,7 @@ function buildSheet(p) {
       <img class="sh-art" src="/img/trades/${p.trade.toLowerCase()}.webp" alt="The ${esc(p.trade)}">
     </div>
 
+    <section class="fight-panel" data-dyn="fight" id="sec-fight" hidden></section>
     <details class="starter" data-starter id="sec-starter"><summary><b>NEW CHARACTER CHECKLIST</b><small>Guidebook pp. 6–8</small><span class="st-prog" data-dyn="starter-prog"></span></summary>
       <div class="starter-in" data-dyn="starter"></div>
       <div class="st-finish"><button type="button" class="btn" data-mode="finish">Save character</button><span class="muted">Checks that nothing is missing, then locks the sheet for play.</span><ul class="st-errs" data-st-errs></ul></div></details>
@@ -399,6 +401,13 @@ function wireSheet(p) {
   on('change', (e) => {
     if (e.target.matches('.pick')) return pickItem(p, e.target);
     if (e.target.matches('[data-pack]')) return choosePack(p, e.target.dataset.pack === '2' ? 'pack2' : 'pack', e.target.value);
+    if (e.target.matches('[data-fs]')) {
+      const s = fightSel[p.id] ||= {}, k = e.target.dataset.fs;
+      s[k] = k === 'aim' ? e.target.checked : k === 'w' ? Number(e.target.value) : k === 'dodge' ? Math.max(1, Number(e.target.value) || 1) : e.target.value;
+      e.target.blur();
+      if (k === 'w' || k === 'aim') renderFight(view, pcById(p.id));
+      return;
+    }
     if (e.target.matches('[data-topple]')) { e.target.blur(); return act({ action: 'sheet', id: p.id, path: 'mech.toppled', value: e.target.checked }); }
     if (e.target.matches('[data-ach]')) {
       const on = e.target.checked, name = e.target.dataset.ach; e.target.blur();
@@ -499,6 +508,26 @@ function wireSheet(p) {
       if (await act({ action: 'pc', id: p.id, op: 'installUpgrade', target: ub.dataset.upgBox, index: ub.dataset.i, item, pay })) toast('Upgrade installed — it’s in the Table Log.');
     } else if (rm && ub) {
       if (confirm('Take this upgrade off? (No refund.)')) act({ action: 'pc', id: p.id, op: 'removeUpgrade', target: ub.dataset.upgBox, index: ub.dataset.i, slot: rm.dataset.upgRm });
+    } else if (e.target.closest('[data-attack]')) {
+      e.target.closest('[data-attack]').blur();
+      const s = fightSel[p.id];
+      const r = await act({ action: 'pc', id: p.id, op: 'attack', weapon: s.w, range: s.r, target: s.t, ammo: s.ammo, aim: s.aim });
+      if (r?.dice) {
+        s.aim = false;
+        await rollPopup(r, `${pcById(p.id).name} → ${r.target} · ${r.pool}`);
+        toast(`${r.dmg ? `💥 ${r.dmg} damage to ${r.target}` : `${r.target} shrugs it off`} (${r.hits} Hits − ${r.def} Defense)${r.down ? ' — it’s down!' : ''}`, !r.dmg);
+      }
+    } else if (e.target.closest('[data-dodge]')) {
+      e.target.closest('[data-dodge]').blur();
+      const r = await act({ action: 'pc', id: p.id, op: 'dodge', grit: fightSel[p.id]?.dodge || 1 });
+      if (r?.dice) { rollPopup(r, `${pcById(p.id).name} · Dodge · ${r.pool}`); toast(`🛡 ${r.banked} Dodge ready for the next hit.`); }
+    } else if (e.target.closest('[data-rl]')) {
+      const b = e.target.closest('[data-rl]'), st = b.dataset.rl; b.blur();
+      const r = await act({ action: 'pc', id: p.id, op: 'relieve', status: st, dice: view.querySelector(`[data-rl-dice="${st}"]`)?.value, skill: view.querySelector(`[data-rl-skill="${st}"]`)?.value });
+      if (r?.dice) { rollPopup(r, `${pcById(p.id).name} · Relieve ${st} · ${r.pool}`); toast(r.left ? `${st} down to [${r.left}].` : `${st} is gone!`); }
+    } else if (e.target.closest('[data-endturn]')) {
+      e.target.closest('[data-endturn]').blur();
+      if (await act({ action: 'pc', id: p.id, op: 'endTurn' })) toast('Turn ended.');
     } else if (e.target.closest('[data-break]')) {
       e.target.closest('[data-break]').blur();
       const r = await act({ action: 'pc', id: p.id, op: 'breakHorse' });
@@ -725,6 +754,67 @@ function renderRides(view, p) {
   }
 }
 
+// ---------- in the fight: attack, Dodge, relieve Statuses, end turn (pp. 41–49) ----------
+const RANGES = [['arms', 'Arm’s Reach'], ['short', 'Short Range'], ['long', 'Long Range'], ['distant', 'Distant']];
+const fightSel = {}; // per sheet: { w, r, t, ammo, aim, dodge }
+let turnSeen = '';
+function whoseName(key) {
+  if (!key) return '—';
+  if (key === 'enemies') return 'the enemies';
+  return data.posse.find((x) => x.id === key)?.name || data.enemies.find((e) => e.id === key)?.name || '—';
+}
+function renderFight(view, p) {
+  const box = view.querySelector('[data-dyn="fight"]');
+  const c = data.combat || {};
+  const mine = c.active && c.current === p.id;
+  // turn alert: banner in the bar + a buzz/toast when the turn comes round
+  view.querySelector('[data-turn-tag]').hidden = !mine;
+  const key = `${c.round}:${c.current}`;
+  if (mine && turnSeen !== key) {
+    if (turnSeen) { toast(`⚔ ${p.name}, it’s your turn!`); try { navigator.vibrate?.([120, 60, 120]); } catch {} }
+    turnSeen = key;
+  } else if (!mine) turnSeen = key;
+  document.title = `${mine ? '⚔ ' : ''}${p.name} · Posse Sheets`;
+  const statuses = Object.entries(p.statuses || {}).filter(([, v]) => v);
+  const show = (c.active || statuses.length) && !p.dead;
+  box.hidden = !show;
+  if (!show || box.contains(document.activeElement)) return;
+  const foes = (data.enemies || []).filter((e) => !e.defeated);
+  const weapons = p.weapons.map((w, i) => [w, i]).filter(([w]) => w.model || w.manufacturer);
+  const sel = fightSel[p.id] ||= { w: weapons[0]?.[1] ?? 0, r: '', t: '', ammo: '', aim: false, dodge: 1 };
+  const w = p.weapons[sel.w] || {};
+  const ranges = RANGES.filter(([k]) => /^(\d+[BG])+$/.test(String(w[k] || '')));
+  if (!ranges.some(([k]) => k === sel.r)) sel.r = ranges[0]?.[0] || '';
+  if (!foes.some((e) => e.id === sel.t)) sel.t = foes[0]?.id || '';
+  const loaded = (w.ammo || []).map((a, k) => [a, k]).filter(([a]) => a.name && Number(a.rds) > 0);
+  if (!loaded.some(([, k]) => String(k) === String(sel.ammo))) sel.ammo = '';
+  const cost = (parseInt(String(w.grit || '').split('|')[0], 10) || 0) + (sel.aim ? 1 : 0);
+  const order = c.turnList || [];
+  const ahead = c.active && !mine && order.includes(p.id) ? (order.indexOf(p.id) - order.indexOf(c.current) + order.length) % order.length : 0;
+  const skillDice = (sk) => { const m = String(p.skills[sk.toLowerCase()] || '').toUpperCase(); return [...m.matchAll(/(\d+)[BG]/g)].reduce((n, x) => n + Number(x[1]), 0); };
+  box.innerHTML = `
+    ${c.active ? (mine ? `<div class="turn-banner mine">⚔ YOUR TURN · <b>${p.grit}</b> Grit${p.dodge ? ` · 🛡 ${p.dodge} Dodge ready` : ''}<button type="button" class="btn small" data-endturn>End my turn ⏭</button></div>`
+      : `<div class="turn-banner">Round ${c.round || 1} · <b>${esc(whoseName(c.current))}</b>’s turn${ahead ? ` · you’re up in ${ahead}` : ''}${p.dodge ? ` · 🛡 ${p.dodge} Dodge ready` : ''}</div>`) : ''}
+    ${c.active && foes.length ? `<div class="fp-row"><b class="fp-h">ATTACK</b>
+      <select data-fs="w" aria-label="Weapon">${weapons.map(([x, i]) => `<option value="${i}"${i === sel.w ? ' selected' : ''}>${esc(x.model || x.manufacturer)}</option>`).join('')}</select>
+      <select data-fs="r" aria-label="Range">${ranges.map(([k, l]) => `<option value="${k}"${k === sel.r ? ' selected' : ''}>${l} · ${esc(String(w[k]).toUpperCase())}</option>`).join('') || '<option value="">no dice set</option>'}</select>
+      <select data-fs="t" aria-label="Target">${foes.map((e) => `<option value="${e.id}"${e.id === sel.t ? ' selected' : ''}>→ ${esc(e.name)}</option>`).join('')}</select>
+      <select data-fs="ammo" aria-label="Ammo"><option value="">regular ammo</option>${loaded.map(([a, k]) => `<option value="${k}"${String(k) === String(sel.ammo) ? ' selected' : ''}>${esc(a.name)} (${a.rds})</option>`).join('')}</select>
+      <label class="check"><input type="checkbox" data-fs="aim"${sel.aim ? ' checked' : ''}${p.aimed ? ' disabled' : ''}> Aim +1 Grit${p.aimed ? ' (used)' : ''}</label>
+      <button type="button" class="btn small" data-attack${sel.r ? '' : ' disabled'}>⚔ Attack · ${cost} Grit</button></div>` : c.active ? '<p class="muted fp-note">No enemies standing.</p>' : ''}
+    ${c.active ? `<div class="fp-row"><b class="fp-h">DODGE</b><input type="number" min="1" max="12" value="${sel.dodge}" data-fs="dodge" aria-label="Grit to spend on Dodge"> Grit → roll that many B <button type="button" class="btn small secondary" data-dodge>🛡 Dodge</button><span class="muted">Soaks the next hit; gone at your next turn.</span></div>` : ''}
+    ${statuses.length ? `<div class="fp-relieve"><b class="fp-h">RELIEVE A STATUS</b> <span class="muted">${c.active ? '1 Grit per die, once per Status per turn, on your turn.' : 'Out of combat: no Grit, try as often as you like.'}</span>
+      ${statuses.map(([st, v]) => {
+        const skills = (meta.statuses[st]?.skill || '').split(' or ');
+        const sk = skills[0], max = Math.max(0, skillDice(sk) - (p.statuses.Poisoned && st !== 'Poisoned' ? 2 : 0));
+        const tried = (p.relieved || []).includes(st) && c.active;
+        return `<div class="fp-row"><b>${esc(st)} [${v}]</b>
+          ${skills.length > 1 ? `<select data-rl-skill="${st}" aria-label="Skill">${skills.map((s) => `<option>${s}</option>`).join('')}</select>` : `<span class="muted">${sk}</span>`}
+          <select data-rl-dice="${st}" aria-label="Dice">${Array.from({ length: max }, (_, i) => `<option value="${i + 1}"${i + 1 === max ? ' selected' : ''}>${i + 1} ${i ? 'dice' : 'die'}</option>`).join('')}</select>
+          <button type="button" class="btn small secondary" data-rl="${st}"${tried || !max ? ' disabled' : ''}>${tried ? 'Tried this turn' : 'Roll to relieve'}</button></div>`;
+      }).join('')}</div>` : ''}`;
+}
+
 // Achievements & Title Rewards (p. 34)
 const earnedTitles = (p) => [...meta.tiers.filter((t) => (p.prestige.total || 0) >= t.prestige).map((t) => t.name), ...(p.achievements || [])];
 function renderAch(view, p) {
@@ -749,13 +839,14 @@ function applyMode(view, p) {
   const locked = !isEditing(p);
   view.classList.toggle('viewing', locked);
   view.querySelectorAll('.sheet input, .sheet select, .sheet textarea, .sheet-head input, .sheet .spur[data-spur]').forEach((el) => {
-    if (el.matches('[data-stc]') || el.closest('[data-dyn="spend"], [data-dyn="ach"], [data-upg-box], [data-dyn="horse"], [data-dyn="mech"]')) return; // Statuses + Prestige spending stay live
+    if (el.matches('[data-stc]') || el.closest('[data-dyn="spend"], [data-dyn="ach"], [data-upg-box], [data-dyn="horse"], [data-dyn="mech"], [data-dyn="fight"]')) return; // Statuses + Prestige spending stay live
     const path = el.dataset.path || el.dataset.vpath || el.closest('.dp[data-pool]')?.dataset.pool;
     el.disabled = locked && !(path && PLAY_PATHS.test(path));
   });
   const creating = p.done === false;
   view.querySelector('[data-starter]').hidden = !creating;
   view.querySelector('[data-jump="starter"]').hidden = !creating;
+  view.querySelector('[data-jump="fight"]').hidden = view.querySelector('[data-dyn="fight"]').hidden;
   view.querySelectorAll('[data-mode="finish"]').forEach((b) => { b.hidden = !creating; });
   view.querySelector('.sheet-bar [data-mode="edit"]').hidden = !locked;
   view.querySelector('.sheet-bar [data-mode="view"]').hidden = creating || locked;
@@ -861,6 +952,7 @@ function hydrate(p) {
   renderAch(view, p);
   renderUpgrades(view, p);
   renderRides(view, p);
+  renderFight(view, p);
   applyMode(view, p);
   view.querySelectorAll('[data-toggle]').forEach((el) => { el.checked = p[el.dataset.toggle].includes(el.value); });
   view.querySelectorAll('[data-ab]').forEach((el) => el.classList.toggle('locked', !p.abilities.includes(el.dataset.ab)));
@@ -973,7 +1065,6 @@ function hydrate(p) {
   view.querySelectorAll('.dp[data-pool]').forEach((dp) => fillPool(dp, get(p, dp.dataset.pool)));
   const dl = view.querySelector('#kz-list');
   if (dl && !dl.children.length) dl.innerHTML = kzOptions.map((o) => `<option value="${esc(o.kz)}">${esc(o.name)}</option>`).join('');
-  document.title = `${p.name} · Posse Sheets`;
 }
 
 // ---------- routing & boot ----------

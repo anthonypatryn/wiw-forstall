@@ -211,6 +211,7 @@ function enemyCard(e) {
         <span class="ae">${esc(a.effect)}</span></div>`;
     }).join('')}</div>
     <div>${p.frenzy.map((f) => `<div class="frenzy-row${e.frenzied.includes(f.name) ? ' hit' : ''}"><b>${esc(f.name)}</b> ${f.event ? '(Event) ' : ''}at ${f.health} Health${e.frenzied.includes(f.name) ? ' — <b>ACTIVE</b>' : ''}<br>${esc(f.text)}</div>`).join('')}</div>
+    ${eaHTML(e, p)}
     <details class="more"><summary>Features &amp; tolerances</summary>${p.features.map((f) => `<p>${esc(f)}</p>`).join('')}<p><b>Tolerances:</b> ${esc(p.tolerances)}</p></details>` : ''}
     ${e.defeated ? lootHTML(e, p) : ''}
     <div class="f-actions">
@@ -218,6 +219,20 @@ function enemyCard(e) {
       <button class="btn small secondary danger" data-remove type="button">Remove</button>
     </div>
   </article>`;
+}
+
+// ---------- enemy attacks a posse member (Warden) ----------
+const eaSel = {};
+function eaHTML(e, p) {
+  if (e.defeated || !p?.attacks?.length) return '';
+  const s = eaSel[e.id] ||= { atk: 0, pc: '', cover: 0 };
+  const alive = data.posse.filter((x) => !x.dead);
+  return `<div class="ea"><b class="loot-h">💥 ATTACK THE POSSE</b>
+    <div class="loot-row"><select data-ea="atk" aria-label="Attack">${p.attacks.map((a, i) => `<option value="${i}"${i === s.atk ? ' selected' : ''}>${esc(a.name)} · ${a.range}${a.aoe ? ' · AOE' : ''}</option>`).join('')}</select>
+      <select data-ea="pc" aria-label="Target"><option value="">— who? —</option>${alive.map((x) => `<option value="${x.id}"${x.id === s.pc ? ' selected' : ''}>${esc(x.name)}${x.dodge ? ` (🛡${x.dodge})` : ''}</option>`).join('')}</select>
+      <select data-ea="cover" aria-label="Cover"><option value="0">no cover</option><option value="1"${s.cover == 1 ? ' selected' : ''}>light cover (+1B)</option><option value="2"${s.cover == 2 ? ' selected' : ''}>heavy cover (+2B)</option></select>
+      <button class="btn small" type="button" data-ea-go>Roll it</button></div>
+    <p class="loot-guide"><span>Rolls the damage, then their Defense + Cover + any banked Dodge, and applies the rest. AOE: roll once per target.</span></p></div>`;
 }
 
 // ---------- loot (p. 79), Warden side ----------
@@ -248,6 +263,14 @@ function renderEnemies() {
     card.querySelectorAll('[data-rollpool]').forEach((b) => b.addEventListener('click', () =>
       doRoll({ pool: b.dataset.rollpool, who: eid, label: b.dataset.label, hidden: card.querySelector('[data-secret]').checked })));
     card.querySelector('[data-remove]').addEventListener('click', () => { if (confirm('Remove this enemy?')) send({ op: 'remove' }); });
+    const es = eaSel[eid] ||= { atk: 0, pc: '', cover: 0 };
+    card.querySelectorAll('[data-ea]').forEach((el) => el.addEventListener('change', () => { es[el.dataset.ea] = el.dataset.ea === 'pc' ? el.value : Number(el.value); }));
+    card.querySelector('[data-ea-go]')?.addEventListener('click', async () => {
+      if (!es.pc) return toast('Pick who it targets.', true);
+      const r = await act({ action: 'enemyAttack', enemy: eid, attack: es.atk, pc: es.pc, cover: es.cover });
+      if (r?.atk?.dice) rollPopup(r.atk, `${r.atk.label} · ${r.atk.pool}`);
+      if (r) toast(`${r.dmg ? `${r.dmg} damage` : 'No damage'}${r.notes.length ? ` · ${r.notes.join(', ')}` : ''}`);
+    });
     const ls = lootSel[eid] ||= { pc: '', cond: 'Good' };
     card.querySelector('[data-loot-pc]')?.addEventListener('change', (ev) => { ls.pc = ev.target.value; });
     card.querySelector('[data-loot-cond]')?.addEventListener('change', (ev) => { ls.cond = ev.target.value; });
