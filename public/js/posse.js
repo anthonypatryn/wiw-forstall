@@ -170,7 +170,7 @@ function renderList() {
       <a class="pc-open" href="#${p.id}" aria-label="Open ${esc(p.name)}’s sheet">
         <img class="pc-face" src="/img/tokens/trade-${p.trade.toLowerCase()}.webp" alt="">
         <div class="t">THE ${esc(p.trade.toUpperCase())}${p.dead ? ' · FALLEN' : ''}</div>
-        <div class="n">${esc(p.name)}</div>${p.title ? `<div class="tile-title">“${esc(p.title)}”</div>` : ''}
+        <div class="n">${esc(p.name)}</div>${p.player ? `<div class="tile-player">Played by ${esc(p.player)}</div>` : ''}${p.title ? `<div class="tile-title">“${esc(p.title)}”</div>` : ''}
         <div class="hp"><span class="bar"><i style="width:${Math.min(100, (p.health / Math.max(1, p.maxHealth)) * 100)}%"></i></span><span class="num">${p.health}/${p.maxHealth}</span></div>
       </a>
       <div class="tile-actions">${p.done === false
@@ -198,8 +198,8 @@ function renderList() {
 $('#new-pc').addEventListener('submit', async (e) => {
   e.preventDefault();
   if (!chosenTrade) return toast('Pick a Trade first.', true);
-  const sheet = await act({ action: 'addPc', trade: chosenTrade, name: $('#new-name').value });
-  if (sheet?.id) { $('#new-name').value = ''; location.hash = sheet.id; }
+  const sheet = await act({ action: 'addPc', trade: chosenTrade, name: $('#new-name').value, player: $('#new-player').value });
+  if (sheet?.id) { $('#new-name').value = ''; $('#new-player').value = ''; location.hash = sheet.id; }
 });
 
 // ---------- small builders ----------
@@ -277,6 +277,7 @@ function buildSheet(p) {
       <div class="sh-trade"><small>THE</small>${esc(p.trade.toUpperCase())}</div>
       <img class="sh-logo" src="/img/logo-light.svg" alt="Wild Imaginary West">
       <label class="sh-name"><span>NAME</span><input class="sheet-name" data-path="name" maxlength="40" aria-label="Character name"><em class="sh-title" data-dyn="title"></em></label>
+      <label class="sh-player"><span>PLAYER</span><input class="sheet-player" data-path="player" maxlength="40" placeholder="who’s playing?" aria-label="Player name"></label>
       <img class="sh-art" src="/img/trades/${p.trade.toLowerCase()}.webp" alt="The ${esc(p.trade)}">
     </div>
 

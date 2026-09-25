@@ -88,7 +88,7 @@ function renderGlance() {
       ${posse.map((p) => {
         const flag = p.dead ? '<span class="gl-flag dead">FALLEN</span>' : p.bleeding ? '<span class="gl-flag">🩸 BLEEDING OUT</span>' : p.done === false ? '<span class="gl-flag wip">CREATING</span>' : '';
         const low = !p.dead && p.health <= Math.ceil(p.maxHealth / 3);
-        return `<tr class="${p.dead ? 'dead' : ''}"><td><a href="/posse#${p.id}"><b>${esc(p.name)}</b></a><small>The ${esc(p.trade)}${p.title ? ` · “${esc(p.title)}”` : ''}</small>${flag}${STATUS_SHORT(p.statuses) ? `<small class="gl-st">${esc(STATUS_SHORT(p.statuses))}</small>` : ''}</td>
+        return `<tr class="${p.dead ? 'dead' : ''}"><td><a href="/posse#${p.id}"><b>${esc(p.name)}</b></a><small>The ${esc(p.trade)}${p.player ? ` · ${esc(p.player)}` : ''}${p.title ? ` · “${esc(p.title)}”` : ''}</small>${flag}${STATUS_SHORT(p.statuses) ? `<small class="gl-st">${esc(STATUS_SHORT(p.statuses))}</small>` : ''}</td>
           <td class="${low ? 'low' : ''}">${p.health}/${p.maxHealth}</td><td>${p.grit}</td>
           <td>${p.prestige?.total ?? 0}${p.prestige?.unclaimed ? `<small>${p.prestige.unclaimed} to spend</small>` : ''}</td><td>${esc(String(p.wallet || '0'))}</td></tr>`;
       }).join('')}</tbody></table>` : '<p class="muted">No characters yet.</p>'}

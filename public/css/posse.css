@@ -429,3 +429,13 @@ body.on-sheet .masthead { display: none; }
 .rm-btn { flex: none; margin-left: 6px; width: 28px; height: 28px; border: 1px solid var(--ink-faint); border-radius: 50%; background: #fffdf7; color: #8f1d17; font-size: 14px; line-height: 1; cursor: pointer; }
 .rm-btn:hover { border-color: #8f1d17; background: #fbe9e4; }
 .inv-item .rm-btn { margin-left: 4px; }
+
+/* player name */
+.sh-player { grid-column: 4; display: flex; align-items: baseline; gap: 10px; align-self: start; margin-top: -6px; }
+.sh-player span { font: 12px var(--display); letter-spacing: .14em; color: var(--brass, #d9b36c); }
+.sheet-player { flex: 1; min-width: 0; border: 0; border-bottom: 1px solid rgba(244,234,214,.5); background: transparent; color: #f4ead6; font: 17px var(--body); padding: 2px 0; }
+.sheet-player:focus { outline: none; border-color: var(--brass); }
+.sheet-player::placeholder { color: rgba(244,234,214,.45); }
+@media (max-width: 860px) { .sh-player { grid-column: 1; grid-row: 3; margin-top: 0; } }
+.tile-player { font: italic 14px var(--body); color: var(--ink-soft); }
+.new-pc #new-player { flex: 1; min-width: 0; }
