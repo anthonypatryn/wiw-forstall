@@ -1,0 +1,14 @@
+/* Journal: newspapers archive (quests + clues come next) */
+.jn-papers { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 18px; }
+.jn-paper { position: relative; padding: 0; border: 0; background: none; cursor: pointer; text-align: left; transition: transform .15s ease; }
+.jn-paper:hover, .jn-paper:focus-visible { transform: translateY(-3px) rotate(-.4deg); }
+.jn-paper .np-mini { max-height: 360px; }
+.jn-paper .newspaper { padding: 12px 14px; font-size: 11px; }
+.jn-paper .np-name { font-size: 34px; margin-top: 0; }
+.jn-paper .np-head { font-size: 26px; }
+.jn-paper .np-ears { display: none; }
+.jn-paper .np-cols { columns: 2; column-gap: 12px; }
+.jn-draft { position: absolute; top: 8px; right: 8px; z-index: 1; }
+.jn-tools { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.jn-papers > div { min-width: 0; }
+@media (max-width: 480px) { .jn-papers { grid-template-columns: minmax(0, 1fr); } .jn-paper .np-cols { columns: 1; } }

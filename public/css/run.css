@@ -95,3 +95,8 @@
   .modal.endsess { padding: var(--sp-4) var(--sp-3); }
   .es-steps button { padding: 4px 8px 4px 4px; }
 }
+/* End Session: the Front page step */
+.es-np-edit { display: grid; gap: 10px; margin: var(--sp-3) 0; }
+.es-np-edit .es-field input + textarea { margin-top: 4px; }
+.es-preview { margin-top: var(--sp-3); border-radius: var(--r-sm); font-size: 13px; }
+.es-preview .newspaper { padding: 14px 16px; font-size: 13px; }

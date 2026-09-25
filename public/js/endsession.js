@@ -3,9 +3,10 @@
 import { esc, api, toast } from './common.js';
 import { gl } from './glyphs.js';
 import { play } from './sound.js';
+import { paperHTML, paperStyles, openPaper } from './paper.js';
 
 const START = '=== SUMMARY ===', END = '=== MY NOTES ===';
-const STEPS = [['loose', 'Loose ends'], ['prestige', 'Prestige'], ['jackpot', 'Jackpot'], ['titles', 'Titles'], ['rest', 'Rest'], ['writeup', 'Write-up'], ['wrap', 'Wrap']];
+const STEPS = [['loose', 'Loose ends'], ['prestige', 'Prestige'], ['jackpot', 'Jackpot'], ['titles', 'Titles'], ['rest', 'Rest'], ['writeup', 'Write-up'], ['paper', 'Front page'], ['wrap', 'Wrap']];
 
 export function openEndSession({ getCombat, refresh = () => {} }) {
   const w = { step: 0, prestige: {}, reason: '', jp: '', jpWhy: '', done: {}, session: null, locks: [], mine: '', recap: '', postRecap: true, writing: false, meta: null };
@@ -85,12 +86,29 @@ export function openEndSession({ getCombat, refresh = () => {} }) {
         <label class="es-field"><span>RECAP FOR THE PLAYERS <small>short and spoiler-free</small></span><textarea data-es-f="recap" rows="3" maxlength="2000" placeholder="Last time, the posse…">${esc(w.recap)}</textarea></label>
         <div class="field-step"><button type="button" class="chip-btn${w.postRecap ? ' on' : ''}" data-es="toggleRecap">Post the recap to the Table Log</button></div>`;
     },
+    paper() {
+      paperStyles();
+      const p = w.paper, towns = w.towns || [];
+      return `<p class="es-lead">Tonight’s news, set in type for the posse. It’s written from the Table Log (nothing Warden-only), and you can fix anything before it’s printed.</p>
+        <div class="field-step"><span>WHICH TOWN’S PAPER?</span><select data-np-town>${[{ id: '', name: 'Out on the frontier' }, ...towns].map((t) => `<option value="${esc(t.id)}"${t.id === w.town ? ' selected' : ''}>${esc(t.name)}${t.id && t.id === w.here ? ' (the posse is here)' : ''}</option>`).join('')}</select></div>
+        <div class="btn-row"><button type="button" class="btn" data-es="setType"${w.setting ? ' disabled' : ''}>${gl('scroll')} ${w.setting ? 'Setting the type…' : p ? 'Write it again' : 'Set the type'}</button>${p ? '<button type="button" class="btn secondary" data-es="bigPaper">See it full size</button>' : ''}</div>
+        ${p ? `<div class="es-np-edit">
+          <label class="es-field"><span>PAPER</span><input data-np="paper" maxlength="60" value="${esc(p.paper)}"></label>
+          <label class="es-field"><span>HEADLINE</span><input data-np="headline" maxlength="90" value="${esc(p.headline)}"></label>
+          <label class="es-field"><span>BELOW THE HEADLINE</span><input data-np="subhead" maxlength="200" value="${esc(p.subhead)}"></label>
+          <label class="es-field"><span>THE MAIN STORY</span><textarea data-np="lead" rows="5" maxlength="2400">${esc(p.lead)}</textarea></label>
+          ${(p.stories || []).map((st, i) => `<label class="es-field"><span>STORY ${i + 2}</span><input data-np-story="${i}" data-k="head" maxlength="80" value="${esc(st.head)}"><textarea data-np-story="${i}" data-k="text" rows="3" maxlength="900">${esc(st.text)}</textarea></label>`).join('')}
+          <label class="es-field"><span>QUOTE OF THE NIGHT</span><input data-np="quote" maxlength="240" value="${esc(p.quote)}"></label>
+        </div>
+        <div class="es-preview np-mini">${paperHTML(p, w.faces || [])}</div>` : ''}
+        ${w.done.paper ? `<p class="es-ok">${gl('trophy')} ${esc(w.done.paper)}</p>` : ''}`;
+    },
     wrap() {
       return `<p class="es-lead">Last thing: save a backup of everything to this device, then end the session.</p>
         <div class="btn-row"><button type="button" class="btn secondary" data-es="backup">${gl('satchel')} Download backup</button>${w.done.backup ? `<span class="es-ok">${gl('trophy')} Saved</span>` : ''}</div>
         <ul class="es-recap">${[
           w.done.prestige && `Prestige: ${esc(w.done.prestige)}`, w.done.jackpot && `Jackpot: ${esc(w.done.jackpot)}`, w.done.titles && `Titles: ${esc(w.done.titles)}`,
-          w.done.rest && esc(w.done.rest), w.done.writeup && 'Write-up saved to your session notes', w.postRecap && w.recap.trim() && 'Recap goes to the Table Log',
+          w.done.rest && esc(w.done.rest), w.done.writeup && 'Write-up saved to your session notes', w.done.paper && esc(w.done.paper), w.postRecap && w.recap.trim() && 'Recap goes to the Table Log',
         ].filter(Boolean).map((t) => `<li>${t}</li>`).join('') || '<li class="muted">Nothing handed out tonight.</li>'}</ul>`;
     },
   };
@@ -104,7 +122,7 @@ export function openEndSession({ getCombat, refresh = () => {} }) {
       <h3 class="es-h">${w.step + 1}. ${title}</h3>
       <div class="es-body">${bodies[key]()}</div>
       <div class="es-nav">${w.step ? '<button type="button" class="btn secondary" data-es="back">Back</button>' : '<span></span>'}
-        <span class="btn-row">${['prestige', 'jackpot', 'rest'].includes(key) && !w.done[key] ? '<button type="button" class="btn secondary" data-es="skip">Skip</button>' : ''}
+        <span class="btn-row">${['prestige', 'jackpot', 'rest', 'paper'].includes(key) && !w.done[key] ? '<button type="button" class="btn secondary" data-es="skip">Skip</button>' : ''}
         <button type="button" class="btn" data-es="next">${last ? `${gl('trophy')} End the session` : NEXT[key]?.() || 'Next'}</button></span></div>
     </div>`;
   }
@@ -113,6 +131,7 @@ export function openEndSession({ getCombat, refresh = () => {} }) {
     jackpot: () => (w.done.jackpot || !w.jp ? 'Next' : 'Give Jackpot & next'),
     rest: () => (w.rest === 'town' && !w.done.rest ? 'Rest & next' : 'Next'),
     writeup: () => 'Save & next',
+    paper: () => (w.paper && !w.done.paper ? 'Print it & next' : 'Next'),
   };
 
   // what "Next" does on each step
@@ -140,6 +159,12 @@ export function openEndSession({ getCombat, refresh = () => {} }) {
       w.session = await sessAct({ action: 'edit', id: s.id, notes, recap: w.recap });
       w.done.writeup = !!(parts.summary || w.mine.trim());
     }
+    if (key === 'paper' && w.paper && !w.done.paper) {
+      const { id, paper, headline, subhead, lead, stories, quote } = w.paper;
+      await api('POST', { action: 'save', id, paper, headline, subhead, lead, stories, quote }, '', '/api/papers');
+      await api('POST', { action: 'publish', id }, '', '/api/papers');
+      w.done.paper = `${paper} printed: “${headline}”`; play('success');
+    }
     if (key === 'wrap') {
       const s = await ensureSession();
       if (w.postRecap && w.recap.trim()) await api('POST', { action: 'postRecap', id: s.id }, '', '/api/session');
@@ -152,7 +177,14 @@ export function openEndSession({ getCombat, refresh = () => {} }) {
     return true;
   }
 
-  back.addEventListener('input', (e) => { const k = e.target.dataset.esF; if (k) w[k] = e.target.value; });
+  back.addEventListener('input', (e) => {
+    const d = e.target.dataset;
+    if (d.esF) w[d.esF] = e.target.value;
+    if (d.np && w.paper) w.paper[d.np] = e.target.value;
+    if (d.npStory !== undefined && w.paper) w.paper.stories[Number(d.npStory)][d.k] = e.target.value;
+    if ((d.np || d.npStory !== undefined) && w.paper) { const pv = back.querySelector('.es-preview'); if (pv) pv.innerHTML = paperHTML(w.paper, w.faces || []); }
+  });
+  back.addEventListener('change', (e) => { if (e.target.dataset.npTown !== undefined) w.town = e.target.value; });
   back.addEventListener('click', async (e) => {
     const b = e.target.closest('button');
     if (!b || b.disabled) return;
@@ -194,6 +226,17 @@ export function openEndSession({ getCombat, refresh = () => {} }) {
           } finally { w.writing = false; draw(); }
           return;
         }
+        case 'setType': {
+          w.setting = true; draw();
+          try {
+            const s = await ensureSession();
+            const r = await api('POST', { action: 'draft', sessionId: s.id, town: w.town }, '', '/api/papers');
+            w.paper = r.result; w.faces = r.state.posse;
+            toast(r.result.ai ? 'Hot off the press.' : 'Set from the Table Log — add an Anthropic API key on Vercel for a written front page.');
+          } finally { w.setting = false; draw(); }
+          return;
+        }
+        case 'bigPaper': openPaper(w.paper, w.faces || []); return;
         case 'backup': {
           const bk = await api('GET', null, '', '/api/backup');
           const a = document.createElement('a');
@@ -214,6 +257,7 @@ export function openEndSession({ getCombat, refresh = () => {} }) {
   Promise.all([
     api('GET', null, '?view=warden', '/api/lockpick').then((d) => { w.locks = d.list || []; }).catch(() => {}),
     api('GET', null, '?view=meta', '/api/combat').then((m) => { w.meta = m; }).catch(() => {}),
+    api('GET', null, '?view=warden', '/api/wanted').then((d) => { w.towns = d.towns || []; w.here = d.here; w.town = d.here || ''; }).catch(() => {}),
     ensureSession().then((s) => { const p = split(s.notes); w.mine = p.mine; w.recap = s.recap || ''; }).catch(() => {}),
   ]).then(() => { if (back.isConnected && !back.contains(document.activeElement)) draw(); });
 }

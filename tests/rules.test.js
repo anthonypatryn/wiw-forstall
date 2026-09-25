@@ -384,3 +384,19 @@ test('Selling: anything on the sheet can be sold (starting weapons, horse), and 
   shopAction(shop, combat, { action: 'decide', id: s.id, approve: true }, { warden: true });
   assert.ok(!pc.weapons.some((w) => w.itemId === 'pistols-used-pistol'));
 });
+
+test('Newspaper: drafts stay with the Warden until printed; one draft per session; publish logs the headline', async () => {
+  const { freshPapers, papersAction, papersView, paperName } = await import('../lib/papers.js');
+  const st = freshPapers(), logs = [];
+  assert.equal(paperName('Dodge'), paperName('Dodge'));
+  assert.equal(paperName(''), 'The Frontier Gazette');
+  assert.throws(() => papersAction(st, { action: 'save', sessionId: 's1', headline: 'X' }, { warden: false }), /PIN/);
+  const p = papersAction(st, { action: 'save', sessionId: 's1', townName: 'Dodge', headline: '', stories: [{ head: 'A', text: 'B' }, { head: '', text: '' }] }, { warden: true });
+  assert.equal(p.stories.length, 1); assert.equal(p.no, 1); assert.ok(p.paper.startsWith('The Dodge'));
+  assert.equal(papersAction(st, { action: 'save', sessionId: 's1', headline: 'Posse Routs Hogwilds' }, { warden: true }).id, p.id);
+  assert.equal(papersView(st, { warden: false }).issues.length, 0);
+  papersAction(st, { action: 'publish', id: p.id }, { warden: true, log: (t) => logs.push(t) });
+  assert.equal(papersView(st, { warden: false }).issues.length, 1);
+  assert.match(logs[0], /Posse Routs Hogwilds/);
+  assert.equal(papersAction(st, { action: 'save', sessionId: 's1', headline: 'Next' }, { warden: true }).no, 2); // printed issues aren't reused
+});

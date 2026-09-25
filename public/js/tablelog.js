@@ -29,6 +29,7 @@ export function mountTableLog() {
   injectDefs();
   import('./handouts.js').then((m) => m.watchHandouts()).catch(() => {}); // “The Warden hands you…” pop-ups
   import('./lockpick.js').then((m) => m.watchLocks()).catch(() => {}); // a lock sent to you opens the lock-picking scene
+  import('./paper.js').then((m) => m.watchPapers()).catch(() => {}); // a new issue of the paper: “Extra! Extra!”
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.className = 'log-fab';
