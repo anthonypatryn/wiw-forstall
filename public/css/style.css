@@ -475,7 +475,7 @@ button { cursor: pointer; }
 .log-drawer-head .log-clear { margin-left: auto; margin-right: 6px; padding: 3px 9px 1px; border: 1px solid currentColor; border-radius: 3px; background: transparent; color: inherit; font: 12px var(--display); letter-spacing: .1em; cursor: pointer; }
 
 /* ---------- HUD: turn order strip, start-of-combat rolls, Skill check pop-up (every page) ---------- */
-.hud-strip { position: fixed; left: 12px; bottom: 14px; z-index: 55; display: flex; align-items: center; gap: 6px; max-width: calc(100vw - 200px); overflow-x: auto;
+.hud-strip { position: fixed; left: 12px; bottom: 14px; z-index: 55; display: flex; align-items: center; gap: 6px; max-width: calc(100vw - 390px); overflow-x: auto;
   padding: 7px 10px; border-radius: 22px; background: var(--ink); color: var(--paper); box-shadow: 0 6px 18px rgba(0,0,0,.35); font: 14px var(--display); letter-spacing: .06em; white-space: nowrap; scrollbar-width: none; }
 .hud-strip.closed { padding: 0; background: none; box-shadow: none; }
 .hud-strip .hud-r { font-size: 12px; opacity: .7; }
@@ -518,7 +518,7 @@ button { cursor: pointer; }
 .hud-strip .gl { color: #f0c46a; }
 
 /* quick dice roller (every page) */
-.dice-fab { position: fixed; right: 172px; bottom: 16px; z-index: 50; display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; border: 0; border-radius: 24px;
+.dice-fab { display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; border: 0; border-radius: 24px;
   background: var(--rust); color: #fff; font: 16px var(--display); letter-spacing: .1em; cursor: pointer; box-shadow: 0 6px 18px rgba(0,0,0,.35); }
 .dice-fab .gl { width: 1.2em; height: 1.2em; }
 .dice-drawer { position: fixed; right: 16px; bottom: 74px; z-index: 60; width: min(340px, calc(100vw - 32px)); display: flex; flex-direction: column; gap: 10px;
@@ -535,7 +535,9 @@ button { cursor: pointer; }
 .dice-drawer label { display: flex; flex-direction: column; gap: 3px; font: 12px var(--display); letter-spacing: .12em; color: var(--ink-soft); }
 .dice-drawer label.dd-check { flex-direction: row; align-items: center; gap: 6px; font: 14px var(--body); letter-spacing: 0; color: var(--ink); }
 .dice-drawer select, .dice-drawer input:not([type=checkbox]) { padding: 7px 9px; border: 1px solid var(--ink-faint); border-radius: 3px; background: #fffdf7; font: 15px var(--body); letter-spacing: 0; color: var(--ink); }
-@media (max-width: 560px) { .dice-fab { right: auto; left: 12px; bottom: 64px; padding: 9px 13px; font-size: 14px; } .hud-strip { bottom: 12px; } }
+.fab-row { position: fixed; right: 16px; bottom: 16px; z-index: 50; display: flex; align-items: center; gap: 10px; }
+.fab-row .log-fab { position: static; }
+@media (max-width: 560px) { .fab-row { flex-direction: column; align-items: flex-end; gap: 8px; bottom: 12px; right: 12px; } .dice-drawer { bottom: 118px; } .dice-fab { padding: 9px 13px; font-size: 14px; } .hud-strip { bottom: 12px; } }
 
 /* it's your turn (pages other than the Battle Map) */
 .hud-myturn { position: sticky; top: 0; z-index: 30; width: 100%; box-sizing: border-box; display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 12px;

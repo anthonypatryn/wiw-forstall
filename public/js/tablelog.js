@@ -34,8 +34,12 @@ export function mountTableLog() {
   panel.setAttribute('aria-label', 'Table Log');
   panel.hidden = true;
   panel.innerHTML = `<div class="log-drawer-head"><b>TABLE LOG</b><a href="/battle">Battle Map ›</a><button type="button" class="log-clear" hidden>Clear</button><button type="button" class="log-close" aria-label="Close">✕</button></div><div class="log"></div>`;
-  document.body.append(btn, panel);
-  mountDice();
+  // Roll dice + Table Log share one bottom-right row, so a wider button (unread badge) never overlaps
+  const row = document.createElement('div');
+  row.className = 'fab-row';
+  row.append(btn);
+  document.body.append(row, panel);
+  mountDice(row);
 
   let seenTop = null, unread = 0, latest = [];
   const badge = btn.querySelector('.log-badge');
@@ -186,14 +190,15 @@ function holdPopup(h) {
 }
 
 // ---------- quick dice roller on every page (any mix of Black & Gold, logged for everyone) ----------
-function mountDice() {
+function mountDice(row) {
   const fab = document.createElement('button');
   fab.type = 'button'; fab.className = 'dice-fab';
   fab.innerHTML = `${gl('bullet')} Roll dice`;
   const box = document.createElement('aside');
   box.className = 'dice-drawer'; box.hidden = true;
   box.setAttribute('aria-label', 'Roll dice');
-  document.body.append(fab, box);
+  row.prepend(fab);
+  document.body.append(box);
   const pool = { B: store.get('wiw.rollB', 2), G: store.get('wiw.rollG', 0) };
   let posse = [];
   const draw = () => {
