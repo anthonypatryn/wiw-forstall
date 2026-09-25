@@ -176,3 +176,17 @@ test('Natural EMP stops Sweeps in Long Range and blocks Bursts; Forstall Efficie
   pc.gear[0] = { itemId: 'x', item: 'Refined Crystal', type: '', grit: '', notes: '', uses: 0 };
   assert.throws(() => publicAction(state, { action: 'forstall', op: 'burst', key, enemy: worm.id }, { warden: true, ctx: ctx() }), /Natural EMP/);
 });
+
+test('"Needs you" lists store requests and enemy turns for the Warden', async () => {
+  const { wardenNeeds } = await import('../lib/combat.js');
+  const state = freshCombat();
+  publicAction(state, { action: 'addPc', trade: 'Hunter', name: 'Tess' }, { warden: true });
+  publicAction(state, { action: 'addEnemy', profile: 'Chupacabra' }, { warden: true });
+  const shop = { requests: [{ status: 'pending', pcName: 'Tess', kind: 'buy', qty: 1, name: 'Rope', price: 1 }] };
+  let n = wardenNeeds(state, { shop, edison: [] });
+  assert.equal(n.count, 1);
+  publicAction(state, { action: 'start' }, { warden: true });
+  state.combat.current = state.enemies[0].id;
+  n = wardenNeeds(state, { shop: null, edison: [] });
+  assert.match(n.items[0].text, /Chupacabra’s turn/);
+});

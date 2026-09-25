@@ -44,6 +44,7 @@
   - Helpers in `public/js/common.js`: `tryWarden`, `forgetWarden`, `wardenModal`, `markWarden`.
   - A red strip shows while the page is in Warden mode; its "Switch to player view" is the only way out.
   - It sticks across pages: with a PIN, the nav's Forstall Scanner link points to `/warden`, and `/` (player.js) redirects there. Nav adds star Combat Control + Session links.
+  - **Needs you** (Warden strip, every page): `GET /api/combat?view=needs` → `wardenNeeds` (pending store requests, open Skill checks, triggered holds, Bleeding Out, Edison clashes, whose turn), polled every 6 s by `pollNeeds` in common.js; the dropdown also links Session / Combat Control / Battle Map / Store / NPCs.
   - `/combat` = **Combat Control**, Warden-only (gate card for players; not in the player nav). Players fight from the Battle Map + sheets.
   - NPC ledger: players see only the ledger (deal/table-felt hidden) and the server allows only `posseNote`/`where` without the PIN (`add` is Warden-only).
 - Dice:

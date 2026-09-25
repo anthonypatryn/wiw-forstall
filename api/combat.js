@@ -1,7 +1,7 @@
 import { load, save, storeKind } from '../lib/store.js';
 import { pinOk, send, readBody, sinceParam } from '../lib/http.js';
-import { freshCombat, publicAction, playerCombatView, wardenCombatView, logView, META, autoAchievements, isUndoable, pushUndo, undoLabel, undoCombat, applyMapRange, sweepHit } from '../lib/combat.js';
-import { fields, slotMonster } from '../lib/forstall.js';
+import { freshCombat, publicAction, playerCombatView, wardenCombatView, logView, META, autoAchievements, isUndoable, pushUndo, undoLabel, undoCombat, applyMapRange, sweepHit, wardenNeeds } from '../lib/combat.js';
+import { fields, slotMonster, edisonConflicts } from '../lib/forstall.js';
 import { findItem, freshShop } from '../lib/shop.js';
 
 const KEY = 'combat';
@@ -15,6 +15,13 @@ export default async function handler(req, res) {
 
     if (req.method === 'GET') {
       if (url.searchParams.get('view') === 'meta') return send(res, 200, META);
+      if (url.searchParams.get('view') === 'needs') {
+        if (!warden) return send(res, 401, { error: 'Wrong PIN.' });
+        const [shop, battle] = await Promise.all([load('shop'), load('battle')]);
+        const fl = fields(battle, state);
+        const edison = edisonConflicts(fl).map(([a, b]) => [fl.find((f) => f.key === a)?.name, fl.find((f) => f.key === b)?.name]);
+        return send(res, 200, wardenNeeds(state, { shop, battle, edison }));
+      }
       if (url.searchParams.get('view') === 'warden' && !warden) return send(res, 401, { error: 'Wrong PIN.' });
       if (sinceParam(url) === state.v) return send(res, 200, { v: state.v, unchanged: true });
       if (url.searchParams.get('view') === 'log') return send(res, 200, logView(state));

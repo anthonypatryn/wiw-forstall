@@ -567,3 +567,15 @@ button { cursor: pointer; }
 .who-pick small { display: block; font-size: 13px; opacity: .75; }
 
 .log-drawer-head .log-clock { font-size: 13px; opacity: .75; margin-right: auto; margin-left: 8px; white-space: nowrap; }
+
+/* Warden strip: "Needs you" */
+.warden-strip .needs-btn b { display: inline-block; min-width: 1.4em; margin-left: 4px; padding: 0 4px; border-radius: 8px; background: rgba(0,0,0,.35); }
+.warden-strip .needs-btn b.hot { background: #ffdd8a; color: var(--ink); }
+.needs-list { position: absolute; z-index: 40; top: 100%; left: 50%; transform: translateX(-50%); width: min(440px, calc(100vw - 32px)); text-align: left;
+  background: #fffdf7; color: var(--ink); border: 2px solid var(--ink); border-radius: var(--radius); box-shadow: 0 10px 30px rgba(0,0,0,.35); padding: 10px 12px; letter-spacing: 0; font: 15px/1.35 var(--body, inherit); }
+.needs-list .needs-head { font: 14px var(--display); letter-spacing: .08em; opacity: .7; margin-bottom: 6px; }
+.needs-list > a { display: block; padding: 7px 8px; margin: 3px 0; border-radius: 6px; color: var(--ink); text-decoration: none; background: rgba(0,0,0,.04); }
+.needs-list > a.urgent { background: rgba(164,64,31,.12); border-left: 4px solid var(--rust); }
+.needs-list > a:hover { background: rgba(164,64,31,.22); }
+.needs-links { display: flex; flex-wrap: wrap; gap: 6px 12px; margin-top: 8px; padding-top: 8px; border-top: 1px dashed rgba(0,0,0,.25); font-size: 14px; }
+.needs-links a { color: var(--rust-dark, #7a2e16); }

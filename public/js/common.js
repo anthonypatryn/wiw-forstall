@@ -242,6 +242,23 @@ const pinStore = {
 try { localStorage.removeItem('wiw.pin'); } catch {}
 
 // A strip under the nav so it's always obvious you're looking at the Warden's view.
+// Everything waiting on the Warden (store requests, open rolls, enemy turns…), refreshed every few seconds.
+let needsTimer = null;
+function pollNeeds(bar) {
+  const btn = bar.querySelector('.needs-btn'), list = bar.querySelector('.needs-list');
+  const tick = async () => {
+    if (!document.body.contains(bar) || document.hidden) return;
+    try {
+      const n = await api('GET', null, '?view=needs', '/api/combat');
+      btn.innerHTML = `Needs you <b class="${n.count ? 'hot' : ''}">${n.count}</b>`;
+      list.innerHTML = `<div class="needs-head">${esc(n.clock)}</div>${n.items.length ? n.items.map((x) => `<a class="${x.urgent ? 'urgent' : ''}" href="${esc(x.href)}">${esc(x.text)}</a>`).join('') : '<span class="muted">All quiet — nothing waiting on you.</span>'}
+        <div class="needs-links"><a href="/session">Session</a><a href="/combat">Combat Control</a><a href="/battle">Battle Map</a><a href="/store">Store</a><a href="/names">NPCs</a></div>`;
+    } catch { /* offline for a moment */ }
+  };
+  clearInterval(needsTimer);
+  setTimeout(tick, 400); setTimeout(tick, 1500); // the page sets the PIN a moment after the strip appears
+  needsTimer = setInterval(tick, 6000);
+}
 export function markWarden(on) {
   let bar = document.querySelector('.warden-strip');
   const inner = document.querySelector('.sitenav-inner');
@@ -252,10 +269,13 @@ export function markWarden(on) {
   if (on && !bar) {
     bar = document.createElement('div');
     bar.className = 'warden-strip';
-    bar.innerHTML = gl('star') + ' WARDEN MODE — players don’t see the Warden tools <button type="button">Switch to player view</button>';
-    bar.querySelector('button').addEventListener('click', () => { forgetWarden(); if (location.pathname.startsWith('/warden')) location.href = '/'; else location.reload(); });
+    bar.innerHTML = gl('star') + ' WARDEN MODE <button type="button" class="needs-btn" aria-expanded="false">Needs you <b>·</b></button><button type="button" data-player>Switch to player view</button><div class="needs-list" hidden></div>';
+    bar.querySelector('[data-player]').addEventListener('click', () => { forgetWarden(); if (location.pathname.startsWith('/warden')) location.href = '/'; else location.reload(); });
+    const btn = bar.querySelector('.needs-btn'), list = bar.querySelector('.needs-list');
+    btn.addEventListener('click', () => { list.hidden = !list.hidden; btn.setAttribute('aria-expanded', String(!list.hidden)); });
     (document.querySelector('.sitenav') || document.body.firstElementChild).after(bar);
-  } else if (!on && bar) bar.remove();
+    pollNeeds(bar);
+  } else if (!on && bar) { clearInterval(needsTimer); bar.remove(); }
 }
 
 // ---------- dice-pool inputs: two numbers, never typed letters ----------
