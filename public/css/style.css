@@ -583,14 +583,14 @@ button { cursor: pointer; }
 .needs-links { display: flex; flex-wrap: wrap; gap: 6px 12px; margin-top: 8px; padding-top: 8px; border-top: 1px dashed rgba(0,0,0,.25); font-size: 14px; }
 .needs-links a { color: var(--rust-dark, #7a2e16); }
 
-/* Start combat: who's in this fight */
+/* Start combat: who's in this fight — tap chips like Call for a Roll */
 .fight-ask { width: min(620px, 100%); }
-.fight-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 4px 0 16px; max-height: 55vh; overflow-y: auto; }
-@media (max-width: 560px) { .fight-cols { grid-template-columns: 1fr; } }
-.fight-h { font: 14px var(--display); letter-spacing: .1em; margin-bottom: 6px; display: flex; gap: 6px; align-items: center; }
+.fight-step { margin: 4px 0 14px; }
+.fight-h { font: 13px var(--display); letter-spacing: .12em; opacity: .8; margin-bottom: 6px; display: flex; gap: 8px; align-items: center; }
 .fight-h button { font: 12px var(--body); letter-spacing: 0; background: none; border: 0; color: var(--rust); text-decoration: underline; cursor: pointer; padding: 0 2px; }
-.fight-pick { display: flex; align-items: center; gap: 10px; padding: 7px 8px; border: 1.5px solid rgba(0,0,0,.2); border-radius: 6px; margin-bottom: 6px; cursor: pointer; background: #fffdf7; }
-.fight-pick:has(input:checked) { border-color: var(--ink); background: rgba(164,64,31,.08); }
-.fight-pick input { width: 20px; height: 20px; accent-color: var(--rust); }
-.fight-pick b { display: block; font: 17px/1.1 var(--display); letter-spacing: .04em; font-weight: 400; }
-.fight-pick small { font-size: 12px; opacity: .7; }
+.fight-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.fight-chip { display: inline-flex; flex-direction: column; align-items: center; padding: 6px 14px 4px; border: 1.5px solid rgba(0,0,0,.25); border-radius: 18px; background: #fffdf7; color: var(--ink); cursor: pointer; }
+.fight-chip b { font: 16px/1.1 var(--display); letter-spacing: .04em; font-weight: 400; }
+.fight-chip small { font: 11px var(--body); opacity: .7; }
+.fight-chip.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+.fight-chip:not(.on) b { text-decoration: line-through; opacity: .6; }

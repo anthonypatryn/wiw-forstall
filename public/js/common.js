@@ -366,24 +366,27 @@ export function pickFighters(combat) {
   return new Promise((resolve) => {
     const back = document.createElement('div');
     back.className = 'modal-back ask-back';
-    const row = (x, kind, sub) => `<label class="fight-pick"><input type="checkbox" data-${kind}="${esc(x.id)}" checked><span><b>${esc(x.name)}</b>${sub ? `<small>${esc(sub)}</small>` : ''}</span></label>`;
+    // tap chips (like Call for a Roll): dark = in this fight
+    const chip = (x, kind, sub) => `<button type="button" class="fight-chip on" data-${kind}="${esc(x.id)}" aria-pressed="true"><b>${esc(x.name)}</b>${sub ? `<small>${esc(sub)}</small>` : ''}</button>`;
     back.innerHTML = `<div class="modal ask fight-ask" role="dialog" aria-modal="true" aria-label="Who's in this fight?">
       <h2>Who’s in this fight?</h2>
-      <p class="ask-body">Untick anyone who isn’t here. You can bring people in (or out) once it’s going.</p>
-      <div class="fight-cols">
-        <div><div class="fight-h">THE POSSE <button type="button" data-all="pc">all</button><button type="button" data-none="pc">none</button></div>${posse.map((p) => row(p, 'pc', p.trade)).join('') || '<p class="muted">No characters.</p>'}</div>
-        <div><div class="fight-h">ENEMIES <button type="button" data-all="en">all</button><button type="button" data-none="en">none</button></div>${foes.map((e) => row(e, 'en', e.size)).join('') || '<p class="muted">No enemies yet — add them in Combat Control.</p>'}</div>
-      </div>
+      <p class="ask-body">Tap anyone who isn’t here to leave them out. You can bring people in (or out) once it’s going.</p>
+      <div class="fight-step"><div class="fight-h">THE POSSE <button type="button" data-all="pc">all</button><button type="button" data-none="pc">none</button></div>
+        <div class="fight-chips">${posse.map((p) => chip(p, 'pc', p.trade)).join('') || '<span class="muted">No characters.</span>'}</div></div>
+      <div class="fight-step"><div class="fight-h">ENEMIES <button type="button" data-all="en">all</button><button type="button" data-none="en">none</button></div>
+        <div class="fight-chips">${foes.map((e) => chip(e, 'en', e.size)).join('') || '<span class="muted">No enemies yet — add them in Combat Control.</span>'}</div></div>
       <div class="ask-btns"><button type="button" class="btn secondary" data-no>Cancel</button><button type="button" class="btn" data-go>Start combat</button></div></div>`;
     document.body.append(back);
     const close = (v) => { back.remove(); resolve(v); };
+    const set = (c, on) => { c.classList.toggle('on', on); c.setAttribute('aria-pressed', String(on)); };
     back.addEventListener('click', (e) => { if (e.target === back) close(null); });
     back.querySelector('[data-no]').addEventListener('click', () => close(null));
+    back.querySelectorAll('.fight-chip').forEach((c) => c.addEventListener('click', () => set(c, !c.classList.contains('on'))));
     back.querySelectorAll('[data-all], [data-none]').forEach((b) => b.addEventListener('click', () => {
-      back.querySelectorAll(`[data-${b.dataset.all || b.dataset.none}]`).forEach((c) => { c.checked = !!b.dataset.all; });
+      back.querySelectorAll(`.fight-chip[data-${b.dataset.all || b.dataset.none}]`).forEach((c) => set(c, !!b.dataset.all));
     }));
     back.querySelector('[data-go]').addEventListener('click', () => {
-      const ids = (k) => [...back.querySelectorAll(`[data-${k}]:checked`)].map((c) => c.dataset[k]);
+      const ids = (k) => [...back.querySelectorAll(`.fight-chip.on[data-${k}]`)].map((c) => c.dataset[k]);
       const r = { posse: ids('pc'), enemies: ids('en') };
       if (!r.posse.length && !r.enemies.length) { toast('Pick at least one fighter.', true); return; }
       close(r);
