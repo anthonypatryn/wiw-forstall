@@ -1,5 +1,5 @@
 // The shared Table Log: every roll from any page (combat, sheets, Forstall scans) in one place.
-import { esc, api, startPolling, staticDice, timeAgo, injectDefs, savedPin, toast, store, rollPopup, animateRoll , ask, askText } from './common.js';
+import { esc, api, startPolling, staticDice, timeAgo, injectDefs, savedPin, toast, store, rollPopup, animateRoll , ask, askText, play } from './common.js';
 import { gl } from './glyphs.js';
 
 export function logHTML(log) {
@@ -165,6 +165,7 @@ export function renderHud(h) {
   const who = open.who.find((w) => w.id === mine);
   const others = open.who.filter((w) => w.id !== mine).map((w) => w.name).concat(open.vs ? [open.vs] : []);
   ck.hidden = false;
+  play('chime');
   try { navigator.vibrate?.(150); } catch {}
   ck.innerHTML = `<div><small>${open.kind === 'challenge' ? `CHALLENGE${open.round > 1 ? ` · ROUND ${open.round} (TIE)` : ''} — MOST HITS WINS` : 'THE WARDEN ASKS YOU TO ROLL'}</small>
     <b>${esc(who.name)}: ${esc(open.skill)}</b> ${open.kind === 'challenge' ? `vs ${esc(others.join(' & '))}` : `· ${esc(open.diff)} — ${open.target} Hit${open.target === 1 ? '' : 's'}`}${open.note ? ` · <i>${esc(open.note)}</i>` : ''}</div>
@@ -178,6 +179,7 @@ export function renderHud(h) {
       ck.hidden = true;
       if (r?.dice) {
         await rollPopup(r, `${who.name} · ${r.label}`);
+        if (r.outcome) play(r.outcome.ok ? 'success' : 'fail');
         if (r.outcome) toast(r.outcome.ok ? `✓ Success — ${r.outcome.total}/${r.target} Hits!` : `✗ Short — ${r.outcome.total}/${r.target} Hits.`, !r.outcome.ok);
         else toast(`${r.hits} Hit${r.hits === 1 ? '' : 's'} — see the Table Log for who won.`);
       }
@@ -279,6 +281,7 @@ function myTurnInner(h) {
   if (seen('wiw.turnHid') === k) { turnEl.hidden = true; return; }
   if (turnEl.dataset.k === k && !turnEl.hidden) return;
   turnEl.dataset.k = k; turnEl.hidden = false;
+  play('chime');
   try { navigator.vibrate?.([120, 60, 120]); } catch {}
   turnEl.innerHTML = `<div>${gl('revolver')} <b>${esc(cur.name)}, it’s your turn!</b></div>
     <div class="hud-ck-btns"><a class="btn small" href="/battle">Go to Battle Map ›</a><button type="button" class="btn small secondary" data-end>End my turn</button></div><button type="button" class="hud-myturn-x" data-hide aria-label="Hide until my next turn" title="Hide until my next turn">×</button>`;

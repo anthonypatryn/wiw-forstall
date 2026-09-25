@@ -1,4 +1,4 @@
-import { $, esc, api, toast, store, mountNav, startPolling, timeAgo, tryWarden, forgetWarden, savedPin, wardenModal , ask, askText } from './common.js';
+import { $, esc, api, toast, store, mountNav, startPolling, timeAgo, tryWarden, forgetWarden, savedPin, wardenModal , ask, askText, play } from './common.js';
 import { NPC } from './npc-data.js';
 import { mountTableLog } from './tablelog.js';
 import { gl } from './glyphs.js';
@@ -101,7 +101,7 @@ async function dealTo(col) {
   el.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); swap(col); } });
   return el;
 }
-const flipUp = (el) => el.classList.add('up');
+const flipUp = (el) => { el.classList.add('up'); play('card'); };
 
 async function sweep(col) {
   const el = slotEl(col).querySelector('.pcard');

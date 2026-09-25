@@ -773,3 +773,12 @@ input[type=range] { -webkit-appearance: none; appearance: none; height: 6px; bor
 input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; border-radius: 50%; background: var(--ink); border: 2px solid var(--surface); box-shadow: 0 0 0 1.5px var(--ink); cursor: pointer; }
 input[type=range]::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: var(--ink); border: 2px solid var(--surface); cursor: pointer; }
 .tip-pop { position: fixed; z-index: 450; max-width: 280px; padding: 6px 10px 5px; border-radius: var(--r-sm); background: var(--ink); color: var(--on-dark); font: var(--fs-sm)/1.35 var(--body); pointer-events: none; box-shadow: var(--shadow-soft); }
+
+/* sound toggle in the nav */
+.nav-sound { flex: none; display: flex; align-items: center; justify-content: center; width: 40px; padding: 0; border: 0; background: none; color: var(--on-dark-dim); cursor: pointer; }
+.nav-sound:hover { color: #fff; }
+.nav-sound .gl { width: 20px; height: 20px; margin: 0; }
+.nav-sound[aria-pressed="false"] { opacity: .6; }
+.nav-sheet-sound { display: flex; align-items: center; gap: 12px; padding: 6px 8px; }
+.nav-sheet-sound button { flex: 1; margin: 0; }
+.nav-sheet-sound .nav-vol { flex: 1; }

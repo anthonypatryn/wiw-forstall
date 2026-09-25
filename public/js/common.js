@@ -1,6 +1,8 @@
 import { ICONS } from './icons.js';
 import { gl } from './glyphs.js';
-import './controls.js'; // styled drop-downs, suggestion lists and tooltips (no browser pop-up UI)
+import './controls.js';
+import { play, isMuted, setMuted, volume, setVolume } from './sound.js';
+export { play }; // styled drop-downs, suggestion lists and tooltips (no browser pop-up UI)
 
 export const $ = (s, r = document) => r.querySelector(s);
 export const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -80,6 +82,7 @@ const FACES = { B: ['blank', 'blank', 'spur', 'hit', 'hit', 'ace'], G: ['blank',
 
 // Animate a finished roll into the tray. Returns a promise that resolves when dice settle.
 export function animateRoll(tray, dice) {
+  play('dice', dice?.length || 3);
   tray.innerHTML = '';
   const settle = [];
   dice.forEach((d, i) => {
@@ -241,6 +244,7 @@ export function mountNav(active) {
   el.innerHTML = `<div class="sitenav-inner">
       <div class="nav-main">${top}</div>
       <div class="nav-side">
+        <button type="button" class="nav-sound" title="Sound effects" aria-pressed="${!isMuted()}">${gl(isMuted() ? 'mute' : 'sound')}</button>
         ${link('/howto', '?', ' class="nav-help" title="How to Play" aria-label="How to Play"')}
         ${on ? `<button type="button" class="nav-needs" aria-expanded="false" title="What's waiting on you"><span class="nn">Needs you</span> <b>·</b></button>
           <div class="nav-group nav-warden"><button type="button" class="nav-drop" aria-expanded="false">${gl('star')} Warden <i>▾</i></button>
@@ -250,7 +254,7 @@ export function mountNav(active) {
       </div>
     </div>
     <div class="needs-list" hidden></div>
-    <div class="nav-sheet" hidden><nav aria-label="All pages">${all.map(([h, l]) => (h && h.startsWith('<b>') ? `<div class="nav-sheet-h">${h}</div>` : link(h, esc(l)))).join('')}${link('/howto', 'How to Play')}${on ? '<div class="nav-sheet-h">Warden</div><a href="/run#grp-tools">Backup &amp; homebrew</a><button type="button" data-player>Switch to player view</button>' : ''}</nav></div>`;
+    <div class="nav-sheet" hidden><nav aria-label="All pages">${all.map(([h, l]) => (h && h.startsWith('<b>') ? `<div class="nav-sheet-h">${h}</div>` : link(h, esc(l)))).join('')}${link('/howto', 'How to Play')}<div class="nav-sheet-h">Sound</div><div class="nav-sheet-sound"><button type="button" class="nav-sound-sheet">${isMuted() ? 'Sound is off — turn on' : 'Sound is on — mute'}</button><input type="range" min="0" max="1" step="0.05" value="${volume()}" aria-label="Volume" class="nav-vol"></div>${on ? '<div class="nav-sheet-h">Warden</div><a href="/run#grp-tools">Backup &amp; homebrew</a><button type="button" data-player>Switch to player view</button>' : ''}</nav></div>`;
   wireNav(el, on);
   // other sticky bars (sheet toolbar, contents bars) sit just under the nav
   const navH = () => document.documentElement.style.setProperty('--nav-h', `${el.offsetHeight}px`);
@@ -279,6 +283,10 @@ function wireNav(el, on) {
     if (own) { own.click(); return; }
     if (await wardenModal('/api/combat')) location.reload();
   });
+  const toggleSound = () => { setMuted(!isMuted()); if (!isMuted()) play('chime'); mountNav(); };
+  el.querySelector('.nav-sound')?.addEventListener('click', toggleSound);
+  el.querySelector('.nav-sound-sheet')?.addEventListener('click', (e) => { e.stopPropagation(); toggleSound(); });
+  el.querySelector('.nav-vol')?.addEventListener('change', (e) => { setVolume(e.target.value); play('chime'); });
   const needs = el.querySelector('.nav-needs');
   if (needs) {
     const list = el.querySelector('.needs-list');

@@ -77,6 +77,9 @@
 - Session write-up: every log() also appends to `combat.archive` (Warden-only, 2000 entries, undo trims it; never in views) because the Table Log keeps only 80. Session notes' **Write up this session** → `{action:'summarize', id}` in api/session.js: `sessionEntries` (from the session's `created` to the next session), then Claude (`ANTHROPIC_API_KEY` env on Vercel; model `SUMMARY_MODEL` or claude-haiku-4-5) writes STORY SO FAR / FIGHTS / LOOT / PEOPLE / LOOSE ENDS + a player RECAP (fills an empty recap); without a key `plainSummary` lists the events. `withSummary` puts it between `=== SUMMARY ===` and `=== MY NOTES ===`, keeping the Warden's notes below; re-running replaces only the summary. vercel.json gives api/session.js 30 s.
 - Session notes: `api/session.js` + `lib/session.js` (Redis key `session`), every request needs the PIN; shown on Run the Game.
 
+## Sound
+- `public/js/sound.js`: `play(name, arg)` synthesizes effects with WebAudio (dice, card, gun, bow, swing, explosion, forstall, zap, lockClick, lockSnap, lockOpen, success, fail, chime); `weaponSound(weapon)` picks gun/bow/swing. Real recordings: put `public/sfx/<name>.mp3` and add the name to `public/sfx/manifest.json`. Mute/volume per device (`wiw.muted`, `wiw.volume`) via the nav speaker / phone Menu. Hooks: `animateRoll` (dice), NPC `flipUp` (card), Battle Map attacks/items/Forstalls, HUD pop-ups (chime), Skill results (success/fail).
+
 ## Style
 - **Read `STYLEGUIDE.md` before any UI change.** Tokens (colors, type scale, spacing, corners, shadows) and shared components (`.head-row`, `.stack-grid`, `.band`, `.toc-bar`, `.chip-btn`, `.field-step`, `.pill`, `.item-row`, `.notice`, `.link-grid`, buttons) live in `public/css/style.css`; page CSS holds only page-specific rules. No raw hex colors in page CSS.
 

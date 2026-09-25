@@ -1,5 +1,6 @@
 import { $, esc, api, startPolling, toast, mountNav, tryWarden, forgetWarden, savedPin, wardenModal, rollPopup, abilityOptions, abilityTargetsHTML, abilityBody , ask, askText, pickFighters } from './common.js';
 import { gl } from './glyphs.js';
+import { play, weaponSound } from './sound.js';
 let meta = null;
 // the Ability button depends on this, so redraw the turn panel once it arrives
 api('GET', null, '?view=meta', '/api/combat').then((m) => { meta = m; renderTurnBar(); }).catch(() => {});
@@ -221,6 +222,7 @@ function renderPanel() {
   if (sel) wireFs(box);
   box.querySelector('[data-emp]')?.addEventListener('click', async (e) => {
     if (!await ask('Natural EMP?\n\nEvery Forstall within Long Range (18″) stops Sweeping, and they can’t Scan or Burst until this monster’s next turn.', { ok: 'Let it rip', danger: true })) return;
+    play('zap');
     const r = await fsAct({ action: 'forstall', op: 'emp', enemy: e.target.closest('[data-emp]').dataset.emp });
     if (r) toast(r.hit.length ? `EMP! ${r.hit.join(', ')} knocked out.` : 'EMP — no Forstall in range.');
   });
@@ -482,6 +484,7 @@ function wireTurnBar(bar, cur, tok) {
   });
   bar.querySelector('[data-tp-item]')?.addEventListener('click', async () => {
     const r = await tpAct({ ...base, op: 'useItem', gear: tp.gear });
+    if (r && /explos|dynamite|bomb|grenade/i.test(`${r.label || ''} ${r.used || ''} ${a.gear?.[tp.gear]?.type || ''}`)) play('explosion');
     if (r?.dice) rollPopup(r, `${a.name} · ${r.label} · ${r.pool}`); else if (r) toast(`Used ${r.used}.`);
   });
   bar.querySelector('[data-tp-imp]')?.addEventListener('click', async () => {
@@ -536,6 +539,7 @@ function wireAttack(box, sel) {
     const bandKey = WEAPON_KEY[band(dist(sel, tgt))];
     const r = await combatAct({ action: 'pc', id: sel.ref, op: 'attack', weapon: s.w, range: bandKey, target: tgt.ref, ammo: s.ammo, aim: s.aim });
     if (r?.dice) {
+      play(weaponSound(combat?.posse.find((p) => p.id === sel.ref)?.weapons[s.w]));
       s.aim = false;
       await rollPopup(r, `${sel.name} → ${r.target} · ${r.pool}`);
       toast(`${r.dmg ? `${r.dmg} damage to ${r.target}` : `${r.target} shrugs it off`} (${r.hits} Hits − ${r.def} Defense)${r.down ? ' — it’s down!' : ''}`, !r.dmg);
@@ -551,7 +555,7 @@ function wireAttack(box, sel) {
       if (!await ask(`${err.message.slice(14)}\n\nRoll it anyway?`)) return;
       r = await combatAct({ action: 'enemyAttack', enemy: sel.ref, attack: s.a, pc: tgt.ref, cover: s.cover || 0, force: true });
     }
-    if (r?.atk?.dice) rollPopup(r.atk, `${r.atk.label} · ${r.atk.pool}`);
+    if (r?.atk?.dice) { play(/range|shoot|spit|throw/i.test(r.atk.label) ? 'gun' : 'swing'); rollPopup(r.atk, `${r.atk.label} · ${r.atk.pool}`); }
     if (r) { toast(`${r.dmg ? `${r.dmg} damage` : 'No damage'}${r.notes?.length ? ` · ${r.notes.join(', ')}` : ''}`); poller?.now?.(); }
   });
 }
@@ -743,7 +747,9 @@ async function fsAct(body) {
 function wireFs(box) {
   box.querySelectorAll('[data-fs-sweep]').forEach((b) => b.addEventListener('click', async () => {
     const eff = box.querySelector(`[data-fs-eff="${CSS.escape(b.dataset.fsSweep)}"]`)?.checked;
+    play('forstall');
     const r = await fsAct({ action: 'forstall', op: 'sweep', key: b.dataset.fsSweep, efficiency: !!eff });
+    if (r?.melted) play('zap');
     if (r?.dice) { await rollPopup(r, `${r.label} · ${r.pool}`); toast(`Sweep ${r.hits} — monsters in Range lose ${r.hits} Grit at their turn (+1 if programmed).`); }
     else if (r?.melted) toast('The waves crossed — sparks, Electrocuted, batteries melted.', true);
   }));
@@ -766,6 +772,7 @@ function wireFs(box) {
     const tgt = f?.burst.find((x) => x.ref === sel?.value);
     if (!tgt || !await ask(`Burst ${f.name} on the ${tgt.name}’s frequency?\n\nThe crystal shatters and the monster flees for at least two hours.`, { ok: 'Burst', danger: true })) return;
     const r = await fsAct({ action: 'forstall', op: 'burst', key: f.key, enemy: tgt.ref });
+    if (r?.fled) play('explosion');
     if (r?.fled) toast(`${r.fled} flees!`);
   }));
 }
