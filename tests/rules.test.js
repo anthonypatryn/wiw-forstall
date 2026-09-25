@@ -736,3 +736,43 @@ test('Bounties: taking a poster makes a Journal quest; captured and paid tick it
   wantedAction(st, { action: 'remove', id: p2.id }, W);
   assert.equal(journal.quests.find((x) => x.bounty === p2.id).status, 'failed');
 });
+
+test('Trading: money and things change hands whole (a gun keeps its upgrades, a horse moves), or not at all', async () => {
+  const { tradeAction } = await import('../lib/trade.js');
+  const { sellables } = await import('../lib/shop.js');
+  const combat = freshCombat();
+  const a = publicAction(combat, { action: 'addPc', name: 'Lila', trade: 'Gunslinger' }, { warden: false });
+  const b = publicAction(combat, { action: 'addPc', name: 'Doc', trade: 'Trapper' }, { warden: false });
+  a.wallet = '20.00'; b.wallet = '5.00';
+  const gunKey = sellables(a, { custom: [] }).find((x) => x.key.startsWith('weapon:')).key;
+  const gi = Number(gunKey.split(':')[1]);
+  a.weapons[gi].upgrades[0] = 'Scope';
+  const gunName = [a.weapons[gi].manufacturer, a.weapons[gi].model].filter(Boolean).join(' - ');
+  b.horse.breed = 'Morgan'; b.horse.name = 'Biscuit'; b.horse.bond = 'Loyal';
+  const T = (x) => tradeAction(combat, { action: 'trade', ...x });
+  assert.throws(() => T({ op: 'offer', pc: a.id, to: a.id, give: { money: 1 } }), /yourself/);
+  assert.throws(() => T({ op: 'offer', pc: a.id, to: b.id }), /something/);
+  const o = T({ op: 'offer', pc: a.id, to: b.id, give: { money: 5, things: [{ key: gunKey }] }, get: { things: [{ key: 'horse' }] }, note: 'fair deal' });
+  assert.throws(() => T({ op: 'answer', id: o.id, pc: a.id, accept: true }), /Only/);
+  const r = T({ op: 'answer', id: o.id, pc: b.id, accept: true });
+  assert.equal(r.status, 'accepted');
+  assert.equal(a.wallet, '15.00'); assert.equal(b.wallet, '10.00');
+  assert.equal(a.weapons[gi].model, '', 'gun left Lila’s sheet');
+  const theirGun = b.weapons.find((w) => [w.manufacturer, w.model].filter(Boolean).join(' - ') === gunName && w.upgrades[0] === 'Scope');
+  assert.ok(theirGun, 'Doc has the gun with its upgrade');
+  assert.equal(a.horse.name, 'Biscuit'); assert.equal(a.horse.bond, 'Loyal'); assert.equal(b.horse.breed, '');
+  assert.ok(combat.log.some((l) => /Lila traded \$5\.00/.test(l.text)));
+  // a failed trade changes nothing: Doc asks for money Lila no longer has
+  const o2 = T({ op: 'offer', pc: b.id, to: a.id, give: { money: 1 }, get: { money: 15 } });
+  a.wallet = '2.00';
+  const r2 = T({ op: 'answer', id: o2.id, pc: a.id, accept: true });
+  assert.equal(r2.status, 'failed'); assert.match(r2.why, /only has/);
+  assert.equal(a.wallet, '2.00'); assert.equal(b.wallet, '10.00');
+  // a horse can't go to someone who already rides one
+  const o3 = T({ op: 'offer', pc: a.id, to: b.id, give: { things: [{ key: 'horse' }] } });
+  b.horse.breed = 'Mustang';
+  assert.equal(T({ op: 'answer', id: o3.id, pc: b.id, accept: true }).status, 'failed');
+  assert.equal(a.horse.name, 'Biscuit');
+  const o4 = T({ op: 'offer', pc: a.id, to: b.id, give: { money: 1 } });
+  assert.equal(T({ op: 'cancel', id: o4.id, pc: a.id }).status, 'cancelled');
+});

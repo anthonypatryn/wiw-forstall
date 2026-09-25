@@ -947,3 +947,15 @@ input[type=range]::-moz-range-thumb { width: 16px; height: 16px; border-radius: 
 .duel-ask .field-step { margin: 12px 0; }
 @media (max-width: 480px) { .duel-scene .duel-table tbody th { width: 58px; font-size: var(--fs-xs); } .duel-scene .duel-tray .die { width: 26px; } }
 .jw-list { margin: 6px 0 12px; padding-left: 20px; font: var(--fs-md)/1.4 var(--body); }
+
+/* trading between players */
+.trade-modal { max-width: 560px; }
+.trade-money { display: flex; align-items: center; gap: 8px; width: 100%; }
+.trade-open { display: grid; gap: 6px; margin-bottom: 12px; font: var(--fs-sm) var(--body); }
+.trade-sum { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 10px 0; }
+.trade-sum > div { background: var(--surface); border: 1px solid var(--line); border-radius: var(--r-sm); padding: 10px; display: grid; gap: 4px; }
+.trade-sum small { font: var(--fs-xs) var(--display); letter-spacing: .12em; opacity: .7; }
+.trade-row { margin-bottom: 8px; }
+@media (max-width: 480px) { .trade-sum { grid-template-columns: 1fr; } }
+.modal.trade-modal input:not([type=checkbox]):not([type=radio]) { padding: 7px 9px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--surface); font: var(--fs-sm) var(--body); letter-spacing: 0; text-align: left; }
+.modal.trade-modal .lp-num input { width: 80px; flex: 0 0 80px !important; }

@@ -280,6 +280,7 @@ function buildSheet(p) {
       ${box('HISTORY', 'how your legend began', inp('history', '', { type: 'textarea' }), 'history')}
       ${box('GEAR ITEMS', 'first aid, explosives, &amp; traps', `<div class="pack-row"><span class="rl">Equipment Pack</span>${packSelect('data-pack')}<span data-pack2-wrap hidden>${packSelect('data-pack="2"')}</span><small class="muted">its gear is written into Inventory → Other items</small></div>${[0, 1, 2].map(gear).join('')}`, 'gear')}
       ${box('INVENTORY', 'loot, trophies, &amp; additional items', `
+          <div class="btn-row trade-row"><button type="button" class="btn small secondary" data-trade="${esc(p.id)}">${gl('satchel')} Trade with the posse</button></div>
           <div class="w-grid">${inp('wallet', 'Wallet $', { max: 20 })}${inp('scrap', 'Scrap (pcs)', { max: 20 })}${inp('supplies', 'Supplies', { max: 20 })}</div>
           <div data-dyn="items"></div>${inp('inventory', 'Other items', { type: 'textarea' })}`, 'inventory')}
       ${box('FORSTALL', 'emits energy waves that disturb &amp; repel monstrous creatures', `

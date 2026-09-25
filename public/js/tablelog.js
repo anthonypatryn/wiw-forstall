@@ -2,6 +2,7 @@
 import { esc, api, startPolling, staticDice, timeAgo, injectDefs, savedPin, toast, store, rollPopup, animateRoll , ask, askText, play } from './common.js';
 import { gl } from './glyphs.js';
 import { duelHud } from './duel-hud.js';
+import { tradeHud, openTrade } from './trade.js';
 
 export function logHTML(log) {
   if (!log.length) return '<p class="empty-note">Rolls and big moments show up here for everyone.</p>';
@@ -56,10 +57,17 @@ export function mountTableLog() {
       wb.innerHTML = `${gl('scroll')} <span>Whisper</span>`;
       wb.addEventListener('click', m.whisper);
       row.prepend(wb);
+      const tb = document.createElement('button');
+      tb.type = 'button'; tb.className = 'log-fab whisper-fab'; tb.title = 'Trade with the posse';
+      tb.innerHTML = `${gl('satchel')} <span>Trade</span>`;
+      tb.addEventListener('click', () => openTrade());
+      row.prepend(tb);
     }
     m.watchWhispers();
   }).catch(() => {});
   askWhoIAm();
+  // any [data-trade] button (e.g. on a sheet's Inventory) opens a trade with that character
+  document.addEventListener('click', (e) => { const b = e.target.closest('[data-trade]'); if (b) openTrade(b.dataset.trade || null); });
 
   let seenTop = null, unread = 0, latest = [];
   const badge = btn.querySelector('.log-badge');
@@ -114,6 +122,7 @@ export function renderHud(h) {
   if (!h) return;
   lastHud = h;
   duelHud(h);
+  tradeHud(h);
   const { strip, pop, ck } = hudMount();
   // 1) turn order strip (collapsible; remembered per device)
   if (!h.active || !h.order.length) strip.hidden = true;
