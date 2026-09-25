@@ -128,16 +128,20 @@ function renderSide() {
     });
   }
 
-  const inv = pc?.items || [];
+  // everything they could sell: Store buys, plus starting weapons, packs, a horse or mech already on their sheet
+  const inv = pc?.sell || [];
   $('#inventory').innerHTML = !pc ? '<p class="empty-note">Pick a character to see what they carry.</p>'
-    : inv.length ? inv.map((i) => `<div class="inv-row" data-uid="${i.uid}"><span>${i.qty > 1 ? `${i.qty}× ` : ''}${esc(i.name)}<small>${esc(i.sub || i.cat || '')}${i.placed ? ` · on sheet: ${esc(i.placed)}` : i.placed === null ? ' · not on the sheet yet' : ''}</small></span>
+    : inv.length ? inv.map((i) => `<div class="inv-row" data-key="${esc(i.key)}"><span>${i.qty > 1 ? `${i.qty}× ` : ''}${esc(i.name)}<small>${i.where ? `on sheet: ${esc(i.where)}` : 'inventory'}${i.unit ? ` · worth about ${money(i.unit)}` : ''}</small></span>
         <button class="btn small secondary" data-sell type="button">Sell…</button></div>`).join('')
-    : '<p class="empty-note">Nothing bought here yet. (Their sheet’s free-text inventory still works too.)</p>';
+    : '<p class="empty-note">Nothing to sell yet.</p>';
   $('#inventory').querySelectorAll('[data-sell]').forEach((b) => b.addEventListener('click', async () => {
-    const row = b.closest('.inv-row'); const it = inv.find((x) => x.uid === row.dataset.uid);
+    const it = inv.find((x) => x.key === b.closest('.inv-row').dataset.key);
     const qty = it.qty > 1 ? Number(await askText(`Sell how many? (they have ${it.qty})`, '1')) : 1;
     if (!qty) return;
-    act({ action: 'request', kind: 'sell', pc: pc.id, uid: it.uid, qty }, 'Sale request sent — the Warden sets the price.');
+    if (it.where && !await ask(`Sell ${it.name}?
+
+Once the Warden approves, it comes off ${pc.name}’s sheet (${it.where}).`, { ok: 'Ask to sell it', danger: false })) return;
+    act({ action: 'request', kind: 'sell', pc: pc.id, key: it.key, qty }, 'Sale request sent — the Warden sets the price.');
   }));
 }
 $('#shopper').addEventListener('change', (e) => { store.set('wiw.shopper', e.target.value); renderSide(); renderItems(); });

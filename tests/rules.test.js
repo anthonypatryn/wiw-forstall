@@ -357,3 +357,30 @@ test('Wanted posters: Warden-only, hidden ones stay hidden, bounty split with Cu
   assert.equal(posse[0].wallet, '60.00'); assert.equal(posse[1].wallet, '60.00');
   assert.throws(() => wantedAction(st, { action: 'payout', id: p.id, to: ['a'] }, o), /already/);
 });
+
+test('Selling: anything on the sheet can be sold (starting weapons, horse), and a sold Store item leaves the sheet too', async () => {
+  const { freshShop, shopAction, sellables } = await import('../lib/shop.js');
+  const combat = freshCombat(), shop = freshShop();
+  const pc = publicAction(combat, { action: 'addPc', name: 'Lila', trade: 'Gunslinger' }, { warden: false });
+  pc.wallet = '10.00';
+  pc.horse.breed = 'Morgan'; pc.horse.name = 'Biscuit';
+  const list = sellables(pc, shop);
+  const gun = list.find((x) => x.key.startsWith('weapon:'));
+  assert.ok(gun, 'starting weapon is sellable');
+  assert.ok(list.some((x) => x.key === 'horse' && x.name === 'Biscuit (Morgan)'));
+  const r = shopAction(shop, combat, { action: 'request', kind: 'sell', pc: pc.id, key: gun.key }, { warden: false });
+  shopAction(shop, combat, { action: 'decide', id: r.id, approve: true, price: 7 }, { warden: true });
+  assert.equal(pc.wallet, '17.00');
+  assert.equal(pc.weapons[Number(gun.key.split(':')[1])].model, '');
+  assert.ok(!sellables(pc, shop).some((x) => x.key === gun.key && x.name === gun.name));
+  // a bought gun: one row (the inventory), and selling it takes it off the Weapons section too
+  const buy = shopAction(shop, combat, { action: 'request', kind: 'buy', pc: pc.id, itemId: 'pistols-used-pistol' }, { warden: false });
+  pc.wallet = '999';
+  shopAction(shop, combat, { action: 'decide', id: buy.id, approve: true }, { warden: true });
+  assert.ok(pc.weapons.some((w) => w.itemId === 'pistols-used-pistol'));
+  const rows = sellables(pc, shop).filter((x) => x.name.includes('Used Pistol'));
+  assert.equal(rows.length, 1); assert.ok(rows[0].key.startsWith('inv:'));
+  const s = shopAction(shop, combat, { action: 'request', kind: 'sell', pc: pc.id, key: rows[0].key }, { warden: false });
+  shopAction(shop, combat, { action: 'decide', id: s.id, approve: true }, { warden: true });
+  assert.ok(!pc.weapons.some((w) => w.itemId === 'pistols-used-pistol'));
+});
