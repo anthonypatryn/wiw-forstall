@@ -43,6 +43,17 @@ export function mountTableLog() {
   row.append(btn);
   document.body.append(row, panel);
   mountDice(row);
+  // Whisper to the Warden (players only) + pop-ups for whispers/replies
+  import('./whisper.js').then((m) => {
+    if (!savedPin()) {
+      const wb = document.createElement('button');
+      wb.type = 'button'; wb.className = 'log-fab whisper-fab'; wb.title = 'Whisper to the Warden';
+      wb.innerHTML = `${gl('scroll')} <span>Whisper</span>`;
+      wb.addEventListener('click', m.whisper);
+      row.prepend(wb);
+    }
+    m.watchWhispers();
+  }).catch(() => {});
   askWhoIAm();
 
   let seenTop = null, unread = 0, latest = [];

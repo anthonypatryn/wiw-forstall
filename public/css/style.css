@@ -828,3 +828,12 @@ input[type=range]::-moz-range-thumb { width: 16px; height: 16px; border-radius: 
 .bp-tile .note-paper { font-size: 21px; max-height: 220px; overflow: hidden; }
 .bp-tile .item-text { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .bp-meta { font: var(--fs-xs) var(--display); letter-spacing: var(--track); color: var(--ink-faint); }
+
+/* whispers */
+.whisper-fab { background: var(--iron-2); }
+@media (max-width: 560px) { .whisper-fab span { display: none; } }
+.whisper-box, .whisper-card { width: min(460px, 100%); }
+.whisper-box h2 .gl, .whisper-card h2 .gl { width: 1em; height: 1em; vertical-align: -3px; }
+.whisper-box textarea { width: 100%; padding: 10px 12px; border: 1.5px solid var(--ink); border-radius: var(--radius); background: var(--surface); font: var(--fs-md)/1.4 var(--body); resize: vertical; margin-bottom: 12px; }
+.whisper-quote { margin: 4px 0 12px; padding: 8px 12px; border-left: 3px solid var(--secret-line); background: var(--secret-tint); font-style: italic; color: var(--ink-soft); }
+.whisper-quote.big { font: italic var(--fs-lg)/1.45 var(--body); color: var(--ink); }

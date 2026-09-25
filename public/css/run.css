@@ -44,3 +44,5 @@
 #handout textarea { flex: 1 1 100%; min-width: 0; padding: 8px 10px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--surface); font: var(--fs-md)/1.4 var(--body); resize: vertical; }
 .ho-photo { display: flex; align-items: center; gap: var(--sp-2); flex-wrap: wrap; margin-bottom: 10px; }
 .ho-photo img { width: 72px; height: 72px; object-fit: cover; border-radius: var(--r-sm); border: 1.5px solid var(--ink); }
+
+.ww-text { width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--surface); font: var(--fs-md)/1.4 var(--body); resize: vertical; margin-bottom: 8px; }

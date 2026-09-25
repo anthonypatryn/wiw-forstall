@@ -233,3 +233,15 @@ test('handouts: Warden-only sending, private until shown, the posse sees shared 
   handoutAction(st, { action: 'share', id: h.id, pc: 'a' }, { warden: false, names });
   assert.equal(handoutView(st, { pc: 'b' }).list[0].sharedBy, 'Ada');
 });
+
+test('whispers: player → Warden, Warden replies or starts one; each only reaches its person', async () => {
+  const { freshWhispers, whisperAction, whisperView } = await import('../lib/whispers.js');
+  const st = freshWhispers(), names = { a: 'Ada', b: 'Bo' };
+  const { id } = whisperAction(st, { action: 'send', pc: 'a', text: 'psst' }, { warden: false, names });
+  assert.equal(whisperView(st, { warden: true }).list.length, 1);
+  assert.throws(() => whisperAction(st, { action: 'reply', id, text: 'ok' }, { warden: false, names }), /Warden/);
+  whisperAction(st, { action: 'reply', id, text: 'noted' }, { warden: true, names });
+  whisperAction(st, { action: 'wardenSend', to: ['b'], text: 'you hear a click' }, { warden: true, names });
+  assert.deepEqual(whisperView(st, { pc: 'a' }).list.map((w) => w.reply), ['noted']);
+  assert.deepEqual(whisperView(st, { pc: 'b' }).list.map((w) => [w.reply, w.fromWarden]), [['you hear a click', true]]);
+});

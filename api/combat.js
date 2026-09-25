@@ -17,10 +17,10 @@ export default async function handler(req, res) {
       if (url.searchParams.get('view') === 'meta') return send(res, 200, META);
       if (url.searchParams.get('view') === 'needs') {
         if (!warden) return send(res, 401, { error: 'Wrong PIN.' });
-        const [shop, battle] = await Promise.all([load('shop'), load('battle')]);
+        const [shop, battle, whispers] = await Promise.all([load('shop'), load('battle'), load('whispers')]);
         const fl = fields(battle, state);
         const edison = edisonConflicts(fl).map(([a, b]) => [fl.find((f) => f.key === a)?.name, fl.find((f) => f.key === b)?.name]);
-        return send(res, 200, wardenNeeds(state, { shop, battle, edison }));
+        return send(res, 200, wardenNeeds(state, { shop, battle, edison, whispers }));
       }
       if (url.searchParams.get('view') === 'warden' && !warden) return send(res, 401, { error: 'Wrong PIN.' });
       if (sinceParam(url) === state.v) return send(res, 200, { v: state.v, unchanged: true });
