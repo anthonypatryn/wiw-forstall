@@ -1,4 +1,4 @@
-// Local dev server: serves /public and routes /api/<name> to the same api/<name>.js handlers Vercel uses.
+// Local dev server: serves /public and sends /api/<name> to the same router Vercel uses (api/[area].js → lib/routes/<name>.js).
 import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -12,8 +12,7 @@ http.createServer(async (req, res) => {
   const { pathname } = new URL(req.url, 'http://x');
   const apiMatch = pathname.match(/^\/api\/([a-z-]+)$/);
   if (apiMatch) {
-    const file = path.join(path.dirname(fileURLToPath(import.meta.url)), 'api', `${apiMatch[1]}.js`);
-    if (!fs.existsSync(file)) { res.statusCode = 404; return res.end('Not found'); }
+    const file = path.join(path.dirname(fileURLToPath(import.meta.url)), 'api', '[area].js'); // the same single router Vercel runs
     return (await import(pathToFileURL(file).href)).default(req, res);
   }
   let file = path.join(ROOT, pathname === '/' ? 'index.html' : pathname);
