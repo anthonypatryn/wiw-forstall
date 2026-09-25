@@ -5,6 +5,7 @@ let meta = null;
 // the Ability button depends on this, so redraw the turn panel once it arrives
 api('GET', null, '?view=meta', '/api/combat').then((m) => { meta = m; renderTurnBar(); }).catch(() => {});
 import { mountTableLog } from './tablelog.js';
+import { pcCardHTML, enemyCardHTML, wireFighters } from './fighter-card.js';
 import { panZoom } from './panzoom.js';
 
 const EP = '/api/battle';
@@ -190,7 +191,7 @@ function renderTokens() {
 function renderPanel() {
   const sel = selected && data.tokens.find((x) => x.id === selected);
   const box = $('#sel-box');
-  if (box.contains(document.activeElement) && document.activeElement.tagName === 'SELECT') return;
+  if (box.contains(document.activeElement) && /^(SELECT|INPUT)$/.test(document.activeElement.tagName)) return; // don't redraw under the Warden's typing
   const selF = !sel && selFs ? fsOf(selFs) : null;
   if (selF) {
     box.innerHTML = `<div class="sel-card"><div class="kind">FORSTALL${selF.hidden ? ' · HIDDEN FROM POSSE' : ''}</div>${forstallCard(selF)}</div>`;
@@ -202,25 +203,29 @@ function renderPanel() {
     const others = data.tokens.filter((t) => t.id !== sel.id).map((t) => ({ t, d: dist(sel, t) })).sort((a, b) => a.d - b.d);
     const st = Object.entries(sel.statuses || {});
     const hpPct = sel.maxHealth != null ? Math.max(0, Math.min(100, (sel.health / Math.max(1, sel.maxHealth)) * 100)) : 0;
+    // the Warden gets the full fighter card: Health ±, Grit, Statuses, and for enemies the stat block with public dice and loot
+    const fc = warden && combat && meta && sel.ref && (sel.kind === 'pc' ? combat.posse.find((x) => x.id === sel.ref) : combat.enemies.find((x) => x.id === sel.ref));
+    const fcHTML = !fc ? '' : sel.kind === 'pc' ? pcCardHTML(fc, { data: combat, meta }) : enemyCardHTML(fc, { data: combat, meta });
     const detail = `
-      ${sel.maxHealth != null ? `<div class="d-hp"><span class="bar"><i style="width:${hpPct}%"></i></span><b>${sel.health}/${sel.maxHealth}</b></div>` : ''}
+      ${!fcHTML && sel.maxHealth != null ? `<div class="d-hp"><span class="bar"><i style="width:${hpPct}%"></i></span><b>${sel.health}/${sel.maxHealth}</b></div>` : ''}
       <div class="d-tags">${sel.ref && sel.ref === data.current ? '<span class="tag turn">THEIR TURN</span>' : ''}${sel.frenzied ? '<span class="tag red">FRENZIED</span>' : ''}${sel.bleeding ? '<span class="tag red">BLEEDING OUT</span>' : ''}${sel.down ? '<span class="tag">DOWN</span>' : ''}</div>
-      ${st.length ? `<div class="d-st">${st.map(([k, v]) => `<span class="st">${esc(k)} <b>${v}</b></span>`).join('')}</div>` : ''}
-      <div class="d-row">${sel.grit != null ? `<span><b>GRIT</b> ${sel.grit}</span>` : ''}${sel.defense ? `<span><b>DEFENSE</b> ${esc(sel.defense)}</span>` : ''}${sel.speed ? `<span><b>SPEED</b> ${esc(sel.speed)}</span>` : ''}${sel.finesse ? `<span><b>FINESSE</b> ${esc(sel.finesse)}</span>` : ''}${sel.aces ? `<span><b>ACES</b> ${sel.aces}/6</span>` : ''}${sel.size ? `<span><b>SIZE</b> ${esc(sel.size)}</span>` : ''}</div>
+      ${!fcHTML && st.length ? `<div class="d-st">${st.map(([k, v]) => `<span class="st">${esc(k)} <b>${v}</b></span>`).join('')}</div>` : ''}
+      ${fcHTML ? "" : `<div class="d-row">${sel.grit != null ? `<span><b>GRIT</b> ${sel.grit}</span>` : ''}${sel.defense ? `<span><b>DEFENSE</b> ${esc(sel.defense)}</span>` : ''}${sel.speed ? `<span><b>SPEED</b> ${esc(sel.speed)}</span>` : ''}${sel.finesse ? `<span><b>FINESSE</b> ${esc(sel.finesse)}</span>` : ''}${sel.aces ? `<span><b>ACES</b> ${sel.aces}/6</span>` : ''}${sel.size ? `<span><b>SIZE</b> ${esc(sel.size)}</span>` : ''}</div>`}
       ${sel.frenzyText?.length ? `<div class="d-note">${sel.frenzyText.map(esc).join('<br>')}</div>` : ''}
       ${sel.sweepPreview ? `<div class="d-note fs-prev">${gl('forstall')} ${esc(sel.sweepPreview)}</div>` : ''}
       ${sel.emp != null ? `<button type="button" class="btn small danger" data-emp="${esc(sel.ref)}"${sel.emp < 1 ? ' disabled' : ''}>${gl('flash')} Natural EMP (${sel.emp}/2 left today)</button>` : ''}
       ${warden && sel.kind === 'enemy' && sel.ref ? `<label class="check"><input type="checkbox" data-submerged="${esc(sel.ref)}"${sel.submerged ? ' checked' : ''}> Submerged — Forstalls can’t reach it</label>` : ''}
       ${(() => { const f = sel.kind === 'pc' && (data.forstalls || []).find((x) => x.owner === sel.ref); return f ? forstallCard(f) : ''; })()}
-      ${sel.attacks?.length ? `<details class="d-atk"><summary>Attacks</summary>${sel.attacks.map((a) => `<p>${esc(a)}</p>`).join('')}</details>` : ''}
+      ${!fcHTML && sel.attacks?.length ? `<details class="d-atk"><summary>Attacks</summary>${sel.attacks.map((a) => `<p>${esc(a)}</p>`).join('')}</details>` : ''}
       ${combat?.combat?.active && sel.ref && sel.ref === combat.combat.current ? '<p class="tp-hint">Attacks and actions are in the turn panel above.</p>' : ''}`;
     const kindLabel = sel.kind === 'pc' ? `POSSE${sel.trade ? ` · THE ${esc(sel.trade.toUpperCase())}` : ''}` : sel.kind === 'enemy' ? 'ENEMY' : 'NPC';
-    box.innerHTML = `<div class="sel-card">${sel.photo || sel.img ? `<img class="sel-art" src="${esc(sel.photo || `/img/tokens/${sel.img}.webp`)}" alt="">` : ''}<div class="kind">${kindLabel}${sel.hidden ? ' · HIDDEN FROM POSSE' : ''}</div><h2>${esc(sel.name)}</h2>${detail}
+    box.innerHTML = `<div class="sel-card">${sel.photo || sel.img ? `<img class="sel-art" src="${esc(sel.photo || `/img/tokens/${sel.img}.webp`)}" alt="">` : ''}<div class="kind">${kindLabel}${sel.hidden ? ' · HIDDEN FROM POSSE' : ''}</div>${fcHTML ? '' : `<h2>${esc(sel.name)}</h2>`}${fcHTML}${detail}
       <h3 class="d-h">DISTANCES</h3>
       ${others.length ? others.map(({ t, d }) => `<div class="tok-row" data-pick="${t.id}"><span class="chip" style="background:${color(t)}">${esc(initials(t.name))}</span>
         <span class="n">${esc(t.name)}</span><span class="d ${band(d)}">${d}″ · ${BAND_LABEL[band(d)]}</span></div>`).join('') : '<p class="muted">Nobody else on the board.</p>'}</div>`;
   }
   if (sel) wireFs(box);
+  if (sel && warden) wireFighters(box, { data: combat, meta, act: async (body) => { const r = await combatAct(body); renderPanel(); renderTurnBar(); poller?.now?.(); return r; } });
   box.querySelector('[data-emp]')?.addEventListener('click', async (e) => {
     if (!await ask('Natural EMP?\n\nEvery Forstall within Long Range (18″) stops Sweeping, and they can’t Scan or Burst until this monster’s next turn.', { ok: 'Let it rip', danger: true })) return;
     play('zap');
@@ -450,7 +455,7 @@ function wireTurnBar(bar, cur, tok) {
   bar.querySelector('[data-endmine]')?.addEventListener('click', () => { tp.open = ''; tpAct({ action: 'pc', id: c.current, op: 'endTurn' }); });
   bar.querySelector('[data-endfight]')?.addEventListener('click', async () => {
     if (!await ask('End combat? Grit refills and Dodge/Aim clear. Health and Statuses stay as they are.')) return;
-    if (await tpAct({ action: 'end' }, 'Combat is over. Loot the fallen in Combat Control.')) poller?.now?.();
+    if (await tpAct({ action: 'end' }, 'Combat is over. Tap a downed enemy to loot it.')) poller?.now?.();
   });
   bar.querySelector('[data-goto]')?.addEventListener('click', () => {
     const t = data?.tokens.find((x) => x.ref === c.current);

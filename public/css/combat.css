@@ -28,83 +28,6 @@
 .order .slot button.on { color: #ff7a5c; }
 .turn-help { font: italic var(--fs-sm) var(--body); color: #cbbda4; margin: 10px 0 0; }
 
-/* ---------- combatant cards ---------- */
-.fighter {
-  position: relative; background: var(--surface); border: 1.5px solid var(--ink); border-radius: var(--radius); padding: 12px 12px 10px;
-  box-shadow: 2px 2px 0 rgba(34,31,31,.18); display: flex; flex-direction: column; gap: 8px;
-}
-.fighter.now { outline: 3px solid var(--brass); outline-offset: 2px; }
-.fighter.down { opacity: .55; filter: grayscale(.7); }
-.fighter.frenzied { border-color: var(--red); box-shadow: 0 0 0 1px var(--red), 2px 2px 0 rgba(200,55,45,.3); }
-.f-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; }
-.f-name { font: 400 var(--fs-xl)/1.05 var(--western); }
-.f-name a { color: inherit; text-decoration: none; }
-.f-name a:hover { text-decoration: underline; }
-.f-sub { font: var(--fs-sm) var(--type); color: var(--ink-faint); }
-.f-tag { font: var(--fs-xs)/1 var(--display); letter-spacing: .1em; padding: 4px 6px 2px; border-radius: var(--r-sm); background: var(--ink); color: var(--paper); white-space: nowrap; }
-.f-tag.now { background: var(--brass); color: var(--ink); }
-.f-tag.red { background: var(--red); color: #fff; }
-
-.hp { display: flex; align-items: center; gap: 8px; }
-.hp .bar { flex: 1; height: 14px; background: var(--paper-2); border: 1px solid var(--ink); border-radius: var(--r-sm); overflow: hidden; }
-.hp .bar i { display: block; height: 100%; background: linear-gradient(180deg, var(--red), var(--danger)); transition: width .3s; }
-.hp .num { font: var(--fs-xl)/1 var(--display); min-width: 58px; text-align: right; }
-.pm { display: inline-flex; gap: 4px; }
-.pm button, .icon-btn {
-  width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid var(--ink); background: var(--paper);
-  font: var(--fs-lg)/1 var(--display); display: grid; place-items: center; padding: 0;
-}
-.pm button:hover, .icon-btn:hover { background: var(--ink); color: var(--paper); }
-.hp input { width: 48px; padding: 4px; border: 1px solid var(--ink-faint); border-radius: var(--r-sm); font: var(--fs-sm) var(--type); text-align: center; background: #fff; }
-
-.row2 { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.lbl { font: var(--fs-sm) var(--display); letter-spacing: .14em; color: var(--ink-soft); min-width: 44px; }
-.pips { display: flex; gap: 4px; }
-.pip { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--ink); background: transparent; padding: 0; }
-.pip.on { background: var(--rust); border-color: var(--rust-dark); box-shadow: inset 0 -2px 0 rgba(0,0,0,.25); }
-.pip.ace { border-radius: var(--r-sm); transform: rotate(45deg) scale(.82); }
-.pip.ace.on { background: var(--brass); border-color: #8a6a2a; }
-
-.statuses { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-.st {
-  display: inline-flex; align-items: center; gap: 4px; padding: 2px 4px 1px 8px; border-radius: var(--radius);
-  background: var(--ink); color: var(--paper); font: var(--fs-sm)/1.4 var(--display); letter-spacing: .06em;
-}
-.st b { font-weight: 400; background: var(--rust); border-radius: var(--radius); padding: 0 6px; }
-.st button { background: none; border: 0; color: #cbbda4; font: var(--fs-sm)/1 var(--display); padding: 0 3px; }
-.st button:hover { color: #fff; }
-.st-add { padding: 3px 6px; border: 1px dashed var(--ink-faint); border-radius: var(--radius); background: transparent; font: var(--fs-xs) var(--body); color: var(--ink-soft); max-width: 128px; }
-
-.f-actions { display: flex; gap: 6px; flex-wrap: wrap; }
-.f-actions .btn { font-size: var(--fs-sm); padding: 6px 9px 4px; box-shadow: none; }
-.bleed { background: #3a1210; color: var(--danger-tint); border-radius: var(--r-sm); padding: 8px 10px; font-size: var(--fs-sm); }
-.bleed b { font: var(--fs-md) var(--display); letter-spacing: .1em; color: #ff8c73; }
-.bleed .skills { display: flex; gap: 4px; flex-wrap: wrap; margin: 6px 0; }
-.bleed .skills button { font: var(--fs-xs) var(--display); letter-spacing: .08em; padding: 4px 7px 2px; border-radius: var(--r-sm); border: 1px solid var(--danger-tint); background: transparent; color: var(--danger-tint); }
-.bleed .skills button.done { background: var(--danger-tint); color: #3a1210; text-decoration: line-through; }
-.ace-ready { background: linear-gradient(90deg, #f0d48a, var(--brass)); border-radius: var(--r-sm); padding: 8px 10px; font-size: var(--fs-sm); }
-.ace-ready b { font: var(--fs-md) var(--display); letter-spacing: .08em; }
-
-/* enemy detail (Warden) */
-.e-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; text-align: center; font: var(--fs-xs) var(--display); letter-spacing: .1em; color: var(--ink-soft); }
-.e-stats b { display: block; font: var(--fs-md) var(--type); letter-spacing: 0; color: var(--ink); }
-.e-stats button { border: 1px solid var(--ink-faint); background: #fff; border-radius: var(--r-sm); padding: 4px 2px; cursor: pointer; font: inherit; color: inherit; }
-.e-stats button:hover { border-color: var(--rust); color: var(--rust); }
-.attacks { display: flex; flex-direction: column; gap: 4px; }
-.atk { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; align-items: center; padding: 5px 0; border-top: 1px dotted rgba(34,31,31,.3); font-size: var(--fs-sm); }
-.atk .an { font-weight: 700; }
-.atk .an small { font: var(--fs-xs) var(--display); letter-spacing: .1em; color: var(--ink-faint); margin-left: 4px; }
-.atk .ae { grid-column: 1; color: var(--ink-soft); }
-.atk .rolls { grid-row: 1 / span 2; grid-column: 2; display: flex; gap: 4px; }
-.atk .rolls button { font: var(--fs-xs) var(--display); letter-spacing: .06em; padding: 5px 7px 3px; border: 1px solid var(--ink); border-radius: var(--r-sm); background: var(--ink); color: var(--paper); }
-.atk .rolls button.st-roll { background: transparent; color: var(--ink); }
-.atk .rolls button:hover { background: var(--rust); border-color: var(--rust); color: #fff; }
-details.more summary { cursor: pointer; font: var(--fs-sm) var(--display); letter-spacing: .12em; color: var(--rust); }
-details.more p { font-size: var(--fs-sm); margin: 6px 0; }
-.frenzy-row { font-size: var(--fs-sm); padding: 6px 8px; border-left: 3px solid var(--ink-faint); background: rgba(0,0,0,.04); margin-top: 4px; }
-.frenzy-row.hit { border-left-color: var(--red); background: rgba(200,55,45,.1); }
-.frenzy-row b { font: var(--fs-sm) var(--display); letter-spacing: .08em; }
-
 .add-enemy { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
 .add-enemy select, .add-enemy input { padding: 8px 10px; border: 1.5px solid var(--ink); border-radius: var(--radius); background: var(--surface); font-size: var(--fs-sm); }
 .add-enemy select { flex: 1 1 240px; font-family: var(--type); }
@@ -163,25 +86,5 @@ details.more p { font-size: var(--fs-sm); margin: 6px 0; }
   .duel-table thead th { font-size: var(--fs-sm); }
 }
 
-/* loot (p. 79) */
-.loot { margin: 10px 0 4px; padding: 8px 10px; border: 1.5px dashed var(--brass, var(--brass)); border-radius: var(--radius); background: var(--surface); }
-.loot-h { font: var(--fs-md) var(--display); letter-spacing: .1em; font-weight: 400; color: var(--rust); }
-.loot-tro { font-size: var(--fs-sm); line-height: 1.35; margin: 6px 0; }
-.loot-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin: 6px 0; }
-.loot-row select { padding: 5px 7px; border: 1px solid var(--ink-faint); border-radius: var(--r-sm); background: var(--surface); font-size: var(--fs-sm); min-width: 0; max-width: 100%; }
-.loot-guide { display: flex; flex-direction: column; gap: 1px; font-size: var(--fs-xs); color: var(--ink-soft); margin: 4px 0; }
-
-.ea { margin: 10px 0 4px; padding: 8px 10px; border: 1.5px dashed var(--rust); border-radius: var(--radius); background: var(--surface); }
-
-.f-name .rename { border: 0; background: none; color: var(--ink-faint); font-size: var(--fs-sm); cursor: pointer; padding: 0 2px; vertical-align: middle; }
-.f-name .rename:hover { color: var(--rust); }
 #add-mon-name, #add-npc-name { flex: 1 1 140px; min-width: 0; padding: 8px 10px; border: 1.5px solid var(--ink); border-radius: var(--radius); background: var(--surface); font-size: var(--fs-sm); }
 
-/* Warden: a downed monster stays readable — only its stats fade; the loot box sits on top, bright */
-.fighter.down.lootable { opacity: 1; filter: none; }
-.fighter.down.lootable .f-body { opacity: .5; filter: grayscale(.8); }
-.fighter.down.lootable .f-head { opacity: .75; }
-.loot-flag { display: flex; align-items: center; gap: 6px; margin: -4px 0 8px; padding: 5px 10px 3px; border-radius: var(--r-sm); background: var(--ink); color: var(--brass); font: var(--fs-sm) var(--display); letter-spacing: var(--track-wide); }
-.loot-flag .gl { width: 1.1em; height: 1.1em; }
-.fighter.lootable .loot { border: 2px solid var(--brass); background: #fbf1d8; box-shadow: 0 0 0 3px rgba(201,164,92,.25); }
-.fighter.lootable .loot .loot-h { font-size: var(--fs-lg); }

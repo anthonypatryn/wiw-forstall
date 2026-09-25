@@ -263,3 +263,8 @@
 .tok-row .fs-chip.on { background: var(--forstall-glow); color: #10292a; }
 .tok-row .fs-chip .gl { width: 15px; height: 15px; }
 @media (max-width: 600px) { .fs-slots { grid-template-columns: 1fr; } }
+
+/* the Warden runs the map from a desktop: a wider side panel so the fighter card (fighter.css) has room */
+body.warden-mode .battle-wrap { grid-template-columns: minmax(0, 1fr) 440px; }
+@media (max-width: 900px) { body.warden-mode .battle-wrap { grid-template-columns: 1fr; } }
+#sel-box .fighter { margin: 6px 0 10px; }
