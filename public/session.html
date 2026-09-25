@@ -11,7 +11,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Rye&family=Special+Elite&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css?v=30">
   <link rel="stylesheet" href="/css/rollcall.css?v=1">
-  <link rel="stylesheet" href="/css/session.css?v=7">
+  <link rel="stylesheet" href="/css/run.css?v=2">
+  <link rel="stylesheet" href="/css/session.css?v=8">
 </head>
 <body>
   <header class="masthead">
@@ -28,56 +29,66 @@
   <nav class="sitenav" data-nav aria-label="Site"></nav>
 
   <main class="wrap">
-    <section class="card corner gate" id="gate" hidden>
+    <section class="card corner run-gate" id="gate" hidden>
       <h2 class="section-title">Warden only</h2>
       <p class="muted">This page is just for the Warden.</p>
       <button class="btn" id="unlock" type="button"><span data-gl="star"></span> Enter the Warden PIN</button>
     </section>
 
-    <div class="grid" id="desk" hidden>
-      <div>
-        <section class="card corner" id="check-card">
-          <div class="head-row"><h2 class="section-title">Skill Check</h2><span class="muted">Task difficulty, p. 12</span></div>
+    <div class="run-grid" id="desk" hidden>
+      <div class="run-col">
+        <section class="card corner">
+          <div class="head-row"><h2 class="section-title">Call for a Roll</h2><span class="muted">Task difficulty, p. 12</span></div>
           <div id="check-form"></div>
+        </section>
+        <section class="card corner">
+          <div class="head-row"><h2 class="section-title">Open Rolls</h2><a class="btn small secondary" href="/run"><span data-gl="star"></span> Run the Game</a></div>
           <div id="check-list"></div>
         </section>
-
         <section class="card corner">
-          <div class="head-row">
-            <h2 class="section-title">Session Notes</h2>
-            <button class="btn small" id="new-session" type="button">+ New session</button>
-          </div>
+          <div class="head-row"><h2 class="section-title">Session Notes</h2><button class="btn small" id="new-session" type="button"><span data-gl="scroll"></span> New session</button></div>
           <div class="sess-tabs" id="sess-tabs"></div>
           <div id="editor"></div>
         </section>
-
-        <section class="card corner">
-          <div class="head-row"><h2 class="section-title">Your Homebrew</h2><button class="btn small secondary" id="hb-refresh" type="button">↻ Refresh</button></div>
-          <p class="muted" style="margin-top:0">Everything you’ve made up, in one place. Deleting can’t be undone.</p>
-          <div id="homebrew"></div>
-        </section>
-
-        <section class="card corner">
-          <h2 class="section-title">Backup</h2>
-          <p class="muted" style="margin-top:0">Saves everything — sheets, NPCs, factions, map, battle map, store, notes and the Table Log — to one file on this device. Do it after each session.</p>
-          <button class="btn" id="backup" type="button">Download a backup</button>
-          <span class="muted" id="backup-note"></span>
-        </section>
       </div>
 
-      <aside>
+      <div class="run-col">
         <section class="card corner">
-          <div class="head-row"><h2 class="section-title">At a Glance</h2><span class="muted" id="glance-conn"></span></div>
+          <div class="head-row"><h2 class="section-title">The Posse</h2><span class="muted" id="glance-conn"></span></div>
           <div id="glance"></div>
         </section>
         <section class="card corner">
-          <div class="head-row"><h2 class="section-title">Recent at the Table</h2><button class="btn small secondary danger" id="clear-log" type="button">Clear Table Log</button></div>
+          <div class="head-row"><h2 class="section-title">Enemies</h2><a class="btn small secondary" href="/combat"><span data-gl="claws"></span> Add or loot</a></div>
+          <div id="glance-foes"></div>
+        </section>
+        <section class="card corner">
+          <div class="head-row"><h2 class="section-title">Recent at the Table</h2><button class="btn small secondary danger" id="clear-log" type="button">Clear log</button></div>
           <div class="log glance-log" id="glance-log"></div>
         </section>
-      </aside>
+        <section class="card corner">
+          <div class="head-row"><h2 class="section-title">Your Homebrew</h2><button class="btn small secondary" id="hb-refresh" type="button"><span data-gl="die"></span> Refresh</button></div>
+          <p class="muted sess-note">Everything you’ve made up, in one place. Deleting can’t be undone.</p>
+          <div id="homebrew"></div>
+        </section>
+        <section class="card corner">
+          <div class="head-row"><h2 class="section-title">Backup</h2><button class="btn small" id="backup" type="button"><span data-gl="satchel"></span> Download</button></div>
+          <p class="muted sess-note">Saves everything — sheets, NPCs, factions, maps, store, notes and the Table Log — to one file on this device. Do it after each session. <span id="backup-note"></span></p>
+        </section>
+        <section class="card corner">
+          <h2 class="section-title">Jump To</h2>
+          <div class="run-links">
+            <a href="/run"><span data-gl="star"></span><b>Run the Game</b><small>needs you · the fight</small></a>
+            <a href="/combat"><span data-gl="revolver"></span><b>Combat Control</b><small>add enemies · awards · loot</small></a>
+            <a href="/battle"><span data-gl="pin"></span><b>Battle Map</b><small>tokens · range · Forstalls</small></a>
+            <a href="/posse"><span data-gl="scroll"></span><b>Posse Sheets</b><small>every character</small></a>
+            <a href="/store"><span data-gl="satchel"></span><b>Store</b><small>approve buys · give loot</small></a>
+            <a href="/names"><span data-gl="hat"></span><b>NPCs</b><small>deal a stranger · the ledger</small></a>
+          </div>
+        </section>
+      </div>
     </div>
   </main>
 
-  <script type="module" src="/js/session.js?v=26"></script>
+  <script type="module" src="/js/session.js?v=27"></script>
 </body>
 </html>

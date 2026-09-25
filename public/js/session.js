@@ -80,24 +80,27 @@ function onSessions(d) {
 
 // ---------- at a glance (live from the Combat & sheets data) ----------
 const STATUS_SHORT = (st) => Object.entries(st || {}).filter(([, v]) => v).map(([k, v]) => `${k}${v > 1 ? ` [${v}]` : ''}`).join(', ');
+const hpBar = (h, max) => { const pct = Math.max(0, Math.min(100, (h / Math.max(1, max)) * 100)); return `<span class="run-hp"><i style="width:${pct}%"></i></span>`; };
+const stTags = (st) => Object.entries(st || {}).filter(([, v]) => v).map(([k, v]) => `<span class="run-st">${esc(k)} ${v}</span>`).join('');
 function renderGlance() {
   if (!combat) return;
   const posse = combat.posse || [];
+  const c = combat.combat || {};
+  $('#glance').innerHTML = posse.length ? posse.map((p) => {
+    const flag = p.dead ? '<span class="run-st">FALLEN</span>' : p.bleeding ? '<span class="run-st hot">BLEEDING OUT</span>' : p.done === false ? '<span class="run-st">CREATING</span>' : '';
+    return `<div class="run-row${p.dead ? ' sitting' : ''}${c.current === p.id ? ' now' : ''}${p.bleeding ? ' bleed' : ''}">
+      <div class="run-who"><a href="/posse#${esc(p.id)}"><b>${esc(p.name)}</b></a><small>The ${esc(p.trade)}${p.player ? ` · ${esc(p.player)}` : ''}${p.title ? ` · “${esc(p.title)}”` : ''}</small>${flag}${stTags(p.statuses)}</div>
+      <div class="run-nums">${hpBar(p.health, p.maxHealth)}<span class="run-hpn">${p.health}/${p.maxHealth}</span>
+        <span class="run-grit" title="Prestige">${p.prestige?.total ?? 0} P${p.prestige?.unclaimed ? ` <small>(${p.prestige.unclaimed} to spend)</small>` : ''}</span>
+        <span class="run-grit" title="Wallet">$${esc(String(p.wallet || '0'))}</span></div></div>`;
+  }).join('') : '<p class="muted">No characters yet.</p>';
   const foes = (combat.enemies || []).filter((e) => !e.defeated);
   const d = combat.duel;
-  $('#glance').innerHTML = `
-    ${posse.length ? `<table class="glance-table"><thead><tr><th>Character</th><th>Health</th><th>Grit</th><th>Prestige</th><th>$</th></tr></thead><tbody>
-      ${posse.map((p) => {
-        const flag = p.dead ? '<span class="gl-flag dead">FALLEN</span>' : p.bleeding ? '<span class="gl-flag">' + gl('drop') + ' BLEEDING OUT</span>' : p.done === false ? '<span class="gl-flag wip">CREATING</span>' : '';
-        const low = !p.dead && p.health <= Math.ceil(p.maxHealth / 3);
-        return `<tr class="${p.dead ? 'dead' : ''}"><td><a href="/posse#${p.id}"><b>${esc(p.name)}</b></a><small>The ${esc(p.trade)}${p.player ? ` · ${esc(p.player)}` : ''}${p.title ? ` · “${esc(p.title)}”` : ''}</small>${flag}${STATUS_SHORT(p.statuses) ? `<small class="gl-st">${esc(STATUS_SHORT(p.statuses))}</small>` : ''}</td>
-          <td class="${low ? 'low' : ''}">${p.health}/${p.maxHealth}</td><td>${p.grit}</td>
-          <td>${p.prestige?.total ?? 0}${p.prestige?.unclaimed ? `<small>${p.prestige.unclaimed} to spend</small>` : ''}</td><td>${esc(String(p.wallet || '0'))}</td></tr>`;
-      }).join('')}</tbody></table>` : '<p class="muted">No characters yet.</p>'}
-    <h4 class="gl-h">IN THE FIGHT ${combat.combat?.active ? `<small>Round ${combat.combat.round}</small>` : '<small>no combat running</small>'}</h4>
-    ${foes.length ? `<ul class="gl-foes">${foes.map((e) => `<li><b>${esc(e.name)}</b> ${e.health ?? '?'}/${e.maxHealth ?? '?'} Health${STATUS_SHORT(e.statuses) ? ` · ${esc(STATUS_SHORT(e.statuses))}` : ''}</li>`).join('')}</ul>` : '<p class="muted">No enemies on the field.</p>'}
-    ${d ? `<p class="gl-duel">${gl('hat')} Duel: <b>${esc(d.names[0])}</b> vs <b>${esc(d.names[1])}</b> — ${d.done ? 'finished' : `next: ${['Charm', 'Finesse', 'Intuition', 'Nerve', 'Draw!'][d.step]}`}</p>` : ''}
-    <div class="gl-links"><a class="btn small secondary" href="/combat">Combat</a><a class="btn small secondary" href="/posse">Posse Sheets</a><a class="btn small secondary" href="/names">NPCs</a><a class="btn small secondary" href="/map">Map</a><a class="btn small secondary" href="/battle">Battle Map</a><a class="btn small secondary" href="/store">Store</a></div>`;
+  $('#glance-foes').innerHTML = `<p class="muted sess-note">${c.active ? `In a fight — Round ${c.round}.` : 'No combat running.'}</p>`
+    + (foes.length ? foes.map((e) => `<div class="run-row${c.current === e.id ? ' now' : ''}${e.out ? ' sitting' : ''}">
+      <div class="run-who"><b>${esc(e.name)}</b>${e.out ? '<small>sitting this fight out</small>' : ''}${e.frenzied?.length ? '<span class="run-st hot">FRENZIED</span>' : ''}${stTags(e.statuses)}</div>
+      <div class="run-nums">${hpBar(e.health ?? 0, e.maxHealth ?? 1)}<span class="run-hpn">${e.health ?? '?'}/${e.maxHealth ?? '?'}</span><span class="run-grit">${e.grit ?? '—'} Grit</span></div></div>`).join('') : '<p class="muted">No enemies on the field.</p>')
+    + (d ? `<p class="gl-duel">${gl('hat')} Duel: <b>${esc(d.names[0])}</b> vs <b>${esc(d.names[1])}</b> — ${d.done ? 'finished' : `next: ${['Charm', 'Finesse', 'Intuition', 'Nerve', 'Draw!'][d.step]}`}</p>` : '');
   renderLogInto($('#glance-log'), (combat.log || []).slice(0, 12));
 }
 
@@ -112,18 +115,21 @@ function renderChecks(force) {
   if (!combat) return;
   caller.draw();
   const nm = (pid) => combat.posse.find((p) => p.id === pid)?.name || '—';
-  $('#check-list').innerHTML = (combat.checks || []).map((ck) => {
+  const rows = (combat.checks || []).map((ck) => {
     const help = Math.max(0, ...Object.values(ck.helps || {}).map((h) => h.hits));
+    const done = `<button type="button" class="btn small secondary" data-ck-close="${ck.id}">Done</button>`;
     if (ck.kind === 'challenge') {
-      return `<div class="ck-item"><div class="ck-head"><b>${gl('revolver')} ${esc(ck.skill)} Challenge</b>${ck.round > 1 ? ` · round ${ck.round}` : ''}${ck.note ? ` · <i>${esc(ck.note)}</i>` : ''}<button type="button" class="btn small secondary" data-ck-close="${ck.id}">Done</button></div>
-        <ul>${ck.who.map((pid) => `<li>${esc(nm(pid))}: ${ck.rolls[pid] ? `<b>${ck.rolls[pid].hits}</b>` : '<span class="muted">waiting…</span>'}</li>`).join('')}${ck.npc ? `<li>${esc(ck.npc.name)}: <span class="muted">rolls when the posse has</span></li>` : ''}</ul>
-        ${ck.winner ? `<p class="ck-win">${gl('trophy')} ${esc(ck.winner)} wins — ${(ck.last || []).map((x) => `${esc(x.name)} ${x.hits}`).join(' · ')}</p>` : ck.last ? `<p class="muted">Tied last round (${ck.last.map((x) => `${esc(x.name)} ${x.hits}`).join(' · ')}) — rolling again.</p>` : ''}</div>`;
+      return `<div class="need${ck.winner ? '' : ' urgent'}"><div class="ck-body"><b>${gl('revolver')} ${esc(ck.skill)} Challenge</b>${ck.round > 1 ? ` · round ${ck.round}` : ''}${ck.note ? ` · <i>${esc(ck.note)}</i>` : ''}
+        <div class="ck-who">${ck.who.map((pid) => `<span class="run-st${ck.rolls[pid] ? '' : ' wait'}">${esc(nm(pid))} ${ck.rolls[pid] ? `<b>${ck.rolls[pid].hits}</b>` : '…'}</span>`).join('')}${ck.npc ? `<span class="run-st">${esc(ck.npc.name)} rolls last</span>` : ''}</div>
+        ${ck.winner ? `<div class="ck-win">${gl('trophy')} ${esc(ck.winner)} wins — ${(ck.last || []).map((x) => `${esc(x.name)} ${x.hits}`).join(' · ')}</div>` : ck.last ? `<div class="muted">Tied (${ck.last.map((x) => `${esc(x.name)} ${x.hits}`).join(' · ')}) — rolling again.</div>` : ''}</div>${done}</div>`;
     }
-    return `<div class="ck-item"><div class="ck-head"><b>${esc(ck.skill)}</b> · ${esc(ck.diff)} (${ck.target})${ck.note ? ` · <i>${esc(ck.note)}</i>` : ''}<button type="button" class="btn small secondary" data-ck-close="${ck.id}">Done</button></div>
-      <ul>${ck.who.map((pid) => { const r = ck.rolls[pid]; const tot = r ? r.hits + help : null;
-        return `<li>${esc(nm(pid))}: ${r ? `<b class="${tot >= ck.target ? 'ok' : 'no'}">${tot >= ck.target ? '✓' : '✗'} ${tot}/${ck.target}</b>${help ? ` <small>(+${help} help)</small>` : ''}` : '<span class="muted">waiting…</span>'}</li>`; }).join('')}
-      ${Object.values(ck.helps || {}).map((h) => `<li class="muted">${esc(h.name)} helped: ${h.hits}</li>`).join('')}</ul></div>`;
+    const waiting = ck.who.some((pid) => !ck.rolls[pid]);
+    return `<div class="need${waiting ? ' urgent' : ''}"><div class="ck-body"><b>${gl('die')} ${esc(ck.skill)}</b> · ${esc(ck.diff)} (${ck.target})${ck.note ? ` · <i>${esc(ck.note)}</i>` : ''}
+      <div class="ck-who">${ck.who.map((pid) => { const r = ck.rolls[pid]; const tot = r ? r.hits + help : null;
+        return `<span class="run-st${r ? (tot >= ck.target ? ' ok' : ' no') : ' wait'}">${esc(nm(pid))} ${r ? `${tot >= ck.target ? '✓' : '✗'} ${tot}/${ck.target}` : '…'}</span>`; }).join('')}
+      ${Object.values(ck.helps || {}).map((h) => `<span class="run-st">${esc(h.name)} helped +${h.hits}</span>`).join('')}</div></div>${done}</div>`;
   }).join('');
+  $('#check-list').innerHTML = rows || '<p class="muted">No rolls open. Call one above.</p>';
   $('#check-list').querySelectorAll('[data-ck-close]').forEach((b) => b.addEventListener('click', () => combatAct({ action: 'checkClose', id: b.dataset.ckClose })));
 }
 // ---------- homebrew: monsters (scanner), NPC ledger, store items ----------

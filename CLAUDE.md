@@ -73,6 +73,7 @@
   - **Every page** (`mountTableLog`): Table Log + Roll dice buttons share `.fab-row` (bottom-right; stacked on phones); `mountDice` rolls any B/G pool as anyone; first visit asks "Who are you playing?" (`askWhoIAm`, sets `wiw.me`, `wiw.meAsked`), skipped in Warden mode.
   - `/howto` = How to Play Online (static guide for players, in the nav). Update it when player-facing flows change.
 
+- Session page uses Run the Game's look (loads css/run.css: `run-grid`/`run-col`, `run-row` rows, `need` rows for open rolls, `run-links` Jump To). Keep Warden pages in that style.
 - Session page: `/session` + `api/session.js` + `lib/session.js` (Redis key `session`), every request needs the PIN; `mountNav` adds the Session link only when a PIN is saved.
 
 ## Conventions
