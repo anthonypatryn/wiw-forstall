@@ -14,6 +14,8 @@ const NEAR = 55; // map px: a token this close to a place counts as "at" it
 
 let meta = null, data = null, warden = false, poller = null;
 let selected = null;      // place id
+let wanted = [];          // Wanted posters up around the West (for the "N wanted" line)
+const loadWanted = () => api('GET', null, `?view=${warden ? 'warden' : 'player'}`, '/api/wanted').then((d) => { wanted = d.posters || []; if (selected) renderPanel(); }).catch(() => {});
 let placing = false;      // Warden "add a place" mode
 const view = { s: 1, x: 0, y: 0 };
 
@@ -159,6 +161,7 @@ function renderPanel() {
   const paras = (p.text || '').split('\n\n').filter(Boolean);
   body.innerHTML = `
     <div><div class="kind">${KIND_LABEL[p.kind] || ''}</div><h2>${esc(p.name)}</h2></div>
+    ${(() => { const n = wanted.filter((w) => w.town === p.id && w.status === 'wanted' && !w.hidden).length; return n || (warden && p.kind !== 'region') ? `<a class="btn small secondary wanted-link" href="/wanted#${encodeURIComponent(p.id)}">${gl('pin')} ${n ? `${n} wanted in ${esc(p.name)}` : 'Wanted posters'}</a>` : ''; })()}
     ${here.length ? `<div><h3>WHO’S HERE</h3><div class="here">${here.map((c) => `<span style="background:${TRADE_COLOR[c.trade] || '#555'}">${esc(c.name)}</span>`).join('')}</div></div>` : ''}
     ${paras.length ? `<div class="book-text"><h3>FROM THE GUIDEBOOK</h3>${paras.map((t) => `<p>${esc(t)}</p>`).join('')}${p.page ? `<div class="src">Official Guidebook, p. ${p.page}</div>` : ''}</div>`
       : (p.kind !== 'pin' ? '<p class="muted">The Guidebook marks this on the map but doesn’t say more. Make it yours.</p>' : '')}
@@ -293,6 +296,7 @@ function onState(d) {
 }
 function connect() {
   poller?.stop();
+  loadWanted();
   poller = startPolling(warden ? 'warden' : 'player', onState, (ok, e) => {
     if (e?.status === 401) { warden = false; forgetWarden(); setWarden(); connect(); }
   }, EP);

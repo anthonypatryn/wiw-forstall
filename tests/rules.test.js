@@ -334,3 +334,26 @@ test('Duel requests: a player calls out a ledger NPC; the Warden accepts (starts
   const ans = publicAction(st, { action: 'duelAnswer', id: r2.id, accept: false, note: 'Not in church.' }, { warden: true });
   assert.equal(ans.status, 'denied'); assert.equal(ans.note, 'Not in church.');
 });
+
+test('Wanted posters: Warden-only, hidden ones stay hidden, bounty split with Cut of the Profit', async () => {
+  const { freshWanted, wantedAction, wantedView, allTowns } = await import('../lib/wanted.js');
+  const st = freshWanted(), towns = allTowns(st, []);
+  const dodge = towns.find((t) => t.name.includes('Dodge'));
+  assert.ok(dodge, 'Dodge is a town');
+  const posse = [{ id: 'a', name: 'Lila', wallet: '$10' }, { id: 'b', name: 'Doc', wallet: '' }];
+  const o = { warden: true, towns, posse };
+  assert.throws(() => wantedAction(st, { action: 'add', town: dodge.id, name: 'X' }, { ...o, warden: false }), /PIN/);
+  assert.throws(() => wantedAction(st, { action: 'add', town: 'nowhere', name: 'X' }, o), /town/);
+  const p = wantedAction(st, { action: 'add', town: dodge.id, name: 'Black Bart', reward: '$100', crime: 'Train robbery', wardenNote: 'secret' }, o);
+  wantedAction(st, { action: 'add', town: dodge.id, name: 'Hidden Hank', hidden: true }, o);
+  const pub = wantedView(st, { warden: false, towns });
+  assert.equal(pub.posters.length, 1); assert.equal(pub.posters[0].wardenNote, undefined);
+  const t = wantedAction(st, { action: 'addTown', name: 'Coyote Flats' }, o);
+  const towns2 = allTowns(st, []);
+  wantedAction(st, { action: 'edit', id: p.id, town: t.id }, { ...o, towns: towns2 });
+  assert.throws(() => wantedAction(st, { action: 'removeTown', id: t.id }, o), /posters/);
+  const paid = wantedAction(st, { action: 'payout', id: p.id, to: ['a', 'b'], bonus: ['b'] }, o);
+  assert.deepEqual(paid.map((x) => x.amount), [50, 60]);
+  assert.equal(posse[0].wallet, '60.00'); assert.equal(posse[1].wallet, '60.00');
+  assert.throws(() => wantedAction(st, { action: 'payout', id: p.id, to: ['a'] }, o), /already/);
+});

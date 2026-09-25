@@ -1,0 +1,79 @@
+/* Wanted posters: the posting board, town tabs, and the old-timey poster itself (art, so the paper keeps a few literal tones) */
+.wt-towns { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: var(--sp-2); }
+.wt-other select { padding: 8px 10px; border: 1.5px solid var(--ink); border-radius: var(--r-pill); background: var(--surface); font: var(--fs-sm) var(--display); letter-spacing: var(--track); }
+#wt-tools { display: flex; gap: 8px; flex-wrap: wrap; }
+
+/* the board: rough planks the posters are nailed to */
+.wt-board {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 26px 20px; padding: 26px 20px 30px; margin-top: var(--sp-2);
+  border-radius: var(--radius); box-shadow: inset 0 0 40px rgba(0,0,0,.55); overflow: hidden;
+  background:
+    repeating-linear-gradient(0deg, rgba(0,0,0,.28) 0 2px, transparent 2px 64px),
+    repeating-linear-gradient(90deg, rgba(255,255,255,.03) 0 1px, transparent 1px 7px),
+    linear-gradient(180deg, #6b4a2f, #4d331f);
+}
+.wt-board .empty-note { grid-column: 1 / -1; color: var(--on-dark); text-align: center; margin: 20px 0; }
+.ps-tile { position: relative; padding: 0; border: 0; background: none; cursor: pointer; transform: rotate(var(--tilt, 0deg)); transition: transform .15s ease; text-align: center; }
+.ps-tile:hover, .ps-tile:focus-visible { transform: rotate(0deg) scale(1.03); z-index: 2; }
+.ps-flag { position: absolute; top: -8px; right: -4px; z-index: 1; }
+
+/* the poster */
+.poster {
+  position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px;
+  padding: 26px 16px 18px; color: #2a1d12; text-align: center;
+  background: #e9d7b0 url('../img/paper.jpg') center / 600px; background-blend-mode: multiply;
+  box-shadow: 3px 6px 12px rgba(0,0,0,.55), inset 0 0 38px rgba(110,70,25,.45);
+  clip-path: polygon(0 2%, 6% 0, 18% 1.5%, 33% 0, 50% 1%, 64% 0, 80% 1.8%, 94% 0, 100% 2.5%, 99% 20%, 100% 42%, 98.8% 63%, 100% 84%, 99% 100%, 82% 98.6%, 64% 100%, 47% 98.4%, 30% 100%, 14% 98.8%, 0 100%, 1.2% 78%, 0 55%, 1% 32%);
+  font-family: var(--body);
+}
+.poster .nail { position: absolute; top: 9px; left: 50%; width: 12px; height: 12px; margin-left: -6px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #d9d2c6, #6d655c 55%, #2c2824); box-shadow: 0 2px 2px rgba(0,0,0,.5); }
+.ps-wanted { font: 400 44px/0.95 var(--western); letter-spacing: .04em; color: #2a1d12; text-shadow: 0 1px 0 rgba(255,255,255,.25); }
+.ps-terms { font: var(--fs-sm) var(--display); letter-spacing: var(--track-wide); color: #7a2c14; border-top: 1.5px solid #2a1d12; border-bottom: 1.5px solid #2a1d12; padding: 2px 8px 0; }
+.ps-photo { width: 78%; aspect-ratio: 1; margin: 6px 0 2px; border: 3px solid #2a1d12; background: #c9b58e; overflow: hidden; display: grid; place-items: center; box-shadow: inset 0 0 18px rgba(0,0,0,.4); }
+.ps-photo img { width: 100%; height: 100%; object-fit: cover; filter: sepia(.85) contrast(1.15) brightness(.95) grayscale(.2); mix-blend-mode: multiply; }
+.ps-nophoto { display: grid; justify-items: center; gap: 4px; color: #6d5436; }
+.ps-nophoto .gl { width: 44px; height: 44px; }
+.ps-nophoto small { font: var(--fs-xs) var(--display); letter-spacing: var(--track-wide); }
+.ps-name { font: 400 var(--fs-xl)/1.05 var(--western); overflow-wrap: anywhere; }
+.ps-alias { font: italic var(--fs-sm) var(--body); color: #5a412a; margin-top: -2px; }
+.ps-crime { font: var(--fs-sm)/1.3 var(--type); color: #3b2a1a; max-width: 100%; overflow-wrap: anywhere; }
+.ps-reward { font: 400 var(--fs-2xl)/1 var(--western); color: #7a2c14; margin-top: 4px; }
+.ps-reward small { display: block; font: var(--fs-sm) var(--display); letter-spacing: .3em; color: #2a1d12; margin-bottom: 2px; }
+.ps-stamp {
+  position: absolute; top: 44%; left: 50%; transform: translate(-50%, -50%) rotate(-16deg);
+  font: var(--fs-2xl)/1 var(--display); letter-spacing: .1em; white-space: nowrap; color: rgba(164,32,24,.88);
+  border: 4px double rgba(164,32,24,.88); padding: 6px 12px 2px; border-radius: var(--r-sm); mix-blend-mode: multiply;
+}
+.poster.is-captured .ps-photo img, .poster.is-dead .ps-photo img, .poster.is-claimed .ps-photo img { filter: sepia(.9) grayscale(.6) contrast(.9) brightness(.9); }
+.poster.is-hidden { opacity: .6; }
+
+/* one poster, large */
+.wt-back { z-index: 80; align-items: start; overflow-y: auto; }
+.wt-view { width: min(460px, 100%); display: grid; gap: 14px; margin: 16px auto; }
+.poster.big { padding: 34px 26px 26px; }
+.poster.big .ps-wanted { font-size: 72px; }
+.poster.big .ps-name { font-size: var(--fs-2xl); }
+.poster.big .ps-crime { font-size: var(--fs-md); }
+.poster.big .ps-reward { font-size: var(--fs-3xl); }
+.poster.big .ps-stamp { font-size: var(--fs-3xl); }
+.wt-admin { background: var(--surface); border: 1.5px solid var(--ink); border-radius: var(--radius); padding: 14px; display: grid; gap: 10px; }
+.wt-admin .btn-row { flex-wrap: wrap; }
+.wt-close { justify-content: center; }
+.wt-close .btn.secondary { background: var(--surface); }
+.wt-form { width: min(560px, 100%); max-height: 92vh; overflow-y: auto; }
+.wt-form .field-step select + select { margin-top: 6px; }
+.modal.wt-form input:not([type=checkbox]):not([type=radio]), .modal.wt-form textarea { flex: none; width: 100%; padding: 9px 11px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--surface); font: var(--fs-md) var(--body); letter-spacing: 0; text-align: left; }
+.wt-form .ho-photo { margin: var(--sp-2) 0 var(--sp-3); }
+.wt-form .check { margin: var(--sp-2) 0; }
+
+@media (max-width: 480px) {
+  .wt-board { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px 12px; padding: 18px 10px 22px; }
+  .poster { padding: 22px 8px 12px; }
+  .ps-wanted { font-size: clamp(20px, 7.4vw, 30px); }
+  .ps-name { font-size: var(--fs-md); }
+  .ps-crime { display: none; }
+  .ps-reward { font-size: var(--fs-lg); }
+  .ps-stamp { font-size: var(--fs-md); border-width: 3px; }
+  .poster.big .ps-wanted { font-size: 52px; }
+  .poster.big .ps-crime { display: block; }
+}

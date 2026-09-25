@@ -5,7 +5,7 @@ import { pinOk, send, readBody } from '../lib/http.js';
 import { freshCombat } from '../lib/combat.js';
 
 const LIMIT = { head: 300_000, full: 2_000_000 }; // base64 characters (the page shrinks images well below this)
-const NS = new Set(['pc', 'handout']);
+const NS = new Set(['pc', 'handout', 'wanted']);
 const clean = (s) => String(s || '').replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 40);
 const key = (ns, id, size) => `img-${ns}-${id}-${size}`;
 
@@ -27,7 +27,7 @@ export default async function handler(req, res) {
     const body = await readBody(req);
     const ns = clean(body.ns), id = clean(body.id);
     if (!NS.has(ns) || !id) throw new Error('Unknown picture.');
-    if (ns === 'handout' && !warden) return send(res, 401, { error: 'Warden PIN required.' });
+    if ((ns === 'handout' || ns === 'wanted') && !warden) return send(res, 401, { error: 'Warden PIN required.' });
     const parse = (s, size) => {
       const m = /^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/.exec(String(s || ''));
       if (!m) throw new Error('That doesn’t look like a picture.');
@@ -51,6 +51,12 @@ export default async function handler(req, res) {
       pc.updated = Date.now();
       combat.v = (combat.v || 0) + 1;
       await save(combat, 'combat');
+    }
+    // a Wanted poster's picture is noted on the poster
+    if (ns === 'wanted') {
+      const ws = (await load('wanted')) || { v: 0, posters: [] };
+      const p = ws.posters.find((x) => x.id === id);
+      if (p) { p.img = v; ws.v = (ws.v || 0) + 1; await save(ws, 'wanted'); }
     }
     // a handout's photo is noted on the handout
     if (ns === 'handout') {
