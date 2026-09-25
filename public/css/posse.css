@@ -485,11 +485,11 @@
   .sh-face { width: 72px; height: 72px; }
 }
 
-/* Warden mode: the sheet's boxes and toolbar take the oxblood & brass palette too (style.css) */
-body.warden-mode .sbox { background: var(--surface); border-color: var(--rust-dark); }
-body.warden-mode .sheet-bar { background: #2a0f0c; border-color: var(--brass); color: var(--on-dark); }
-body.warden-mode .sheet-bar .btn.secondary:not(.danger), body.warden-mode .sheet-bar a.btn { color: var(--on-dark); border-color: rgba(201,164,92,.55); }
-body.warden-mode .sheet-bar .sheet-toc a { background: transparent; color: var(--on-dark); border-color: rgba(201,164,92,.5); }
-body.warden-mode .sheet-bar .sheet-toc a:hover { background: var(--brass); color: var(--iron); }
+/* Warden mode: the sheet's boxes and toolbar take the cool slate & teal palette too (style.css) */
+body.warden-mode .sbox { background: var(--surface); border-color: var(--accent-dark); }
+body.warden-mode .sheet-bar { background: var(--w-slate); border-color: var(--w-teal); color: #d5e2e6; }
+body.warden-mode .sheet-bar .btn.secondary:not(.danger), body.warden-mode .sheet-bar a.btn { color: #d5e2e6; border-color: rgba(95,179,179,.55); }
+body.warden-mode .sheet-bar .sheet-toc a { background: transparent; color: #d5e2e6; border-color: rgba(95,179,179,.5); }
+body.warden-mode .sheet-bar .sheet-toc a:hover { background: var(--w-teal); color: var(--w-slate); }
 body.warden-mode .sheet-bar .btn.secondary.danger { color: var(--on-dark-warn); border-color: var(--on-dark-warn); }
-body.warden-mode .sheet-bar .save-state { color: var(--on-dark-dim); }
+body.warden-mode .sheet-bar .save-state { color: #9fb0b7; }

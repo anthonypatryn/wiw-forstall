@@ -974,39 +974,44 @@ input[type=range]::-moz-range-thumb { width: 16px; height: 16px; border-radius: 
 .tour-step { font: var(--fs-xs) var(--display); letter-spacing: .12em; color: var(--rust); }
 .tour-btns { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
 
-/* ---------- Warden mode: oxblood & brass ----------
-   A different palette so the Warden always knows which seat they're in: an oxblood nav, a dark red-brown desk,
-   aged tan parchment cards with oxblood borders and titles, iron buttons lettered in brass, oxblood chips.
-   Mostly token overrides, so every page follows; body.warden-mode is set by mountNav. Players never see it. */
+/* ---------- Warden mode: cool slate, steel blue & teal ----------
+   The player side is warm (paper, rust, brass); the Warden's side is cool so they always know which seat they're in:
+   a slate nav with a teal rule, the Map of the West as the header, a dark slate desk, cool grey paper cards with
+   steel-blue titles, slate buttons lettered in pale teal, teal chips. Mostly token overrides, so every page follows;
+   body.warden-mode is set by mountNav. Players never see it. */
 body.warden-mode {
-  --paper: #dac6a0; --paper-2: #cdb68c; --surface: #f6ebd2; --surface-2: #e8d6b0;
-  --rust: #8a2418; --rust-dark: #5c1a14; --accent: #7a1f17; --accent-dark: #5c1a14; --accent-tint: rgba(122,31,23,.12);
-  --line: rgba(92,26,20,.35); --line-soft: rgba(92,26,20,.18);
-  --desk: #34201b;
+  --paper: #cdd5d8; --paper-2: #bcc7cb; --surface: #eef3f4; --surface-2: #dfe7ea;
+  --rust: #2f6d73; --rust-dark: #1d4a50; --accent: #25586a; --accent-dark: #1b3f4d; --accent-tint: rgba(37,88,106,.12);
+  --line: rgba(27,63,77,.35); --line-soft: rgba(27,63,77,.18);
+  --desk: #1e272c; --w-slate: #151d22; --w-teal: #5fb3b3; --w-teal-pale: #a9dcd9;
   background-color: var(--desk);
 }
-body.warden-mode .sitenav { background: #2a0f0c; border-bottom-color: var(--brass); }
-body.warden-mode .sitenav a[aria-current="page"], body.warden-mode .sitenav .nav-group.current > .nav-drop { color: var(--brass); }
-body.warden-mode .nav-menu { background: #2a0f0c; }
-body.warden-mode .masthead { box-shadow: inset 0 -5px 0 var(--brass); }
-body.warden-mode .masthead::after { background: linear-gradient(90deg, rgba(60,10,6,.92) 0%, rgba(90,18,12,.6) 55%, rgba(110,22,14,.35) 100%); }
-/* cards: solid aged parchment, oxblood edges */
-body.warden-mode .card { background: var(--paper) url('../img/paper.jpg') center / 900px repeat; background-blend-mode: multiply; border-color: var(--rust-dark); box-shadow: 3px 3px 0 rgba(0,0,0,.35); }
-body.warden-mode .card.corner::before, body.warden-mode .card.corner::after { color: var(--rust); }
-body.warden-mode .section-title, body.warden-mode .field-step > span { color: var(--accent); }
+body.warden-mode .masthead { background-image: url('../img/map.jpg'); background-position: 38% 42%; border-bottom-color: var(--w-slate); box-shadow: inset 0 -4px 0 var(--w-teal); }
+body.warden-mode .masthead::after { background: linear-gradient(90deg, rgba(12,20,26,.94) 0%, rgba(16,32,40,.72) 50%, rgba(20,48,58,.4) 100%); }
+body.warden-mode .brand-title { border-left-color: rgba(95,179,179,.7); }
+body.warden-mode .brand-title .kicker { color: var(--w-teal-pale); }
+body.warden-mode .sitenav { background: var(--w-slate); border-bottom-color: var(--w-teal); box-shadow: inset 0 -1px 0 rgba(95,179,179,.5); }
+body.warden-mode .nav-warden > .nav-drop { color: var(--w-teal-pale); }
+body.warden-mode .sitenav a[aria-current="page"], body.warden-mode .sitenav .nav-group.current > .nav-drop { color: var(--w-teal-pale); }
+body.warden-mode .nav-menu { background: var(--w-slate); border-top-color: var(--w-teal); }
+/* cards: cool grey paper, steel-blue edges and titles */
+body.warden-mode .card { background: var(--paper) url('../img/paper.jpg') center / 900px repeat; background-blend-mode: multiply; border-color: var(--accent-dark); box-shadow: 3px 3px 0 rgba(0,0,0,.4); }
+body.warden-mode .card.corner::before, body.warden-mode .card.corner::after { color: var(--accent); }
+body.warden-mode .section-title, body.warden-mode .field-step > span { color: var(--accent-dark); }
 body.warden-mode .field-step > span { opacity: .9; }
-/* buttons: iron, lettered in brass */
-body.warden-mode .btn:not(.secondary):not(.danger) { background: var(--iron); border-color: var(--brass); color: var(--brass); }
-body.warden-mode .btn:not(.secondary):not(.danger):hover { background: var(--rust-dark); color: #f6e7c1; }
-body.warden-mode .btn.secondary:not(.danger) { border-color: var(--rust-dark); color: var(--rust-dark); }
-body.warden-mode .btn.secondary:not(.danger):hover { background: var(--rust-dark); color: #f6e7c1; }
-body.warden-mode .chip-btn.on { background: var(--accent); border-color: var(--rust-dark); color: #f6e7c1; }
-/* the contents bar: dark, with brass for where you are */
-body.warden-mode .toc-bar { background: #2a0f0c; border-color: var(--brass); }
-body.warden-mode .toc-bar a { background: transparent; color: var(--on-dark); border-color: rgba(201,164,92,.5); }
-body.warden-mode .toc-bar a:hover, body.warden-mode .toc-bar a.on { background: var(--brass); color: var(--iron); border-color: var(--brass); }
+/* buttons: slate, lettered in pale teal */
+body.warden-mode .btn:not(.secondary):not(.danger) { background: var(--w-slate); border-color: var(--w-teal); color: var(--w-teal-pale); }
+body.warden-mode .btn:not(.secondary):not(.danger):hover { background: var(--rust); color: #fff; }
+/* outline buttons go steel blue only on light surfaces (cards, dialogs); on dark ones (sheet header, card tables) they keep their own look */
+body.warden-mode :is(.card, .modal, .sbox-in) .btn.secondary:not(.danger) { border-color: var(--accent-dark); color: var(--accent-dark); }
+body.warden-mode :is(.card, .modal, .sbox-in) .btn.secondary:not(.danger):hover { background: var(--accent-dark); color: #fff; }
+body.warden-mode .chip-btn.on { background: var(--rust); border-color: var(--rust-dark); color: #fff; }
+/* the contents bar: slate, teal for where you are */
+body.warden-mode .toc-bar { background: var(--w-slate); border-color: var(--w-teal); }
+body.warden-mode .toc-bar a { background: transparent; color: #d5e2e6; border-color: rgba(95,179,179,.5); }
+body.warden-mode .toc-bar a:hover, body.warden-mode .toc-bar a.on { background: var(--w-teal); color: var(--w-slate); border-color: var(--w-teal); }
 /* text straight on the desk */
-body.warden-mode .band-h { color: var(--brass); }
-body.warden-mode .band-h::after { border-top-color: rgba(201,164,92,.4); }
-body.warden-mode .footer, body.warden-mode .footer .conn { color: var(--on-dark-dim); }
-body.warden-mode main > .muted, body.warden-mode main > p:not([class]) { color: var(--on-dark-dim); }
+body.warden-mode .band-h { color: var(--w-teal-pale); }
+body.warden-mode .band-h::after { border-top-color: rgba(95,179,179,.4); }
+body.warden-mode .footer, body.warden-mode .footer .conn { color: #9fb0b7; }
+body.warden-mode main > .muted, body.warden-mode main > p:not([class]) { color: #9fb0b7; }
