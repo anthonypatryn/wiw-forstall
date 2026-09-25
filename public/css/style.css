@@ -510,3 +510,9 @@ button { cursor: pointer; }
 @media (prefers-reduced-motion: reduce) { .hud-check { animation: none; } }
 @media (max-width: 560px) { .hud-strip { max-width: calc(100vw - 160px); bottom: 12px; } .hud-pop li { grid-template-columns: 26px 1fr auto; } .hud-pop .hud-tray { grid-column: 2 / -1; justify-content: flex-start; } }
 .hud-hold { top: 150px; border-color: #c89b3c; }
+
+/* line-art icons (public/js/glyphs.js) */
+.gl { width: 1.15em; height: 1.15em; vertical-align: -.2em; flex: none; }
+.btn .gl { margin-right: 2px; }
+.log-fab .gl { width: 1.25em; height: 1.25em; }
+.hud-strip .gl { color: #f0c46a; }

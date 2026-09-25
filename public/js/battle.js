@@ -1,4 +1,5 @@
 import { $, esc, api, startPolling, toast, mountNav, tryWarden, forgetWarden, savedPin, wardenModal, rollPopup, abilityOptions, abilityTargetsHTML, abilityBody } from './common.js';
+import { gl } from './glyphs.js';
 let meta = null;
 api('GET', null, '?view=meta', '/api/combat').then((m) => { meta = m; }).catch(() => {});
 import { mountTableLog } from './tablelog.js';
@@ -38,7 +39,7 @@ function attackHTML(sel) {
     if (!pc || pc.dead) return '';
     const foes = data.tokens.filter((t) => t.kind === 'enemy' && !t.down && combat.enemies.some((e) => e.id === t.ref && !e.defeated))
       .map((t) => ({ t, d: dist(sel, t) })).sort((a, b) => a.d - b.d);
-    if (!foes.length) return '<h3 class="d-h">⚔ ATTACK</h3><p class="muted">No enemies standing on the board.</p>';
+    if (!foes.length) return `<h3 class="d-h">${gl('revolver')} ATTACK</h3><p class="muted">No enemies standing on the board.</p>`;
     if (!foes.some((f) => f.t.id === s.t)) s.t = foes[0].t.id;
     const tgt = foes.find((f) => f.t.id === s.t), bandKey = WEAPON_KEY[band(tgt.d)];
     const weapons = pc.weapons.map((w, i) => [w, i]).filter(([w]) => (w.model || w.manufacturer) && isPool(w[bandKey]));
@@ -48,13 +49,13 @@ function attackHTML(sel) {
     if (!loaded.some(([, k]) => String(k) === String(s.ammo))) s.ammo = '';
     const cost = (parseInt(String(w.grit || '').split('|')[0], 10) || 0) + (s.aim ? 1 : 0);
     const mine = combat.combat.current === pc.id;
-    return `<h3 class="d-h">⚔ ATTACK FROM HERE ${mine ? '<span class="tag turn">THEIR TURN</span>' : ''} <small>${pc.grit} Grit</small></h3>
+    return `<h3 class="d-h">${gl('revolver')} ATTACK FROM HERE ${mine ? '<span class="tag turn">THEIR TURN</span>' : ''} <small>${pc.grit} Grit</small></h3>
       <div class="atk-form">
         <select data-as="t" aria-label="Target">${foes.map(({ t, d }) => `<option value="${t.id}"${t.id === s.t ? ' selected' : ''}>→ ${esc(t.name)} · ${d}″ ${BAND_LABEL[band(d)]}</option>`).join('')}</select>
         ${weapons.length ? `<select data-as="w" aria-label="Weapon">${weapons.map(([x, i]) => `<option value="${i}"${i === s.w ? ' selected' : ''}>${esc(x.model || x.manufacturer)} · ${esc(String(x[bandKey]).toUpperCase())}</option>`).join('')}</select>
         <select data-as="ammo" aria-label="Ammo"><option value="">regular ammo</option>${loaded.map(([a, k]) => `<option value="${k}"${String(k) === String(s.ammo) ? ' selected' : ''}>${esc(a.name)} (${a.rds})</option>`).join('')}</select>
         <label class="check"><input type="checkbox" data-as="aim"${s.aim ? ' checked' : ''}${pc.aimed ? ' disabled' : ''}> Aim +1</label>
-        <button type="button" class="btn small" data-map-attack>⚔ Attack · ${cost} Grit</button>`
+        <button type="button" class="btn small" data-map-attack>${gl('revolver')} Attack · ${cost} Grit</button>`
         : `<p class="muted">No weapon reaches ${BAND_LABEL[band(tgt.d)]} (${tgt.d}″). Move closer.</p>`}
       </div>`;
   }
@@ -69,13 +70,13 @@ function attackHTML(sel) {
     const tgt = posse.find((f) => f.t.id === s.t), b = band(tgt.d);
     const fits = prof.attacks.map((a, i) => [a, i]).filter(([a]) => (ATK_BAND[a.range] || 'arm') === b || (b === 'arm' && a.range === 'Short'));
     if (!prof.attacks.some((_, i) => i === s.a)) s.a = (fits[0] || [null, 0])[1];
-    return `<h3 class="d-h">💥 ATTACK THE POSSE <small>${e.grit ?? '?'} Grit</small></h3>
+    return `<h3 class="d-h">${gl('claws')} ATTACK THE POSSE <small>${e.grit ?? '?'} Grit</small></h3>
       <div class="atk-form">
         <select data-as="t" aria-label="Target">${posse.map(({ t, d }) => `<option value="${t.id}"${t.id === s.t ? ' selected' : ''}>→ ${esc(t.name)} · ${d}″ ${BAND_LABEL[band(d)]}</option>`).join('')}</select>
         <select data-as="a" aria-label="Attack">${prof.attacks.map((a, i) => { const ok = fits.some(([, k]) => k === i);
           return `<option value="${i}"${i === s.a ? ' selected' : ''}>${ok ? '' : '(out of range) '}${esc(a.name)} · ${a.range}${a.grit ? ` · ${a.grit} Grit` : ''}</option>`; }).join('')}</select>
         <select data-as="cover" aria-label="Cover"><option value="0">no cover</option><option value="1"${s.cover == 1 ? ' selected' : ''}>light cover</option><option value="2"${s.cover == 2 ? ' selected' : ''}>heavy cover</option></select>
-        <button type="button" class="btn small" data-map-eattack>💥 Roll it</button>
+        <button type="button" class="btn small" data-map-eattack>${gl('claws')} Roll it</button>
       </div>`;
   }
   return '';
@@ -171,8 +172,8 @@ function renderTokens() {
     return `<div class="btoken ${t.kind}${t.img ? ' art' : ' stand-in'}${canMove(t) ? ' movable' : ''}${t.id === selected ? ' sel' : ''}${t.ref && t.ref === data.current ? ' turn' : ''}${t.hidden ? ' hidden-tok' : ''}${t.down ? ' down' : ''}${t.frenzied ? ' frenzied' : ''}"
       data-id="${t.id}" data-size="${esc(t.size || '')}" style="left:${c.x}px;top:${c.y}px;width:${size}px;height:${size}px;${bg};font-size:${font}px;border-width:${data.grid.ppi * 0.05}px"
       title="${esc(t.name)}">${t.img ? '' : esc(initials(t.name))}
-      ${t.holding ? `<span class="hold-dot" style="font-size:${labFont * 1.4}px" title="Prepared: ${esc(t.holding)}">⏳</span>` : ''}
-      ${t.dead ? `<span class="skull" style="font-size:${size * 0.62}px" aria-label="Down">💀</span>` : t.bleeding ? `<span class="skull bleed" style="font-size:${size * 0.5}px" aria-label="Bleeding Out">🩸</span>` : ''}
+      ${t.holding ? `<span class="hold-dot" style="font-size:${labFont * 1.4}px" title="Prepared: ${esc(t.holding)}">${gl('watch')}</span>` : ''}
+      ${t.dead ? `<span class="skull" style="font-size:${size * 0.62}px" aria-label="Down">${gl('skull')}</span>` : t.bleeding ? `<span class="skull bleed" style="font-size:${size * 0.5}px" aria-label="Bleeding Out">${gl('drop')}</span>` : ''}
       ${nStatus ? `<span class="st-dot" style="font-size:${labFont}px" title="${esc(Object.entries(t.statuses).map(([k, v]) => `${k} ${v}`).join(', '))}">${nStatus}</span>` : ''}
       <span class="lab" style="font-size:${labFont}px">${esc(t.name)}${hasHp ? `<i class="hpbar"><i style="width:${pct}%"></i></i><em>${t.health}/${t.maxHealth}</em>` : ''}</span>
       ${d !== null ? `<span class="dist ${band(d)}" style="font-size:${labFont}px">${d}″ · ${BAND_LABEL[band(d)]}</span>` : ''}</div>`;
@@ -230,7 +231,7 @@ function moveReadout(t, d) {
   if (!c?.active || !actor) return `${t.name} moves ${d}″`;
   if (c.current !== t.ref) return warden ? `${t.name} moves ${d}″ · free (Warden, off-turn)` : `Not ${t.name}’s turn`;
   const m = moveCostFor(t.kind, actor, d, tp.rough);
-  return `${t.name} moves ${d}″ · ${m.cost} Grit (${m.speed}${tp.rough ? ', rough' : ''})${m.cost > (actor.grit || 0) ? ` · ⚠ only ${actor.grit || 0} left` : ''}`;
+  return `${t.name} moves ${d}″ · ${m.cost} Grit (${m.speed}${tp.rough ? ', rough' : ''})${m.cost > (actor.grit || 0) ? ` · only ${actor.grit || 0} left!` : ''}`;
 }
 // ---------- turn panel: whose turn, Grit left, this turn's actions (pp. 40–43) ----------
 const tp = { open: '', pp: { kind: 'attack', trig: 'within-short', grit: 1, gear: 0, aim: false, ammo: '', ab: {} }, ab: {}, rough: false, dodge: 1, gear: 0, imp: 1, impLabel: '', impSkill: '', prep: 1, prepLabel: '', rl: '', rlDice: 1 };
@@ -264,7 +265,7 @@ function renderTurnBar() {
     bar.hidden = !warden;
     const n = (combat?.enemies || []).filter((e) => !e.defeated).length, pcs = (combat?.posse || []).filter((p) => !p.dead).length;
     bar.innerHTML = warden ? `<div class="turn-bar"><div><small>NO COMBAT RUNNING</small><span class="muted">${pcs} in the posse · ${n} enem${n === 1 ? 'y' : 'ies'} ready${n ? '' : ' — add them on the Combat page'}</span></div>
-      <button type="button" class="btn" data-startfight${pcs + n ? '' : ' disabled'}>⚔ Start combat</button></div>` : '';
+      <button type="button" class="btn" data-startfight${pcs + n ? '' : ' disabled'}>${gl('revolver')} Start combat</button></div>` : '';
     bar.querySelector('[data-startfight]')?.addEventListener('click', async () => { if (await tpAct({ action: 'start' }, 'Combat begins — tokens placed.')) poller?.now?.(); });
     return;
   }
@@ -283,15 +284,15 @@ function renderTurnBar() {
   const sts = isPc ? Object.entries(a.statuses || {}).filter(([, v]) => v) : [];
   const abil = isPc && meta ? abilityOptions(a, meta) : [];
   const ACTIONS = [
-    ['attack', '⚔', 'Attack', 'weapon’s Grit'],
-    ['move', '🏃', 'Move', 'drag token'],
-    ['dodge', '🛡', 'Dodge', '1 per die'],
-    ...(abil.length ? [['ability', '✨', 'Ability', 'varies']] : []),
-    ...(gear.length ? [['item', '🎒', 'Use Item', 'item’s Grit']] : []),
-    ...(sts.length ? [['relieve', '🩹', 'Relieve', '1 per die']] : []),
-    ['improvise', '🤹', 'Improvise', '1+'],
-    ...(isPc ? [['prepare', '⏳', 'Prepare', 'held', a.prepared]] : []),
-    ...(isPc ? [['fool', '💪', 'Fool’s Grit', '+1 for 1 HP', a.foolUsed]] : []),
+    ['attack', 'revolver', 'Attack', 'weapon’s Grit'],
+    ['move', 'boot', 'Move', 'drag token'],
+    ['dodge', 'dodge', 'Dodge', '1 per die'],
+    ...(abil.length ? [['ability', 'star', 'Ability', 'varies']] : []),
+    ...(gear.length ? [['item', 'satchel', 'Use Item', 'item’s Grit']] : []),
+    ...(sts.length ? [['relieve', 'bandage', 'Relieve', '1 per die']] : []),
+    ['improvise', 'lasso', 'Improvise', '1+'],
+    ...(isPc ? [['prepare', 'watch', 'Prepare', 'held', a.prepared]] : []),
+    ...(isPc ? [['fool', 'heart', 'Fool’s Grit', '+1 for 1 HP', a.foolUsed]] : []),
   ];
   if (!ACTIONS.some(([k]) => k === tp.open)) tp.open = '';
   let drawer = '';
@@ -303,16 +304,16 @@ function renderTurnBar() {
       drawer = `<p class="tp-hint">Drag <b>${esc(a.name)}</b>’s token on the map — the Grit cost shows while you drag, and it’s spent when you drop.</p>
         <label class="check"><input type="checkbox" data-tp="rough"${tp.rough ? ' checked' : ''}> Rough terrain (costs double)</label>
         ${isPc && (a.horse?.breed || a.mech?.class) ? `<select data-tp-mount aria-label="On foot or mounted"><option value="">On foot (Normal)</option>${a.horse?.breed ? `<option value="horse"${a.mounted === 'horse' ? ' selected' : ''}>Riding ${esc(a.horse.name || a.horse.breed)} (Fast)</option>` : ''}${a.mech?.class ? `<option value="mech"${a.mounted === 'mech' ? ' selected' : ''}>Driving the ${esc(a.mech.class)} mech</option>` : ''}</select>` : ''}
-        ${isPc && /arabian/i.test(a.horse?.breed || '') && a.horse?.bond === 'Revered' && a.mounted === 'horse' ? `<button type="button" class="btn small secondary" data-tp-horse${(a.horseGrit || 0) >= 2 ? ' disabled' : ''}>🐎 Arabian +1 Grit (${a.horseGrit || 0}/2)</button>` : ''}`;
+        ${isPc && /arabian/i.test(a.horse?.breed || '') && a.horse?.bond === 'Revered' && a.mounted === 'horse' ? `<button type="button" class="btn small secondary" data-tp-horse${(a.horseGrit || 0) >= 2 ? ' disabled' : ''}>${gl('horseshoe')} Arabian +1 Grit (${a.horseGrit || 0}/2)</button>` : ''}`;
       break;
     case 'dodge':
       drawer = `<p class="tp-hint">Spend Grit, roll that many Black dice. The Hits soak the next attack on ${esc(a.name)} — gone at their next turn.</p>
-        <div class="tp-form"><input type="number" min="1" max="12" data-tp="dodge" value="${tp.dodge}"> Grit <button type="button" class="btn small" data-tp-dodge>🛡 Dodge</button></div>`;
+        <div class="tp-form"><input type="number" min="1" max="12" data-tp="dodge" value="${tp.dodge}"> Grit <button type="button" class="btn small" data-tp-dodge>${gl('dodge')} Dodge</button></div>`;
       break;
     case 'ability':
       if (!abil.some((o) => o.name === tp.ab.name)) tp.ab.name = abil.find((o) => !o.out)?.name || abil[0].name;
       drawer = `<div class="tp-form"><select data-abp="name">${abil.map((o) => `<option value="${esc(o.name)}"${o.name === tp.ab.name ? ' selected' : ''}${o.out ? ' disabled' : ''}>${esc(o.label)}</option>`).join('')}</select>
-        ${abilityTargetsHTML(tp.ab.name, a, combat.posse, combat.enemies.filter((e) => !e.defeated), tp.ab)}<button type="button" class="btn small" data-tp-ab>✨ Use</button></div>`;
+        ${abilityTargetsHTML(tp.ab.name, a, combat.posse, combat.enemies.filter((e) => !e.defeated), tp.ab)}<button type="button" class="btn small" data-tp-ab>${gl('star')} Use</button></div>`;
       break;
     case 'item':
       drawer = `<div class="tp-form"><select data-tp="gear">${gear.map(([g, k]) => `<option value="${k}"${k === tp.gear ? ' selected' : ''}>${esc(g.item)} · ${esc(g.grit || 0)} Grit${g.notes ? ` · ${esc(g.notes)}` : ''}</option>`).join('')}</select><button type="button" class="btn small" data-tp-item>Use it</button></div>`;
@@ -338,16 +339,18 @@ function renderTurnBar() {
       if (!ranges.some(([k]) => k === pp.range)) pp.range = ranges.find(([k]) => k === 'short')?.[0] || ranges[0]?.[0] || '';
       const foes = combat.enemies.filter((e) => !e.defeated);
       const loaded = (w.ammo || []).map((am, k) => [am, k]).filter(([am]) => am.name && Number(am.rds) > 0);
-      const cost = pp.kind === 'attack' ? (parseInt(String(w.grit || '').split('|')[0], 10) || 0) + (pp.aim ? 1 : 0) : pp.kind === 'dodge' ? pp.grit : pp.kind === 'item' ? (parseInt(String(a.gear[pp.gear]?.grit || '0'), 10) || 0) : (meta?.abilityInfo?.[pp.ab?.name]?.cost || 0);
+      const cost = pp.kind === 'attack' ? (parseInt(String(w.grit || '').split('|')[0], 10) || 0) + (pp.aim ? 1 : 0) : pp.kind === 'dodge' || pp.kind === 'improvise' ? pp.grit : pp.kind === 'item' ? (parseInt(String(a.gear[pp.gear]?.grit || '0'), 10) || 0) : (meta?.abilityInfo?.[pp.ab?.name]?.cost || 0);
       drawer = a.hold ? `<p class="tp-hint">Already holding <b>${esc(a.hold.label)}</b> — when ${esc(a.hold.when)}.</p>`
         : `<p class="tp-hint">Pay now, fire outside your turn when the trigger happens. It fizzles at your next turn (p. 42).</p>
         <div class="pp-grid">
-          <label>HOLD<select data-pp="kind"><option value="attack"${pp.kind === 'attack' ? ' selected' : ''}>⚔ an attack</option><option value="dodge"${pp.kind === 'dodge' ? ' selected' : ''}>🛡 a Dodge</option>${gear.length ? `<option value="item"${pp.kind === 'item' ? ' selected' : ''}>🎒 an item</option>` : ''}${abil.length ? `<option value="ability"${pp.kind === 'ability' ? ' selected' : ''}>✨ an ability</option>` : ''}</select></label>
+          <label>HOLD<select data-pp="kind"><option value="attack"${pp.kind === 'attack' ? ' selected' : ''}>an attack</option><option value="dodge"${pp.kind === 'dodge' ? ' selected' : ''}>a Dodge</option>${gear.length ? `<option value="item"${pp.kind === 'item' ? ' selected' : ''}>an item</option>` : ''}${abil.length ? `<option value="ability"${pp.kind === 'ability' ? ' selected' : ''}>an ability</option>` : ''}<option value="improvise"${pp.kind === 'improvise' ? ' selected' : ''}>an Improvise</option></select></label>
           ${pp.kind === 'attack' ? `<label>WEAPON<select data-pp="weapon">${weapons.map(([x, k]) => `<option value="${k}"${k === pp.weapon ? ' selected' : ''}>${esc(x.model || x.manufacturer)}</option>`).join('')}</select></label>
             <label>AT<select data-pp="range">${ranges.map(([k, l]) => `<option value="${k}"${k === pp.range ? ' selected' : ''}>${l} · ${esc(String(w[k]).toUpperCase())}</option>`).join('')}</select></label>
             <label>AMMO<select data-pp="ammo"><option value="">regular</option>${loaded.map(([am, k]) => `<option value="${k}"${String(k) === String(pp.ammo) ? ' selected' : ''}>${esc(am.name)} (${am.rds})</option>`).join('')}</select></label>
             <label class="check"><input type="checkbox" data-pp="aim"${pp.aim ? ' checked' : ''}> Aim +1</label>` : ''}
-          ${pp.kind === 'dodge' ? `<label>GRIT<input type="number" min="1" max="12" data-pp="grit" value="${pp.grit}"></label>` : ''}
+          ${pp.kind === 'dodge' || pp.kind === 'improvise' ? `<label>GRIT<input type="number" min="1" max="12" data-pp="grit" value="${pp.grit}"></label>` : ''}
+          ${pp.kind === 'improvise' ? `<label class="wide">DO WHAT<input data-pp="itext" maxlength="60" placeholder="e.g. kick the lantern into the hay" value="${esc(pp.itext || '')}"></label>
+            <label>ROLL<select data-pp="skill"><option value="">no roll</option>${['Charm', 'Finesse', 'Intuition', 'Nerve'].map((k) => `<option${k === pp.skill ? ' selected' : ''}>${k}</option>`).join('')}</select></label>` : ''}
           ${pp.kind === 'item' ? `<label>ITEM<select data-pp="gear">${gear.map(([g, k]) => `<option value="${k}"${k === pp.gear ? ' selected' : ''}>${esc(g.item)}</option>`).join('')}</select></label>` : ''}
           ${pp.kind === 'ability' ? `<label>ABILITY<select data-pp="abname">${abil.map((o) => `<option value="${esc(o.name)}"${o.name === pp.ab?.name ? ' selected' : ''}${o.out ? ' disabled' : ''}>${esc(o.label)}</option>`).join('')}</select></label>` : ''}
           <label class="wide">WHEN<select data-pp="trig">
@@ -358,7 +361,7 @@ function renderTurnBar() {
             <option value="custom"${pp.trig === 'custom' ? ' selected' : ''}>something else…</option></select></label>
           ${pp.trig === 'custom' ? `<label class="wide">DESCRIBE IT<input data-pp="text" maxlength="80" placeholder="e.g. the wagon door opens" value="${esc(pp.text || '')}"></label>` : ''}
         </div>
-        <button type="button" class="btn small" data-tp-prep>⏳ Prepare · ${cost} Grit</button>`;
+        <button type="button" class="btn small" data-tp-prep>${gl('watch')} Prepare · ${cost} Grit</button>`;
       break;
     }
   }
@@ -369,9 +372,9 @@ function renderTurnBar() {
     </div>
     ${holdsHTML()}
     <div class="tp-log">${log.length ? log.map((l) => `<span class="tp-chip">${esc(l.text)}${l.grit > 0 ? ` <i>−${l.grit}</i>` : l.grit < 0 ? ` <i class="plus">+${-l.grit}</i>` : ''}</span>`).join('') : '<span class="muted">Nothing done yet this turn.</span>'}
-      ${a.dodge ? `<span class="tp-chip good">🛡 ${a.dodge} Dodge ready</span>` : ''}</div>
+      ${a.dodge ? `<span class="tp-chip good">${gl('dodge')} ${a.dodge} Dodge ready</span>` : ''}</div>
     ${can ? `
-      <div class="tp-actions">${ACTIONS.map(([k, ic, label, cost, off]) => `<button type="button" class="tp-act${tp.open === k ? ' on' : ''}" data-open="${k}"${off ? ' disabled' : ''}><span class="ic">${ic}</span>${label}<small>${off ? 'used' : cost}</small></button>`).join('')}</div>
+      <div class="tp-actions">${ACTIONS.map(([k, ic, label, cost, off]) => `<button type="button" class="tp-act${tp.open === k ? ' on' : ''}" data-open="${k}"${off ? ' disabled' : ''}><span class="ic">${gl(ic)}</span>${label}<small>${off ? 'used' : cost}</small></button>`).join('')}</div>
       ${drawer ? `<div class="tp-drawer">${drawer}</div>` : ''}
       <div class="tp-end">
         <span class="tp-undo">${(warden ? u.last : u.lastIsThisTurn && u.last) ? `<button type="button" class="btn small secondary" data-undo="last" title="Undo: ${esc(u.last)}">↶ Undo <small>${esc(u.last)}</small></button>` : ''}
@@ -390,9 +393,9 @@ function holdsHTML() {
   return `<div class="tp-holds">${holders.map((p) => {
     const h = p.hold, may = warden || myId() === p.id;
     const tgt = h.triggeredBy?.enemy || h.trigger?.enemy || '';
-    return `<div class="tp-hold${h.triggeredBy ? ' hot' : ''}"><div>⏳ <b>${esc(p.name)}</b> holds ${esc(h.label)} — when ${esc(h.when)}${h.triggeredBy ? `<small>${esc(h.triggeredBy.text)} — it can go off!</small>` : ''}</div>
+    return `<div class="tp-hold${h.triggeredBy ? ' hot' : ''}"><div>${gl('watch')} <b>${esc(p.name)}</b> holds ${esc(h.label)} — when ${esc(h.when)}${h.triggeredBy ? `<small>${esc(h.triggeredBy.text)} — it can go off!</small>` : ''}</div>
       ${may ? `<div class="tp-hold-btns">${h.kind === 'attack' ? `<select data-hold-target="${p.id}" aria-label="Target">${foes.map((e) => `<option value="${e.id}"${e.id === tgt ? ' selected' : ''}>→ ${esc(e.name)}</option>`).join('')}</select>` : ''}
-        <button type="button" class="btn small" data-hold-fire="${p.id}">🔥 Fire now</button><button type="button" class="btn small secondary" data-hold-drop="${p.id}">Let it go</button></div>` : ''}</div>`;
+        <button type="button" class="btn small" data-hold-fire="${p.id}">${gl('flash')} Fire now</button><button type="button" class="btn small secondary" data-hold-drop="${p.id}">Let it go</button></div>` : ''}</div>`;
   }).join('')}</div>`;
 }
 function wireHolds(box) {
@@ -404,7 +407,7 @@ function wireHolds(box) {
     const range = me && foe ? { arm: 'arms', short: 'short', long: 'long', distant: 'distant' }[band(dist(me, foe))] : undefined;
     const r = await tpAct({ action: 'pc', id: pid, op: 'fireHold', target, range: p?.hold?.kind === 'attack' ? range : undefined });
     if (r?.dice) rollPopup(r, `${p.name} · prepared ${r.fired} · ${r.pool}`);
-    if (r) toast(r.dmg != null ? `🔥 ${r.dmg ? `${r.dmg} damage to ${r.target}` : `${r.target} shrugs it off`}` : `🔥 ${r.fired}!`);
+    if (r) toast(r.dmg != null ? (r.dmg ? `${r.dmg} damage to ${r.target}` : `${r.target} shrugs it off`) : `${r.fired} — done!`);
   }));
   box.querySelectorAll('[data-hold-drop]').forEach((b) => b.addEventListener('click', () => { if (confirm('Let the prepared Action go? The Grit isn’t refunded.')) tpAct({ action: 'pc', id: b.dataset.holdDrop, op: 'dropHold' }); }));
 }
@@ -467,12 +470,13 @@ function wireTurnBar(bar, cur, tok) {
     if (k !== 'text') renderTurnBar();
   }));
   bar.querySelector('input[data-pp="text"]')?.addEventListener('input', (e) => { tp.pp.text = e.target.value; });
+  bar.querySelector('input[data-pp="itext"]')?.addEventListener('input', (e) => { tp.pp.itext = e.target.value; });
   bar.querySelector('[data-tp-prep]')?.addEventListener('click', async () => {
     const pp = tp.pp, [tt, id] = pp.trig.split(':');
     const trigger = tt === 'within-short' ? { type: 'within', range: 'short' } : tt === 'within-arms' ? { type: 'within', range: 'arms' } : tt === 'moves' || tt === 'attacks' ? { type: tt, enemy: id } : tt === 'ally' ? { type: 'allyAttacked' } : { type: 'custom', text: pp.text };
-    const hold = { kind: pp.kind, weapon: pp.weapon, range: pp.range, ammo: pp.ammo, aim: pp.aim, grit: pp.grit, gear: pp.gear, ability: pp.ab, trigger };
+    const hold = { kind: pp.kind, weapon: pp.weapon, range: pp.range, ammo: pp.ammo, aim: pp.aim, grit: pp.grit, gear: pp.gear, ability: pp.ab, text: pp.itext, skill: pp.skill, trigger };
     const r = await tpAct({ ...base, op: 'prepare', hold });
-    if (r) { tp.open = ''; toast(`⏳ Holding ${r.label} — when ${r.when}.`); }
+    if (r) { tp.open = ''; toast(`Holding ${r.label} — when ${r.when}.`); }
   });
   wireHolds(bar);
   bar.querySelector('[data-tp-rl]')?.addEventListener('click', async () => {
@@ -487,7 +491,7 @@ function wireTurnBar(bar, cur, tok) {
     bar.querySelectorAll('[data-ab]').forEach((el) => { tp.ab[el.dataset.ab] = el.value; });
     const r = await tpAct(abilityBody(a, tp.ab));
     if (r?.dice) rollPopup(r, `${a.name} · ${r.ability} · ${r.pool}`);
-    if (r) toast(`✨ ${r.ability}${r.extra ? ` — ${r.extra}` : ''}`);
+    if (r) toast(`${r.ability}${r.extra ? ` — ${r.extra}` : ''}`);
   });
 }
 
@@ -507,7 +511,7 @@ function wireAttack(box, sel) {
     if (r?.dice) {
       s.aim = false;
       await rollPopup(r, `${sel.name} → ${r.target} · ${r.pool}`);
-      toast(`${r.dmg ? `💥 ${r.dmg} damage to ${r.target}` : `${r.target} shrugs it off`} (${r.hits} Hits − ${r.def} Defense)${r.down ? ' — it’s down!' : ''}`, !r.dmg);
+      toast(`${r.dmg ? `${r.dmg} damage to ${r.target}` : `${r.target} shrugs it off`} (${r.hits} Hits − ${r.def} Defense)${r.down ? ' — it’s down!' : ''}`, !r.dmg);
       poller?.now?.();
     }
   });

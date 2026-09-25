@@ -202,3 +202,13 @@
 
 /* the move readout rides above your finger/cursor while dragging */
 .drag-readout { position: fixed; bottom: auto; transform: translate(-50%, calc(-100% - 46px)); z-index: 80; pointer-events: none; max-width: calc(100vw - 20px); white-space: normal; text-align: center; box-shadow: 0 6px 16px rgba(0,0,0,.4); font-size: 16px; }
+
+.tp-act .ic { display: grid; place-items: center; height: 28px; }
+.tp-act .ic .gl { width: 26px; height: 26px; color: var(--rust); }
+.tp-act.on .ic .gl { color: var(--ink); }
+.tp-act:disabled .ic .gl { color: var(--ink-faint); }
+.d-h .gl { color: var(--rust); }
+.btoken .skull .gl { width: 1em; height: 1em; color: #f4ead6; filter: drop-shadow(0 2px 3px rgba(0,0,0,.9)); }
+.btoken .skull.bleed .gl { color: #b3261e; filter: drop-shadow(0 0 2px #fff) drop-shadow(0 2px 3px rgba(0,0,0,.8)); }
+.btoken .hold-dot .gl { width: 1em; height: 1em; color: #f0c46a; background: #221f1f; border-radius: 50%; padding: 2px; }
+.tp-hold .gl { color: #a4401f; }

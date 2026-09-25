@@ -1,5 +1,6 @@
 // The shared Table Log: every roll from any page (combat, sheets, Forstall scans) in one place.
 import { esc, api, startPolling, staticDice, timeAgo, injectDefs, savedPin, toast, store, rollPopup, animateRoll } from './common.js';
+import { gl } from './glyphs.js';
 
 export function logHTML(log) {
   if (!log.length) return '<p class="empty-note">Rolls and big moments show up here for everyone.</p>';
@@ -26,7 +27,7 @@ export function mountTableLog() {
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.className = 'log-fab';
-  btn.innerHTML = '📜 Table Log <span class="log-badge" hidden></span>';
+  btn.innerHTML = `${gl('scroll')} Table Log <span class="log-badge" hidden></span>`;
   btn.setAttribute('aria-expanded', 'false');
   const panel = document.createElement('aside');
   panel.className = 'log-drawer';
@@ -97,8 +98,8 @@ export function renderHud(h) {
     const rest = [...h.order.slice(i + 1), ...h.order.slice(0, Math.max(0, i))];
     strip.classList.toggle('closed', closed);
     strip.innerHTML = closed
-      ? `<button type="button" class="hud-toggle" data-hud-open title="Show turn order">⚔ ${esc(cur?.name || '—')}’s turn</button>`
-      : `<span class="hud-r">R${h.round || 1}</span><b class="hud-now${cur && cur.key === me() ? ' mine' : ''}">⚔ ${esc(cur?.name || '—')}</b>${rest.length ? '<i>›</i>' : ''}${rest.map((o) => `<span class="hud-next${o.key === me() ? ' mine' : ''}">${esc(o.name)}</span>`).join('<i>›</i>')}
+      ? `<button type="button" class="hud-toggle" data-hud-open title="Show turn order">${gl('revolver')} ${esc(cur?.name || '—')}’s turn</button>`
+      : `<span class="hud-r">R${h.round || 1}</span><b class="hud-now${cur && cur.key === me() ? ' mine' : ''}">${gl('revolver')} ${esc(cur?.name || '—')}</b>${rest.length ? '<i>›</i>' : ''}${rest.map((o) => `<span class="hud-next${o.key === me() ? ' mine' : ''}">${esc(o.name)}</span>`).join('<i>›</i>')}
         <button type="button" class="hud-toggle" data-hud-close title="Hide" aria-label="Hide turn order">–</button>`;
     strip.querySelector('[data-hud-open]')?.addEventListener('click', () => { store.set('wiw.hudClosed', false); renderHud(lastHud); });
     strip.querySelector('[data-hud-close]')?.addEventListener('click', () => { store.set('wiw.hudClosed', true); renderHud(lastHud); });
@@ -134,7 +135,7 @@ export function renderHud(h) {
   try { navigator.vibrate?.(150); } catch {}
   ck.innerHTML = `<div><small>${open.kind === 'challenge' ? `CHALLENGE${open.round > 1 ? ` · ROUND ${open.round} (TIE)` : ''} — MOST HITS WINS` : 'THE WARDEN ASKS YOU TO ROLL'}</small>
     <b>${esc(who.name)}: ${esc(open.skill)}</b> ${open.kind === 'challenge' ? `vs ${esc(others.join(' & '))}` : `· ${esc(open.diff)} — ${open.target} Hit${open.target === 1 ? '' : 's'}`}${open.note ? ` · <i>${esc(open.note)}</i>` : ''}</div>
-    <div class="hud-ck-btns"><button type="button" class="btn" data-ck-go>🎲 Roll ${esc(open.skill)}</button><button type="button" class="btn small secondary" data-ck-later>Later</button></div>`;
+    <div class="hud-ck-btns"><button type="button" class="btn" data-ck-go>Roll ${esc(open.skill)}</button><button type="button" class="btn small secondary" data-ck-later>Later</button></div>`;
   ck.querySelector('[data-ck-later]').addEventListener('click', () => { setSeen(`wiw.ck.${open.id}.${open.round}`, 'later'); ck.hidden = true; });
   ck.querySelector('[data-ck-go]').addEventListener('click', async (e) => {
     e.target.disabled = true;
@@ -144,7 +145,7 @@ export function renderHud(h) {
       ck.hidden = true;
       if (r?.dice) {
         await rollPopup(r, `${who.name} · ${r.label}`);
-        if (r.outcome) toast(r.outcome.ok ? `✅ Success — ${r.outcome.total}/${r.target} Hits!` : `❌ Short — ${r.outcome.total}/${r.target} Hits.`, !r.outcome.ok);
+        if (r.outcome) toast(r.outcome.ok ? `✓ Success — ${r.outcome.total}/${r.target} Hits!` : `✗ Short — ${r.outcome.total}/${r.target} Hits.`, !r.outcome.ok);
         else toast(`${r.hits} Hit${r.hits === 1 ? '' : 's'} — see the Table Log for who won.`);
       }
     } catch (err) { toast(err.message, true); e.target.disabled = false; }
@@ -166,8 +167,8 @@ function holdPopup(h) {
   if (holdEl.dataset.k === key && !holdEl.hidden) return;
   holdEl.dataset.k = key; holdEl.hidden = false;
   try { navigator.vibrate?.([100, 50, 100]); } catch {}
-  holdEl.innerHTML = `<div><small>YOUR PREPARED ACTION CAN GO OFF</small><b>⏳ ${esc(hot.triggeredBy.text)}</b> — fire ${esc(hot.name)}’s ${esc(hot.label)}?</div>
-    <div class="hud-ck-btns"><button type="button" class="btn" data-fire>🔥 Fire now</button><button type="button" class="btn small secondary" data-no>Not yet</button></div>`;
+  holdEl.innerHTML = `<div><small>YOUR PREPARED ACTION CAN GO OFF</small><b>${gl('watch')} ${esc(hot.triggeredBy.text)}</b> — fire ${esc(hot.name)}’s ${esc(hot.label)}?</div>
+    <div class="hud-ck-btns"><button type="button" class="btn" data-fire>${gl('flash')} Fire now</button><button type="button" class="btn small secondary" data-no>Not yet</button></div>`;
   holdEl.querySelector('[data-no]').addEventListener('click', () => { setSeen(`wiw.hold.${key}`, 'no'); holdEl.hidden = true; });
   holdEl.querySelector('[data-fire]').addEventListener('click', async (e) => {
     e.target.disabled = true;
@@ -176,7 +177,7 @@ function holdPopup(h) {
       const r = res.result;
       holdEl.hidden = true;
       if (r?.dice) await rollPopup(r, `${hot.name} · prepared ${r.fired} · ${r.pool}`);
-      toast(r?.dmg != null ? `🔥 ${r.dmg ? `${r.dmg} damage to ${r.target}` : `${r.target} shrugs it off`}` : `🔥 ${r?.fired || 'Fired'}!`);
+      toast(r?.dmg != null ? (r.dmg ? `${r.dmg} damage to ${r.target}` : `${r.target} shrugs it off`) : `${r?.fired || 'Fired'} — done!`);
     } catch (err) { toast(err.message, true); e.target.disabled = false; }
   });
 }
