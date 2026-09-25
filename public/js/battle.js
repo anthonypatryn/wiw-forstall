@@ -1,4 +1,4 @@
-import { $, esc, api, startPolling, toast, mountNav, tryWarden, forgetWarden, savedPin, wardenModal } from './common.js';
+import { $, esc, api, startPolling, toast, mountNav, tryWarden, forgetWarden, savedPin, wardenModal, rollPopup } from './common.js';
 import { mountTableLog } from './tablelog.js';
 import { panZoom } from './panzoom.js';
 
@@ -18,6 +18,66 @@ const band = (d) => (d <= 1 ? 'arm' : d <= 6 ? 'short' : d <= 18 ? 'long' : 'dis
 const BAND_LABEL = { arm: 'Arm’s Reach', short: 'Short', long: 'Long', distant: 'Distant' };
 
 let data = null, warden = false, poller = null, selected = null, dragging = null;
+// Combat data (sheets, enemies, attacks) so tokens can attack from the map
+let combat = null, combatPoller = null;
+const atkSel = {}; // per selected token: remembered picks
+const WEAPON_KEY = { arm: 'arms', short: 'short', long: 'long', distant: 'distant' };
+const ATK_BAND = { Melee: 'arm', Short: 'short', Long: 'long', Distant: 'distant' };
+const isPool = (s) => /^(\d+[BG])+$/.test(String(s || '').toUpperCase());
+async function combatAct(body) {
+  try { const res = await api('POST', body, '', '/api/combat'); combat = res.state || combat; return res.result ?? true; }
+  catch (e) { toast(e.message, true); return null; }
+}
+function attackHTML(sel) {
+  if (!combat?.combat?.active) return '';
+  const s = atkSel[sel.id] ||= {};
+  if (sel.kind === 'pc') {
+    const pc = combat.posse.find((p) => p.id === sel.ref);
+    if (!pc || pc.dead) return '';
+    const foes = data.tokens.filter((t) => t.kind === 'enemy' && !t.down && combat.enemies.some((e) => e.id === t.ref && !e.defeated))
+      .map((t) => ({ t, d: dist(sel, t) })).sort((a, b) => a.d - b.d);
+    if (!foes.length) return '<h3 class="d-h">⚔ ATTACK</h3><p class="muted">No enemies standing on the board.</p>';
+    if (!foes.some((f) => f.t.id === s.t)) s.t = foes[0].t.id;
+    const tgt = foes.find((f) => f.t.id === s.t), bandKey = WEAPON_KEY[band(tgt.d)];
+    const weapons = pc.weapons.map((w, i) => [w, i]).filter(([w]) => (w.model || w.manufacturer) && isPool(w[bandKey]));
+    if (!weapons.some(([, i]) => i === s.w)) s.w = weapons[0]?.[1];
+    const w = pc.weapons[s.w] || {};
+    const loaded = (w.ammo || []).map((a, k) => [a, k]).filter(([a]) => a.name && Number(a.rds) > 0);
+    if (!loaded.some(([, k]) => String(k) === String(s.ammo))) s.ammo = '';
+    const cost = (parseInt(String(w.grit || '').split('|')[0], 10) || 0) + (s.aim ? 1 : 0);
+    const mine = combat.combat.current === pc.id;
+    return `<h3 class="d-h">⚔ ATTACK FROM HERE ${mine ? '<span class="tag turn">THEIR TURN</span>' : ''} <small>${pc.grit} Grit</small></h3>
+      <div class="atk-form">
+        <select data-as="t" aria-label="Target">${foes.map(({ t, d }) => `<option value="${t.id}"${t.id === s.t ? ' selected' : ''}>→ ${esc(t.name)} · ${d}″ ${BAND_LABEL[band(d)]}</option>`).join('')}</select>
+        ${weapons.length ? `<select data-as="w" aria-label="Weapon">${weapons.map(([x, i]) => `<option value="${i}"${i === s.w ? ' selected' : ''}>${esc(x.model || x.manufacturer)} · ${esc(String(x[bandKey]).toUpperCase())}</option>`).join('')}</select>
+        <select data-as="ammo" aria-label="Ammo"><option value="">regular ammo</option>${loaded.map(([a, k]) => `<option value="${k}"${String(k) === String(s.ammo) ? ' selected' : ''}>${esc(a.name)} (${a.rds})</option>`).join('')}</select>
+        <label class="check"><input type="checkbox" data-as="aim"${s.aim ? ' checked' : ''}${pc.aimed ? ' disabled' : ''}> Aim +1</label>
+        <button type="button" class="btn small" data-map-attack>⚔ Attack · ${cost} Grit</button>`
+        : `<p class="muted">No weapon reaches ${BAND_LABEL[band(tgt.d)]} (${tgt.d}″). Move closer.</p>`}
+      </div>`;
+  }
+  if (sel.kind === 'enemy' && warden) {
+    const e = combat.enemies.find((x) => x.id === sel.ref);
+    const prof = e?.profile ? combat.profiles?.[e.profile] : null;
+    if (!e || e.defeated || !prof?.attacks?.length) return '';
+    const posse = data.tokens.filter((t) => t.kind === 'pc' && combat.posse.some((p) => p.id === t.ref && !p.dead))
+      .map((t) => ({ t, d: dist(sel, t) })).sort((a, b) => a.d - b.d);
+    if (!posse.length) return '';
+    if (!posse.some((f) => f.t.id === s.t)) s.t = posse[0].t.id;
+    const tgt = posse.find((f) => f.t.id === s.t), b = band(tgt.d);
+    const fits = prof.attacks.map((a, i) => [a, i]).filter(([a]) => (ATK_BAND[a.range] || 'arm') === b || (b === 'arm' && a.range === 'Short'));
+    if (!prof.attacks.some((_, i) => i === s.a)) s.a = (fits[0] || [null, 0])[1];
+    return `<h3 class="d-h">💥 ATTACK THE POSSE <small>${e.grit ?? '?'} Grit</small></h3>
+      <div class="atk-form">
+        <select data-as="t" aria-label="Target">${posse.map(({ t, d }) => `<option value="${t.id}"${t.id === s.t ? ' selected' : ''}>→ ${esc(t.name)} · ${d}″ ${BAND_LABEL[band(d)]}</option>`).join('')}</select>
+        <select data-as="a" aria-label="Attack">${prof.attacks.map((a, i) => { const ok = fits.some(([, k]) => k === i);
+          return `<option value="${i}"${i === s.a ? ' selected' : ''}>${ok ? '' : '(out of range) '}${esc(a.name)} · ${a.range}${a.grit ? ` · ${a.grit} Grit` : ''}</option>`; }).join('')}</select>
+        <select data-as="cover" aria-label="Cover"><option value="0">no cover</option><option value="1"${s.cover == 1 ? ' selected' : ''}>light cover</option><option value="2"${s.cover == 2 ? ' selected' : ''}>heavy cover</option></select>
+        <button type="button" class="btn small" data-map-eattack>💥 Roll it</button>
+      </div>`;
+  }
+  return '';
+}
 const vp = $('#viewport'), stage = $('#stage');
 const pz = panZoom(vp, stage, {
   maxScale: 2.5, ignore: '.btoken, .map-ctrls',
@@ -119,6 +179,7 @@ function renderTokens() {
 function renderPanel() {
   const sel = selected && data.tokens.find((x) => x.id === selected);
   const box = $('#sel-box');
+  if (box.contains(document.activeElement) && document.activeElement.tagName === 'SELECT') return;
   if (!sel) {
     box.innerHTML = `<div class="sel-card"><div class="kind">RANGE METER</div><h2>Tap a token</h2>
       <p>You’ll see its Arm’s Reach, Short and Long Range, and how far away everyone else is.</p></div>`;
@@ -132,13 +193,15 @@ function renderPanel() {
       ${st.length ? `<div class="d-st">${st.map(([k, v]) => `<span class="st">${esc(k)} <b>${v}</b></span>`).join('')}</div>` : ''}
       <div class="d-row">${sel.grit != null ? `<span><b>GRIT</b> ${sel.grit}</span>` : ''}${sel.defense ? `<span><b>DEFENSE</b> ${esc(sel.defense)}</span>` : ''}${sel.speed ? `<span><b>SPEED</b> ${esc(sel.speed)}</span>` : ''}${sel.finesse ? `<span><b>FINESSE</b> ${esc(sel.finesse)}</span>` : ''}${sel.aces ? `<span><b>ACES</b> ${sel.aces}/6</span>` : ''}${sel.size ? `<span><b>SIZE</b> ${esc(sel.size)}</span>` : ''}</div>
       ${sel.frenzyText?.length ? `<div class="d-note">${sel.frenzyText.map(esc).join('<br>')}</div>` : ''}
-      ${sel.attacks?.length ? `<details class="d-atk"><summary>Attacks</summary>${sel.attacks.map((a) => `<p>${esc(a)}</p>`).join('')}</details>` : ''}`;
+      ${sel.attacks?.length ? `<details class="d-atk"><summary>Attacks</summary>${sel.attacks.map((a) => `<p>${esc(a)}</p>`).join('')}</details>` : ''}
+      ${attackHTML(sel)}`;
     const kindLabel = sel.kind === 'pc' ? `POSSE${sel.trade ? ` · THE ${esc(sel.trade.toUpperCase())}` : ''}` : sel.kind === 'enemy' ? 'ENEMY' : 'NPC';
     box.innerHTML = `<div class="sel-card">${sel.img ? `<img class="sel-art" src="/img/tokens/${esc(sel.img)}.webp" alt="">` : ''}<div class="kind">${kindLabel}${sel.hidden ? ' · HIDDEN FROM POSSE' : ''}</div><h2>${esc(sel.name)}</h2>${detail}
       <h3 class="d-h">DISTANCES</h3>
       ${others.length ? others.map(({ t, d }) => `<div class="tok-row" data-pick="${t.id}"><span class="chip" style="background:${color(t)}">${esc(initials(t.name))}</span>
         <span class="n">${esc(t.name)}</span><span class="d ${band(d)}">${d}″ · ${BAND_LABEL[band(d)]}</span></div>`).join('') : '<p class="muted">Nobody else on the board.</p>'}</div>`;
   }
+  wireAttack(box, sel);
   const list = $('#token-list');
   list.innerHTML = data.tokens.length ? data.tokens.map((t) => `<div class="tok-row${t.id === selected ? ' sel' : ''}" data-pick="${t.id}">
       <span class="chip" style="background:${color(t)}">${esc(initials(t.name))}</span>
@@ -156,6 +219,34 @@ function renderPanel() {
     act({ action: 'tokenEdit', id: t.id, hidden: !t.hidden });
   }));
   list.querySelectorAll('[data-rm]').forEach((b) => b.addEventListener('click', () => act({ action: 'removeToken', id: b.dataset.rm })));
+}
+
+function wireAttack(box, sel) {
+  if (!sel) return;
+  const s = atkSel[sel.id] ||= {};
+  box.querySelectorAll('[data-as]').forEach((el) => el.addEventListener('change', () => {
+    const k = el.dataset.as;
+    s[k] = k === 'aim' ? el.checked : (k === 'w' || k === 'a' || k === 'cover') ? Number(el.value) : el.value;
+    el.blur();
+    renderPanel();
+  }));
+  box.querySelector('[data-map-attack]')?.addEventListener('click', async () => {
+    const tgt = data.tokens.find((t) => t.id === s.t);
+    const bandKey = WEAPON_KEY[band(dist(sel, tgt))];
+    const r = await combatAct({ action: 'pc', id: sel.ref, op: 'attack', weapon: s.w, range: bandKey, target: tgt.ref, ammo: s.ammo, aim: s.aim });
+    if (r?.dice) {
+      s.aim = false;
+      await rollPopup(r, `${sel.name} → ${r.target} · ${r.pool}`);
+      toast(`${r.dmg ? `💥 ${r.dmg} damage to ${r.target}` : `${r.target} shrugs it off`} (${r.hits} Hits − ${r.def} Defense)${r.down ? ' — it’s down!' : ''}`, !r.dmg);
+      poller?.now?.();
+    }
+  });
+  box.querySelector('[data-map-eattack]')?.addEventListener('click', async () => {
+    const tgt = data.tokens.find((t) => t.id === s.t);
+    const r = await combatAct({ action: 'enemyAttack', enemy: sel.ref, attack: s.a, pc: tgt.ref, cover: s.cover || 0 });
+    if (r?.atk?.dice) rollPopup(r.atk, `${r.atk.label} · ${r.atk.pool}`);
+    if (r) { toast(`${r.dmg ? `${r.dmg} damage` : 'No damage'}${r.notes?.length ? ` · ${r.notes.join(', ')}` : ''}`); poller?.now?.(); }
+  });
 }
 
 function renderWarden() {
@@ -267,6 +358,8 @@ async function act(body, okMsg) {
 }
 function connect() {
   poller?.stop();
+  combatPoller?.stop();
+  combatPoller = startPolling(warden ? 'warden' : 'player', (d) => { combat = d; if (data && !dragging) renderPanel(); }, null, '/api/combat');
   poller = startPolling(warden ? 'warden' : 'player', (d) => {
     data = d;
     if (selected && !data.tokens.some((t) => t.id === selected)) selected = null;

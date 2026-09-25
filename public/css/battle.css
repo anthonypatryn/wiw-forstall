@@ -118,3 +118,9 @@
 .d-atk summary { cursor: pointer; font: 13px var(--display); letter-spacing: .12em; color: var(--rust); margin-top: 6px; }
 .d-atk p { margin: 3px 0; font-size: 13px; }
 .d-h { margin: 12px 0 4px !important; font-size: 15px !important; }
+
+/* attack from the map */
+.atk-form { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+.atk-form select { min-width: 0; max-width: 100%; padding: 6px 8px; border: 1px solid var(--ink-faint); border-radius: 3px; background: #fffdf7; font-size: 14px; }
+.atk-form .btn { align-self: flex-start; }
+.d-h small { font: italic 12px var(--body); letter-spacing: 0; color: var(--ink-soft); margin-left: 6px; }
