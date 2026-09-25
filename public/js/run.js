@@ -6,6 +6,7 @@ import { mountRollCaller } from './rollcall.js';
 import { faceUrl } from './portrait.js';
 import { mountHandout } from './handout-send.js';
 import { mountWardenWhisper } from './whisper.js';
+import { mountLockSend } from './lockpick.js';
 import { mountDesk, renderChecks, renderRecent } from './desk.js';
 
 mountTableLog();
@@ -14,6 +15,7 @@ mountNav('/run');
 let combat = null, poller = null, needsTimer = null;
 const handout = mountHandout($('#handout'), () => combat);
 const wwhisper = mountWardenWhisper($('#wwhisper'), () => combat);
+const locks = mountLockSend($('#lockpick'), () => combat);
 const caller = mountRollCaller($('#rollcall'), () => combat, () => { poller?.now?.(); refreshNeeds(); });
 
 async function act(body, msg) {
@@ -107,7 +109,7 @@ function renderPosse() {
 }
 function render() {
   if (!combat) return;
-  renderFight(); renderEnemies(); renderPosse(); caller.draw(); renderChecks(); renderRecent(); renderRewards(); handout.draw(); wwhisper.draw();
+  renderFight(); renderEnemies(); renderPosse(); caller.draw(); renderChecks(); renderRecent(); renderRewards(); handout.draw(); wwhisper.draw(); locks.draw();
 }
 
 // ---------- Rewards: award the posse, Jackpot, Town Rest (moved here from the Posse page) ----------
