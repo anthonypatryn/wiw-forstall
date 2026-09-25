@@ -446,3 +446,27 @@ body.on-sheet .masthead { display: none; }
 .fp-log { display: flex; flex-wrap: wrap; gap: 5px; margin: 0 0 6px; }
 .fp-log span { padding: 2px 8px; border-radius: 12px; background: rgba(34,31,31,.08); font-size: 13px; }
 .fp-log i { font-style: normal; color: var(--rust); }
+
+/* Table view: the sheet trimmed to what you need at the table */
+#sheet-view.table-view :is(#sec-prestige, #sec-achievements, #sec-talents, #sec-disposition, #sec-appearance, #sec-reputation, #sec-history, #sec-inventory, .tv-empty) { display: none; }
+#sheet-view.table-view .sheet-toc :is([data-jump="prestige"], [data-jump="talents"], [data-jump="achievements"], [data-jump="disposition"], [data-jump="reputation"], [data-jump="inventory"]) { display: none; }
+#sheet-view.table-view :is(.sh-art, .sh-logo, .sbox-sub, select.pick, .rm-btn, [data-upg-box], .pack-row, .w-grid .f:has(textarea)) { display: none; }
+#sheet-view.table-view .sheet-head { min-height: 0; padding-top: 6px; padding-bottom: 6px; }
+#sheet-view.table-view .sheet { gap: 10px; }
+#sheet-view.table-view { display: flex; flex-direction: column; }
+#sheet-view.table-view > .sheet { display: contents; }
+#sheet-view.table-view > * { order: 50; }
+#sheet-view.table-view > .sheet-bar { order: 1; }
+#sheet-view.table-view > .sheet-head { order: 2; }
+#sheet-view.table-view > .fight-panel { order: 3; }
+#sheet-view.table-view #sec-health { order: 4; }
+#sheet-view.table-view #sec-statuses { order: 5; }
+#sheet-view.table-view #sec-weapons { order: 6; }
+#sheet-view.table-view #sec-gear { order: 7; }
+#sheet-view.table-view #sec-forstall { order: 8; }
+#sheet-view.table-view #sec-horse { order: 9; }
+#sheet-view.table-view #sec-mech { order: 10; }
+#sheet-view.table-view #sec-skills { order: 11; }
+#sheet-view.table-view #sec-abilities { order: 12; }
+#sheet-view.table-view .sbox { margin-bottom: 12px; }
+#sheet-view.table-view .sk-name :is(small, em) { display: none; }

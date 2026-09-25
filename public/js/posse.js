@@ -269,6 +269,7 @@ function buildSheet(p) {
       <button class="btn small" type="button" data-mode="edit" hidden>✎ Edit</button>
       <button class="btn small" type="button" data-mode="view" hidden>✓ Done editing</button>
       <button class="btn small" type="button" data-mode="finish" hidden>Save character</button>
+      <button class="btn small secondary" type="button" data-tableview hidden></button>
       <button class="btn small secondary danger" id="delete-pc" type="button">Delete</button>
       <nav class="sheet-toc" aria-label="Jump to">${[['starter', 'Checklist'], ['fight', 'Fight'], ['skills', 'Skills'], ['health', 'Health'], ['statuses', 'Statuses'], ['weapons', 'Weapons'], ['abilities', 'Abilities'], ['prestige', 'Prestige'], ['talents', 'Talents'], ['achievements', 'Titles'], ['disposition', 'Story'], ['reputation', 'Reputation'], ['gear', 'Gear'], ['inventory', 'Inventory'], ['forstall', 'Forstall'], ['horse', 'Horse'], ['mech', 'Mech']].map(([id, label]) => `<a href="#${p.id}" data-jump="${id}">${label}</a>`).join('')}</nav>
     </div>
@@ -798,7 +799,23 @@ function applyMode(view, p) {
   const mine = myId() === p.id, star = view.querySelector('[data-me-bar]');
   star.textContent = mine ? '★ ME' : '☆ This is me'; star.setAttribute('aria-pressed', String(mine));
   view.querySelector('[data-mode-tag]').dataset.m = creating ? 'create' : locked ? 'view' : 'edit';
+  // Table view: just what you need mid-session (phones default to it); editing always shows the full sheet
+  const tv = locked && !creating && tableViewOn();
+  view.classList.toggle('table-view', tv);
+  const tb = view.querySelector('[data-tableview]');
+  tb.hidden = !locked || creating;
+  tb.textContent = tv ? 'Full sheet' : 'Table view';
+  view.querySelector('#sec-forstall')?.classList.toggle('tv-empty', !p.forstall?.model);
+  view.querySelector('#sec-horse')?.classList.toggle('tv-empty', !p.horse?.breed);
+  view.querySelector('#sec-mech')?.classList.toggle('tv-empty', !p.mech?.class);
 }
+const tableViewOn = () => store.get('wiw.tableView', window.matchMedia('(max-width: 700px)').matches);
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('[data-tableview]')) return;
+  store.set('wiw.tableView', !tableViewOn());
+  const pc = pcById(location.hash.slice(1).split('/')[0]);
+  if (pc) { applyMode($('#sheet-view'), pc); window.scrollTo(0, 0); }
+});
 async function unlockSheet(p) {
   if (!await ask(`Edit ${pcById(p.id)?.name || 'this character'}’s sheet? Changes save as you type.`)) return false;
   editMode.add(p.id);
