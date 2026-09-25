@@ -142,6 +142,12 @@ function renderSide() {
 }
 $('#shopper').addEventListener('change', (e) => { store.set('wiw.shopper', e.target.value); renderSide(); renderItems(); });
 $('#clear-history').addEventListener('click', () => act({ action: 'clearHistory' }));
+$('#equip-all').addEventListener('click', async () => {
+  const r = await act({ action: 'equipAll' });
+  if (!r) return;
+  const done = r.placed.length ? `Filled in ${r.placed.length}: ${r.placed.join(' · ')}.` : 'Nothing new to fill in.';
+  await tell(`Sheets updated\n\n${done}${r.noRoom.length ? ` Still no room: ${r.noRoom.join(' ')}` : ''}`);
+});
 
 // ---------- Warden: make an item ----------
 function buildCreate() {
