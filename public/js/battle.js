@@ -169,6 +169,7 @@ function renderTokens() {
     return `<div class="btoken ${t.kind}${t.img ? ' art' : ' stand-in'}${canMove(t) ? ' movable' : ''}${t.id === selected ? ' sel' : ''}${t.ref && t.ref === data.current ? ' turn' : ''}${t.hidden ? ' hidden-tok' : ''}${t.down ? ' down' : ''}${t.frenzied ? ' frenzied' : ''}"
       data-id="${t.id}" data-size="${esc(t.size || '')}" style="left:${c.x}px;top:${c.y}px;width:${size}px;height:${size}px;${bg};font-size:${font}px;border-width:${data.grid.ppi * 0.05}px"
       title="${esc(t.name)}">${t.img ? '' : esc(initials(t.name))}
+      ${t.dead ? `<span class="skull" style="font-size:${size * 0.62}px" aria-label="Down">💀</span>` : t.bleeding ? `<span class="skull bleed" style="font-size:${size * 0.5}px" aria-label="Bleeding Out">🩸</span>` : ''}
       ${nStatus ? `<span class="st-dot" style="font-size:${labFont}px" title="${esc(Object.entries(t.statuses).map(([k, v]) => `${k} ${v}`).join(', '))}">${nStatus}</span>` : ''}
       <span class="lab" style="font-size:${labFont}px">${esc(t.name)}${hasHp ? `<i class="hpbar"><i style="width:${pct}%"></i></i><em>${t.health}/${t.maxHealth}</em>` : ''}</span>
       ${d !== null ? `<span class="dist ${band(d)}" style="font-size:${labFont}px">${d}″ · ${BAND_LABEL[band(d)]}</span>` : ''}</div>`;
@@ -219,6 +220,26 @@ function renderPanel() {
     act({ action: 'tokenEdit', id: t.id, hidden: !t.hidden });
   }));
   list.querySelectorAll('[data-rm]').forEach((b) => b.addEventListener('click', () => act({ action: 'removeToken', id: b.dataset.rm })));
+}
+
+// ---------- whose turn (from Combat) ----------
+function renderTurnBar() {
+  const bar = $('#turn-bar');
+  const c = combat?.combat;
+  if (!c?.active) { bar.hidden = !warden; bar.innerHTML = warden ? '<div class="turn-bar"><span class="muted">No combat running — start it on the Combat page.</span><a class="btn small secondary" href="/combat">Combat</a></div>' : ''; return; }
+  bar.hidden = false;
+  const nm = (k) => (k === 'enemies' ? 'The enemies' : combat.posse.find((p) => p.id === k)?.name || combat.enemies.find((e) => e.id === k)?.name || '—');
+  const order = c.turnList || [], i = order.indexOf(c.current), next = order.length > 1 ? order[(i + 1) % order.length] : null;
+  let me = null; try { me = JSON.parse(localStorage.getItem('wiw.me') || 'null'); } catch {}
+  const isPc = combat.posse.some((p) => p.id === c.current);
+  bar.innerHTML = `<div class="turn-bar"><div><small>ROUND ${c.round || 1}</small><b data-goto="${esc(c.current || '')}">${esc(nm(c.current))}</b>’s turn${next ? `<small>next: ${esc(nm(next))}</small>` : ''}</div>
+    ${warden ? '<button type="button" class="btn small" data-nextturn>Next turn ⏭</button>' : isPc && me === c.current ? '<button type="button" class="btn small" data-endmine>End my turn ⏭</button>' : ''}</div>`;
+  bar.querySelector('[data-nextturn]')?.addEventListener('click', async () => { if (await combatAct({ action: 'next' })) { renderTurnBar(); poller?.now?.(); } });
+  bar.querySelector('[data-endmine]')?.addEventListener('click', async () => { if (await combatAct({ action: 'pc', id: c.current, op: 'endTurn' })) { renderTurnBar(); poller?.now?.(); } });
+  bar.querySelector('[data-goto]')?.addEventListener('click', () => {
+    const t = data?.tokens.find((x) => x.ref === c.current);
+    if (t) { select(t.id); const p = center(t.col, t.row); pz.centerOn(p.x, p.y, Math.max(pz.view.s, 0.45)); }
+  });
 }
 
 function wireAttack(box, sel) {
@@ -359,7 +380,7 @@ async function act(body, okMsg) {
 function connect() {
   poller?.stop();
   combatPoller?.stop();
-  combatPoller = startPolling(warden ? 'warden' : 'player', (d) => { combat = d; if (data && !dragging) renderPanel(); }, null, '/api/combat');
+  combatPoller = startPolling(warden ? 'warden' : 'player', (d) => { combat = d; renderTurnBar(); if (data && !dragging) renderPanel(); }, null, '/api/combat');
   poller = startPolling(warden ? 'warden' : 'player', (d) => {
     data = d;
     if (selected && !data.tokens.some((t) => t.id === selected)) selected = null;

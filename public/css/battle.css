@@ -124,3 +124,11 @@
 .atk-form select { min-width: 0; max-width: 100%; padding: 6px 8px; border: 1px solid var(--ink-faint); border-radius: 3px; background: #fffdf7; font-size: 14px; }
 .atk-form .btn { align-self: flex-start; }
 .d-h small { font: italic 12px var(--body); letter-spacing: 0; color: var(--ink-soft); margin-left: 6px; }
+
+/* downed tokens + turn bar */
+.btoken .skull { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); line-height: 1; pointer-events: none; filter: drop-shadow(0 2px 3px rgba(0,0,0,.8)); z-index: 2; }
+.btoken.down .skull { filter: drop-shadow(0 2px 3px rgba(0,0,0,.8)); }
+.turn-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 12px; margin-bottom: 12px; border: 2px solid var(--rust); border-radius: 6px; background: #fffaf0; }
+.turn-bar small { display: block; font: 11px var(--display); letter-spacing: .12em; color: var(--ink-soft); }
+.turn-bar b { font: 20px var(--display); letter-spacing: .06em; font-weight: 400; color: var(--rust); cursor: pointer; }
+.btoken .skull { color: #fff; -webkit-text-fill-color: initial; }
