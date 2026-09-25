@@ -222,24 +222,133 @@ function renderPanel() {
   list.querySelectorAll('[data-rm]').forEach((b) => b.addEventListener('click', () => act({ action: 'removeToken', id: b.dataset.rm })));
 }
 
-// ---------- whose turn (from Combat) ----------
+function moveReadout(t, d) {
+  const c = combat?.combat;
+  const actor = t.kind === 'pc' ? combat?.posse.find((p) => p.id === t.ref) : t.kind === 'enemy' ? combat?.enemies.find((e) => e.id === t.ref) : null;
+  if (!c?.active || !actor) return `${t.name} moves ${d}″`;
+  if (c.current !== t.ref) return warden ? `${t.name} moves ${d}″ · free (Warden, off-turn)` : `Not ${t.name}’s turn`;
+  const m = moveCostFor(t.kind, actor, d, tp.rough);
+  return `${t.name} moves ${d}″ · ${m.cost} Grit (${m.speed}${tp.rough ? ', rough' : ''})${m.cost > (actor.grit || 0) ? ` · ⚠ only ${actor.grit || 0} left` : ''}`;
+}
+// ---------- turn panel: whose turn, Grit left, this turn's actions (pp. 40–43) ----------
+const tp = { rough: false, dodge: 1, gear: 0, imp: 1, impLabel: '', impSkill: '', prep: 1, prepLabel: '', rl: '', rlDice: 1 };
+const myId = () => { try { return JSON.parse(localStorage.getItem('wiw.me') || 'null'); } catch { return null; } };
+function currentActor() {
+  const c = combat?.combat;
+  if (!c?.active || !c.current) return null;
+  const pc = combat.posse.find((p) => p.id === c.current);
+  if (pc) return { kind: 'pc', a: pc };
+  const e = combat.enemies.find((x) => x.id === c.current);
+  return e ? { kind: 'enemy', a: e } : null;
+}
+// same rules as the server (lib/combat.js moveCost)
+function moveCostFor(kind, a, inches, rough) {
+  if (!inches) return { cost: 0, speed: 'Normal' };
+  const w = (t) => ['Very Slow', 'Slow', 'Normal', 'Fast'].find((x) => String(t || '').toLowerCase().startsWith(x.toLowerCase())) || 'Normal';
+  const speed = kind === 'enemy' ? w(a.speed) : a.mounted === 'horse' ? 'Fast' : a.mounted === 'mech' ? w(a.mech?.speed) : 'Normal';
+  const shorts = Math.ceil(inches / 6);
+  let cost = speed === 'Fast' ? Math.ceil(inches / 12) : speed === 'Slow' ? shorts * 2 : speed === 'Very Slow' ? shorts * 3 : shorts;
+  if (rough) cost *= 2;
+  if (kind === 'pc' && a.mounted === 'mech' && a.mech?.state === 'Compromised') cost = Math.min(6, cost * 2);
+  return { cost: Math.max(1, cost), speed };
+}
+const pips = (n) => `<span class="grit-pips">${Array.from({ length: Math.max(6, n) }, (_, i) => `<i class="${i < n ? 'on' : ''}"></i>`).join('')}</span>`;
+
 function renderTurnBar() {
   const bar = $('#turn-bar');
+  if (bar.contains(document.activeElement) && /^(SELECT|INPUT)$/.test(document.activeElement.tagName)) return;
   const c = combat?.combat;
   if (!c?.active) { bar.hidden = !warden; bar.innerHTML = warden ? '<div class="turn-bar"><span class="muted">No combat running — start it on the Combat page.</span><a class="btn small secondary" href="/combat">Combat</a></div>' : ''; return; }
   bar.hidden = false;
-  const nm = (k) => (k === 'enemies' ? 'The enemies' : combat.posse.find((p) => p.id === k)?.name || combat.enemies.find((e) => e.id === k)?.name || '—');
+  const cur = currentActor();
+  const nm = (k) => combat.posse.find((p) => p.id === k)?.name || combat.enemies.find((e) => e.id === k)?.name || '—';
   const order = c.turnList || [], i = order.indexOf(c.current), next = order.length > 1 ? order[(i + 1) % order.length] : null;
-  let me = null; try { me = JSON.parse(localStorage.getItem('wiw.me') || 'null'); } catch {}
-  const isPc = combat.posse.some((p) => p.id === c.current);
-  bar.innerHTML = `<div class="turn-bar"><div><small>ROUND ${c.round || 1}</small><b data-goto="${esc(c.current || '')}">${esc(nm(c.current))}</b>’s turn${next ? `<small>next: ${esc(nm(next))}</small>` : ''}</div>
-    ${warden ? '<button type="button" class="btn small" data-nextturn>Next turn ⏭</button>' : isPc && me === c.current ? '<button type="button" class="btn small" data-endmine>End my turn ⏭</button>' : ''}</div>`;
-  bar.querySelector('[data-nextturn]')?.addEventListener('click', async () => { if (await combatAct({ action: 'next' })) { renderTurnBar(); poller?.now?.(); } });
-  bar.querySelector('[data-endmine]')?.addEventListener('click', async () => { if (await combatAct({ action: 'pc', id: c.current, op: 'endTurn' })) { renderTurnBar(); poller?.now?.(); } });
+  if (!cur) { bar.innerHTML = `<div class="turn-bar"><span>Round ${c.round || 1}</span>${warden ? '<button type="button" class="btn small" data-nextturn>Next turn ⏭</button>' : ''}</div>`; wireTurnBar(bar, null); return; }
+  const a = cur.a, isPc = cur.kind === 'pc';
+  const mine = isPc && myId() === a.id;
+  const can = warden || mine;
+  const log = a.turnLog || [];
+  const lastIsMove = a.lastMove && log.length && log[log.length - 1].id === a.lastMove.logId;
+  const gear = isPc ? a.gear.map((g, k) => [g, k]).filter(([g]) => g.item) : [];
+  const sts = isPc ? Object.entries(a.statuses || {}).filter(([, v]) => v) : [];
+  if (!sts.some(([s]) => s === tp.rl)) tp.rl = sts[0]?.[0] || '';
+  const row = (label, body) => `<div class="tp-row"><b class="tp-h">${label}</b>${body}</div>`;
+  bar.innerHTML = `<div class="turn-panel${mine ? ' mine' : ''}">
+    <div class="tp-top"><div><small>ROUND ${c.round || 1}${next ? ` · NEXT: ${esc(nm(next))}` : ''}</small><b data-goto="${esc(a.id)}">${esc(a.name)}</b>’s turn</div>
+      <div class="tp-grit">${pips(a.grit || 0)}<span><b>${a.grit ?? 0}</b> Grit</span></div></div>
+    ${log.length ? `<ol class="tp-log">${log.map((l) => `<li>${esc(l.text)}<span>${l.grit > 0 ? `−${l.grit}` : l.grit < 0 ? `+${-l.grit}` : ''}</span></li>`).join('')}</ol>` : '<p class="muted tp-empty">Nothing done yet this turn.</p>'}
+    ${a.dodge ? `<p class="tp-note">🛡 ${a.dodge} Dodge ready for the next hit.</p>` : ''}
+    ${can ? `
+      ${row('MOVE', `<span class="muted">Drag ${esc(a.name)}’s token — the cost shows as you drag.</span>
+        <label class="check"><input type="checkbox" data-tp="rough"${tp.rough ? ' checked' : ''}> Rough terrain (×2)</label>
+        ${isPc ? `<select data-tp-mount aria-label="On foot or mounted"><option value="">On foot</option>${a.horse?.breed ? `<option value="horse"${a.mounted === 'horse' ? ' selected' : ''}>Riding ${esc(a.horse.name || a.horse.breed)} (Fast)</option>` : ''}${a.mech?.class ? `<option value="mech"${a.mounted === 'mech' ? ' selected' : ''}>Driving the ${esc(a.mech.class)} mech</option>` : ''}</select>` : ''}
+        ${lastIsMove ? '<button type="button" class="btn small secondary" data-undo>↶ Undo last move</button>' : ''}`)}
+      ${row('ATTACK', `<button type="button" class="btn small" data-tp-attack>⚔ Attack…</button><span class="muted">pick the target and weapon in the panel below</span>`)}
+      ${row('DODGE', `<input type="number" min="1" max="12" data-tp="dodge" value="${tp.dodge}"> Grit → that many B <button type="button" class="btn small secondary" data-tp-dodge>🛡 Dodge</button>`)}
+      ${isPc && gear.length ? row('USE ITEM', `<select data-tp="gear">${gear.map(([g, k]) => `<option value="${k}"${k === tp.gear ? ' selected' : ''}>${esc(g.item)} · ${esc(g.grit || 0)} Grit</option>`).join('')}</select><button type="button" class="btn small secondary" data-tp-item>Use</button>`) : ''}
+      ${row('IMPROVISE', `<input type="number" min="1" max="12" data-tp="imp" value="${tp.imp}"> Grit <input data-tp="impLabel" maxlength="60" placeholder="what? e.g. climb the wagon" value="${esc(tp.impLabel)}">
+        ${isPc ? `<select data-tp="impSkill"><option value="">no roll</option>${['Charm', 'Finesse', 'Intuition', 'Nerve'].map((k) => `<option${k === tp.impSkill ? ' selected' : ''}>${k}</option>`).join('')}</select>` : ''}<button type="button" class="btn small secondary" data-tp-imp>Do it</button>`)}
+      ${isPc ? row('PREPARE', `<input type="number" min="0" max="12" data-tp="prep" value="${tp.prep}"> Grit <input data-tp="prepLabel" maxlength="60" placeholder="e.g. shoot whoever comes round the corner" value="${esc(tp.prepLabel)}"><button type="button" class="btn small secondary" data-tp-prep${a.prepared ? ' disabled' : ''}>${a.prepared ? 'Prepared' : 'Prepare'}</button>`) : ''}
+      ${isPc && sts.length ? row('RELIEVE', `<select data-tp="rl">${sts.map(([st, v]) => `<option value="${st}"${st === tp.rl ? ' selected' : ''}>${st} [${v}]</option>`).join('')}</select><input type="number" min="1" max="12" data-tp="rlDice" value="${tp.rlDice}"> dice (1 Grit each)<button type="button" class="btn small secondary" data-tp-rl>Roll</button>`) : ''}
+      ${isPc ? row('FOOL’S GRIT', `<button type="button" class="btn small secondary" data-tp-fool${a.foolUsed ? ' disabled' : ''}>+1 Grit for 1 Health</button><span class="muted">once per turn</span>`) : ''}
+      <div class="tp-end">${warden ? '<button type="button" class="btn" data-nextturn>Next turn ⏭</button>' : '<button type="button" class="btn" data-endmine>End my turn ⏭</button>'}</div>`
+    : `<p class="muted tp-empty">${isPc ? 'Only that player (or the Warden) acts on this turn.' : 'The enemies are acting.'}</p>`}
+  </div>`;
+  wireTurnBar(bar, cur);
+}
+async function tpAct(body, msg) {
+  const r = await combatAct(body);
+  if (r !== null) { if (msg) toast(msg); combatPoller?.now?.(); poller?.now?.(); }
+  return r;
+}
+function wireTurnBar(bar, cur) {
+  const c = combat?.combat;
+  bar.querySelector('[data-nextturn]')?.addEventListener('click', () => tpAct({ action: 'next' }));
+  bar.querySelector('[data-endmine]')?.addEventListener('click', () => tpAct({ action: 'pc', id: c.current, op: 'endTurn' }));
   bar.querySelector('[data-goto]')?.addEventListener('click', () => {
     const t = data?.tokens.find((x) => x.ref === c.current);
     if (t) { select(t.id); const p = center(t.col, t.row); pz.centerOn(p.x, p.y, Math.max(pz.view.s, 0.45)); }
   });
+  if (!cur) return;
+  const a = cur.a, isPc = cur.kind === 'pc';
+  const base = isPc ? { action: 'pc', id: a.id } : { action: 'enemy', id: a.id };
+  bar.querySelectorAll('[data-tp]').forEach((el) => el.addEventListener('change', () => {
+    const k = el.dataset.tp;
+    tp[k] = el.type === 'checkbox' ? el.checked : el.type === 'number' ? Number(el.value) : k === 'gear' ? Number(el.value) : el.value;
+  }));
+  bar.querySelectorAll('input[data-tp]:not([type=checkbox])').forEach((el) => el.addEventListener('input', () => { tp[el.dataset.tp] = el.type === 'number' ? Number(el.value) : el.value; }));
+  bar.querySelector('[data-tp-mount]')?.addEventListener('change', (e) => tpAct({ ...base, op: 'mount', value: e.target.value }, e.target.value ? 'Mounted up.' : 'On foot.'));
+  bar.querySelector('[data-undo]')?.addEventListener('click', async () => {
+    try { const res = await api('POST', { action: 'undoMove', ref: a.id }, '', EP); poller.push(res.state); toast('Move undone — Grit refunded.'); combatPoller?.now?.(); }
+    catch (e) { toast(e.message, true); }
+  });
+  bar.querySelector('[data-tp-attack]')?.addEventListener('click', () => {
+    const t = data?.tokens.find((x) => x.ref === a.id);
+    if (!t) return toast('Put their token on the board first.', true);
+    select(t.id); $('#sel-box').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+  bar.querySelector('[data-tp-dodge]')?.addEventListener('click', async () => {
+    const r = await tpAct({ ...base, op: 'dodge', grit: tp.dodge });
+    if (r?.dice) rollPopup(r, `${a.name} · Dodge · ${r.pool}`);
+  });
+  bar.querySelector('[data-tp-item]')?.addEventListener('click', async () => {
+    const r = await tpAct({ ...base, op: 'useItem', gear: tp.gear });
+    if (r?.dice) rollPopup(r, `${a.name} · ${r.label} · ${r.pool}`); else if (r) toast(`Used ${r.used}.`);
+  });
+  bar.querySelector('[data-tp-imp]')?.addEventListener('click', async () => {
+    const r = await tpAct({ ...base, op: 'improvise', grit: tp.imp, label: tp.impLabel, skill: tp.impSkill });
+    if (r?.dice) rollPopup(r, `${a.name} · ${r.label} · ${r.pool}`);
+    if (r) { tp.impLabel = ''; }
+  });
+  bar.querySelector('[data-tp-prep]')?.addEventListener('click', async () => {
+    const r = await tpAct({ ...base, op: 'prepare', grit: tp.prep, label: tp.prepLabel });
+    if (r) { tp.prepLabel = ''; toast('Prepared — it goes off when the trigger happens.'); }
+  });
+  bar.querySelector('[data-tp-rl]')?.addEventListener('click', async () => {
+    const r = await tpAct({ ...base, op: 'relieve', status: tp.rl, dice: tp.rlDice });
+    if (r?.dice) rollPopup(r, `${a.name} · Relieve ${tp.rl} · ${r.pool}`);
+  });
+  bar.querySelector('[data-tp-fool]')?.addEventListener('click', () => tpAct({ ...base, op: 'fool' }, '+1 Grit, −1 Health.'));
 }
 
 function wireAttack(box, sel) {
@@ -313,7 +422,7 @@ function wireToken(el) {
     const ro = $('#readout');
     ro.hidden = false;
     // Normal speed: 1 Grit per Short Range distance (6"); Long needs 2+, Distant 6 over two turns.
-    ro.textContent = d === 0 ? 'Drop to stay put' : `${t.name} moves ${d}″ · ${Math.ceil(d / 6)} Grit at Normal speed`;
+    ro.textContent = d === 0 ? 'Drop to stay put' : moveReadout(t, d);
   });
   const end = async () => {
     if (!dragging || dragging.id !== t.id) return;
@@ -323,10 +432,13 @@ function wireToken(el) {
     el.classList.remove('dragging');
     if (!drag.moved) { select(t.id); return; }
     if (drag.hex.col === t.col && drag.hex.row === t.row) { render(); return; }
+    const was = { col: t.col, row: t.row };
     t.col = drag.hex.col; t.row = drag.hex.row; // move locally right away
     selected = t.id;
     render();
-    await act({ action: 'move', id: t.id, ...drag.hex });
+    const ok = await act({ action: 'move', id: t.id, ...drag.hex, rough: tp.rough });
+    if (ok === null) { t.col = was.col; t.row = was.row; render(); } // not allowed: snap back
+    else if (ok?.cost) { toast(`${t.name} moved — ${ok.cost} Grit.`); combatPoller?.now?.(); }
   };
   el.addEventListener('pointerup', end);
   el.addEventListener('pointercancel', end);

@@ -1,6 +1,7 @@
 import { load, save } from '../lib/store.js';
 import { pinOk, send, readBody } from '../lib/http.js';
-import { freshBattle, battleAction, battleView } from '../lib/battle.js';
+import { freshBattle, battleAction, battleView, hexDist, clampHex } from '../lib/battle.js';
+import { chargeMove, undoMove, freshCombat } from '../lib/combat.js';
 
 const KEY = 'battle';
 const IMG_KEY = 'battle-img';
@@ -44,10 +45,29 @@ export default async function handler(req, res) {
       body.action = 'uploaded';
     }
 
-    const result = battleAction(state, body, { warden, combat }) ?? null;
+    // Moving in combat spends the mover's Grit (p. 41), which lives in the combat document.
+    let combatDirty = false, moveResult = null;
+    if (body.action === 'move' && combat?.combat?.active) {
+      const t = state.tokens.find((x) => x.id === body.id);
+      if (t && t.ref && (t.kind === 'pc' || t.kind === 'enemy')) {
+        const from = { col: t.col, row: t.row }, to = clampHex(state, body.col, body.row);
+        moveResult = chargeMove(combat, { kind: t.kind, ref: t.ref, inches: hexDist(from, to), rough: !!body.rough, warden, tokenId: t.id, from, to });
+        combatDirty = moveResult.cost > 0;
+      }
+    }
+    if (body.action === 'undoMove') {
+      if (!combat) throw new Error('Nothing to undo.');
+      const lm = undoMove(combat, String(body.ref || ''));
+      const t = state.tokens.find((x) => x.id === lm.tokenId);
+      if (t) { t.col = lm.from.col; t.row = lm.from.row; }
+      combatDirty = true;
+      body.action = 'noop';
+    }
+    const result = body.action === 'noop' ? null : (battleAction(state, body, { warden, combat }) ?? null);
+    if (combatDirty) { combat.v = (combat.v || 0) + 1; await save(combat, 'combat'); }
     state.v = (state.v || 0) + 1;
     await save(state, KEY);
-    return send(res, 200, { result, state: view() });
+    return send(res, 200, { result: moveResult || result, state: view() });
   } catch (err) {
     return send(res, 400, { error: err.message || String(err) });
   }
