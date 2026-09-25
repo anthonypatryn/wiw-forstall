@@ -34,6 +34,22 @@ const G = {
   horseshoe: `<path ${S} stroke-width="3" d="M6 20.5V11a6 6 0 0 1 12 0v9.5"/><circle ${F} cx="6" cy="12" r=".75" style="fill:var(--paper,#f4ead6)"/><circle cx="18" cy="12" r=".75" style="fill:var(--paper,#f4ead6)"/><circle cx="7.4" cy="7.4" r=".75" style="fill:var(--paper,#f4ead6)"/><circle cx="16.6" cy="7.4" r=".75" style="fill:var(--paper,#f4ead6)"/>`,
   // a bullet (dice)
   bullet: `<path ${F} d="M9 9.5h6v10.5H9z"/><path ${F} d="M9 9c0-3.6 1.3-5.9 3-6.5 1.7.6 3 2.9 3 6.5z"/><rect ${F} x="8.2" y="19.4" width="7.6" height="2.1" rx=".5"/>`,
+  // a six-sided die (rolls)
+  die: `<rect ${S} x="3.5" y="3.5" width="17" height="17" rx="3.5"/><circle ${F} cx="8.3" cy="8.3" r="1.35"/><circle ${F} cx="15.7" cy="8.3" r="1.35"/><circle ${F} cx="12" cy="12" r="1.35"/><circle ${F} cx="8.3" cy="15.7" r="1.35"/><circle ${F} cx="15.7" cy="15.7" r="1.35"/>`,
+  // a trophy cup (wins, Achievements, Prestige)
+  trophy: `<path ${S} d="M7.5 3.5h9v5.2a4.5 4.5 0 0 1-9 0z"/><path ${S} d="M7.5 5.2H4.3v1.3a3.2 3.2 0 0 0 3.4 3.2M16.5 5.2h3.2v1.3a3.2 3.2 0 0 1-3.4 3.2"/><path ${S} d="M12 13.2v3.6"/><path ${S} d="M8.3 20.5h7.4l-.8-3.7H9.1z"/>`,
+  // a campfire
+  fire: `<path ${F} d="M12 2.6c.6 3-1.8 4.4-3.1 6.4-1.6 2.5-1 6 1.8 7-.9-1.9-.3-3.7 1.3-5 .3 1.8 1.6 2.6 2.5 3.9.9-1.2 1.1-2.5.8-4 2 1.7 2.6 4.6.6 6.4 3.3-.9 4.6-4.5 3.3-7.6-1.2-3-4.6-4.2-7.2-7.1z"/><path ${S} d="M4 20.8l16-3.2M4 17.6l16 3.2"/>`,
+  // crosshairs (a called-for roll, a scan)
+  target: `<circle ${S} cx="12" cy="12" r="7.5"/><circle ${S} cx="12" cy="12" r="3.2"/><path ${S} d="M12 1.8v4.4M12 17.8v4.4M1.8 12h4.4M17.8 12h4.4"/>`,
+  // a padlock
+  lock: `<rect ${S} x="5" y="10.5" width="14" height="10" rx="2"/><path ${S} d="M8 10.5V7.8a4 4 0 0 1 8 0v2.7"/><path ${S} d="M12 14.4v2.3"/>`,
+  // a wrench (upgrades, repairs)
+  wrench: `<path ${S} d="M14.7 3.4a5 5 0 0 0-5.3 6.5L3.6 15.7a2 2 0 0 0 2.8 2.8l5.8-5.8a5 5 0 0 0 6.5-5.3l-3 3-2.7-.6-.6-2.7z"/>`,
+  // a cowboy hat (the posse)
+  hat: `<path ${F} d="M8.6 5.5c1.1-.9 2.2.3 3.4.3s2.3-1.2 3.4-.3c1 .9 1.4 4.3 1.5 7.3H7.1c.1-3 .5-6.4 1.5-7.3z"/><path ${F} d="M2 12.4c1.5 2.4 5 3.9 10 3.9s8.5-1.5 10-3.9c-.4 3.2-4.3 5.8-10 5.8S2.4 15.6 2 12.4z"/>`,
+  // a map pin
+  pin: `<path ${S} d="M12 21s-6.5-6.3-6.5-11.3a6.5 6.5 0 0 1 13 0C18.5 14.7 12 21 12 21z"/><circle ${S} cx="12" cy="9.7" r="2.4"/>`,
   // a scroll (the Table Log)
   scroll: `<path ${S} d="M6 4.5h11.5a2 2 0 0 1 2 2v12"/><path ${S} d="M6 4.5a2 2 0 0 0-2 2v1.5h3.8V6.5A2 2 0 0 0 6 4.5z"/><path ${S} d="M7.8 8v11a1.6 1.6 0 0 0 1.6 1.6h10.1a1.6 1.6 0 0 0 1.6-1.6v-.6H11v.6a1.6 1.6 0 0 1-3.2 0"/><path ${S} d="M10.6 9.5h5.8M10.6 12.5h5.8M10.6 15.5h3.8"/>`,
 };

@@ -1,5 +1,6 @@
 import { $, esc, api, startPolling, toast, mountNav, tryWarden, forgetWarden, savedPin, wardenModal, timeAgo , ask, askText } from './common.js';
 import { renderLogInto, mountTableLog } from './tablelog.js';
+import { gl } from './glyphs.js';
 
 const EP = '/api/session';
 mountNav('/session');
@@ -38,7 +39,7 @@ function renderEditor(force) {
     <label class="sess-notes">RECAP FOR THE PLAYERS <small>short and spoiler-free</small>
       <textarea data-f="recap" maxlength="2000" class="short" placeholder="Last time, the posse…">${esc(s.recap)}</textarea></label>
     <div class="sess-actions">
-      <button class="btn small" id="post-recap" type="button">📜 Post recap to the Table Log</button>
+      <button class="btn small" id="post-recap" type="button">${gl('scroll')} Post recap to the Table Log</button>
       <span class="muted" id="saved-note">Saves as you type · edited ${timeAgo(s.at)}</span>
       <button class="btn small secondary danger" id="del-session" type="button">Delete session</button>
     </div>`;
@@ -86,7 +87,7 @@ function renderGlance() {
   $('#glance').innerHTML = `
     ${posse.length ? `<table class="glance-table"><thead><tr><th>Character</th><th>Health</th><th>Grit</th><th>Prestige</th><th>$</th></tr></thead><tbody>
       ${posse.map((p) => {
-        const flag = p.dead ? '<span class="gl-flag dead">FALLEN</span>' : p.bleeding ? '<span class="gl-flag">🩸 BLEEDING OUT</span>' : p.done === false ? '<span class="gl-flag wip">CREATING</span>' : '';
+        const flag = p.dead ? '<span class="gl-flag dead">FALLEN</span>' : p.bleeding ? '<span class="gl-flag">' + gl('drop') + ' BLEEDING OUT</span>' : p.done === false ? '<span class="gl-flag wip">CREATING</span>' : '';
         const low = !p.dead && p.health <= Math.ceil(p.maxHealth / 3);
         return `<tr class="${p.dead ? 'dead' : ''}"><td><a href="/posse#${p.id}"><b>${esc(p.name)}</b></a><small>The ${esc(p.trade)}${p.player ? ` · ${esc(p.player)}` : ''}${p.title ? ` · “${esc(p.title)}”` : ''}</small>${flag}${STATUS_SHORT(p.statuses) ? `<small class="gl-st">${esc(STATUS_SHORT(p.statuses))}</small>` : ''}</td>
           <td class="${low ? 'low' : ''}">${p.health}/${p.maxHealth}</td><td>${p.grit}</td>
@@ -94,7 +95,7 @@ function renderGlance() {
       }).join('')}</tbody></table>` : '<p class="muted">No characters yet.</p>'}
     <h4 class="gl-h">IN THE FIGHT ${combat.combat?.active ? `<small>Round ${combat.combat.round}</small>` : '<small>no combat running</small>'}</h4>
     ${foes.length ? `<ul class="gl-foes">${foes.map((e) => `<li><b>${esc(e.name)}</b> ${e.health ?? '?'}/${e.maxHealth ?? '?'} Health${STATUS_SHORT(e.statuses) ? ` · ${esc(STATUS_SHORT(e.statuses))}` : ''}</li>`).join('')}</ul>` : '<p class="muted">No enemies on the field.</p>'}
-    ${d ? `<p class="gl-duel">🤠 Duel: <b>${esc(d.names[0])}</b> vs <b>${esc(d.names[1])}</b> — ${d.done ? 'finished' : `next: ${['Charm', 'Finesse', 'Intuition', 'Nerve', 'Draw!'][d.step]}`}</p>` : ''}
+    ${d ? `<p class="gl-duel">${gl('hat')} Duel: <b>${esc(d.names[0])}</b> vs <b>${esc(d.names[1])}</b> — ${d.done ? 'finished' : `next: ${['Charm', 'Finesse', 'Intuition', 'Nerve', 'Draw!'][d.step]}`}</p>` : ''}
     <div class="gl-links"><a class="btn small secondary" href="/combat">Combat</a><a class="btn small secondary" href="/posse">Posse Sheets</a><a class="btn small secondary" href="/names">NPCs</a><a class="btn small secondary" href="/map">Map</a><a class="btn small secondary" href="/battle">Battle Map</a><a class="btn small secondary" href="/store">Store</a></div>`;
   renderLogInto($('#glance-log'), (combat.log || []).slice(0, 12));
 }
@@ -114,28 +115,28 @@ function renderChecks(force) {
     form.innerHTML = `<div class="ck-who">${alive.map((p) => `<label class="check"><input type="checkbox" data-ck-who value="${p.id}"${ckSel.who.has(p.id) ? ' checked' : ''}> ${esc(p.name)}</label>`).join('') || '<span class="muted">No characters yet.</span>'}</div>
       <div class="ck-row">
         <label>SKILL<select data-ck="skill">${['Charm', 'Finesse', 'Intuition', 'Nerve'].map((s) => `<option${s === ckSel.skill ? ' selected' : ''}>${s}</option>`).join('')}</select></label>
-        <label>DIFFICULTY<select data-ck="diff">${DIFF.map(([n, t]) => `<option value="${n}"${n === ckSel.diff ? ' selected' : ''}>${n} · ${t} Hit${t > 1 ? 's' : ''}</option>`).join('')}<option value="custom"${ckSel.diff === 'custom' ? ' selected' : ''}>Custom…</option><option value="challenge"${ckSel.diff === 'challenge' ? ' selected' : ''}>⚔️ Challenge (opposed roll)</option></select></label>
+        <label>DIFFICULTY<select data-ck="diff">${DIFF.map(([n, t]) => `<option value="${n}"${n === ckSel.diff ? ' selected' : ''}>${n} · ${t} Hit${t > 1 ? 's' : ''}</option>`).join('')}<option value="custom"${ckSel.diff === 'custom' ? ' selected' : ''}>Custom…</option><option value="challenge"${ckSel.diff === 'challenge' ? ' selected' : ''}>Challenge (opposed roll)</option></select></label>
         ${ckSel.diff === 'custom' ? `<label>HITS<input type="number" min="1" max="20" data-ck="target" value="${ckSel.target}"></label>` : ''}
         ${ckSel.diff === 'challenge' ? `<label>AGAINST<select data-ck="npc"><option value="">— just the ticked characters —</option>
           ${(combat.enemies || []).filter((e) => !e.defeated).length ? `<optgroup label="In the fight">${combat.enemies.filter((e) => !e.defeated).map((e) => `<option value="en:${e.id}"${ckSel.npc === `en:${e.id}` ? ' selected' : ''}>${esc(e.name)}</option>`).join('')}</optgroup>` : ''}
           <optgroup label="Book NPCs">${(combat.npcCatalog || []).map((n) => `<option value="np:${esc(n.key)}|${esc(n.faction ? n.name : '')}"${ckSel.npc === `np:${n.key}|${n.faction ? n.name : ''}` ? ' selected' : ''}>${esc(n.name.replace('Human - ', 'Human: '))}</option>`).join('')}</optgroup></select></label>` : ''}
         <label class="wide">FOR WHAT <input data-ck="note" maxlength="80" placeholder="e.g. climb the cliff" value="${esc(ckSel.note)}"></label>
       </div>
-      <button type="button" class="btn" data-ck-go>🎯 Call for a roll</button>
+      <button type="button" class="btn" data-ck-go>${gl('target')} Call for a roll</button>
       <span class="muted ck-tip">Lower the difficulty for clever ideas (p. 12). Anyone not called can Help with half their dice (p. 13).</span>`;
   }
   const nm = (pid) => combat.posse.find((p) => p.id === pid)?.name || '—';
   $('#check-list').innerHTML = (combat.checks || []).map((ck) => {
     const help = Math.max(0, ...Object.values(ck.helps || {}).map((h) => h.hits));
     if (ck.kind === 'challenge') {
-      return `<div class="ck-item"><div class="ck-head"><b>⚔️ ${esc(ck.skill)} Challenge</b>${ck.round > 1 ? ` · round ${ck.round}` : ''}${ck.note ? ` · <i>${esc(ck.note)}</i>` : ''}<button type="button" class="btn small secondary" data-ck-close="${ck.id}">Done</button></div>
+      return `<div class="ck-item"><div class="ck-head"><b>${gl('revolver')} ${esc(ck.skill)} Challenge</b>${ck.round > 1 ? ` · round ${ck.round}` : ''}${ck.note ? ` · <i>${esc(ck.note)}</i>` : ''}<button type="button" class="btn small secondary" data-ck-close="${ck.id}">Done</button></div>
         <ul>${ck.who.map((pid) => `<li>${esc(nm(pid))}: ${ck.rolls[pid] ? `<b>${ck.rolls[pid].hits}</b>` : '<span class="muted">waiting…</span>'}</li>`).join('')}${ck.npc ? `<li>${esc(ck.npc.name)}: <span class="muted">rolls when the posse has</span></li>` : ''}</ul>
-        ${ck.winner ? `<p class="ck-win">🏆 ${esc(ck.winner)} wins — ${(ck.last || []).map((x) => `${esc(x.name)} ${x.hits}`).join(' · ')}</p>` : ck.last ? `<p class="muted">Tied last round (${ck.last.map((x) => `${esc(x.name)} ${x.hits}`).join(' · ')}) — rolling again.</p>` : ''}</div>`;
+        ${ck.winner ? `<p class="ck-win">${gl('trophy')} ${esc(ck.winner)} wins — ${(ck.last || []).map((x) => `${esc(x.name)} ${x.hits}`).join(' · ')}</p>` : ck.last ? `<p class="muted">Tied last round (${ck.last.map((x) => `${esc(x.name)} ${x.hits}`).join(' · ')}) — rolling again.</p>` : ''}</div>`;
     }
     return `<div class="ck-item"><div class="ck-head"><b>${esc(ck.skill)}</b> · ${esc(ck.diff)} (${ck.target})${ck.note ? ` · <i>${esc(ck.note)}</i>` : ''}<button type="button" class="btn small secondary" data-ck-close="${ck.id}">Done</button></div>
       <ul>${ck.who.map((pid) => { const r = ck.rolls[pid]; const tot = r ? r.hits + help : null;
         return `<li>${esc(nm(pid))}: ${r ? `<b class="${tot >= ck.target ? 'ok' : 'no'}">${tot >= ck.target ? '✓' : '✗'} ${tot}/${ck.target}</b>${help ? ` <small>(+${help} help)</small>` : ''}` : '<span class="muted">waiting…</span>'}</li>`; }).join('')}
-      ${Object.values(ck.helps || {}).map((h) => `<li class="muted">🤝 ${esc(h.name)} helped: ${h.hits}</li>`).join('')}</ul></div>`;
+      ${Object.values(ck.helps || {}).map((h) => `<li class="muted">${esc(h.name)} helped: ${h.hits}</li>`).join('')}</ul></div>`;
   }).join('');
   $('#check-list').querySelectorAll('[data-ck-close]').forEach((b) => b.addEventListener('click', () => combatAct({ action: 'checkClose', id: b.dataset.ckClose })));
 }

@@ -7,7 +7,7 @@ import { mountTableLog } from './tablelog.js';
 
 injectDefs();
 mountTableLog();
-mountNav(null);
+mountNav('/warden');
 
 const SIZES = ['Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Titan'];
 let data = null;
@@ -42,7 +42,7 @@ function lock(msg = '') {
   $('#pin-msg').textContent = msg;
 }
 $('#pin-form').addEventListener('submit', (e) => { e.preventDefault(); unlock($('#pin').value.trim()); });
-$('#logout').addEventListener('click', () => lock());
+$('#logout').addEventListener('click', () => { lock(); location.href = '/'; });
 const saved = savedPin();
 if (saved) unlock(saved, true);
 
@@ -106,7 +106,7 @@ function renderTarget() {
       <div class="w-legend"><b style="color:var(--brass)">■</b> given by Scan · <b style="color:#7fd08a">■</b> found by guessing · <b>■</b> still hidden — click to give</div>
       ${traitsHTML(m)}
       <div class="w-actions">
-        ${a.solved ? '' : `<button class="btn small${data.jammed ? ' jam-on' : ''}" data-act="jam" type="button">${data.jammed ? '⚡ Forstall jammed — click to clear' : '⚡ Jam the Forstall'}</button>`}
+        ${a.solved ? '' : `<button class="btn small${data.jammed ? ' jam-on' : ''}" data-act="jam" type="button">${data.jammed ? 'Forstall jammed — click to clear' : 'Jam the Forstall'}</button>`}
         <button class="btn small" data-act="solve" type="button">Reveal all (mark decoded)</button>
         <button class="btn small danger" data-act="reset" type="button">Reset scan progress</button>
       </div>
@@ -241,7 +241,7 @@ nbBody.addEventListener('focusout', () => setTimeout(renderNb, 50));
 function onState(d) {
   data = d;
   $('#easy').checked = !!d.settings.easyMode;
-  $('#store-kind').textContent = d.store === 'redis' ? 'Saved to the cloud database' : d.store === 'file' ? 'Local dev storage' : '⚠ No database connected — progress resets when the server sleeps';
+  $('#store-kind').textContent = d.store === 'redis' ? 'Saved to the cloud database' : d.store === 'file' ? 'Local dev storage' : 'No database connected — progress resets when the server sleeps';
   renderSelect();
   renderTarget();
   renderFeed();

@@ -16,8 +16,10 @@ export function logHTML(log) {
   }).join('');
 }
 
+const EMOJI = /[\u{1F000}-\u{1FFFF}\u2B50\u23F3\u23ED\u26A0\u26A1\u2694\u2705\u274C\u2728]\uFE0F?\s?/gu;
+const noEmoji = (l) => (l.text || l.label ? { ...l, text: l.text?.replace(EMOJI, ''), label: l.label?.replace(EMOJI, '') } : l);
 export function renderLogInto(box, log) {
-  box.innerHTML = logHTML(log);
+  box.innerHTML = logHTML((log || []).map(noEmoji));
   box.querySelectorAll('[data-dice]').forEach((el) => staticDice(el, JSON.parse(el.dataset.dice)));
 }
 
@@ -40,6 +42,7 @@ export function mountTableLog() {
   row.append(btn);
   document.body.append(row, panel);
   mountDice(row);
+  askWhoIAm();
 
   let seenTop = null, unread = 0, latest = [];
   const badge = btn.querySelector('.log-badge');
@@ -262,4 +265,28 @@ function myTurnInner(h) {
     try { await api('POST', { action: 'pc', id: mine, op: 'endTurn' }, '', '/api/combat'); turnEl.hidden = true; setTurnH(); toast('Turn ended.'); }
     catch (err) { toast(err.message, true); e.target.disabled = false; }
   });
+}
+
+// ---------- first visit: "Who are you playing?" (turn alerts, roll requests and dice all key off this) ----------
+async function askWhoIAm() {
+  if (me() || savedPin() || store.get('wiw.meAsked', false) || location.pathname.startsWith('/howto')) return;
+  let posse = [];
+  try { posse = ((await api('GET', null, '?view=player', '/api/combat')).posse || []).filter((p) => !p.dead); } catch { return; }
+  if (!posse.length || me()) return;
+  const back = document.createElement('div');
+  back.className = 'modal-back ask-back';
+  back.innerHTML = `<div class="modal ask who-ask" role="dialog" aria-modal="true" aria-label="Who are you playing?">
+    <h2>Who are you playing?</h2>
+    <p class="ask-body">Pick your character so this phone gets your turn alerts and the Warden’s roll requests. Change it any time with “This is me” on a sheet.</p>
+    <div class="who-list">${posse.map((p) => `<button type="button" class="who-pick" data-who="${p.id}">${gl('hat')}<span><b>${esc(p.name)}</b><small>${esc(p.trade || '')}${p.player ? ` · ${esc(p.player)}` : ''}</small></span></button>`).join('')}</div>
+    <div class="ask-btns"><a class="btn small secondary" href="/howto">How to play online</a><button type="button" class="btn small secondary" data-skip>Just looking</button></div></div>`;
+  document.body.append(back);
+  const done = () => { store.set('wiw.meAsked', true); back.remove(); };
+  back.querySelector('[data-skip]').addEventListener('click', done);
+  back.querySelector('a[href="/howto"]').addEventListener('click', () => store.set('wiw.meAsked', true));
+  back.querySelectorAll('[data-who]').forEach((b) => b.addEventListener('click', () => {
+    store.set('wiw.me', b.dataset.who); done();
+    toast(`You’re playing ${b.querySelector('b').textContent}.`);
+    if (location.pathname.startsWith('/posse')) location.reload();
+  }));
 }

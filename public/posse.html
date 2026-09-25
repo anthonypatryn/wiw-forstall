@@ -9,9 +9,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Rye&family=Special+Elite&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=23">
+  <link rel="stylesheet" href="/css/style.css?v=24">
   <link rel="stylesheet" href="/css/combat.css?v=4">
-  <link rel="stylesheet" href="/css/posse.css?v=36">
+  <link rel="stylesheet" href="/css/posse.css?v=37">
 </head>
 <body>
   <header class="masthead">
@@ -22,7 +22,7 @@
         <h1>Posse Sheets</h1>
         <div class="sub">Create your character, then view it at the table — changes save as you go</div>
       </div>
-      <button class="btn small warden-link" id="warden-btn" type="button">⭐ Warden</button>
+      <button class="btn small warden-link" id="warden-btn" type="button"><span data-gl="star"></span> Warden</button>
     </div>
   </header>
   <nav class="sitenav" data-nav aria-label="Site"></nav>
@@ -40,10 +40,10 @@
           <label class="wide">LOOT ITEM<input id="aw-item" maxlength="120" placeholder="e.g. Pristine Chupacabra pelt"></label>
           <label class="wide">WHAT FOR<input id="aw-reason" maxlength="120" placeholder="e.g. Cleared the Copper Canyon mine"></label>
         </div>
-        <button class="btn" id="aw-go" type="button">🏆 Award</button>
-        <div class="aw-jackpot"><b>🏨 TOWN REST</b> <span class="muted">The posse beds down in town (p. 54): everyone gets full Health, Statuses cleared, Supplies reset, Forstalls recharged.</span>
+        <button class="btn" id="aw-go" type="button"><span data-gl="trophy"></span> Award</button>
+        <div class="aw-jackpot"><b>TOWN REST</b> <span class="muted">The posse beds down in town (p. 54): everyone gets full Health, Statuses cleared, Supplies reset, Forstalls recharged.</span>
           <div class="aw-jp-row"><button class="btn small" id="town-all" type="button">Town rest for everyone</button></div></div>
-        <div class="aw-jackpot"><b>🎰 JACKPOT</b> <span class="muted">Play of the game (p. 54): the posse votes, the winner gets +1 Prestige.</span>
+        <div class="aw-jackpot"><b>JACKPOT</b> <span class="muted">Play of the game (p. 54): the posse votes, the winner gets +1 Prestige.</span>
           <div class="aw-jp-row"><select id="jp-who" aria-label="Jackpot winner"></select><input id="jp-why" maxlength="120" placeholder="What did they do?"><button class="btn small" id="jp-go" type="button">Jackpot!</button></div></div>
       </section>
       <section class="card corner">
@@ -66,6 +66,6 @@
     <div class="footer"><span class="conn" id="conn">Connected</span> · Sheets based on the official Wild Imaginary West Trade sheets. ™ &amp; © Rune Foundry and Boylei Hobby Time.</div>
   </main>
 
-  <script type="module" src="/js/posse.js?v=51"></script>
+  <script type="module" src="/js/posse.js?v=52"></script>
 </body>
 </html>

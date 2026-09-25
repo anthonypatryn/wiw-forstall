@@ -1,6 +1,7 @@
 import { $, esc, api, toast, store, mountNav, startPolling, timeAgo, tryWarden, forgetWarden, savedPin, wardenModal , ask, askText } from './common.js';
 import { NPC } from './npc-data.js';
 import { mountTableLog } from './tablelog.js';
+import { gl } from './glyphs.js';
 
 mountTableLog();
 mountNav('/names');
@@ -273,7 +274,7 @@ function connect() {
   }, EP);
 }
 function setWarden() {
-  $('#warden-btn').textContent = warden ? '⭐ Warden mode · lock' : '⭐ Warden';
+  $('#warden-btn').innerHTML = `${gl('star')} ${warden ? 'Warden mode · lock' : 'Warden'}`;
   $('#known-wrap').hidden = !warden;
   $('#manual-card').hidden = !warden;
   $('#book-card').hidden = !warden;
@@ -350,7 +351,7 @@ function renderBook() {
       <div class="hd">${prof ? `<img src="/img/tokens/npc-${esc(prof.img)}.webp" alt="">` : ''}<div><div class="nm">${esc(pp.name)}</div><div class="tag">${esc(faction.toUpperCase())} · P. ${pp.page}</div></div></div>
       ${pp.quote ? `<q>${esc(pp.quote.replace(/^“|”$/g, ''))}</q>` : ''}<p>${esc(pp.desc)}</p>
       ${prof ? statBlock(prof) : ''}
-      <div class="acts"><button class="btn small secondary" data-ledger type="button">+ NPC ledger</button>${prof ? '<button class="btn small" data-fight type="button">⚔ Add to Combat</button>' : ''}</div>
+      <div class="acts"><button class="btn small secondary" data-ledger type="button">+ NPC ledger</button>${prof ? '<button class="btn small" data-fight type="button">' + gl('revolver') + ' Add to Combat</button>' : ''}</div>
     </article>`;
   const openAttr = (k) => (openFactions.has(k) ? ' open' : '');
   $('#book').innerHTML = `<div class="acc-all"><button class="btn small secondary" type="button" data-acc-all="1">Open all</button><button class="btn small secondary" type="button" data-acc-all="0">Close all</button></div>`
@@ -359,8 +360,8 @@ function renderBook() {
     + `<details class="faction" data-k="generic"${openAttr('generic')}><summary><h3>Ready-Made Enemies<small>P. 191 · JUST ADD A NAME</small></h3></summary><div class="book-grid">${book.generic.map((g) => `<article class="bnpc" data-generic="${esc(g.name)}">
       <div class="hd"><div><div class="nm">${esc(g.name.replace('Human - ', ''))}</div><div class="tag">HUMAN ENEMY PROFILE</div></div></div>
       ${statBlock(g)}
-      <div class="acts"><input placeholder="Name them…" maxlength="40" data-gname><button class="btn small secondary" data-roll type="button" title="Random name from the card table">🎲</button>
-        <button class="btn small secondary" data-ledger type="button">+ Ledger</button><button class="btn small" data-fight type="button">⚔ Combat</button></div></article>`).join('')}</div></details>`;
+      <div class="acts"><input placeholder="Name them…" maxlength="40" data-gname><button class="btn small secondary" data-roll type="button" title="Random name from the card table">${gl('die')}</button>
+        <button class="btn small secondary" data-ledger type="button">+ Ledger</button><button class="btn small" data-fight type="button">${gl('revolver')} Combat</button></div></article>`).join('')}</div></details>`;
   $('#book').querySelectorAll('details.faction').forEach((d) => d.addEventListener('toggle', () => {
     if (d.open) openFactions.add(d.dataset.k); else openFactions.delete(d.dataset.k);
   }));

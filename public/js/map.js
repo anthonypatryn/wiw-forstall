@@ -1,5 +1,6 @@
 import { $, esc, api, startPolling, toast, mountNav, tryWarden, forgetWarden, savedPin, wardenModal , ask, askText } from './common.js';
 import { mountTableLog } from './tablelog.js';
+import { gl } from './glyphs.js';
 
 const EP = '/api/map';
 mountTableLog();
@@ -297,7 +298,7 @@ function connect() {
   }, EP);
 }
 function setWarden() {
-  $('#warden-btn').textContent = warden ? '⭐ Warden mode · lock' : '⭐ Warden';
+  $('#warden-btn').innerHTML = `${gl('star')} ${warden ? 'Warden mode · lock' : 'Warden'}`;
   $('#warden-box').hidden = !warden;
   if (!warden) stopPlacing();
 }

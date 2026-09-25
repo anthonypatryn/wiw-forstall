@@ -556,3 +556,12 @@ button { cursor: pointer; }
 .modal.ask .ask-input { font: 18px var(--body); letter-spacing: 0; }
 .ask-btns { display: flex; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
 .ask-btns .btn.danger { background: var(--red, #8e2a1a); border-color: var(--red, #8e2a1a); color: #fff; }
+
+/* first-visit "Who are you playing?" */
+.who-ask { width: min(460px, 100%); }
+.who-list { display: grid; gap: 8px; margin: 4px 0 16px; max-height: 50vh; overflow-y: auto; }
+.who-pick { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1.5px solid var(--ink); border-radius: var(--radius); background: #fffdf7; text-align: left; cursor: pointer; font: inherit; color: var(--ink); }
+.who-pick:hover, .who-pick:focus-visible { background: var(--rust); color: #fff; border-color: var(--rust); }
+.who-pick .gl { width: 28px; height: 28px; flex: none; }
+.who-pick b { display: block; font: 19px var(--display); letter-spacing: .06em; font-weight: 400; }
+.who-pick small { display: block; font-size: 13px; opacity: .75; }

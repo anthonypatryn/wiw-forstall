@@ -9,8 +9,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Rye&family=Special+Elite&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=23">
-  <link rel="stylesheet" href="/css/battle.css?v=12">
+  <link rel="stylesheet" href="/css/style.css?v=24">
+  <link rel="stylesheet" href="/css/battle.css?v=13">
 </head>
 <body>
   <header class="masthead">
@@ -21,7 +21,7 @@
         <h1>Battle Map</h1>
         <div class="sub">One hex = 1 inch · tap a token to see who’s in range (Guidebook p. 85)</div>
       </div>
-      <button class="btn small warden-link" id="warden-btn" type="button">⭐ Warden</button>
+      <button class="btn small warden-link" id="warden-btn" type="button"><span data-gl="star"></span> Warden</button>
     </div>
   </header>
   <nav class="sitenav" data-nav aria-label="Site"></nav>
@@ -66,7 +66,7 @@
         <label class="field-inline">Lines <input type="range" id="g-op" min="0" max="1" step="0.05"></label>
         <div class="nudge"><span>Nudge grid</span><button type="button" data-n="-5,0" aria-label="Left">←</button><button type="button" data-n="5,0" aria-label="Right">→</button><button type="button" data-n="0,-5" aria-label="Up">↑</button><button type="button" data-n="0,5" aria-label="Down">↓</button></div>
         <h3>WARDEN · TOKENS</h3>
-        <button class="btn small" id="sync" type="button">⚔ Add posse &amp; enemies from Combat</button>
+        <button class="btn small" id="sync" type="button"><span data-gl="revolver"></span> Add posse &amp; enemies from Combat</button>
         <label class="check"><input type="checkbox" id="sync-hidden"> New enemies start hidden (ambush)</label>
         <form class="npc-add" id="npc-add"><input id="npc-name" maxlength="40" placeholder="NPC name" aria-label="NPC name"><button class="btn small secondary" type="submit">+ NPC token</button></form>
         <button class="btn small secondary danger" id="clear" type="button">Clear all tokens</button>
@@ -74,6 +74,6 @@
     </aside>
   </main>
 
-  <script type="module" src="/js/battle.js?v=26"></script>
+  <script type="module" src="/js/battle.js?v=27"></script>
 </body>
 </html>

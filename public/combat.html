@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Rye&family=Special+Elite&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=23">
+  <link rel="stylesheet" href="/css/style.css?v=24">
   <link rel="stylesheet" href="/css/combat.css?v=10">
 </head>
 <body>
@@ -21,7 +21,7 @@
         <h1>Combat Control</h1>
         <div class="sub">For the Warden: enemies, turn order, duels &amp; loot — the posse plays from the Battle Map and their sheets</div>
       </div>
-      <button class="btn small warden-link" id="warden-btn" type="button">⭐ Warden</button>
+      <button class="btn small warden-link" id="warden-btn" type="button"><span data-gl="star"></span> Warden</button>
     </div>
   </header>
   <nav class="sitenav" data-nav aria-label="Site"></nav>
@@ -72,7 +72,7 @@
               <label class="check"><input type="checkbox" id="roll-spur"> Reroll Spurs <span class="muted">(Talent)</span></label>
               <label class="check" id="hidden-wrap" hidden><input type="checkbox" id="roll-hidden"> Secret roll</label>
             </div>
-            <button class="btn" id="roll-btn" type="button">🎲 Roll <span id="roll-pool">2B</span></button>
+            <button class="btn" id="roll-btn" type="button"><span data-gl="die"></span> Roll <span id="roll-pool">2B</span></button>
           </div>
           <div class="tray small-tray" id="tray"><span class="empty">Dice land here.</span></div>
           <div class="tally" id="tally"></div>
@@ -90,6 +90,6 @@
     <div class="footer"><span class="conn" id="conn">Connected</span> · A fan-made table tool for the <em>Wild Imaginary West</em> RPG by Rune Foundry &amp; Boylei Hobby Time.</div>
   </main>
 
-  <script type="module" src="/js/combat.js?v=29"></script>
+  <script type="module" src="/js/combat.js?v=30"></script>
 </body>
 </html>

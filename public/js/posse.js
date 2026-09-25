@@ -1,9 +1,10 @@
 import {
-  $, esc, api, startPolling, abilityOptions, abilityTargetsHTML, abilityBody, tryWarden, forgetWarden, savedPin, wardenModal, store, injectDefs, toast, mountNav, poolHTML, readPool, fillPool, rollPopup, bleedPanel, ask, askText,
+  $, esc, api, startPolling, tryWarden, forgetWarden, savedPin, wardenModal, store, injectDefs, toast, mountNav, poolHTML, readPool, fillPool, rollPopup, bleedPanel, ask, askText,
 } from './common.js';
 import { mountTableLog } from './tablelog.js';
 import { ICONS } from './icons.js';
 import { NPC } from './npc-data.js';
+import { gl } from './glyphs.js';
 
 const EP = '/api/combat';
 injectDefs();
@@ -110,10 +111,10 @@ $('#town-all').addEventListener('click', async () => {
 });
 $('#jp-go').addEventListener('click', async () => {
   const r = await act({ action: 'jackpot', id: $('#jp-who').value, reason: $('#jp-why').value });
-  if (r) { toast(`🎰 Jackpot for ${r.name}!`); $('#jp-why').value = ''; }
+  if (r) { toast(`Jackpot for ${r.name}!`); $('#jp-why').value = ''; }
 });
 function setWardenUI() {
-  $('#warden-btn').textContent = warden ? '⭐ Warden mode · lock' : '⭐ Warden';
+  $('#warden-btn').innerHTML = `${gl('star')} ${warden ? 'Warden mode · lock' : 'Warden'}`;
   if (data) render();
 }
 $('#warden-btn').addEventListener('click', async () => {
@@ -233,7 +234,7 @@ function buildSheet(p) {
         ${inp(`weapons.${i}.slots`, 'Upgrade slots', { max: 4, cls: 'narrow' })}${inp(`weapons.${i}.grit`, 'Grit', { max: 8, cls: 'narrow' })}
       </div>
       <div class="ranges">${[['arms', 'Arm’s Reach'], ['short', 'Short Range'], ['long', 'Long Range'], ['distant', 'Distant']].map(([k, l]) =>
-        `<div class="range-in"><span class="rl">${l}</span>${poolHTML(`data-pool="weapons.${i}.${k}"`, l)}<button type="button" class="roll-mini" data-roll-path="weapons.${i}.${k}" data-roll-label="${l.toLowerCase()}" data-weapon="${i}" aria-label="Roll ${l}">🎲</button></div>`).join('')}</div>
+        `<div class="range-in"><span class="rl">${l}</span>${poolHTML(`data-pool="weapons.${i}.${k}"`, l)}<button type="button" class="roll-mini" data-roll-path="weapons.${i}.${k}" data-roll-label="${l.toLowerCase()}" data-weapon="${i}" aria-label="Roll ${l}">${gl('die')}</button></div>`).join('')}</div>
       <div class="w-grid">${[0, 1, 2, 3].map((u) => inp(`weapons.${i}.upgrades.${u}`, `${u + 1}.`)).join('')}</div>
       <div class="upg" data-upg-box="weapon" data-i="${i}"></div>
       <div class="w-grid ammo">${[0, 1].map((a) => inp(`weapons.${i}.ammo.${a}.name`, 'Sp. Ammo', { list: 'ammo-list', max: 40 }) + `<div class="rds-ctl">${inp(`weapons.${i}.ammo.${a}.rds`, 'rds', { max: 6, cls: 'narrow' })}<button type="button" class="pmb sm" data-rds="${i}.${a}" data-d="-1" aria-label="One less">−</button><button type="button" class="pmb sm" data-rds="${i}.${a}" data-d="1" aria-label="One more">+</button></div>`).join('')}</div>
@@ -252,7 +253,7 @@ function buildSheet(p) {
   const gear = (i) => `<div class="gear" data-g="${i}">
       <div class="w-top">${pick('gear', i, gearGroups, '— pick gear —')}<span data-gspur="${i}"></span><button type="button" class="rm-btn" data-rm-thing="gear" data-i="${i}" title="Remove this gear" aria-label="Remove this gear">✕</button></div>
       <div class="w-grid">${inp(`gear.${i}.item`, 'Item')}${inp(`gear.${i}.type`, 'Type', { cls: 'narrow2' })}${inp(`gear.${i}.grit`, 'Grit', { max: 4, cls: 'narrow' })}</div>
-      <div class="g-row">${inp(`gear.${i}.notes`, 'Dice / effect')}<button type="button" class="roll-mini" data-gear-roll="${i}" aria-label="Roll this gear">🎲</button></div>
+      <div class="g-row">${inp(`gear.${i}.notes`, 'Dice / effect')}<button type="button" class="roll-mini" data-gear-roll="${i}" aria-label="Roll this gear">${gl('die')}</button></div>
       <div class="row2" data-dyn="gear-${i}"></div></div>`;
 
   const forstalls = catalog.filter((i) => i.cat === 'Forstalls' && i.sub === 'Models' && i.sweep);
@@ -265,7 +266,7 @@ function buildSheet(p) {
       <span class="save-state" data-save-state></span>
       <button type="button" class="me-star" data-me-bar>☆ This is me</button>
       <span class="mode-tag" data-mode-tag></span>
-      <a class="mode-tag bleed-tag" data-bleed-tag data-jump="health" href="#${p.id}" hidden>🩸 BLEEDING OUT</a>
+      <a class="mode-tag bleed-tag" data-bleed-tag data-jump="health" href="#${p.id}" hidden>${gl('drop')} BLEEDING OUT</a>
       <button class="btn small" type="button" data-mode="edit" hidden>✎ Edit</button>
       <button class="btn small" type="button" data-mode="view" hidden>✓ Done editing</button>
       <button class="btn small" type="button" data-mode="finish" hidden>Save character</button>
@@ -288,7 +289,7 @@ function buildSheet(p) {
     <div class="sheet page1">
       ${box('SKILLS', 'practice &amp; master with Prestige', Object.entries(SKILL_INFO).map(([k, [nm, ds]]) => `<div class="sk">
           ${spurBox(nm)}<div class="sk-name"><b>${nm}</b><small>${ds}</small><em>quick-build: assign ${esc(t.quickBuild[k])}</em></div>
-          ${poolHTML(`data-pool="skills.${k}"`, nm)}<button type="button" class="roll-mini" data-roll-path="skills.${k}" data-roll-label="${nm}" data-talent="${nm}" aria-label="Roll ${nm}">🎲</button></div>`).join(''), 'skills')}
+          ${poolHTML(`data-pool="skills.${k}"`, nm)}<button type="button" class="roll-mini" data-roll-path="skills.${k}" data-roll-label="${nm}" data-talent="${nm}" aria-label="Roll ${nm}">${gl('die')}</button></div>`).join(''), 'skills')}
       ${box('HEALTH', 'increase max Health with Prestige', '<div data-dyn="vitals"></div>', 'health')}
       ${box('STATUSES', 'relieved by rolling with the associated Skill', '<div data-dyn="statuses"></div>', 'statuses')}
       ${box('WEAPONS', 'each weapon has between 1–4 upgrade slots', [0, 1, 2].map(weapon).join(''), 'weapons')}
@@ -317,7 +318,7 @@ function buildSheet(p) {
           <div class="w-top">${pick('forstall', 0, [['Forstall models', forstalls]], '— pick a model —')}${spurBox('Forstalls')}<button type="button" class="rm-btn" data-rm-thing="forstall" data-i="0" title="Remove the Forstall" aria-label="Remove the Forstall">✕</button></div>
           <div class="w-grid">${inp('forstall.model', 'Model')}${inp('forstall.slots', 'Total upgrade slots', { max: 4, cls: 'narrow2' })}${inp('forstall.range', 'Range', { cls: 'narrow2' })}</div>
           <div class="w-grid">${inp('forstall.grit', 'Grit', { max: 4, cls: 'narrow' })}${inp('forstall.duration', 'Duration (hrs)', { max: 6, cls: 'narrow2' })}
-            <div class="range-in full"><span class="rl">Sweep</span>${poolHTML('data-pool="forstall.sweep"', 'Sweep')}<button type="button" class="roll-mini" data-roll-path="forstall.sweep" data-roll-label="Forstall Sweep" data-talent="Forstalls" aria-label="Roll Sweep">🎲</button></div></div>
+            <div class="range-in full"><span class="rl">Sweep</span>${poolHTML('data-pool="forstall.sweep"', 'Sweep')}<button type="button" class="roll-mini" data-roll-path="forstall.sweep" data-roll-label="Forstall Sweep" data-talent="Forstalls" aria-label="Roll Sweep">${gl('die')}</button></div></div>
           <div class="row2" data-dyn="charges"></div>
           <div class="w-grid">${[0, 1, 2, 3].map((u) => inp(`forstall.upgrades.${u}`, `${u + 1}.`)).join('')}</div>
           <div class="upg" data-upg-box="forstall" data-i="0"></div>
@@ -336,7 +337,7 @@ function buildSheet(p) {
           <div class="w-grid">${inp('mech.class', 'Class')}${inp('mech.slots', 'Upgrade slots', { max: 4, cls: 'narrow2' })}${inp('mech.speed', 'Speed', { cls: 'narrow2' })}</div>
           <div class="w-grid">${inp('mech.maxHealth', 'Max health', { max: 4, cls: 'narrow' })}${inp('mech.health', 'Health', { max: 4, cls: 'narrow' })}</div>
           <div class="ride-dyn" data-dyn="mech"></div>
-          <div class="range-in mech-def"><span class="rl">Defense</span>${poolHTML('data-pool="mech.defense"', 'Mech defense')}<button type="button" class="roll-mini" data-roll-path="mech.defense" data-roll-label="Mech Defense" data-talent="Mechs" aria-label="Roll mech defense">🎲</button></div>
+          <div class="range-in mech-def"><span class="rl">Defense</span>${poolHTML('data-pool="mech.defense"', 'Mech defense')}<button type="button" class="roll-mini" data-roll-path="mech.defense" data-roll-label="Mech Defense" data-talent="Mechs" aria-label="Roll mech defense">${gl('die')}</button></div>
           <div class="w-grid">${inp('mech.supplies', 'Supply slots', { cls: 'narrow2' })}${inp('mech.cover', 'Player cover', { cls: 'narrow2' })}</div>
           <div class="w-grid">${[0, 1, 2, 3].map((u) => inp(`mech.upgrades.${u}`, `${u + 1}.`)).join('')}</div>
           <div class="upg" data-upg-box="mech" data-i="0"></div>`, 'mech')}
@@ -401,22 +402,10 @@ function wireSheet(p) {
   on('change', async (e) => {
     if (e.target.matches('.pick')) return pickItem(p, e.target);
     if (e.target.matches('[data-pack]')) return choosePack(p, e.target.dataset.pack === '2' ? 'pack2' : 'pack', e.target.value);
-    if (e.target.matches('[data-dyn="fight"] [data-abp], [data-dyn="fight"] [data-ab]')) {
-      const s = (fightSel[p.id] ||= {}); s.ab ||= {};
-      if (e.target.dataset.abp) { s.ab = { name: e.target.value }; e.target.blur(); renderFight(view, pcById(p.id)); } else s.ab[e.target.dataset.ab] = e.target.value;
-      return;
-    }
-    if (e.target.matches('[data-fs]')) {
-      const s = fightSel[p.id] ||= {}, k = e.target.dataset.fs;
-      s[k] = k === 'aim' ? e.target.checked : k === 'w' ? Number(e.target.value) : k === 'dodge' ? Math.max(1, Number(e.target.value) || 1) : e.target.value;
-      e.target.blur();
-      if (k === 'w' || k === 'aim') renderFight(view, pcById(p.id));
-      return;
-    }
     if (e.target.matches('[data-topple]')) { e.target.blur(); return act({ action: 'sheet', id: p.id, path: 'mech.toppled', value: e.target.checked }); }
     if (e.target.matches('[data-ach]')) {
       const on = e.target.checked, name = e.target.dataset.ach; e.target.blur();
-      return act({ action: 'achieve', id: p.id, name, on }).then((ok) => ok && toast(on ? `🏅 ${name} granted.` : `${name} removed.`));
+      return act({ action: 'achieve', id: p.id, name, on }).then((ok) => ok && toast(on ? `${name} granted.` : `${name} removed.`));
     }
     if (e.target.matches('[data-ach-title]')) { e.target.blur(); return act({ action: 'sheet', id: p.id, path: 'title', value: e.target.value }); }
     if (e.target.matches('[data-tier]')) {
@@ -513,25 +502,6 @@ function wireSheet(p) {
       if (await act({ action: 'pc', id: p.id, op: 'installUpgrade', target: ub.dataset.upgBox, index: ub.dataset.i, item, pay })) toast('Upgrade installed — it’s in the Table Log.');
     } else if (rm && ub) {
       if (await ask('Take this upgrade off? (No refund.)')) act({ action: 'pc', id: p.id, op: 'removeUpgrade', target: ub.dataset.upgBox, index: ub.dataset.i, slot: rm.dataset.upgRm });
-    } else if (e.target.closest('[data-attack]')) {
-      e.target.closest('[data-attack]').blur();
-      const s = fightSel[p.id];
-      const r = await act({ action: 'pc', id: p.id, op: 'attack', weapon: s.w, range: s.r, target: s.t, ammo: s.ammo, aim: s.aim });
-      if (r?.dice) {
-        s.aim = false;
-        await rollPopup(r, `${pcById(p.id).name} → ${r.target} · ${r.pool}`);
-        toast(`${r.dmg ? `💥 ${r.dmg} damage to ${r.target}` : `${r.target} shrugs it off`} (${r.hits} Hits − ${r.def} Defense)${r.down ? ' — it’s down!' : ''}`, !r.dmg);
-      }
-    } else if (e.target.closest('[data-dodge]')) {
-      e.target.closest('[data-dodge]').blur();
-      const r = await act({ action: 'pc', id: p.id, op: 'dodge', grit: fightSel[p.id]?.dodge || 1 });
-      if (r?.dice) { rollPopup(r, `${pcById(p.id).name} · Dodge · ${r.pool}`); toast(`🛡 ${r.banked} Dodge ready for the next hit.`); }
-    } else if (e.target.closest('[data-use-ab]')) {
-      e.target.closest('[data-use-ab]').blur();
-      const s = fightSel[p.id]; view.querySelectorAll('[data-dyn="fight"] [data-ab]').forEach((el) => { s.ab[el.dataset.ab] = el.value; });
-      const r = await act(abilityBody(pcById(p.id), s.ab));
-      if (r?.dice) rollPopup(r, `${pcById(p.id).name} · ${r.ability} · ${r.pool}`);
-      if (r) toast(`✨ ${r.ability}${r.extra ? ` — ${r.extra}` : ''}`);
     } else if (e.target.closest('[data-rl]')) {
       const b = e.target.closest('[data-rl]'), st = b.dataset.rl; b.blur();
       const r = await act({ action: 'pc', id: p.id, op: 'relieve', status: st, dice: view.querySelector(`[data-rl-dice="${st}"]`)?.value, skill: view.querySelector(`[data-rl-skill="${st}"]`)?.value });
@@ -548,23 +518,10 @@ function wireSheet(p) {
       const r = await act({ action: 'pc', id: p.id, op: 'checkRoll', check: b.dataset.ckRoll });
       if (r?.dice) {
         await rollPopup(r, `${pcById(p.id).name} · ${r.label}`);
-        if (r.helping) toast(`🤝 You added ${r.hits} Hit${r.hits === 1 ? '' : 's'} of help.`);
-        else if (r.outcome) toast(r.outcome.ok ? `✅ Success — ${r.outcome.total}/${r.target} Hits!` : `❌ Short — ${r.outcome.total}/${r.target} Hits.`, !r.outcome.ok);
+        if (r.helping) toast(`You added ${r.hits} Hit${r.hits === 1 ? '' : 's'} of help.`);
+        else if (r.outcome) toast(r.outcome.ok ? `✓ Success — ${r.outcome.total}/${r.target} Hits!` : `✗ Short — ${r.outcome.total}/${r.target} Hits.`, !r.outcome.ok);
         else toast(`${r.hits} Hit${r.hits === 1 ? '' : 's'} — see the Table Log for who won.`);
       }
-    } else if (e.target.closest('[data-hold-fire]')) {
-      e.target.closest('[data-hold-fire]').blur();
-      const r = await act({ action: 'pc', id: p.id, op: 'fireHold', target: view.querySelector('[data-hold-target]')?.value });
-      if (r?.dice) rollPopup(r, `${pcById(p.id).name} · prepared ${r.fired} · ${r.pool}`);
-      if (r) toast(r.dmg != null ? `🔥 ${r.dmg ? `${r.dmg} damage to ${r.target}` : `${r.target} shrugs it off`}` : `🔥 ${r.fired}!`);
-    } else if (e.target.closest('[data-sheet-undo]')) {
-      const b = e.target.closest('[data-sheet-undo]'); b.blur();
-      if (b.dataset.sheetUndo === 'turn' && !await ask('Restart this turn? Everything done this turn is undone.')) return;
-      const r = await act({ action: 'undo', mode: b.dataset.sheetUndo });
-      if (r) toast(`↶ Undone: ${r.labels.join(' · ')}`);
-    } else if (e.target.closest('[data-endturn]')) {
-      e.target.closest('[data-endturn]').blur();
-      if (await act({ action: 'pc', id: p.id, op: 'endTurn' })) toast('Turn ended.');
     } else if (e.target.closest('[data-break]')) {
       e.target.closest('[data-break]').blur();
       const r = await act({ action: 'pc', id: p.id, op: 'breakHorse' });
@@ -774,9 +731,9 @@ function renderRides(view, p) {
     const revered = h.bond === 'Revered', wild = !h.bond || h.bond === 'Suspicious' || h.bond === 'Hostile';
     const extra = /clydesdale/i.test(h.breed || '') ? 2 : 1;
     hb.innerHTML = h.breed ? `
-      <div class="ride-line"><b>REVERED BOND ABILITY</b> ${h.breedAbility ? `<span class="${revered ? 'on' : 'off'}">${revered ? '✓ Active' : `🔒 Unlocks at Revered (now ${esc(h.bond || '—')})`}</span>` : '<span class="muted">none for this breed</span>'}</div>
+      <div class="ride-line"><b>REVERED BOND ABILITY</b> ${h.breedAbility ? `<span class="${revered ? 'on' : 'off'}">${revered ? '✓ Active' : `Unlocks at Revered (now ${esc(h.bond || '—')})`}</span>` : '<span class="muted">none for this breed</span>'}</div>
       <div class="ride-line"><b>SUPPLIES</b> <span>+${extra} Supplies slot${extra > 1 ? 's' : ''} in its pack (you must be within Arm’s Reach)${wild ? ' — once it’s broken' : ''}.</span></div>
-      ${wild ? `<div class="ride-line"><button type="button" class="btn small" data-break>🐎 Break this horse</button><span class="muted">Roll all four Skills; total Hits must reach Breaking Point ${esc(h.breakingPoint || '?')}. Bought, gifted or stolen horses don’t need breaking.</span></div>` : ''}
+      ${wild ? `<div class="ride-line"><button type="button" class="btn small" data-break>${gl('horseshoe')} Break this horse</button><span class="muted">Roll all four Skills; total Hits must reach Breaking Point ${esc(h.breakingPoint || '?')}. Bought, gifted or stolen horses don’t need breaking.</span></div>` : ''}
       <p class="muted ride-note">The Warden raises or lowers Bond as you ride together (edit mode).</p>` : '';
   }
   if (mb && !mb.contains(document.activeElement)) {
@@ -786,47 +743,27 @@ function renderRides(view, p) {
       <div class="ride-line"><b>CONDITION</b> <span class="cond ${st.toLowerCase()}">${label}</span> <span class="muted">${fx}</span></div>
       <label class="ride-line check"><input type="checkbox" data-topple${m.toppled ? ' checked' : ''}> Toppled <span class="muted">— can’t move, mounted weapons won’t fire until it’s righted.</span></label>
       ${hp < max ? `<div class="ride-line repair"><b>REPAIR</b> <input type="number" min="1" max="${max - hp}" value="${max - hp}" data-rep-n aria-label="Health to repair"> Health
-        <button type="button" class="btn small secondary" data-rep="scrap">🔧 Use Scrap (1 each)</button><button type="button" class="btn small secondary" data-rep="cash">Mech depot ($2 each)</button>
+        <button type="button" class="btn small secondary" data-rep="scrap">${gl('wrench')} Use Scrap (1 each)</button><button type="button" class="btn small secondary" data-rep="cash">Mech depot ($2 each)</button>
         <span class="muted">Not during combat.</span></div>` : ''}` : '';
   }
 }
 
 // ---------- in the fight: attack, Dodge, relieve Statuses, end turn (pp. 41–49) ----------
 const checkSeen = new Set(); let checksPrimed = false;
-const RANGES = [['arms', 'Arm’s Reach'], ['short', 'Short Range'], ['long', 'Long Range'], ['distant', 'Distant']];
-const fightSel = {}; // per sheet: { w, r, t, ammo, aim, dodge }
-function whoseName(key) {
-  if (!key) return '—';
-  if (key === 'enemies') return 'the enemies';
-  return data.posse.find((x) => x.id === key)?.name || data.enemies.find((e) => e.id === key)?.name || '—';
-}
 function renderFight(view, p) {
   const box = view.querySelector('[data-dyn="fight"]');
   const c = data.combat || {};
-  const mine = c.active && c.current === p.id;
-  document.title = `${mine ? '⚔ ' : ''}${p.name} · Posse Sheets`;
+  document.title = `${p.name} · Posse Sheets`;
   const statuses = Object.entries(p.statuses || {}).filter(([, v]) => v);
   const checks = (data.checks || []).filter((ck) => (ck.who.includes(p.id) ? !ck.rolls[p.id] && !ck.winner : ck.kind !== 'challenge' && !ck.helps[p.id]));
   // a new roll called for this character: buzz once
   checks.filter((ck) => ck.who.includes(p.id)).forEach((ck) => {
-    if (!checkSeen.has(ck.id)) { if (checkSeen.size || checksPrimed) { toast(`🎯 The Warden wants a ${ck.skill} roll from ${p.name}!`); try { navigator.vibrate?.(150); } catch {} } checkSeen.add(ck.id); }
+    if (!checkSeen.has(ck.id)) { if (checkSeen.size || checksPrimed) { toast(`The Warden wants a ${ck.skill} roll from ${p.name}!`); try { navigator.vibrate?.(150); } catch {} } checkSeen.add(ck.id); }
   });
   checksPrimed = true;
   const show = ((statuses.length && !c.active) || checks.length) && !p.dead;
   box.hidden = !show;
   if (!show || box.contains(document.activeElement)) return;
-  const foes = (data.enemies || []).filter((e) => !e.defeated);
-  const weapons = p.weapons.map((w, i) => [w, i]).filter(([w]) => w.model || w.manufacturer);
-  const sel = fightSel[p.id] ||= { w: weapons[0]?.[1] ?? 0, r: '', t: '', ammo: '', aim: false, dodge: 1 };
-  const w = p.weapons[sel.w] || {};
-  const ranges = RANGES.filter(([k]) => /^(\d+[BG])+$/.test(String(w[k] || '')));
-  if (!ranges.some(([k]) => k === sel.r)) sel.r = ranges[0]?.[0] || '';
-  if (!foes.some((e) => e.id === sel.t)) sel.t = foes[0]?.id || '';
-  const loaded = (w.ammo || []).map((a, k) => [a, k]).filter(([a]) => a.name && Number(a.rds) > 0);
-  if (!loaded.some(([, k]) => String(k) === String(sel.ammo))) sel.ammo = '';
-  const cost = (parseInt(String(w.grit || '').split('|')[0], 10) || 0) + (sel.aim ? 1 : 0);
-  const order = c.turnList || [];
-  const ahead = c.active && !mine && order.includes(p.id) ? (order.indexOf(p.id) - order.indexOf(c.current) + order.length) % order.length : 0;
   const skillDice = (sk) => { const m = String(p.skills[sk.toLowerCase()] || '').toUpperCase(); return [...m.matchAll(/(\d+)[BG]/g)].reduce((n, x) => n + Number(x[1]), 0); };
   const skillPool = (sk) => String(p.skills[sk.toLowerCase()] || '—').toUpperCase();
   box.innerHTML = `
@@ -834,7 +771,7 @@ function renderFight(view, p) {
       const vs = ck.kind === 'challenge' ? [...ck.who.filter((x) => x !== p.id).map((x) => data.posse.find((q) => q.id === x)?.name), ck.npc?.name].filter(Boolean).join(' & ') : '';
       return `<div class="ck-prompt${mineCk ? ' mine' : ''}"><div><small>${ck.kind === 'challenge' ? `CHALLENGE${ck.round > 1 ? ` · ROUND ${ck.round} (TIE)` : ''} — MOST HITS WINS` : mineCk ? 'THE WARDEN ASKS YOU TO ROLL' : 'SOMEONE ELSE IS ROLLING — YOU CAN HELP'}</small>
         <b>${esc(ck.skill)}</b> · ${ck.kind === 'challenge' ? `vs ${esc(vs)}` : `${esc(ck.diff)} — ${ck.target} Hit${ck.target === 1 ? '' : 's'}`}${ck.note ? ` · <i>${esc(ck.note)}</i>` : ''}</div>
-        <button type="button" class="btn small${mineCk ? '' : ' secondary'}" data-ck-roll="${ck.id}">${mineCk ? `🎲 Roll ${esc(ck.skill)} (${skillPool(ck.skill)})` : '🤝 Help (½ dice)'}</button></div>`; }).join('')}
+        <button type="button" class="btn small${mineCk ? '' : ' secondary'}" data-ck-roll="${ck.id}">${mineCk ? `${gl('die')} Roll ${esc(ck.skill)} (${skillPool(ck.skill)})` : 'Help (½ dice)'}</button></div>`; }).join('')}
     ${statuses.length && !c.active ? `<div class="fp-relieve"><b class="fp-h">RELIEVE A STATUS</b> <span class="muted">${c.active ? '1 Grit per die, once per Status per turn, on your turn.' : 'Out of combat: no Grit, try as often as you like.'}</span>
       ${statuses.map(([st, v]) => {
         const skills = (meta.statuses[st]?.skill || '').split(' or ');
@@ -927,7 +864,7 @@ function renderStarter(view, p) {
   const steps = [
     [true, 'Pick a Trade', `The ${esc(p.trade)}. Starting Ability <b>${esc(t.abilities[0].name)}</b> and Ace-in-the-Hole <b>${esc(t.aces[0].name)}</b> are already marked.`],
     [!!tier && (high ? applied : hasStart && wallet !== ''), 'Starting Prestige tier &amp; loadout (p. 33)', tierBody],
-    [named && story === 3, 'Get to know yourself', `${named ? `Name: <b>${esc(p.name)}</b>. ` : ''}<button type="button" class="btn small secondary" data-start="name">🎲 Random name (p. 204)</button>
+    [named && story === 3, 'Get to know yourself', `${named ? `Name: <b>${esc(p.name)}</b>. ` : ''}<button type="button" class="btn small secondary" data-start="name">${gl('die')} Random name (p. 204)</button>
       <span class="muted">Then fill in Appearance, Disposition &amp; History on page two (${story}/3 done).</span>`],
     [skillsOk, 'Assign your Skills', `<b>${dice}/12</b> Black dice assigned, 1–6 per Skill. ${skillsOk ? '' : `<button type="button" class="btn small secondary" data-start="quick">Use quick build (${Object.values(t.quickBuild).join(' · ')})</button>`}`],
     [!!p.pack && (packs < 2 || !!p.pack2), `Equipment Pack${packs > 1 ? 's (2)' : ''}`, `<span class="muted">${packs > 1 ? 'Your tier gets two, so tap two packs.' : 'Tap one.'} Its gear goes into Inventory, plus 1 Supplies slot.</span>
@@ -1024,8 +961,8 @@ function hydrate(p) {
       ${p.dead ? '<p class="bleed"><b>FALLEN</b> — this character has died. If the story allows it, the Warden can bring them back.</p>' : ''}
       ${p.dead ? '' : `<div class="rest-row"><span class="rl">REST</span>
         <select data-camp-skill aria-label="Skill to roll at camp">${meta.skills.map((s) => `<option value="${s}">${s} (${esc(String(p.skills[s.toLowerCase()] || '—').toUpperCase())})</option>`).join('')}</select>
-        <button class="btn small secondary" type="button" data-camp title="Roll a Skill; regain Health equal to Hits (p. 52)">🔥 Campfire</button>
-        <button class="btn small secondary" type="button" data-town title="Full Health, Statuses cleared, Supplies reset, Forstall recharged (p. 54)">🏨 Town</button></div>`}`;
+        <button class="btn small secondary" type="button" data-camp title="Roll a Skill; regain Health equal to Hits (p. 52)">${gl('fire')} Campfire</button>
+        <button class="btn small secondary" type="button" data-town title="Full Health, Statuses cleared, Supplies reset, Forstall recharged (p. 54)">Town</button></div>`}`;
     vitals.querySelectorAll('[data-hp]').forEach((b) => b.addEventListener('click', () => send({ op: 'health', delta: Number(b.dataset.hp) })));
     vitals.querySelectorAll('[data-bleed-roll]').forEach((b) => b.addEventListener('click', () => bleedRoll(p, b.dataset.bleedRoll)));
     vitals.querySelectorAll('.bleed-panel [data-op]').forEach((b) => b.addEventListener('click', async () => {

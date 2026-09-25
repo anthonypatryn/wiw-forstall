@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Rye&family=Special+Elite&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=23">
+  <link rel="stylesheet" href="/css/style.css?v=24">
   <link rel="stylesheet" href="/css/session.css?v=5">
 </head>
 <body>
@@ -21,7 +21,7 @@
         <h1>Session</h1>
         <div class="sub">Your notes for each game night, and the whole table at a glance</div>
       </div>
-      <button class="btn small warden-link" id="lock" type="button" hidden>⭐ Lock</button>
+      <button class="btn small warden-link" id="lock" type="button" hidden><span data-gl="star"></span> Lock</button>
     </div>
   </header>
   <nav class="sitenav" data-nav aria-label="Site"></nav>
@@ -30,7 +30,7 @@
     <section class="card corner gate" id="gate" hidden>
       <h2 class="section-title">Warden only</h2>
       <p class="muted">This page is just for the Warden.</p>
-      <button class="btn" id="unlock" type="button">⭐ Enter the Warden PIN</button>
+      <button class="btn" id="unlock" type="button"><span data-gl="star"></span> Enter the Warden PIN</button>
     </section>
 
     <div class="grid" id="desk" hidden>
@@ -59,7 +59,7 @@
         <section class="card corner">
           <h2 class="section-title">Backup</h2>
           <p class="muted" style="margin-top:0">Saves everything — sheets, NPCs, factions, map, battle map, store, notes and the Table Log — to one file on this device. Do it after each session.</p>
-          <button class="btn" id="backup" type="button">💾 Download a backup</button>
+          <button class="btn" id="backup" type="button">Download a backup</button>
           <span class="muted" id="backup-note"></span>
         </section>
       </div>
@@ -77,6 +77,6 @@
     </div>
   </main>
 
-  <script type="module" src="/js/session.js?v=17"></script>
+  <script type="module" src="/js/session.js?v=18"></script>
 </body>
 </html>

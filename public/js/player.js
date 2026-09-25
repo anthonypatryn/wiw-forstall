@@ -1,11 +1,13 @@
 import {
   $, esc, api, startPolling, injectDefs, bulletSVG, animateRoll, staticDice,
   readoutHTML, diamondsHTML, chipsHTML, WAVE_SVG, toast, store,
-  mountNav,
+  mountNav, savedPin,
 } from './common.js';
 import { renderNotebook } from './notebook.js';
 import { mountTableLog } from './tablelog.js';
+import { gl } from './glyphs.js';
 
+if (savedPin()) location.replace('/warden'); // Warden mode stays on until "Switch to player view"
 injectDefs();
 mountTableLog();
 mountNav('/');
@@ -40,7 +42,7 @@ function renderPool() {
   const a = data?.active;
   const label = `${pool.B ? pool.B + 'B' : ''}${pool.G ? pool.G + 'G' : ''}` || '0 dice';
   $('#pool-note').innerHTML = data?.jammed
-    ? '<span class="badge">⚡ FORSTALL JAMMED</span> No Scanning until the signal comes back.'
+    ? '<span class="badge">' + gl('flash') + ' FORSTALL JAMMED</span> No Scanning until the signal comes back.'
     : a?.scanHalf
     ? `<span class="badge">SPINAL DEFLECTORS</span> Chupacabra — you roll half your pool (${esc(label)} → ${halfLabel()})`
     : `Rolling <b>${esc(label)}</b>`;
@@ -171,7 +173,7 @@ async function submitGuess() {
     const res = await api('POST', { action: 'guess', digits: guess });
     input = Array(6).fill(null);
     poller.push(res.state);
-    if (res.result.solved) toast('📡 Frequency locked! It’s in the notebook.');
+    if (res.result.solved) toast('Frequency locked! It’s in the notebook.');
   } catch (e) { toast(e.message, true); }
   busy = false;
 }
@@ -193,7 +195,7 @@ function renderBoard() {
     if (a.solved) {
       html += `<div class="solved-banner">FREQUENCY LOCKED · ${esc(a.kz)}</div>`;
     } else if (jammed) {
-      html += '<div class="solved-banner jam">⚡ SIGNAL LOST — FORSTALL JAMMED</div>';
+      html += '<div class="solved-banner jam">' + gl('flash') + ' SIGNAL LOST — FORSTALL JAMMED</div>';
     } else {
       const locked = lockedDigits();
       const cursor = openSlots().find((i) => input[i] === null);
@@ -233,7 +235,7 @@ function renderTarget() {
       <div class="name">${esc(a.name)}</div>
       <div class="meta">${esc(a.size)}${a.page ? ` · Guidebook p. ${a.page}` : ''}
         ${a.solved ? ' <span class="badge green">DECODED</span>' : ''}
-        ${data.jammed ? ' <span class="badge">⚡ JAMMED</span>' : ''}
+        ${data.jammed ? ' <span class="badge">' + gl('flash') + ' JAMMED</span>' : ''}
         ${data.settings.easyMode ? ' <span class="badge teal">WARDEN’S AID: POSITIONS SHOWN</span>' : ''}</div>
     </div>
     ${readoutHTML(a.positional)}`;

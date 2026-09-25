@@ -275,7 +275,7 @@ function renderTurnBar() {
   const nm = (k) => combat.posse.find((p) => p.id === k)?.name || combat.enemies.find((e) => e.id === k)?.name || '—';
   const order = c.turnList || [], i = order.indexOf(c.current), next = order.length > 1 ? order[(i + 1) % order.length] : null;
   const u = combat.undo || {};
-  if (!cur) { bar.innerHTML = `<div class="turn-bar"><span>Round ${c.round || 1}</span>${warden ? '<button type="button" class="btn small" data-nextturn>Next turn ⏭</button>' : ''}</div>`; wireTurnBar(bar, null); return; }
+  if (!cur) { bar.innerHTML = `<div class="turn-bar"><span>Round ${c.round || 1}</span>${warden ? '<button type="button" class="btn small" data-nextturn>Next turn</button>' : ''}</div>`; wireTurnBar(bar, null); return; }
   const a = cur.a, isPc = cur.kind === 'pc';
   const can = warden || (isPc && myId() === a.id);
   const log = a.turnLog || [];
@@ -380,7 +380,7 @@ function renderTurnBar() {
       <div class="tp-end">
         <span class="tp-undo">${(warden ? u.last : u.lastIsThisTurn && u.last) ? `<button type="button" class="btn small secondary" data-undo="last" title="Undo: ${esc(u.last)}">↶ Undo <small>${esc(u.last)}</small></button>` : ''}
           ${u.thisTurn ? `<button type="button" class="btn small secondary" data-undo="turn">⟲ Restart turn</button>` : ''}</span>
-        ${warden ? '<button type="button" class="btn small secondary" data-endfight>End combat</button><button type="button" class="btn" data-nextturn>Next turn ⏭</button>' : '<button type="button" class="btn" data-endmine>End my turn ⏭</button>'}
+        ${warden ? '<button type="button" class="btn small secondary" data-endfight>End combat</button><button type="button" class="btn" data-nextturn>Next turn</button>' : '<button type="button" class="btn" data-endmine>End my turn</button>'}
       </div>`
     : `<p class="muted tp-empty">${isPc ? `Waiting on ${esc(a.name)}’s player (or the Warden).` : 'The enemies are acting.'}</p>`}
   </div>`;
@@ -653,7 +653,7 @@ function connect() {
   }, (ok, e) => { if (e?.status === 401) { warden = false; forgetWarden(); setWarden(); connect(); } }, EP);
 }
 function setWarden() {
-  $('#warden-btn').textContent = warden ? '⭐ Warden mode · lock' : '⭐ Warden';
+  $('#warden-btn').innerHTML = `${gl('star')} ${warden ? 'Warden mode · lock' : 'Warden'}`;
   if (data) render();
 }
 $('#warden-btn').addEventListener('click', async () => {

@@ -4,6 +4,7 @@ import {
 } from './common.js';
 import { NPC } from './npc-data.js';
 import { renderLogInto, mountHud } from './tablelog.js';
+import { gl } from './glyphs.js';
 mountHud();
 
 const EP = '/api/combat';
@@ -50,7 +51,7 @@ function renderTurn() {
     ...(data.enemies.length ? [{ key: 'enemies', name: 'The enemies', hits: c.init.enemies?.hits ?? null, surprise: c.surprise.includes('enemies') }] : []),
   ]).map((o) => `<span class="slot${o.key === slotOfCurrent ? ' now' : ''}">${esc(o.name)}
       <span class="h">${o.hits === null ? '—' : `${o.hits} hit${o.hits === 1 ? '' : 's'}`}</span>
-      ${warden ? `<button type="button" class="${o.surprise ? 'on' : ''}" data-surprise="${o.key}" title="Surprise attackers go first">${o.surprise ? '⚡ SURPRISE' : 'surprise?'}</button>` : (o.surprise ? '<span class="h">⚡ surprise</span>' : '')}
+      ${warden ? `<button type="button" class="${o.surprise ? 'on' : ''}" data-surprise="${o.key}" title="Surprise attackers go first">${o.surprise ? `${gl('flash')} SURPRISE` : 'surprise?'}</button>` : (o.surprise ? '<span class="h">' + gl('flash') + ' surprise</span>' : '')}
     </span>`).join('');
 
   if (!c.active) {
@@ -58,8 +59,8 @@ function renderTurn() {
       <div class="turn-top">
         <div><div class="round">BETWEEN FIGHTS</div><div class="who">Everyone roll with Finesse!<small>Most Hits goes first · ties re-roll · the Warden rolls once for all enemies</small></div></div>
         ${warden ? `<div class="turn-actions">
-          ${data.enemies.length ? '<button class="btn small" data-act="enemyInit" type="button">🎲 Roll for the enemies</button>' : ''}
-          <button class="btn small go" data-act="start" type="button">⚔ Start combat</button></div>` : ''}
+          ${data.enemies.length ? '<button class="btn small" data-act="enemyInit" type="button">' + gl('die') + ' Roll for the enemies</button>' : ''}
+          <button class="btn small go" data-act="start" type="button">${gl('revolver')} Start combat</button></div>` : ''}
       </div>
       ${orderChips ? `<div class="order">${orderChips}</div>` : '<p class="turn-help">Add characters on the Posse Sheets page to get started.</p>'}
       <p class="turn-help">${warden ? 'Anyone who hasn’t rolled when you start gets rolled for automatically.' : 'Tap “Roll Finesse” on your character card. The Warden starts the fight.'}</p>`;
@@ -144,7 +145,7 @@ function pcCard(p) {
     ${p.dead ? '' : statusesHTML(p, true)}
     ${bleedPanel(p, meta.skills)}
     <div class="f-actions">
-      ${!p.dead ? `<button class="btn small secondary" data-init type="button">🎲 Finesse${init ? ` · ${init.hits} hit${init.hits === 1 ? '' : 's'}` : ' (turn order)'}</button>` : ''}
+      ${!p.dead ? `<button class="btn small secondary" data-init type="button">${gl('die')} Finesse${init ? ` · ${init.hits} hit${init.hits === 1 ? '' : 's'}` : ' (turn order)'}</button>` : ''}
       ${hasQuickDraw && !p.dead ? '<label class="check" style="font-size:14px"><input type="checkbox" data-qd> Quick-Draw +2B</label>' : ''}
       ${!p.dead && now ? `<button class="btn small secondary" data-op="fool" type="button" ${p.foolUsed ? 'disabled' : ''} title="Once per turn: +1 Grit for 1 Health">Fool’s Grit</button>` : ''}
       ${p.dead && warden ? '<button class="btn small secondary" data-op="revive" type="button">Revive</button>' : ''}
@@ -229,9 +230,9 @@ function eaHTML(e, p) {
   if (e.defeated || !p?.attacks?.length) return '';
   const s = eaSel[e.id] ||= { atk: 0, pc: '', cover: 0 };
   const alive = data.posse.filter((x) => !x.dead);
-  return `<div class="ea"><b class="loot-h">💥 ATTACK THE POSSE</b>
+  return `<div class="ea"><b class="loot-h">${gl('flash')} ATTACK THE POSSE</b>
     <div class="loot-row"><select data-ea="atk" aria-label="Attack">${p.attacks.map((a, i) => `<option value="${i}"${i === s.atk ? ' selected' : ''}>${esc(a.name)} · ${a.range}${a.aoe ? ' · AOE' : ''}</option>`).join('')}</select>
-      <select data-ea="pc" aria-label="Target"><option value="">— who? —</option>${alive.map((x) => `<option value="${x.id}"${x.id === s.pc ? ' selected' : ''}>${esc(x.name)}${x.dodge ? ` (🛡${x.dodge})` : ''}</option>`).join('')}</select>
+      <select data-ea="pc" aria-label="Target"><option value="">— who? —</option>${alive.map((x) => `<option value="${x.id}"${x.id === s.pc ? ' selected' : ''}>${esc(x.name)}${x.dodge ? ` (${x.dodge})` : ''}</option>`).join('')}</select>
       <select data-ea="cover" aria-label="Cover"><option value="0">no cover</option><option value="1"${s.cover == 1 ? ' selected' : ''}>light cover (+1B)</option><option value="2"${s.cover == 2 ? ' selected' : ''}>heavy cover (+2B)</option></select>
       <button class="btn small" type="button" data-ea-go>Roll it</button></div>
     <p class="loot-guide"><span>Rolls the damage, then their Defense + Cover + any banked Dodge, and applies the rest. AOE: roll once per target.</span></p></div>`;
@@ -244,12 +245,12 @@ function lootHTML(e, p) {
   const alive = data.posse.filter((x) => !x.dead);
   const who = (attr) => `<select ${attr} aria-label="Who">${`<option value="">— who? —</option>`}${alive.map((x) => `<option value="${x.id}"${x.id === sel.pc ? ' selected' : ''}>${esc(x.name)}</option>`).join('')}</select>`;
   const t = p?.trophy;
-  return `<div class="loot"><b class="loot-h">🏆 LOOT</b>${e.looted ? ` <span class="muted">Trophy taken by ${esc(e.looted)}.</span>` : ''}
+  return `<div class="loot"><b class="loot-h">${gl('trophy')} LOOT</b>${e.looted ? ` <span class="muted">Trophy taken by ${esc(e.looted)}.</span>` : ''}
     ${t ? `<p class="loot-tro"><b>${esc(t.split(/\.\s/)[0])}.</b> ${esc(t.slice(t.split(/\.\s/)[0].length + 1).trim())}</p>
       <div class="loot-row">${who('data-loot-pc')}<select data-loot-cond aria-label="Condition">${data.loot.conditions.map((c) => `<option${c === sel.cond ? ' selected' : ''}>${c}</option>`).join('')}</select>
         <button class="btn small" type="button" data-loot>Give trophy</button></div>
       <p class="loot-guide">${data.loot.guide.map((g) => `<span><b>${g.range}</b>: ${g.with}</span>`).join('')}</p>` : ''}
-    <div class="loot-row">${t ? '' : who('data-loot-pc')}<button class="btn small secondary" type="button" data-search>🎲 Search the body (Intuition)</button><span class="muted">you decide what they find</span></div></div>`;
+    <div class="loot-row">${t ? '' : who('data-loot-pc')}<button class="btn small secondary" type="button" data-search>${gl('die')} Search the body (Intuition)</button><span class="muted">you decide what they find</span></div></div>`;
 }
 
 function renderEnemies() {
@@ -319,7 +320,7 @@ function renderEnemyTools() {
         <optgroup label="Your NPC ledger" id="ledger-opts"></optgroup></select>
       <select id="npc-as" aria-label="Fights like" title="Stats for a ledger NPC">${data.npcCatalog.filter((n) => !n.faction).map((n) => `<option value="${esc(n.key)}">fights like: ${esc(n.name.replace('Human - ', ''))}</option>`).join('')}</select>
       <input id="add-npc-name" maxlength="40" placeholder="Name" aria-label="NPC name">
-      <button class="btn small secondary" id="npc-dice" type="button" title="Random name (NPC deck, p. 204)" aria-label="Random name">🎲</button>
+      <button class="btn small secondary" id="npc-dice" type="button" title="Random name (NPC deck, p. 204)" aria-label="Random name">${gl('die')}</button>
       <button class="btn small" id="add-npc-btn" type="button">+ Add NPC</button>
     </div>
     <div class="custom-enemy">
@@ -449,7 +450,7 @@ function renderDuel() {
     <tbody>${DUEL_STEPS.map((st) => { const r = d.rounds.find((x) => x.skill === st);
       return `<tr class="${st === next ? 'now' : ''}"><th>${st}</th>${cell(r, 0)}${cell(r, 1)}</tr>`; }).join('')}</tbody></table>
     ${d.result ? `<div class="duel-result">${d.result.map((r) => `<div class="dr ${r.level}"><b>${esc(r.name)}</b> takes <b>${r.against}</b> Hit${r.against === 1 ? '' : 's'}: ${esc(r.text)}</div>`).join('')}</div>` : ''}
-    <div class="duel-actions">${next ? `<button class="btn" id="duel-roll" type="button">${next === 'Draw!' ? '💥 DRAW!' : `🎲 Both roll ${next}`}</button>` : ''}
+    <div class="duel-actions">${next ? `<button class="btn" id="duel-roll" type="button">${next === 'Draw!' ? `${gl('flash')} DRAW!` : `${gl('die')} Both roll ${next}`}</button>` : ''}
       <button class="btn small secondary" id="duel-end" type="button">${d.done ? 'Close the Duel' : 'Call it off'}</button></div>`;
   d.rounds.forEach((r) => r.rolls.forEach((x, i) => { const t = box.querySelector(`[data-dt="${r.skill}-${i}"]`); if (t) staticDice(t, x.dice); }));
   // animate only the newest round, once
@@ -492,7 +493,7 @@ function connect() {
 }
 
 function setWardenBtn() {
-  $('#warden-btn').textContent = warden ? '⭐ Warden mode · lock' : '⭐ Warden';
+  $('#warden-btn').innerHTML = `${gl('star')} ${warden ? 'Warden mode · lock' : 'Warden'}`;
   $('#gate').hidden = warden; $('#combat-main').hidden = !warden;
 }
 $('#gate-unlock').addEventListener('click', () => $('#warden-btn').click());

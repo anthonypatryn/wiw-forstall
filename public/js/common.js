@@ -1,4 +1,5 @@
 import { ICONS } from './icons.js';
+import { gl } from './glyphs.js';
 
 export const $ = (s, r = document) => r.querySelector(s);
 export const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -111,12 +112,12 @@ export function bleedPanel(p, skillsMeta) {
   if (!p.bleeding || p.dead) return '';
   const used = p.bleeding.skills;
   const left = skillsMeta.filter((s) => !used.includes(s));
-  return `<div class="bleed-panel" role="alert"><b class="bp-title">🩸 BLEEDING OUT</b>
+  return `<div class="bleed-panel" role="alert"><b class="bp-title">${gl('drop')} BLEEDING OUT</b>
     <p>At the end of each ally’s turn, roll a Skill you haven’t used yet. Get at least <b>1 Hit</b> to hang on. No Hit, or no Skills left, and it’s over. Only an ally’s First Aid can save you.</p>
     <div class="bp-skills">${skillsMeta.map((s) => {
       const pool = (p.skills[s.toLowerCase()] || '').toUpperCase() || '—';
       return used.includes(s) ? `<span class="bp-used">✓ ${s}</span>`
-        : `<button type="button" class="btn small" data-bleed-roll="${s}">🎲 ${s} <small>${pool}</small></button>`;
+        : `<button type="button" class="btn small" data-bleed-roll="${s}">${gl('die')} ${s} <small>${pool}</small></button>`;
     }).join('')}</div>
     ${left.length ? `<p class="muted">${left.length} Skill${left.length > 1 ? 's' : ''} left.</p>` : '<p class="bp-last"><b>No Skills left.</b> Without First Aid, they die at the end of the next ally’s turn.</p>'}
     <div class="bp-actions"><button type="button" class="btn small" data-op="stabilize">✚ Saved by First Aid</button><button type="button" class="btn small secondary danger" data-op="die">Didn’t make it</button></div></div>`;
@@ -207,14 +208,20 @@ const NAV = [
   ['/map', 'Map'],
   ['/battle', 'Battle Map'],
   ['/store', 'Store'],
+  ['/howto', 'How to Play'],
 ];
 export function mountNav(active) {
   const el = document.querySelector('[data-nav]');
   if (!el) return;
   // the Warden's Session page only shows up in the nav for the Warden
-  const items = pinStore.get() ? [...NAV, ['/combat', '⭐ Combat Control'], ['/session', '⭐ Session']] : NAV;
+  // Warden mode sticks until "Switch to player view": the scanner link goes to the Warden's scanner
+  const on = !!pinStore.get();
+  const items = on ? [...NAV.map(([h, l]) => [h === '/' ? '/warden' : h, l]), ['/combat', `${gl('star')} Combat Control`], ['/session', `${gl('star')} Session`]] : NAV;
+  const cur = active === '/warden' ? (on ? '/warden' : '/') : active === '/' && on ? '/warden' : active;
   el.innerHTML = `<div class="sitenav-inner">${items.map(([href, label]) =>
-    `<a href="${href}"${href === active ? ' aria-current="page"' : ''}>${label}</a>`).join('')}</div>`;
+    `<a href="${href}"${href === cur ? ' aria-current="page"' : ''}>${label}</a>`).join('')}</div>`;
+  // static pages mark icons as <span data-gl="name"> — draw them
+  document.querySelectorAll('[data-gl]').forEach((s) => { s.outerHTML = gl(s.dataset.gl); });
 }
 
 // ---------- Warden PIN (shared across pages) ----------
@@ -238,13 +245,15 @@ try { localStorage.removeItem('wiw.pin'); } catch {}
 export function markWarden(on) {
   let bar = document.querySelector('.warden-strip');
   const inner = document.querySelector('.sitenav-inner');
-  if (inner && on && !inner.querySelector('a[href="/session"]')) inner.insertAdjacentHTML('beforeend', '<a href="/combat">⭐ Combat Control</a><a href="/session">⭐ Session</a>');
+  if (inner && on && !inner.querySelector('a[href="/session"]')) inner.insertAdjacentHTML('beforeend', '<a href="/combat">' + gl('star') + ' Combat Control</a><a href="/session">' + gl('star') + ' Session</a>');
   if (inner && !on) { inner.querySelector('a[href="/session"]')?.remove(); inner.querySelector('a[href="/combat"]')?.remove(); }
+  const scan = inner?.querySelector('a[href="/"], a[href="/warden"]');
+  if (scan) scan.setAttribute('href', on ? '/warden' : '/');
   if (on && !bar) {
     bar = document.createElement('div');
     bar.className = 'warden-strip';
-    bar.innerHTML = '⭐ WARDEN MODE — players don’t see the Warden tools <button type="button">Switch to player view</button>';
-    bar.querySelector('button').addEventListener('click', () => { forgetWarden(); location.reload(); });
+    bar.innerHTML = gl('star') + ' WARDEN MODE — players don’t see the Warden tools <button type="button">Switch to player view</button>';
+    bar.querySelector('button').addEventListener('click', () => { forgetWarden(); if (location.pathname.startsWith('/warden')) location.href = '/'; else location.reload(); });
     (document.querySelector('.sitenav') || document.body.firstElementChild).after(bar);
   } else if (!on && bar) bar.remove();
 }

@@ -3,6 +3,7 @@ import {
   poolIcons, poolHTML, readPool, ask, askText,
 } from './common.js';
 import { mountTableLog } from './tablelog.js';
+import { gl } from './glyphs.js';
 
 const EP = '/api/shop';
 injectDefs();
@@ -199,7 +200,7 @@ function connect() {
   poller?.stop();
   poller = startPolling(warden ? 'warden' : 'player', onState, (ok, e) => { if (e?.status === 401) { warden = false; forgetWarden(); setWarden(); connect(); } }, EP);
 }
-function setWarden() { $('#warden-btn').textContent = warden ? '⭐ Warden mode · lock' : '⭐ Warden'; if (data) onState(data); }
+function setWarden() { $('#warden-btn').innerHTML = `${gl('star')} ${warden ? 'Warden mode · lock' : 'Warden'}`; if (data) onState(data); }
 $('#warden-btn').addEventListener('click', async () => {
   if (warden) { warden = false; forgetWarden(); } else if (!(warden = await wardenModal(EP))) return;
   setWarden(); connect();
