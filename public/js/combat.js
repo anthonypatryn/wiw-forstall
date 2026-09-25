@@ -2,6 +2,7 @@ import {
   $, esc, api, startPolling, injectDefs, bulletSVG, animateRoll, staticDice, toast, store, timeAgo,
   mountNav, tryWarden, forgetWarden, savedPin, poolHTML, readPool, rollPopup, bleedPanel,
 } from './common.js';
+import { NPC } from './npc-data.js';
 import { renderLogInto } from './tablelog.js';
 
 const EP = '/api/combat';
@@ -193,7 +194,7 @@ function enemyCard(e) {
   const p = e.profile ? data.profiles[e.profile] : null;
   const skills = Object.entries(e.skills || {}).filter(([, v]) => isPool(v));
   return `<article class="fighter${now ? ' now' : ''}${e.defeated ? ' down' : ''}${frenzied ? ' frenzied' : ''}" data-enemy="${e.id}">
-    <div class="f-head"><div><div class="f-name">${esc(e.name)}</div><div class="f-sub">${esc(e.size)}${p ? ` · p. ${p.page}` : ' · custom'}</div></div><div>${tags}</div></div>
+    <div class="f-head"><div><div class="f-name">${esc(e.name)} <button type="button" class="rename" data-rename title="Rename" aria-label="Rename ${esc(e.name)}">✎</button></div><div class="f-sub">${esc(e.size)}${p ? ` · p. ${p.page}${p.name !== e.name ? ` · ${esc(p.name.replace('Human - ', ''))}` : ''}` : ' · custom'}</div></div><div>${tags}</div></div>
     ${hpHTML(e, true)}
     ${gritHTML(e, true)}
     <div class="e-stats">
@@ -263,6 +264,11 @@ function renderEnemies() {
     card.querySelectorAll('[data-rollpool]').forEach((b) => b.addEventListener('click', () =>
       doRoll({ pool: b.dataset.rollpool, who: eid, label: b.dataset.label, hidden: card.querySelector('[data-secret]').checked })));
     card.querySelector('[data-remove]').addEventListener('click', () => { if (confirm('Remove this enemy?')) send({ op: 'remove' }); });
+    card.querySelector('[data-rename]')?.addEventListener('click', () => {
+      const cur = card.querySelector('.f-name').firstChild.textContent.trim();
+      const n = prompt('New name:', cur);
+      if (n && n.trim() && n.trim() !== cur) send({ op: 'rename', name: n.trim() });
+    });
     const es = eaSel[eid] ||= { atk: 0, pc: '', cover: 0 };
     card.querySelectorAll('[data-ea]').forEach((el) => el.addEventListener('change', () => { es[el.dataset.ea] = el.dataset.ea === 'pc' ? el.value : Number(el.value); }));
     card.querySelector('[data-ea-go]')?.addEventListener('click', async () => {
@@ -295,6 +301,7 @@ function renderEnemyTools() {
     <div class="add-enemy">
       <select id="add-monster" aria-label="Monster">${SIZES.filter((s) => groups[s]).map((s) => `<optgroup label="${s}">${
         groups[s].map((m) => `<option value="${esc(m.name)}">${esc(m.name)} · ${m.health} Health</option>`).join('')}</optgroup>`).join('')}</select>
+      <input id="add-mon-name" maxlength="40" placeholder="Name (optional)" aria-label="Monster name">
       <input type="number" id="add-count" min="1" max="8" value="1" aria-label="How many">
       <button class="btn small" id="add-monster-btn" type="button">+ Add monster</button>
     </div>
@@ -304,6 +311,8 @@ function renderEnemyTools() {
         ${[...new Set(data.npcCatalog.filter((n) => n.faction).map((n) => n.faction))].map((f) => `<optgroup label="${esc(f)}">${data.npcCatalog.filter((n) => n.faction === f).map((n) => `<option value="${esc(n.key)}">${esc(n.name)} · ${n.health} Health</option>`).join('')}</optgroup>`).join('')}
         <optgroup label="Your NPC ledger" id="ledger-opts"></optgroup></select>
       <select id="npc-as" aria-label="Fights like" title="Stats for a ledger NPC">${data.npcCatalog.filter((n) => !n.faction).map((n) => `<option value="${esc(n.key)}">fights like: ${esc(n.name.replace('Human - ', ''))}</option>`).join('')}</select>
+      <input id="add-npc-name" maxlength="40" placeholder="Name" aria-label="NPC name">
+      <button class="btn small secondary" id="npc-dice" type="button" title="Random name (NPC deck, p. 204)" aria-label="Random name">🎲</button>
       <button class="btn small" id="add-npc-btn" type="button">+ Add NPC</button>
     </div>
     <div class="custom-enemy">
@@ -317,9 +326,19 @@ function renderEnemyTools() {
       <label class="check"><input type="checkbox" id="show-hp"> Show enemy Health to the posse</label>
       <button class="btn small secondary danger" id="clear-enemies" type="button">Clear all enemies</button>
     </div>`;
-  $('#add-monster-btn').addEventListener('click', () => act({ action: 'addEnemy', profile: $('#add-monster').value, count: $('#add-count').value }));
+  $('#add-monster-btn').addEventListener('click', async () => {
+    if (await act({ action: 'addEnemy', profile: $('#add-monster').value, count: $('#add-count').value, name: $('#add-mon-name').value }) !== null) $('#add-mon-name').value = '';
+  });
+  const randName = () => `${NPC[Math.random() < 0.5 ? 'first1' : 'first2'][Math.floor(Math.random() * 52)]} ${NPC.last[Math.floor(Math.random() * 52)]}`;
+  $('#npc-dice').addEventListener('click', () => { $('#add-npc-name').value = randName(); });
   // ledger NPCs have no stat block, so they borrow a human combatant's (Weak / Moderate / Strong)
-  const npcAs = () => { $('#npc-as').hidden = !$('#add-npc').value.startsWith('ledger:'); };
+  const npcAs = () => {
+    const v = $('#add-npc').value;
+    $('#npc-as').hidden = !v.startsWith('ledger:');
+    // fill in a name to start from: the ledger/book name, or a random one for a nameless human combatant
+    const n = data.npcCatalog.find((x) => x.key === v);
+    $('#add-npc-name').value = v.startsWith('ledger:') ? v.slice(7) : n?.faction ? n.name : v ? randName() : '';
+  };
   $('#add-npc').addEventListener('change', npcAs); npcAs();
   api('GET', null, '?view=warden', '/api/npcs').then((r) => {
     ledgerNpcs = r.npcs || []; duelSig = ''; renderDuel();
@@ -328,7 +347,9 @@ function renderEnemyTools() {
   $('#add-npc-btn').addEventListener('click', () => {
     const v = $('#add-npc').value;
     if (!v) return toast('Pick an NPC.', true);
-    act(v.startsWith('ledger:') ? { action: 'addEnemy', profile: $('#npc-as').value, name: v.slice(7) } : { action: 'addEnemy', profile: v });
+    const name = $('#add-npc-name').value.trim();
+    act(v.startsWith('ledger:') ? { action: 'addEnemy', profile: $('#npc-as').value, name: name || v.slice(7) } : { action: 'addEnemy', profile: v, name })
+      .then((ok) => { if (ok !== null) npcAs(); });
   });
   $('#ce-add').addEventListener('click', async () => {
     const ok = await act({ action: 'addEnemy', name: $('#ce-name').value, health: $('#ce-hp').value, defense: readPool($('#ce-def')) || '—', finesse: readPool($('#ce-fin')) || '1B', size: 'Human' });

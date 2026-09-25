@@ -174,3 +174,7 @@ details.more p { font-size: 14px; margin: 6px 0; }
 .loot-guide { display: flex; flex-direction: column; gap: 1px; font-size: 12px; color: var(--ink-soft); margin: 4px 0; }
 
 .ea { margin: 10px 0 4px; padding: 8px 10px; border: 1.5px dashed var(--rust); border-radius: 6px; background: #fffaf0; }
+
+.f-name .rename { border: 0; background: none; color: var(--ink-faint); font-size: 15px; cursor: pointer; padding: 0 2px; vertical-align: middle; }
+.f-name .rename:hover { color: var(--rust); }
+#add-mon-name, #add-npc-name { flex: 1 1 140px; min-width: 0; padding: 8px 10px; border: 1.5px solid var(--ink); border-radius: var(--radius); background: #fffdf7; font-size: 15px; }
