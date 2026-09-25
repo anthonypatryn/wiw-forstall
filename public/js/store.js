@@ -108,7 +108,7 @@ function renderSide() {
 
   const reqRow = (r, controls) => `<div class="req" data-id="${r.id}">
     <div class="top"><span><span class="kind ${r.kind}">${r.kind.toUpperCase()}</span> ${r.qty > 1 ? `${r.qty}× ` : ''}${esc(r.name)}</span><span class="st ${r.status}">${r.status.toUpperCase()}</span></div>
-    <div class="muted" style="font-size:13px">${esc(r.pcName)} · ${money(r.price)}${r.note ? ` · ${esc(r.note)}` : ''}</div>${controls || ''}</div>`;
+    <div class="muted fine">${esc(r.pcName)} · ${money(r.price)}${r.note ? ` · ${esc(r.note)}` : ''}</div>${controls || ''}</div>`;
   const mine = data.requests.filter((r) => !pc || r.pc === pc.id);
   $('#my-requests').innerHTML = mine.length ? mine.slice(0, 20).map((r) => reqRow(r, r.status === 'pending' ? '<div class="ctrl"><button class="btn small secondary" data-cancel type="button">Cancel</button></div>' : '')).join('')
     : '<p class="empty-note">No requests yet.</p>';
@@ -119,7 +119,7 @@ function renderSide() {
   if (warden) {
     const pending = data.requests.filter((r) => r.status === 'pending');
     $('#queue').innerHTML = pending.length ? pending.map((r) => reqRow(r, `<div class="ctrl">
-        <label class="muted" style="font-size:13px">${r.kind === 'sell' ? 'Pay out' : 'Charge'} $<input type="number" min="0" step="0.01" value="${r.price.toFixed(2)}" data-price></label>
+        <label class="muted fine">${r.kind === 'sell' ? 'Pay out' : 'Charge'} $<input type="number" min="0" step="0.01" value="${r.price.toFixed(2)}" data-price></label>
         <button class="btn small" data-yes type="button">Approve</button><button class="btn small secondary danger" data-no type="button">Deny</button></div>`)).join('')
       : '<p class="empty-note">Nobody at the counter.</p>';
     $('#queue').querySelectorAll('.req').forEach((row) => {
@@ -166,7 +166,7 @@ function buildCreate() {
     <label class="full" data-for="effect">EFFECT<input name="effect" maxlength="200" placeholder="e.g. Trapped [2B] + Damage [1]"></label>
     <label class="full">DESCRIPTION<textarea name="desc" maxlength="600"></textarea></label>
     <input type="hidden" name="id">
-    <div class="full" style="display:flex;gap:8px"><button class="btn small" type="submit" id="create-go">Add to the store</button><button class="btn small secondary" type="reset" id="create-reset">Clear</button></div>`;
+    <div class="full btn-row"><button class="btn small" type="submit" id="create-go">Add to the store</button><button class="btn small secondary" type="reset" id="create-reset">Clear</button></div>`;
   // show only the fields that kind of item uses (the book's price list as the guide)
   const USES = {
     Weapons: ['quality', 'grit', 'slots', 'dice', 'arms', 'short', 'long', 'distant'],

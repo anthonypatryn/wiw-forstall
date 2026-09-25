@@ -134,6 +134,8 @@ button { cursor: pointer; }
 }
 .tip b { font-style: normal; font-family: var(--display); letter-spacing: .1em; font-weight: 400; }
 .muted { color: var(--ink-faint); }
+.fine { font-size: var(--fs-xs); }
+.btn-row { display: flex; flex-wrap: wrap; gap: var(--sp-2); align-items: center; }
 
 /* ---------- target ---------- */
 .target {
