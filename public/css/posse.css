@@ -424,3 +424,8 @@ body.on-sheet .masthead { display: none; }
 .ck-prompt.mine { border: 2px solid var(--rust); background: rgba(164,64,31,.08); }
 .ck-prompt small { display: block; font: 11px var(--display); letter-spacing: .12em; color: var(--rust); }
 .ck-prompt b { font: 18px var(--display); letter-spacing: .06em; font-weight: 400; }
+
+/* remove buttons */
+.rm-btn { flex: none; margin-left: 6px; width: 28px; height: 28px; border: 1px solid var(--ink-faint); border-radius: 50%; background: #fffdf7; color: #8f1d17; font-size: 14px; line-height: 1; cursor: pointer; }
+.rm-btn:hover { border-color: #8f1d17; background: #fbe9e4; }
+.inv-item .rm-btn { margin-left: 4px; }
