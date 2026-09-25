@@ -107,6 +107,8 @@ Small helpers: `.btn-row` (a row of buttons), `.fine` (12px note), `.small-text`
 4. Sizes/colors/spacing only from tokens. Icons from `glyphs.js`.
 5. Check it at 375px and in Warden + player views; bump the page's `?v=`.
 
-## Warden mode theme
-- In Warden mode (`body.warden-mode`, set by `mountNav`) the page background becomes the dark **desk** (`--desk`, the paper texture multiplied down), cards become solid paper, band labels turn brass, and the masthead gets a red underline. Only text sitting straight on the page background changes, so every card, form and dialog looks the same in both modes. New page-level text outside a card needs a `body.warden-mode` color.
+## Warden mode theme (oxblood & brass)
+- In Warden mode (`body.warden-mode`, set by `mountNav`) the whole palette changes so the Warden always knows which seat they're in. Mostly token overrides on `body.warden-mode` in style.css: `--paper`/`--surface` become aged tan parchment, `--accent`/`--rust` oxblood, `--line` oxblood-tinted, and the page is the dark red-brown `--desk`.
+- Explicit rules: oxblood nav with a brass underline and brass current page; red-tinted masthead; cards solid parchment with oxblood borders, corner diamonds and titles (field labels too); primary buttons iron with brass lettering (secondary = oxblood outline); selected chips oxblood; the contents bar and the sheet toolbar dark with brass pills; band labels brass on the desk. posse.css re-colors the sheet boxes and toolbar.
+- New components: use tokens and they follow. Anything with a hard-coded light background or dark text on the page background needs a `body.warden-mode` rule — check it in Warden mode.
 - The site nav (z 25) sits above the sticky sheet bar and contents bars (20 / 18) so its drop-down menus cover them.

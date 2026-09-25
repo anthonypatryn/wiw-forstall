@@ -974,14 +974,39 @@ input[type=range]::-moz-range-thumb { width: 16px; height: 16px; border-radius: 
 .tour-step { font: var(--fs-xs) var(--display); letter-spacing: .12em; color: var(--rust); }
 .tour-btns { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
 
-/* ---------- Warden mode: the Warden's desk at night ----------
-   The page itself goes dark (the paper texture multiplied down); cards stay paper on top, so every form reads the same.
-   Only text that sits straight on the page background changes. body.warden-mode is set by mountNav. */
-body.warden-mode { background-color: var(--desk); }
-/* cards are see-through paper on the day theme; on the desk they're solid paper sheets */
-body.warden-mode .card { background: var(--paper) url('../img/paper.jpg') center / 900px repeat; background-blend-mode: multiply; }
+/* ---------- Warden mode: oxblood & brass ----------
+   A different palette so the Warden always knows which seat they're in: an oxblood nav, a dark red-brown desk,
+   aged tan parchment cards with oxblood borders and titles, iron buttons lettered in brass, oxblood chips.
+   Mostly token overrides, so every page follows; body.warden-mode is set by mountNav. Players never see it. */
+body.warden-mode {
+  --paper: #dac6a0; --paper-2: #cdb68c; --surface: #f6ebd2; --surface-2: #e8d6b0;
+  --rust: #8a2418; --rust-dark: #5c1a14; --accent: #7a1f17; --accent-dark: #5c1a14; --accent-tint: rgba(122,31,23,.12);
+  --line: rgba(92,26,20,.35); --line-soft: rgba(92,26,20,.18);
+  --desk: #34201b;
+  background-color: var(--desk);
+}
+body.warden-mode .sitenav { background: #2a0f0c; border-bottom-color: var(--brass); }
+body.warden-mode .sitenav a[aria-current="page"], body.warden-mode .sitenav .nav-group.current > .nav-drop { color: var(--brass); }
+body.warden-mode .nav-menu { background: #2a0f0c; }
+body.warden-mode .masthead { box-shadow: inset 0 -5px 0 var(--brass); }
+body.warden-mode .masthead::after { background: linear-gradient(90deg, rgba(60,10,6,.92) 0%, rgba(90,18,12,.6) 55%, rgba(110,22,14,.35) 100%); }
+/* cards: solid aged parchment, oxblood edges */
+body.warden-mode .card { background: var(--paper) url('../img/paper.jpg') center / 900px repeat; background-blend-mode: multiply; border-color: var(--rust-dark); box-shadow: 3px 3px 0 rgba(0,0,0,.35); }
+body.warden-mode .card.corner::before, body.warden-mode .card.corner::after { color: var(--rust); }
+body.warden-mode .section-title, body.warden-mode .field-step > span { color: var(--accent); }
+body.warden-mode .field-step > span { opacity: .9; }
+/* buttons: iron, lettered in brass */
+body.warden-mode .btn:not(.secondary):not(.danger) { background: var(--iron); border-color: var(--brass); color: var(--brass); }
+body.warden-mode .btn:not(.secondary):not(.danger):hover { background: var(--rust-dark); color: #f6e7c1; }
+body.warden-mode .btn.secondary:not(.danger) { border-color: var(--rust-dark); color: var(--rust-dark); }
+body.warden-mode .btn.secondary:not(.danger):hover { background: var(--rust-dark); color: #f6e7c1; }
+body.warden-mode .chip-btn.on { background: var(--accent); border-color: var(--rust-dark); color: #f6e7c1; }
+/* the contents bar: dark, with brass for where you are */
+body.warden-mode .toc-bar { background: #2a0f0c; border-color: var(--brass); }
+body.warden-mode .toc-bar a { background: transparent; color: var(--on-dark); border-color: rgba(201,164,92,.5); }
+body.warden-mode .toc-bar a:hover, body.warden-mode .toc-bar a.on { background: var(--brass); color: var(--iron); border-color: var(--brass); }
+/* text straight on the desk */
 body.warden-mode .band-h { color: var(--brass); }
 body.warden-mode .band-h::after { border-top-color: rgba(201,164,92,.4); }
 body.warden-mode .footer, body.warden-mode .footer .conn { color: var(--on-dark-dim); }
-body.warden-mode .masthead { box-shadow: inset 0 -4px 0 var(--red); }
 body.warden-mode main > .muted, body.warden-mode main > p:not([class]) { color: var(--on-dark-dim); }
