@@ -5,12 +5,13 @@ import { play } from './sound.js';
 
 const EP = '/api/saloon';
 const me = () => store.get('wiw.me', null);
+const TOUGH = [['npc:Human - Weak Combatant', 'Green', 'weak Skills'], ['npc:Human - Moderate Combatant', 'Seasoned', 'fair Skills'], ['npc:Human - Strong Combatant', 'Sharp', 'strong Skills']];
 const STYLE = { tight: 'Plays it close', loose: 'Calls anything', bluffer: 'Loves a bluff' };
 const PHASE = { bet1: 'First betting round', draw: 'The draw', bet2: 'Second betting round (double stakes)', over: 'Hand over' };
 const $$ = (n) => `$${Number(n || 0).toFixed(2)}`;
 export function saloonStyles() {
   if (document.getElementById('saloon-css')) return;
-  document.head.insertAdjacentHTML('beforeend', '<link id="saloon-css" rel="stylesheet" href="/css/saloon.css?v=5">');
+  document.head.insertAdjacentHTML('beforeend', '<link id="saloon-css" rel="stylesheet" href="/css/saloon.css?v=8">');
 }
 // "A♠" → a playing card (same look as the lock-picking cards)
 const RANKV = { A: 'A', K: 'K', Q: 'Q', J: 'J' };
@@ -32,6 +33,10 @@ const MOVES = {
     { key: 'bluff', name: 'Bluff', mine: 'charm', theirs: 'intuition', who: 'every NPC still in the hand', when: 'On your turn to bet, before you bet. Once a hand.', win: 'Each NPC you beat plays scared for the rest of the hand: folds to bets and stops betting. An NPC holding two pair or better isn’t fooled.', lose: 'Nothing. They just don’t buy it.' },
     { key: 'palm', name: 'Palm a card', mine: 'finesse', theirs: 'intuition', who: 'the sharpest-eyed NPC at the table', when: 'On your draw, with exactly one card picked. Once a hand.', win: 'That card is swapped for the better of two cards off the deck.', lose: 'You’re caught cheating. Your hand is thrown in (you lose what you bet) and the whole table hears about it.' },
   ],
+  blackjack: [
+    { key: 'count', name: 'Count the cards', mine: 'intuition', theirs: 'finesse', who: 'the dealer', when: 'Any time in a round. Once a round.', win: 'You know whether the next card out of the shoe is high (a ten-card or an Ace), low (Two to Six) or middling. Good to know before you hit.', lose: 'You lose track. Nothing else.' },
+    { key: 'shiner', name: 'Use a shiner', mine: 'finesse', theirs: 'intuition', who: 'the dealer', when: 'On your turn. Once a round.', win: 'Your little mirror shows you the dealer’s hole card.', lose: 'The dealer spots it. Your bet is forfeit, you’re out of the round, and the whole table hears about it.' },
+  ],
   faro: [
     { key: 'watch', name: 'Watch the dealer', mine: 'intuition', theirs: 'finesse', who: 'the dealer', when: 'Any time during a deal. Once a deal.', win: 'If the dealing box is crooked, you catch it: everyone hears, and the game goes straight from there. If it’s honest, you know it’s honest.', lose: 'You can’t tell either way.' },
   ],
@@ -49,6 +54,14 @@ const RULES = {
     <li><b>Showdown.</b> The best hand still in takes the pot; ties split it. If everyone else folds, you win without showing.</li></ol>
     <h3>Hands, best to worst</h3>
     <p class="sl-ranks">Straight flush (five in a row, same suit) · Four of a kind · Full house (three + a pair) · Flush (same suit) · Straight (five in a row; Ace can be low) · Three of a kind · Two pair · One pair · High card</p>`,
+  blackjack: `<h3>Blackjack — beat the dealer to 21</h3>
+    <ol><li><b>Bet</b> between the table minimum and the house limit. The cards come out once everyone at the table has a bet down (or someone taps Deal the cards).</li>
+    <li>You get two cards face up. The dealer gets one face up and one face down, the <b>hole card</b>.</li>
+    <li>Cards count their number; Jacks, Queens and Kings count 10; an <b>Ace</b> counts 11 or 1, whichever helps.</li>
+    <li>On your turn: <i>hit</i> (take a card), <i>stand</i> (stop), or <i>double down</i> on your first two cards (double the bet and take exactly one more card). Over 21 is a <b>bust</b>: you lose.</li>
+    <li><b>Blackjack</b> (an Ace and a ten-card as your first two) pays 3 to 2.</li>
+    <li>The dealer checks for blackjack when showing an Ace or a ten-card. Then the dealer turns the hole card and <b>draws to 16, stands on 17</b>.</li>
+    <li>Closer to 21 than the dealer wins even money. A tie is a <b>push</b>: your bet comes back. No splitting pairs at this table.</li></ol>`,
   faro: `<h3>Faro — bet against the bank</h3>
     <ol><li>The dealer banks. Put money on any card on the <b>layout</b> (Ace to King); the suit doesn’t matter.</li>
     <li>The first card out, the <b>soda</b>, has no action.</li>
@@ -140,6 +153,7 @@ function render() {
   if (!t) { closeTable(); return; }
   if (t.game === 'faro') { renderFaro(t); return; }
   if (t.game === 'liars') { renderLiars(t); return; }
+  if (t.game === 'blackjack') { renderBj(t); return; }
   const h = t.hand, key = `pc:${me()}`;
   const npcs = t.seats.filter((s) => s.kind === 'npc'), pcs = t.seats.filter((s) => s.kind !== 'npc' && (asWarden || s.key !== key));
   const mine = asWarden ? null : h?.mine;
@@ -229,6 +243,62 @@ function renderLiars(t) {
   </div>`;
 }
 
+// ---------- blackjack ----------
+let bjAmt = 0;
+function renderBj(t) {
+  const B = t.bj, key = `pc:${me()}`, seated = !asWarden && t.seats.some((s) => s.key === key), dealer = t.seats.find((s) => s.kind === 'npc');
+  const min = t.stakes.ante, max = t.stakes.bet * 5;
+  if (!bjAmt) bjAmt = min;
+  bjAmt = Math.max(min, Math.min(max, bjAmt));
+  const pcs = t.seats.filter((s) => s.kind === 'pc');
+  const handHTML = (s) => {
+    const h = B?.hands?.[s.key], res = B?.phase === 'done' ? B.results?.[s.key] : null, bet = B?.phase === 'bets' ? B.bets?.[s.key] : h?.bet;
+    return `<div class="sl-seat bj-seat${B?.turn === s.key ? ' turn' : ''}${s.key === key ? ' me' : ''}${res?.win > 0 ? ' won' : ''}${h?.caught || (res && res.win < 0) ? ' folded' : ''}">
+      <div class="sl-who"><b>${esc(s.name)}${s.key === key ? ' (you)' : ''}</b><small>${s.net >= 0 ? '+' : '−'}${$$(Math.abs(s.net))}</small></div>
+      ${h ? `<div class="sl-cards">${h.cards.map((c) => card(c, s.key === key ? '' : 'sm')).join('')}</div><div class="bj-total">${h.blackjack ? 'Blackjack!' : `${h.total}${h.soft && h.total < 21 ? ' (soft)' : ''}${h.total > 21 ? ' — bust' : ''}`}</div>` : `<div class="sl-out">${B?.phase === 'bets' ? (bet ? 'bet down' : 'no bet yet') : 'sitting out'}</div>`}
+      <div class="sl-state">${bet ? `bet ${$$(bet)}${h?.doubled ? ' (doubled)' : ''}` : ''}${res ? ` <i>${esc(res.text)}</i>` : ''}</div></div>`;
+  };
+  const used = new Set(B?.used || []), myHand = B?.hands?.[key], myTurn = B?.phase === 'play' && B.turn === key;
+  const btns = [];
+  if (asWarden) {
+    if (!B || B.phase === 'done') btns.push(`<button type="button" class="btn" data-sl="deal">${gl('die')} ${B ? 'Next round' : 'Start the first round'}</button>`);
+    else if (B.phase === 'bets') btns.push(`<button type="button" class="btn" data-bj="deal"${Object.keys(B.bets || {}).length ? '' : ' disabled'}>${gl('die')} Deal the cards</button>`);
+    else btns.push(`<span class="muted">Waiting on ${esc(t.seats.find((s) => s.key === B.turn)?.name || '…')}</span>`);
+    btns.push('<button type="button" class="btn secondary" data-sl="close">Close the table</button>');
+  } else if (!seated) {
+    if (t.status !== 'closed') btns.push('<button type="button" class="btn" data-sl="join">Pull up a chair</button>');
+  } else if (!B || B.phase === 'done') {
+    btns.push(`<button type="button" class="btn" data-sl="deal">${gl('die')} ${B ? 'Play another round' : 'Start the first round'}</button>`);
+    btns.push('<button type="button" class="btn secondary" data-sl="leave">Cash out &amp; leave</button>');
+  } else if (B.phase === 'bets') {
+    const mine = B.bets?.[key];
+    btns.push(`<div class="fr-amt bj-amt"><button type="button" class="pm-btn" data-bjd="-1" aria-label="Less">−</button><b>${$$(bjAmt)}</b><button type="button" class="pm-btn" data-bjd="1" aria-label="More">+</button></div>`);
+    btns.push(`<button type="button" class="btn" data-bj="bet">${mine ? `Change bet to ${$$(bjAmt)}` : `Bet ${$$(bjAmt)}`}</button>`);
+    if (mine) btns.push(`<button type="button" class="btn secondary" data-bj="deal">${gl('die')} Deal the cards</button><button type="button" class="btn secondary" data-bj="unbet">Take my bet back</button>`);
+    btns.push('<button type="button" class="btn secondary" data-sl="leave">Cash out &amp; leave</button>');
+  } else if (myTurn) {
+    btns.push('<button type="button" class="btn" data-bjm="hit">Hit</button><button type="button" class="btn" data-bjm="stand">Stand</button>');
+    if (B.canDouble) btns.push(`<button type="button" class="btn secondary" data-bjm="double">Double down (+${$$(myHand.bet)})</button>`);
+    if (t.hooks.shiner && !used.has('shiner')) btns.push(`<button type="button" class="btn small secondary skill" data-bj="shiner">${gl('flash')} Use a shiner<small>Finesse: ${matchup(t, 'finesse', 'intuition', dealer)}</small></button>`);
+  } else {
+    btns.push(`<span class="muted">${myHand && !myHand.done ? 'Your turn is coming.' : myHand ? 'You’re done this round. Waiting on the others…' : 'You’re sitting this round out.'} ${B.turn ? `Now: ${esc(t.seats.find((s) => s.key === B.turn)?.name || '…')}` : ''}</span>`);
+  }
+  if (seated && B && B.phase !== 'done' && t.hooks.count && !used.has('count')) btns.push(`<button type="button" class="btn small secondary skill" data-bj="count">${gl('target')} Count the cards<small>Intuition: ${matchup(t, 'intuition', 'finesse', dealer)}</small></button>`);
+  const title = !B ? (t.status === 'closed' ? 'The table is closed' : 'Waiting for the first round') : B.phase === 'bets' ? `Round ${B.round} — place your bets` : B.phase === 'play' ? `Round ${B.round} — cards are out` : `Round ${B.round} is done`;
+  const dealerCards = B?.dealer?.length ? B.dealer.map((c, i) => card(c, i === 1 && B.holeSeen ? 'peeked' : '')).join('') : card(null) + card(null);
+  scene.innerHTML = `<div class="sl-table" role="dialog" aria-modal="true" aria-label="Blackjack at ${esc(t.where)}">
+    <div class="sl-top"><div><small>BLACKJACK · ${esc(t.where.toUpperCase())}</small><b>${title}</b></div>
+      <span class="sl-stakes">${esc(dealer?.name || 'The dealer')} banks ${$$(dealer?.bank)} · bets ${$$(min)}–${$$(max)} · blackjack pays 3 to 2</span>${rulesBtn}<button type="button" class="sl-x" data-sl="hide" aria-label="Step away">×</button></div>
+    <div class="sl-felt bj-felt">
+      <div class="bj-dealer"><small>${esc((dealer?.name || 'The dealer').toUpperCase())} · DEALER${B?.dealer?.length ? ` · ${B.phase === 'done' || asWarden ? B.dealerTotal : `showing ${B.dealerTotal}`}` : ''}</small><div class="sl-cards">${dealerCards}</div>${B?.holeSeen ? '<p class="bj-note">Your shiner shows the hole card.</p>' : ''}</div>
+      <p class="bj-rule">Dealer draws to 16 and stands on all 17s</p>
+      <div class="sl-seats bj-seats">${pcs.map(handHTML).join('')}</div>
+      ${B?.count ? `<p class="bj-note">${gl('target')} Your count: the next card is <b>${esc(B.count)}</b>.</p>` : ''}
+    </div>
+    <div class="sl-controls"><div class="btn-row sl-moves">${btns.join('')}</div></div>
+    ${B?.log?.length ? `<ol class="sl-log">${B.log.slice(-6).map((l) => `<li>${esc(l)}</li>`).join('')}</ol>` : ''}
+  </div>`;
+}
 // ---------- faro ----------
 const LAYOUT = [14, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
 const RN = { 14: 'A', 11: 'J', 12: 'Q', 13: 'K' };
@@ -364,6 +434,31 @@ async function onClick(e) {
       toast(r.won ? `You glimpse a ${r.die} under ${r.seat}’s cup.` : `${r.seat} keeps the cup tight.`, !r.won);
       return;
     }
+    if (d.bjd) { const t = view.table; bjAmt = Math.max(t.stakes.ante, Math.min(t.stakes.bet * 5, Math.round((bjAmt + Number(d.bjd) * t.stakes.ante) * 100) / 100)); render(); return; }
+    if (d.bj === 'bet') { await act({ action: 'bjBet', amount: bjAmt }); play('card'); return; }
+    if (d.bj === 'unbet') { await act({ action: 'bjBet', amount: 0 }); return; }
+    if (d.bj === 'deal') { await act({ action: 'bjDeal' }); play('card'); setTimeout(() => play('card'), 180); return; }
+    if (d.bjm) {
+      const r = await act({ action: 'bjMove', move: d.bjm }); play('card');
+      const res = view.table.bj?.results?.[`pc:${me()}`];
+      if (res && view.table.bj.phase === 'done') toast(res.win > 0 ? `You win ${$$(res.win)}: ${res.text}.` : res.win < 0 ? `You lose: ${res.text}.` : `Push: ${res.text}.`, res.win < 0);
+      else if (r?.total > 21) toast(`Bust with ${r.total}.`, true);
+      return;
+    }
+    if (d.bj === 'count') {
+      const r = await act({ action: 'bjCount' });
+      await showRoll('Intuition'); play(r.won ? 'success' : 'fail');
+      toast(r.won ? `You’ve kept count. The next card is ${r.next}.` : 'You lose the count.', !r.won);
+      return;
+    }
+    if (d.bj === 'shiner') {
+      if (!await ask('Use a shiner?\n\nFinesse against the dealer’s Intuition. Get it right and you see the hole card. Get caught and your bet is forfeit and you’re out of the round.', { ok: 'Use it', danger: false })) return;
+      const r = await act({ action: 'bjShiner' });
+      await showRoll('Finesse');
+      if (r.won) { play('success'); toast(`In your little mirror: the dealer’s hole card is the ${r.card}.`); }
+      else { play('fail'); toast(`${r.by} spots the shiner! Your bet is forfeit.`, true); }
+      return;
+    }
     if (d.frRank) {
       const t = view.table, r = Number(d.frRank), cur = t.faro?.bets?.[`pc:${me()}`]?.[r];
       const bet = await betDialog(t, r, cur);
@@ -411,6 +506,7 @@ async function showRoll(skill) {
   const again = lastRolls.length > 2 ? ' (after a tie)' : '';
   await rollPopup(mine, `Your ${skill}: ${mine.hits} vs ${theirs ? `${theirs.who} ${theirs.hits}` : '—'}${again}`).catch(() => {});
 }
+const turnOf = (t) => t?.hand?.turn || t?.bj?.turn || t?.liars?.turn || null;
 function openTable(warden = false) {
   saloonStyles();
   asWarden = warden;
@@ -436,7 +532,7 @@ function showChip() {
     chip.addEventListener('click', () => { store.set('wiw.saloonHidden', ''); openTable(false); showChip(); });
     document.body.append(chip);
   }
-  const h = t.hand, myTurn = h && h.turn === `pc:${me()}`;
+  const myTurn = turnOf(t) === `pc:${me()}`;
   chip.classList.toggle('turn', !!myTurn);
   chip.innerHTML = `${gl('die')} ${myTurn ? 'Your move at the card table' : 'Back to the card table'}`;
 }
@@ -454,13 +550,13 @@ export function watchSaloon() {
     if (!seated && invited && store.get('wiw.saloonAsked', '') !== t.id && !scene && !busy) {
       store.set('wiw.saloonAsked', t.id);
       play('chime');
-      const pitch = t.game === 'liars' ? `Liar’s Dice at ${t.where}\n\n${$$(t.stakes.ante)} a head, winner takes the pot. Five dice each, ones are wild. It’s your real money.` : t.game === 'faro' ? `A faro bank at ${t.where}\n\nBet on any card from ${$$(t.stakes.ante)} to ${$$(t.stakes.bet * 5)}. It’s your real money.` : `A card game at ${t.where}\n\nFive-card draw, ${$$(t.stakes.ante)} ante, bets of ${$$(t.stakes.bet)} (${$$(t.stakes.bet * 2)} after the draw). It’s your real money.`;
+      const pitch = t.game === 'blackjack' ? `Blackjack at ${t.where}\n\nBets from ${$$(t.stakes.ante)} to ${$$(t.stakes.bet * 5)}, blackjack pays 3 to 2. It’s your real money.` : t.game === 'liars' ? `Liar’s Dice at ${t.where}\n\n${$$(t.stakes.ante)} a head, winner takes the pot. Five dice each, ones are wild. It’s your real money.` : t.game === 'faro' ? `A faro bank at ${t.where}\n\nBet on any card from ${$$(t.stakes.ante)} to ${$$(t.stakes.bet * 5)}. It’s your real money.` : `A card game at ${t.where}\n\nFive-card draw, ${$$(t.stakes.ante)} ante, bets of ${$$(t.stakes.bet)} (${$$(t.stakes.bet * 2)} after the draw). It’s your real money.`;
       if (await ask(pitch, { ok: 'Take a seat', cancel: 'Not tonight', danger: false })) {
         try { await act({ action: 'join' }); openTable(false); } catch (err) { toast(err.message, true); }
       }
       return;
     }
-    const myTurn = t.hand && t.hand.turn === key && (!before?.table?.hand || before.table.hand.turn !== key || before.table.hand.phase !== t.hand.phase);
+    const myTurn = turnOf(t) === key && turnOf(before?.table) !== key;
     if (seated && myTurn && !scene) { play('chime'); openTable(false); }
     if (scene) render();
     showChip();
@@ -469,7 +565,7 @@ export function watchSaloon() {
 
 // ---------- the Warden's Saloon card (Run the Game) ----------
 export function mountSaloonDesk(el, getCombat) {
-  const st = { game: 'poker', crooked: false, peek: true, stare: true, where: 'the saloon', ante: 1, bet: 2, npcs: [{ name: '', profile: 'npc:Human - Moderate Combatant', style: 'loose', bank: 50 }], invite: null, tell: true, bluff: true, palm: true };
+  const st = { game: 'poker', crooked: false, peek: true, stare: true, count: true, shiner: true, where: 'the saloon', ante: 1, bet: 2, npcs: [{ name: '', profile: 'npc:Human - Moderate Combatant', style: 'loose', bank: 50 }], invite: null, tell: true, bluff: true, palm: true };
   let ledger = [], data = null;
   api('GET', null, '?view=warden', '/api/npcs').then((d) => { ledger = d.npcs || []; draw(); }).catch(() => {});
   const refresh = () => api('GET', null, '?view=warden', EP).then((d) => { data = d; view = d; draw(); if (scene) render(); }).catch(() => {});
@@ -479,29 +575,31 @@ export function mountSaloonDesk(el, getCombat) {
     const t = data?.table;
     if (t && t.status !== 'closed') {
       const h = t.hand;
-      el.innerHTML = `<p class="sl-desk-sum"><b>${t.game === 'faro' ? 'Faro' : t.game === 'liars' ? 'Liar’s Dice' : 'Poker'} at ${esc(t.where)}</b> · ${t.handsPlayed || 0} hand${t.handsPlayed === 1 ? '' : 's'} played${h && h.phase !== 'over' ? ` · hand ${h.no}: ${esc(PHASE[h.phase])}, pot ${$$(h.pot)}` : ''}</p>
-        <div class="sl-desk-seats">${t.seats.map((s) => `<div class="item-row"><span class="item-who"><b>${esc(s.name)}</b><small class="muted">${s.kind === 'npc' ? `${t.game === 'faro' ? 'the dealer' : esc(STYLE[s.style] || '')} · bank ${$$(s.bank)}` : `${s.net >= 0 ? 'up' : 'down'} ${$$(Math.abs(s.net))}`}${h?.all?.[s.key] ? ` · ${esc(h.all[s.key].name)}` : ''}${t.liars?.all?.[s.key] ? ` · cup: ${t.liars.all[s.key].join(' ')}` : ''}</small></span>${s.kind === 'pc' ? `<button type="button" class="btn small secondary" data-kick="${esc(s.key)}">Remove</button>` : ''}</div>`).join('')}</div>
-        <div class="btn-row"><button type="button" class="btn" data-watch>${gl('die')} Watch the table</button>${t.game === 'liars' ? (!t.liars || t.liars.over ? '<button type="button" class="btn secondary" data-deal>Start a game</button>' : '') : t.game === 'faro' ? (!t.faro || t.faro.over ? '<button type="button" class="btn secondary" data-deal>Shuffle a deal</button>' : '') : !h || h.phase === 'over' ? '<button type="button" class="btn secondary" data-deal>Deal a hand</button>' : ''}<button type="button" class="btn secondary" data-close>Close the table</button></div>`;
+      el.innerHTML = `<p class="sl-desk-sum"><b>${{ faro: 'Faro', liars: 'Liar’s Dice', blackjack: 'Blackjack' }[t.game] || 'Poker'} at ${esc(t.where)}</b> · ${t.handsPlayed || 0} hand${t.handsPlayed === 1 ? '' : 's'} played${h && h.phase !== 'over' ? ` · hand ${h.no}: ${esc(PHASE[h.phase])}, pot ${$$(h.pot)}` : ''}</p>
+        <div class="sl-desk-seats">${t.seats.map((s) => `<div class="item-row"><span class="item-who"><b>${esc(s.name)}</b><small class="muted">${s.kind === 'npc' ? `${['faro', 'blackjack'].includes(t.game) ? 'the dealer' : esc(STYLE[s.style] || '')} · bank ${$$(s.bank)}` : `${s.net >= 0 ? 'up' : 'down'} ${$$(Math.abs(s.net))}`}${h?.all?.[s.key] ? ` · ${esc(h.all[s.key].name)}` : ''}${t.liars?.all?.[s.key] ? ` · cup: ${t.liars.all[s.key].join(' ')}` : ''}</small></span>${s.kind === 'pc' ? `<button type="button" class="btn small secondary" data-kick="${esc(s.key)}">Remove</button>` : ''}</div>`).join('')}</div>
+        <div class="btn-row"><button type="button" class="btn" data-watch>${gl('die')} Watch the table</button>${t.game === 'blackjack' ? (!t.bj || t.bj.phase === 'done' ? '<button type="button" class="btn secondary" data-deal>Start a round</button>' : '') : t.game === 'liars' ? (!t.liars || t.liars.over ? '<button type="button" class="btn secondary" data-deal>Start a game</button>' : '') : t.game === 'faro' ? (!t.faro || t.faro.over ? '<button type="button" class="btn secondary" data-deal>Shuffle a deal</button>' : '') : !h || h.phase === 'over' ? '<button type="button" class="btn secondary" data-deal>Deal a hand</button>' : ''}<button type="button" class="btn secondary" data-close>Close the table</button></div>`;
       return;
     }
     const posse = (getCombat()?.posse || []).filter((p) => !p.dead);
-    const faro = st.game === 'faro';
-    el.innerHTML = `<div class="field-step"><span>GAME</span><button type="button" class="chip-btn${st.game === 'poker' ? ' on' : ''}" data-game="poker">Poker<small>five-card draw</small></button><button type="button" class="chip-btn${faro ? ' on' : ''}" data-game="faro">Faro<small>bet against the bank</small></button><button type="button" class="chip-btn${st.game === 'liars' ? ' on' : ''}" data-game="liars">Liar’s Dice<small>bid and bluff</small></button></div>
+    const faro = st.game === 'faro' || st.game === 'blackjack'; // both have one dealer who banks
+    const bj = st.game === 'blackjack';
+    el.innerHTML = `<div class="field-step"><span>GAME</span><button type="button" class="chip-btn${st.game === 'poker' ? ' on' : ''}" data-game="poker">Poker<small>five-card draw</small></button><button type="button" class="chip-btn${st.game === 'faro' ? ' on' : ''}" data-game="faro">Faro<small>bet against the bank</small></button><button type="button" class="chip-btn${st.game === 'liars' ? ' on' : ''}" data-game="liars">Liar’s Dice<small>bid and bluff</small></button><button type="button" class="chip-btn${st.game === 'blackjack' ? ' on' : ''}" data-game="blackjack">Blackjack<small>beat the dealer to 21</small></button></div>
       <div class="field-step"><span>WHERE</span><input data-s="where" maxlength="60" value="${esc(st.where)}" placeholder="e.g. the Long Branch Saloon"></div>
-      ${faro ? `<div class="field-step"><span>BETS</span><label class="lp-num">Least $<input type="number" min="0.25" step="0.25" data-s="ante" value="${st.ante}"></label><label class="lp-num">Most a card $<input type="number" min="1" step="1" data-faromax value="${st.bet * 5}"></label></div>`
+      ${faro ? `<div class="field-step"><span>BETS</span><label class="lp-num">Least $<input type="number" min="0.25" step="0.25" data-s="ante" value="${st.ante}"></label><label class="lp-num">Most ${bj ? 'a hand' : 'a card'} $<input type="number" min="1" step="1" data-faromax value="${st.bet * 5}"></label></div>`
         : st.game === 'liars' ? `<div class="field-step"><span>STAKES</span><label class="lp-num">Each player puts in $<input type="number" min="0.25" step="0.25" data-s="ante" value="${st.ante}"></label><small class="muted">winner takes the pot</small></div>`
         : `<div class="field-step"><span>STAKES</span><label class="lp-num">Ante $<input type="number" min="0.25" step="0.25" data-s="ante" value="${st.ante}"></label><label class="lp-num">Bet $<input type="number" min="0.5" step="0.5" data-s="bet" value="${st.bet}"></label><small class="muted">doubles after the draw</small></div>`}
-      <div class="field-step"><span>${faro ? 'THE DEALER — banks the game' : 'AT THE TABLE — NPCs'}</span></div>
-      ${(faro ? st.npcs.slice(0, 1) : st.npcs).map((n, i) => `<div class="sl-npc-row">
+      ${(faro ? st.npcs.slice(0, 1) : st.npcs).map((n, i) => `<div class="field-step sl-npc">
+        <span>${faro ? 'THE DEALER — banks the game' : `NPC ${i + 1} AT THE TABLE`}</span>
         <input data-n="${i}" data-k="name" maxlength="40" value="${esc(n.name)}" placeholder="Name">
         ${ledger.length ? `<select data-ledger="${i}" aria-label="Pick from the NPC ledger"><option value="">From the ledger…</option>${ledger.map((l) => `<option value="${esc(l.name)}">${esc(l.name)}</option>`).join('')}</select>` : ''}
-        <select data-n="${i}" data-k="profile">${[['npc:Human - Weak Combatant', 'Green'], ['npc:Human - Moderate Combatant', 'Seasoned'], ['npc:Human - Strong Combatant', 'Sharp']].map(([v, l]) => `<option value="${v}"${n.profile === v ? ' selected' : ''}>${l}</option>`).join('')}</select>
-        ${faro ? '' : `<select data-n="${i}" data-k="style">${Object.entries(STYLE).map(([v, l]) => `<option value="${v}"${n.style === v ? ' selected' : ''}>${l}</option>`).join('')}</select>`}
+        <div class="sl-npc-chips">${TOUGH.map(([v, l, d]) => `<button type="button" class="chip-btn${n.profile === v ? ' on' : ''}" data-tough="${i}" data-v="${v}">${l}<small>${d}</small></button>`).join('')}</div>
+        ${faro ? '' : `<div class="sl-npc-chips">${Object.entries(STYLE).map(([v, l]) => `<button type="button" class="chip-btn${n.style === v ? ' on' : ''}" data-style="${i}" data-v="${v}">${l}</button>`).join('')}</div>`}
         <label class="lp-num">Bank $<input type="number" min="1" data-n="${i}" data-k="bank" value="${n.bank}"></label>
-        ${st.npcs.length > 1 && !faro ? `<button type="button" class="rm-btn" data-rmnpc="${i}" aria-label="Remove">×</button>` : ''}</div>`).join('')}
-      ${st.npcs.length < 4 && !faro ? '<button type="button" class="btn small secondary" data-addnpc>+ Another NPC</button>' : ''}
+        ${st.npcs.length > 1 && !faro ? `<button type="button" class="btn small secondary danger" data-rmnpc="${i}">Remove</button>` : ''}</div>`).join('')}
+      ${st.npcs.length < 4 && !faro ? '<div class="btn-row sl-addnpc"><button type="button" class="btn small secondary" data-addnpc>+ Another NPC</button></div>' : ''}
       <div class="field-step"><span>WHO’S INVITED</span><button type="button" class="chip-btn${st.invite ? '' : ' on'}" data-inv-all>Everyone</button>${posse.map((p) => `<button type="button" class="chip-btn${st.invite?.has(p.id) ? ' on' : ''}" data-inv="${esc(p.id)}">${esc(p.name)}</button>`).join('')}</div>
-      ${faro ? `<div class="field-step"><span>THE DEALING BOX — only you see this</span><button type="button" class="chip-btn${st.crooked ? '' : ' on'}" data-crook="0">Square</button><button type="button" class="chip-btn${st.crooked ? ' on' : ''}" data-crook="1">Crooked<small>stacks cards against big bets; Intuition can catch it</small></button></div>`
+      ${bj ? `<div class="field-step"><span>SKILL MOVES</span>${[['count', 'Count the cards', 'Intuition'], ['shiner', 'Use a shiner', 'Finesse']].map(([k, l, s]) => `<button type="button" class="chip-btn${st[k] ? ' on' : ''}" data-hook="${k}">${l}<small>${s}</small></button>`).join('')}</div>`
+        : faro ? `<div class="field-step"><span>THE DEALING BOX — only you see this</span><button type="button" class="chip-btn${st.crooked ? '' : ' on'}" data-crook="0">Square</button><button type="button" class="chip-btn${st.crooked ? ' on' : ''}" data-crook="1">Crooked<small>stacks cards against big bets; Intuition can catch it</small></button></div>`
         : st.game === 'liars' ? `<div class="field-step"><span>SKILL MOVES</span>${[['peek', 'Peek under a cup', 'Intuition'], ['stare', 'Stare them down', 'Charm']].map(([k, l, s]) => `<button type="button" class="chip-btn${st[k] ? ' on' : ''}" data-hook="${k}">${l}<small>${s}</small></button>`).join('')}</div>`
         : `<div class="field-step"><span>SKILL MOVES</span>${[['tell', 'Read a tell', 'Intuition'], ['bluff', 'Bluff', 'Charm'], ['palm', 'Palm a card', 'Finesse']].map(([k, l, s]) => `<button type="button" class="chip-btn${st[k] ? ' on' : ''}" data-hook="${k}">${l}<small>${s}</small></button>`).join('')}</div>`}
       <button type="button" class="btn" data-open>${gl('die')} Open the table</button>`;
@@ -522,10 +620,12 @@ export function mountSaloonDesk(el, getCombat) {
       if (d.invAll !== undefined) { st.invite = null; draw(); return; }
       if (d.inv) { st.invite ||= new Set(); if (st.invite.has(d.inv)) st.invite.delete(d.inv); else st.invite.add(d.inv); if (!st.invite.size) st.invite = null; draw(); return; }
       if (d.hook) { st[d.hook] = !st[d.hook]; draw(); return; }
+      if (d.tough !== undefined) { st.npcs[Number(d.tough)].profile = d.v; draw(); return; }
+      if (d.style !== undefined) { st.npcs[Number(d.style)].style = d.v; draw(); return; }
       if (d.game) { st.game = d.game; draw(); return; }
       if (d.crook !== undefined) { st.crooked = d.crook === '1'; draw(); return; }
       if (d.open !== undefined) {
-        const r = await api('POST', { action: 'open', game: st.game, crooked: st.crooked, where: st.where, ante: st.ante, bet: st.bet, npcs: st.game === 'faro' ? st.npcs.slice(0, 1) : st.npcs, invite: st.invite ? [...st.invite] : [], tell: st.tell, bluff: st.bluff, palm: st.palm, peek: st.peek, stare: st.stare }, '', EP);
+        const r = await api('POST', { action: 'open', game: st.game, crooked: st.crooked, where: st.where, ante: st.ante, bet: st.bet, npcs: ['faro', 'blackjack'].includes(st.game) ? st.npcs.slice(0, 1) : st.npcs, invite: st.invite ? [...st.invite] : [], tell: st.tell, bluff: st.bluff, palm: st.palm, peek: st.peek, stare: st.stare, count: st.count, shiner: st.shiner }, '', EP);
         data = r.state; view = r.state; draw(); toast('The table is open — the posse gets an invite.');
         return;
       }

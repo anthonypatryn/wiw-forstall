@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="/css/style.css?v=54">
   <link rel="stylesheet" href="/css/rollcall.css?v=12">
   <link rel="stylesheet" href="/css/desk.css?v=13">
-  <link rel="stylesheet" href="/css/run.css?v=21">
+  <link rel="stylesheet" href="/css/run.css?v=22">
 </head>
 <body>
   <header class="masthead">
@@ -68,12 +68,12 @@
           <div class="head-row"><h2 class="section-title">Call for a Roll</h2><span class="muted">Task difficulty, p. 12</span></div>
           <div id="rollcall"></div>
         </section>
-          </div>
-          <div class="stack-col">
             <section class="card corner">
           <h2 class="section-title">Open Rolls</h2>
           <div id="check-list"></div>
         </section>
+          </div>
+          <div class="stack-col">
             <section class="card corner">
               <div class="head-row"><h2 class="section-title">Lock Pick</h2><span class="muted">High/Low · Finesse peeks</span></div>
               <div id="lockpick"></div>
@@ -89,18 +89,18 @@
           <div class="head-row"><h2 class="section-title">The Posse</h2><a class="btn small secondary" href="/posse"><span data-gl="scroll"></span> Sheets</a></div>
           <div id="posse"></div>
         </section>
-          </div>
-          <div class="stack-col">
             <section class="card corner">
           <div class="head-row"><h2 class="section-title">Enemies</h2><a class="btn small secondary" href="/combat"><span data-gl="claws"></span> Add or loot</a></div>
           <div id="enemies"></div>
         </section>
           </div>
-        </div>
-        <section class="card corner saloon-card">
-          <div class="head-row"><h2 class="section-title">The Saloon</h2><span class="muted">poker, faro and Liar’s Dice, with real money</span></div>
+          <div class="stack-col">
+            <section class="card corner">
+          <div class="head-row"><h2 class="section-title">The Saloon</h2><span class="muted">cards and dice for real money</span></div>
           <div id="saloon"></div>
         </section>
+          </div>
+        </div>
       </section>
       <section class="band" id="grp-rewards">
         <h2 class="band-h">Rewards &amp; Handouts</h2>
@@ -110,12 +110,16 @@
               <div class="head-row"><h2 class="section-title">Award the Posse</h2><span class="muted">after a fight or expedition</span></div>
               <div id="award"></div>
             </section>
-          </div>
-          <div class="stack-col">
             <section class="card corner">
               <div class="head-row"><h2 class="section-title">Jackpot</h2><span class="muted">play of the game, p. 54</span></div>
               <div id="jackpot"></div>
             </section>
+            <section class="card corner">
+              <div class="head-row"><h2 class="section-title">Town Rest</h2><button class="btn small" id="town-all" type="button"><span data-gl="fire"></span> Everyone rests</button></div>
+              <p class="muted sess-note">The posse beds down in town (p. 54): full Health, Statuses cleared, Supplies reset, Forstalls recharged, 2/day abilities back.</p>
+            </section>
+          </div>
+          <div class="stack-col">
             <section class="card corner">
               <div class="head-row"><h2 class="section-title">Hand Out</h2><span class="muted">items &amp; secret notes</span></div>
               <div id="handout"></div>
@@ -123,10 +127,6 @@
             <section class="card corner">
               <div class="head-row"><h2 class="section-title">Whisper</h2><span class="muted">a secret to one or more players</span></div>
               <div id="wwhisper"></div>
-            </section>
-            <section class="card corner">
-              <div class="head-row"><h2 class="section-title">Town Rest</h2><button class="btn small" id="town-all" type="button"><span data-gl="fire"></span> Everyone rests</button></div>
-              <p class="muted sess-note">The posse beds down in town (p. 54): full Health, Statuses cleared, Supplies reset, Forstalls recharged, 2/day abilities back.</p>
             </section>
           </div>
         </div>
@@ -182,6 +182,6 @@
     </div>
   </main>
 
-  <script type="module" src="/js/run.js?v=33"></script>
+  <script type="module" src="/js/run.js?v=34"></script>
 </body>
 </html>

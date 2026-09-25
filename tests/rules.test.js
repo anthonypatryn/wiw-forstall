@@ -647,3 +647,65 @@ test('Saloon Skill moves: Poisoned rolls 2 fewer dice (gold kept last)', async (
   assert.deepEqual(poolFor({ skills: { charm: '3B1G' }, statuses: { Poisoned: 2 } }, 'charm'), { black: 1, gold: 1 });
   assert.deepEqual(poolFor({ skills: { charm: '1B' }, statuses: { Poisoned: 1 } }, 'charm'), { black: 0, gold: 0 });
 });
+
+test('Blackjack: totals, a dealer bust, blackjack pays 3 to 2, double down, the shiner and the count', async () => {
+  const { freshSaloon, saloonAction, saloonView } = await import('../lib/saloon.js');
+  const { bjTotal } = await import('../lib/blackjack.js');
+  const C = (x) => ({ r: { A: 14, K: 13, Q: 12, J: 11, T: 10 }[x[0]] || Number(x[0]), s: x[1] });
+  assert.equal(bjTotal(['A♠', 'A♦', '9♣'].map(C)).n, 21, 'two Aces and a nine');
+  assert.deepEqual(bjTotal(['A♠', '6♦'].map(C)), { n: 17, soft: true });
+  assert.equal(bjTotal(['K♠', 'Q♦', '5♣'].map(C)).n, 25);
+  // deal order: Lila, dealer, Lila, dealer; then hits
+  const seq = ['T♠', '9♦', '7♣', '7♥', 'K♠', /* r2 */ 'A♠', '9♦', 'K♣', '8♥', /* r3 */ '6♠', 'T♦', '5♣', '7♥', 'T♠', /* r4 */ '9♠', 'T♣', '9♣', '8♦', '4♦'];
+  const deck = () => [...seq, ...Array(52 - seq.length).fill('2♥')].map(C).reverse();
+  const st = freshSaloon(), logs = [];
+  const posse = [{ id: 'a', name: 'Lila', wallet: '20.00', skills: { intuition: '3B', charm: '3B', finesse: '3B' } }];
+  let npcHits = 0;
+  const ctx = { posse, deck, rand: () => 0.5, npcSkills: () => ({ charm: '1B', intuition: '1B', finesse: '1B' }), roll: (seat) => ({ hits: seat.kind === 'npc' ? npcHits : 2 }), log: (t) => logs.push(t) };
+  const W = { ...ctx, warden: true };
+  saloonAction(st, { action: 'open', game: 'blackjack', ante: 1, bet: 2, npcs: [{ name: 'Kid', bank: 100 }, { name: 'extra' }] }, W);
+  assert.equal(st.table.seats.length, 1, 'one dealer');
+  saloonAction(st, { action: 'join', pc: 'a' }, ctx);
+  saloonAction(st, { action: 'deal' }, W);
+  assert.throws(() => saloonAction(st, { action: 'bjBet', pc: 'a', amount: 50 }, ctx), /limit/);
+  saloonAction(st, { action: 'bjBet', pc: 'a', amount: 5 }, ctx); // everyone's bet: the cards come out
+  let v = saloonView(st, { pc: 'a' }).table.bj;
+  assert.equal(v.phase, 'play'); assert.equal(v.hands['pc:a'].total, 17); assert.equal(v.dealer[1], null, 'hole card hidden');
+  assert.equal(posse[0].wallet, '15.00');
+  saloonAction(st, { action: 'bjMove', pc: 'a', move: 'stand' }, ctx);
+  v = saloonView(st, { pc: 'a' }).table.bj;
+  assert.equal(v.phase, 'done'); assert.match(v.results['pc:a'].text, /dealer busts/);
+  assert.equal(posse[0].wallet, '25.00'); assert.equal(st.table.seats[0].bank, 95);
+  // blackjack pays 3 to 2
+  saloonAction(st, { action: 'deal' }, W);
+  saloonAction(st, { action: 'bjBet', pc: 'a', amount: 2 }, ctx);
+  assert.equal(saloonView(st, { pc: 'a' }).table.bj.phase, 'done');
+  assert.equal(posse[0].wallet, '28.00');
+  // double down on 11
+  saloonAction(st, { action: 'deal' }, W);
+  saloonAction(st, { action: 'bjBet', pc: 'a', amount: 2 }, ctx);
+  saloonAction(st, { action: 'bjMove', pc: 'a', move: 'double' }, ctx);
+  v = saloonView(st, { pc: 'a' }).table.bj;
+  assert.equal(v.hands['pc:a'].bet, 4); assert.match(v.results['pc:a'].text, /21 beats 17/);
+  assert.equal(posse[0].wallet, '32.00');
+  // count (win: next card band) and the shiner (win: the hole card; lose: caught, bet forfeit)
+  saloonAction(st, { action: 'deal' }, W);
+  saloonAction(st, { action: 'bjBet', pc: 'a', amount: 2 }, ctx);
+  const n = saloonAction(st, { action: 'bjCount', pc: 'a' }, ctx);
+  assert.match(n.next, /low/, 'the next card is the 4');
+  const sh = saloonAction(st, { action: 'bjShiner', pc: 'a' }, ctx);
+  assert.equal(sh.card, '8♦');
+  assert.equal(saloonView(st, { pc: 'a' }).table.bj.dealer[1], '8♦');
+  assert.throws(() => saloonAction(st, { action: 'bjShiner', pc: 'a' }, ctx), /Once/);
+  saloonAction(st, { action: 'bjMove', pc: 'a', move: 'stand' }, ctx); // 18 vs 18
+  assert.match(saloonView(st, { pc: 'a' }).table.bj.results['pc:a'].text, /push/);
+  assert.equal(posse[0].wallet, '32.00');
+  saloonAction(st, { action: 'deal' }, W);
+  saloonAction(st, { action: 'bjBet', pc: 'a', amount: 2 }, ctx);
+  npcHits = 5;
+  const caught = saloonAction(st, { action: 'bjShiner', pc: 'a' }, ctx);
+  assert.equal(caught.won, false);
+  assert.match(saloonView(st, { pc: 'a' }).table.bj.results['pc:a'].text, /forfeit/);
+  assert.equal(posse[0].wallet, '30.00');
+  assert.ok(logs.some((l) => /cheating at blackjack/.test(l)));
+});
