@@ -21,16 +21,16 @@ export function mountRollCaller(el, getCombat, after) {
     const picked = new Set(chosen().map((p) => p.id));
     const everyone = !sel.who;
     el.innerHTML = `
-      <div class="rc-step"><span>WHO</span>
-        <button type="button" class="rc-chip${everyone ? ' on' : ''}" data-rc-all>${fight ? 'Everyone in the fight' : 'Everyone'}</button>
-        ${list.map((p) => `<button type="button" class="rc-chip${!everyone && picked.has(p.id) ? ' on' : ''}" data-rc-who="${esc(p.id)}">${esc(p.name)}</button>`).join('') || '<span class="muted">No characters yet.</span>'}</div>
-      <div class="rc-step"><span>HOW HARD</span>
-        ${DIFF.map(([n, t]) => `<button type="button" class="rc-chip${sel.diff === n ? ' on' : ''}" data-rc-diff="${n}">${n}<small>${t} Hit${t > 1 ? 's' : ''}</small></button>`).join('')}
-        <button type="button" class="rc-chip${sel.diff === 'challenge' ? ' on' : ''}" data-rc-diff="challenge">Challenge<small>most Hits wins</small></button></div>
-      ${sel.diff === 'challenge' ? `<div class="rc-step"><span>AGAINST</span><select data-rc-npc aria-label="Opponent"><option value="">— just the posse picked above —</option>
+      <div class="field-step"><span>WHO</span>
+        <button type="button" class="chip-btn${everyone ? ' on' : ''}" data-rc-all>${fight ? 'Everyone in the fight' : 'Everyone'}</button>
+        ${list.map((p) => `<button type="button" class="chip-btn${!everyone && picked.has(p.id) ? ' on' : ''}" data-rc-who="${esc(p.id)}">${esc(p.name)}</button>`).join('') || '<span class="muted">No characters yet.</span>'}</div>
+      <div class="field-step"><span>HOW HARD</span>
+        ${DIFF.map(([n, t]) => `<button type="button" class="chip-btn${sel.diff === n ? ' on' : ''}" data-rc-diff="${n}">${n}<small>${t} Hit${t > 1 ? 's' : ''}</small></button>`).join('')}
+        <button type="button" class="chip-btn${sel.diff === 'challenge' ? ' on' : ''}" data-rc-diff="challenge">Challenge<small>most Hits wins</small></button></div>
+      ${sel.diff === 'challenge' ? `<div class="field-step"><span>AGAINST</span><select data-rc-npc aria-label="Opponent"><option value="">— just the posse picked above —</option>
           ${(c?.enemies || []).filter((e) => !e.defeated).map((e) => `<option value="en:${e.id}"${sel.npc === `en:${e.id}` ? ' selected' : ''}>${esc(e.name)}</option>`).join('')}
           <optgroup label="Book NPCs">${(c?.npcCatalog || []).map((n) => { const v = `np:${n.key}|${n.faction ? n.name : ''}`; return `<option value="${esc(v)}"${sel.npc === v ? ' selected' : ''}>${esc(n.name.replace('Human - ', 'Human: '))}</option>`; }).join('')}</optgroup></select></div>` : ''}
-      <div class="rc-step rc-note"><span>FOR</span><input data-rc-note maxlength="80" placeholder="what’s it for? (optional) e.g. climb the cliff" value="${esc(sel.note)}"></div>
+      <div class="field-step"><span>FOR</span><input data-rc-note maxlength="80" placeholder="what’s it for? (optional) e.g. climb the cliff" value="${esc(sel.note)}"></div>
       <div class="rc-skills">${SKILLS.map(([s, d]) => `<button type="button" class="rc-skill" data-rc-skill="${s}">${gl('die')}<b>${s}</b><small>${d}</small></button>`).join('')}</div>
       <p class="muted rc-tip">Tap a Skill to send it — it pops up on ${chosen().length === 1 ? `${esc(chosen()[0].name)}’s` : 'their'} phones. Anyone not called gets a pop-up to Help with half their dice — pick one person when the others should help.</p>`;
   }

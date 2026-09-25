@@ -97,15 +97,15 @@ export function renderChecks() {
     const help = Math.max(0, ...Object.values(ck.helps || {}).map((h) => h.hits));
     const done = `<button type="button" class="btn small secondary" data-ck-close="${ck.id}">Done</button>`;
     if (ck.kind === 'challenge') {
-      return `<div class="need${ck.winner ? '' : ' urgent'}"><div class="ck-body"><b>${gl('revolver')} ${esc(ck.skill)} Challenge</b>${ck.round > 1 ? ` · round ${ck.round}` : ''}${ck.note ? ` · <i>${esc(ck.note)}</i>` : ''}
-        <div class="ck-who">${ck.who.map((pid) => `<span class="run-st${ck.rolls[pid] ? '' : ' wait'}">${esc(nm(pid))} ${ck.rolls[pid] ? `<b>${ck.rolls[pid].hits}</b>` : '…'}</span>`).join('')}${ck.npc ? `<span class="run-st">${esc(ck.npc.name)} rolls last</span>` : ''}</div>
+      return `<div class="notice${ck.winner ? '' : ' urgent'}"><div class="ck-body"><b>${gl('revolver')} ${esc(ck.skill)} Challenge</b>${ck.round > 1 ? ` · round ${ck.round}` : ''}${ck.note ? ` · <i>${esc(ck.note)}</i>` : ''}
+        <div class="ck-who">${ck.who.map((pid) => `<span class="pill${ck.rolls[pid] ? '' : ' wait'}">${esc(nm(pid))} ${ck.rolls[pid] ? `<b>${ck.rolls[pid].hits}</b>` : '…'}</span>`).join('')}${ck.npc ? `<span class="pill">${esc(ck.npc.name)} rolls last</span>` : ''}</div>
         ${ck.winner ? `<div class="ck-win">${gl('trophy')} ${esc(ck.winner)} wins — ${(ck.last || []).map((x) => `${esc(x.name)} ${x.hits}`).join(' · ')}</div>` : ck.last ? `<div class="muted">Tied (${ck.last.map((x) => `${esc(x.name)} ${x.hits}`).join(' · ')}) — rolling again.</div>` : ''}</div>${done}</div>`;
     }
     const waiting = ck.who.some((pid) => !ck.rolls[pid]);
-    return `<div class="need${waiting ? ' urgent' : ''}"><div class="ck-body"><b>${gl('die')} ${esc(ck.skill)}</b> · ${esc(ck.diff)} (${ck.target})${ck.note ? ` · <i>${esc(ck.note)}</i>` : ''}
+    return `<div class="notice${waiting ? ' urgent' : ''}"><div class="ck-body"><b>${gl('die')} ${esc(ck.skill)}</b> · ${esc(ck.diff)} (${ck.target})${ck.note ? ` · <i>${esc(ck.note)}</i>` : ''}
       <div class="ck-who">${ck.who.map((pid) => { const r = ck.rolls[pid]; const tot = r ? r.hits + help : null;
-        return `<span class="run-st${r ? (tot >= ck.target ? ' ok' : ' no') : ' wait'}">${esc(nm(pid))} ${r ? `${tot >= ck.target ? '✓' : '✗'} ${tot}/${ck.target}` : '…'}</span>`; }).join('')}
-      ${Object.values(ck.helps || {}).map((h) => `<span class="run-st">${esc(h.name)} helped +${h.hits}</span>`).join('')}</div></div>${done}</div>`;
+        return `<span class="pill${r ? (tot >= ck.target ? ' ok' : ' no') : ' wait'}">${esc(nm(pid))} ${r ? `${tot >= ck.target ? '✓' : '✗'} ${tot}/${ck.target}` : '…'}</span>`; }).join('')}
+      ${Object.values(ck.helps || {}).map((h) => `<span class="pill">${esc(h.name)} helped +${h.hits}</span>`).join('')}</div></div>${done}</div>`;
   }).join('');
   $('#check-list').innerHTML = rows || '<p class="muted">No rolls open. Call one above.</p>';
   $('#check-list').querySelectorAll('[data-ck-close]').forEach((b) => b.addEventListener('click', () => combatAct({ action: 'checkClose', id: b.dataset.ckClose })));

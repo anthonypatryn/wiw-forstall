@@ -96,7 +96,7 @@ function gritHTML(f, editable) {
   const max = Math.max(6, f.grit);
   return `<div class="row2"><span class="lbl">GRIT</span><span class="pips">${Array.from({ length: max }, (_, i) =>
     `<button type="button" class="pip${i < f.grit ? ' on' : ''}" ${editable ? `data-grit="${i + 1}"` : 'disabled'} aria-label="${i + 1} Grit"></button>`).join('')}</span>
-    <span class="muted" style="font-size:14px">${f.grit} left</span></div>`;
+    <span class="muted small-text">${f.grit} left</span></div>`;
 }
 function statusesHTML(f, editable) {
   const list = Object.entries(f.statuses || {});
@@ -141,12 +141,12 @@ function pcCard(p) {
     ${p.dead ? '' : `<div class="row2"><span class="lbl">ACES</span><span class="pips">${Array.from({ length: 6 }, (_, i) =>
       `<button type="button" class="pip ace${i < p.aces ? ' on' : ''}" data-aces="${i + 1}" aria-label="${i + 1} Aces"></button>`).join('')}</span></div>`}
     ${p.aces >= 6 && !p.dead ? `<div class="ace-ready"><b>ACE-IN-THE-HOLE READY</b> — ${aces.map((a) => `<b>${esc(a.name)}</b>: ${esc(a.text)}`).join('<br>')}
-      <div style="margin-top:6px"><button class="btn small" data-ace-use type="button">Play it (reset meter)</button></div></div>` : ''}
+      <div class="mt-2"><button class="btn small" data-ace-use type="button">Play it (reset meter)</button></div></div>` : ''}
     ${p.dead ? '' : statusesHTML(p, true)}
     ${bleedPanel(p, meta.skills)}
     <div class="f-actions">
       ${!p.dead ? `<button class="btn small secondary" data-init type="button">${gl('die')} Finesse${init ? ` · ${init.hits} hit${init.hits === 1 ? '' : 's'}` : ' (turn order)'}</button>` : ''}
-      ${hasQuickDraw && !p.dead ? '<label class="check" style="font-size:14px"><input type="checkbox" data-qd> Quick-Draw +2B</label>' : ''}
+      ${hasQuickDraw && !p.dead ? '<label class="check small-text"><input type="checkbox" data-qd> Quick-Draw +2B</label>' : ''}
       ${!p.dead && now ? `<button class="btn small secondary" data-op="fool" type="button" ${p.foolUsed ? 'disabled' : ''} title="Once per turn: +1 Grit for 1 Health">Fool’s Grit</button>` : ''}
       ${p.dead && warden ? '<button class="btn small secondary" data-op="revive" type="button">Revive</button>' : ''}
     </div>
@@ -218,7 +218,7 @@ function enemyCard(e) {
     <details class="more"><summary>Features &amp; tolerances</summary>${p.features.map((f) => `<p>${esc(f)}</p>`).join('')}<p><b>Tolerances:</b> ${esc(p.tolerances)}</p></details>` : ''}
     ${e.defeated ? lootHTML(e, p) : ''}
     <div class="f-actions">
-      <label class="check" style="font-size:14px"><input type="checkbox" data-secret> Secret rolls</label>
+      <label class="check small-text"><input type="checkbox" data-secret> Secret rolls</label>
       <button class="btn small secondary danger" data-remove type="button">Remove</button>
     </div>
   </article>`;
@@ -330,7 +330,7 @@ function renderEnemyTools() {
       <div class="ce-pool"><span>FINESSE</span>${poolHTML('id="ce-fin"', 'Finesse')}</div>
       <button class="btn small secondary" id="ce-add" type="button">+ Custom</button>
     </div>
-    <div class="opts" style="margin:-4px 0 14px">
+    <div class="opts tight-top">
       <label class="check"><input type="checkbox" id="show-hp"> Show enemy Health to the posse</label>
       <button class="btn small secondary danger" id="clear-enemies" type="button">Clear all enemies</button>
     </div>`;
@@ -436,7 +436,7 @@ function renderDuel() {
       ${warden && data.npcCatalog ? `<optgroup label="Book NPCs (Warden)">${data.npcCatalog.filter((n) => n.faction).map((n) => `<option value="np:${esc(n.key)}|${esc(n.name)}">${esc(n.name)}</option>`).join('')}</optgroup>
         <optgroup label="Human combatants (p. 191)">${data.npcCatalog.filter((n) => !n.faction).map((n) => `<option value="np:${esc(n.key)}|">${esc(n.name.replace('Human - ', ''))}</option>`).join('')}</optgroup>
         ${ledgerNpcs.length ? `<optgroup label="Your NPC ledger (fights like a Moderate combatant)">${ledgerNpcs.map((n) => `<option value="np:npc:Human - Moderate Combatant|${esc(n.name)}">${esc(n.name)}</option>`).join('')}</optgroup>` : ''}` : ''}`;
-    box.innerHTML = `<p class="muted" style="margin-top:0">Stripped of gear and defenses: just Skills and the town’s Dueling Pistols (2G). Both roll each Skill in turn; whoever rolls more Hits adds <b>1B</b> to their Draw! (a tie gives both). Then both fire.</p>
+    box.innerHTML = `<p class="muted mt-0">Stripped of gear and defenses: just Skills and the town’s Dueling Pistols (2G). Both roll each Skill in turn; whoever rolls more Hits adds <b>1B</b> to their Draw! (a tie gives both). Then both fire.</p>
       <p class="muted">Dueling an NPC? In Warden mode the list includes every book NPC and your NPC ledger. Someone already in the fight takes the result on their card.</p>
       <div class="duel-pick"><select id="duel-a" aria-label="First duelist">${opts}</select><b>vs</b><select id="duel-b" aria-label="Second duelist">${opts}</select>
       <button class="btn" id="duel-go" type="button">Face off</button></div>`;

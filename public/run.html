@@ -9,10 +9,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Rye&family=Special+Elite&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=36">
-  <link rel="stylesheet" href="/css/rollcall.css?v=2">
-  <link rel="stylesheet" href="/css/desk.css?v=3">
-  <link rel="stylesheet" href="/css/run.css?v=7">
+  <link rel="stylesheet" href="/css/style.css?v=37">
+  <link rel="stylesheet" href="/css/rollcall.css?v=3">
+  <link rel="stylesheet" href="/css/desk.css?v=4">
+  <link rel="stylesheet" href="/css/run.css?v=8">
 </head>
 <body>
   <header class="masthead">
@@ -35,19 +35,19 @@
     </section>
 
     <div id="desk" hidden>
-      <nav class="run-toc" id="run-toc" aria-label="Jump to">
+      <nav class="toc-bar" id="run-toc" aria-label="Jump to">
         <a href="#grp-now">Right Now</a><a href="#grp-rolls">Rolls</a><a href="#grp-table">At the Table</a><a href="#grp-rewards">Rewards</a><a href="#grp-notes">Notes &amp; Log</a><a href="#grp-tools">Tools</a>
       </nav>
-      <section class="run-group" id="grp-now">
-        <h2 class="run-group-h">Right Now</h2>
-        <div class="run-grid">
-          <div class="run-col">
+      <section class="band" id="grp-now">
+        <h2 class="band-h">Right Now</h2>
+        <div class="stack-grid">
+          <div class="stack-col">
             <section class="card corner">
           <div class="head-row"><h2 class="section-title">Needs You</h2><span class="muted" id="conn"></span></div>
           <div id="needs"></div>
         </section>
           </div>
-          <div class="run-col">
+          <div class="stack-col">
             <section class="card corner">
           <div class="head-row"><h2 class="section-title">The Fight</h2><a class="btn small secondary" href="/battle"><span data-gl="pin"></span> Battle Map</a></div>
           <div id="fight"></div>
@@ -55,16 +55,16 @@
           </div>
         </div>
       </section>
-      <section class="run-group" id="grp-rolls">
-        <h2 class="run-group-h">Rolls</h2>
-        <div class="run-grid">
-          <div class="run-col">
+      <section class="band" id="grp-rolls">
+        <h2 class="band-h">Rolls</h2>
+        <div class="stack-grid">
+          <div class="stack-col">
             <section class="card corner">
           <div class="head-row"><h2 class="section-title">Call for a Roll</h2><span class="muted">Task difficulty, p. 12</span></div>
           <div id="rollcall"></div>
         </section>
           </div>
-          <div class="run-col">
+          <div class="stack-col">
             <section class="card corner">
           <h2 class="section-title">Open Rolls</h2>
           <div id="check-list"></div>
@@ -72,16 +72,16 @@
           </div>
         </div>
       </section>
-      <section class="run-group" id="grp-table">
-        <h2 class="run-group-h">At the Table</h2>
-        <div class="run-grid">
-          <div class="run-col">
+      <section class="band" id="grp-table">
+        <h2 class="band-h">At the Table</h2>
+        <div class="stack-grid">
+          <div class="stack-col">
             <section class="card corner">
           <div class="head-row"><h2 class="section-title">The Posse</h2><a class="btn small secondary" href="/posse"><span data-gl="scroll"></span> Sheets</a></div>
           <div id="posse"></div>
         </section>
           </div>
-          <div class="run-col">
+          <div class="stack-col">
             <section class="card corner">
           <div class="head-row"><h2 class="section-title">Enemies</h2><a class="btn small secondary" href="/combat"><span data-gl="claws"></span> Add or loot</a></div>
           <div id="enemies"></div>
@@ -89,16 +89,16 @@
           </div>
         </div>
       </section>
-      <section class="run-group" id="grp-rewards">
-        <h2 class="run-group-h">Rewards</h2>
-        <div class="run-grid">
-          <div class="run-col">
+      <section class="band" id="grp-rewards">
+        <h2 class="band-h">Rewards</h2>
+        <div class="stack-grid">
+          <div class="stack-col">
             <section class="card corner">
               <div class="head-row"><h2 class="section-title">Award the Posse</h2><span class="muted">after a fight or expedition</span></div>
               <div id="award"></div>
             </section>
           </div>
-          <div class="run-col">
+          <div class="stack-col">
             <section class="card corner">
               <div class="head-row"><h2 class="section-title">Jackpot</h2><span class="muted">play of the game, p. 54</span></div>
               <div id="jackpot"></div>
@@ -110,17 +110,17 @@
           </div>
         </div>
       </section>
-      <section class="run-group" id="grp-notes">
-        <h2 class="run-group-h">Notes &amp; Log</h2>
-        <div class="run-grid">
-          <div class="run-col">
+      <section class="band" id="grp-notes">
+        <h2 class="band-h">Notes &amp; Log</h2>
+        <div class="stack-grid">
+          <div class="stack-col">
             <section class="card corner">
           <div class="head-row"><h2 class="section-title">Session Notes</h2><button class="btn small" id="new-session" type="button"><span data-gl="scroll"></span> New session</button></div>
           <div class="sess-tabs" id="sess-tabs"></div>
           <div id="editor"></div>
         </section>
           </div>
-          <div class="run-col">
+          <div class="stack-col">
             <section class="card corner">
           <div class="head-row"><h2 class="section-title">Recent at the Table</h2><button class="btn small secondary danger" id="clear-log" type="button">Clear log</button></div>
           <div class="log glance-log" id="glance-log"></div>
@@ -128,13 +128,13 @@
           </div>
         </div>
       </section>
-      <section class="run-group" id="grp-tools">
-        <h2 class="run-group-h">Tools</h2>
-        <div class="run-grid">
-          <div class="run-col">
+      <section class="band" id="grp-tools">
+        <h2 class="band-h">Tools</h2>
+        <div class="stack-grid">
+          <div class="stack-col">
             <section class="card corner">
           <h2 class="section-title">Jump To</h2>
-          <div class="run-links">
+          <div class="link-grid">
             <a href="/combat"><span data-gl="revolver"></span><b>Combat Control</b><small>add enemies · awards · loot</small></a>
             <a href="/battle"><span data-gl="pin"></span><b>Battle Map</b><small>tokens · range · Forstalls</small></a>
             <a href="/warden"><span data-gl="forstall"></span><b>Forstall Scanner</b><small>lock a target · reveal digits</small></a>
@@ -148,7 +148,7 @@
           <p class="muted sess-note">Saves everything — sheets, NPCs, factions, maps, store, notes and the Table Log — to one file on this device. Do it after each session. <span id="backup-note"></span></p>
         </section>
           </div>
-          <div class="run-col">
+          <div class="stack-col">
             <section class="card corner">
           <div class="head-row"><h2 class="section-title">Your Homebrew</h2><button class="btn small secondary" id="hb-refresh" type="button"><span data-gl="die"></span> Refresh</button></div>
           <p class="muted sess-note">Everything you’ve made up, in one place. Deleting can’t be undone.</p>
@@ -160,6 +160,6 @@
     </div>
   </main>
 
-  <script type="module" src="/js/run.js?v=12"></script>
+  <script type="module" src="/js/run.js?v=13"></script>
 </body>
 </html>

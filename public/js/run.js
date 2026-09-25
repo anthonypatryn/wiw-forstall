@@ -25,9 +25,9 @@ async function act(body, msg) {
 async function refreshNeeds() {
   try {
     const n = await api('GET', null, '?view=needs', '/api/combat');
-    $('#needs').innerHTML = n.items.length ? n.items.map((x, i) => `<div class="need${x.urgent ? ' urgent' : ''}">
+    $('#needs').innerHTML = n.items.length ? n.items.map((x, i) => `<div class="notice${x.urgent ? ' urgent' : ''}">
         <a href="${esc(x.href)}">${esc(x.text)}</a>
-        ${x.store ? `<span class="need-btns"><button type="button" class="btn small" data-yes="${esc(x.store)}">Approve</button><button type="button" class="btn small secondary" data-no="${esc(x.store)}">Deny</button></span>` : ''}
+        ${x.store ? `<span class="notice-btns"><button type="button" class="btn small" data-yes="${esc(x.store)}">Approve</button><button type="button" class="btn small secondary" data-no="${esc(x.store)}">Deny</button></span>` : ''}
       </div>`).join('') : '<p class="muted">All quiet — nothing is waiting on you.</p>';
     $('#needs').querySelectorAll('[data-yes], [data-no]').forEach((b) => b.addEventListener('click', async () => {
       try {
@@ -41,8 +41,8 @@ async function refreshNeeds() {
 }
 
 // ---------- the fight ----------
-const hpBar = (h, max) => { const pct = Math.max(0, Math.min(100, (h / Math.max(1, max)) * 100)); return `<span class="run-hp"><i style="width:${pct}%"></i></span>`; };
-const statusTags = (st) => Object.entries(st || {}).filter(([, v]) => v).map(([k, v]) => `<span class="run-st">${esc(k)} ${v}</span>`).join('');
+const hpBar = (h, max) => { const pct = Math.max(0, Math.min(100, (h / Math.max(1, max)) * 100)); return `<span class="hp-bar"><i style="width:${pct}%"></i></span>`; };
+const statusTags = (st) => Object.entries(st || {}).filter(([, v]) => v).map(([k, v]) => `<span class="pill">${esc(k)} ${v}</span>`).join('');
 function renderFight() {
   const c = combat.combat || {};
   const box = $('#fight');
@@ -72,11 +72,11 @@ function renderFight() {
 function renderEnemies() {
   const list = combat.enemies.filter((e) => !e.defeated && !(combat.combat?.active && e.out));
   const gone = combat.enemies.length - list.length;
-  $('#enemies').innerHTML = list.length ? list.map((e) => `<div class="run-row${combat.combat?.current === e.id ? ' now' : ''}">
-      <div class="run-who"><b>${esc(e.name)}</b>${combat.combat?.active ? `<button type="button" class="run-out" data-leave="${esc(e.id)}" title="Take ${esc(e.name)} out of this fight">out</button>` : ''}${e.frenzied?.length ? '<span class="run-st hot">FRENZIED</span>' : ''}${e.submerged ? '<span class="run-st">submerged</span>' : ''}${statusTags(e.statuses)}</div>
-      <div class="run-nums">${hpBar(e.health, e.maxHealth)}<span class="run-hpn">${e.health}/${e.maxHealth}</span>
-        <button type="button" class="run-pm" data-e="${esc(e.id)}" data-d="-1" aria-label="${esc(e.name)} loses 1 Health">−</button><button type="button" class="run-pm" data-e="${esc(e.id)}" data-d="1" aria-label="${esc(e.name)} gains 1 Health">+</button>
-        <span class="run-grit" title="Grit">${e.grit ?? '—'} Grit</span></div></div>`).join('')
+  $('#enemies').innerHTML = list.length ? list.map((e) => `<div class="item-row${combat.combat?.current === e.id ? ' now' : ''}">
+      <div class="item-who"><b>${esc(e.name)}</b>${combat.combat?.active ? `<button type="button" class="run-out" data-leave="${esc(e.id)}" title="Take ${esc(e.name)} out of this fight">out</button>` : ''}${e.frenzied?.length ? '<span class="pill hot">FRENZIED</span>' : ''}${e.submerged ? '<span class="pill">submerged</span>' : ''}${statusTags(e.statuses)}</div>
+      <div class="item-nums">${hpBar(e.health, e.maxHealth)}<span class="hp-num">${e.health}/${e.maxHealth}</span>
+        <button type="button" class="pm-btn" data-e="${esc(e.id)}" data-d="-1" aria-label="${esc(e.name)} loses 1 Health">−</button><button type="button" class="pm-btn" data-e="${esc(e.id)}" data-d="1" aria-label="${esc(e.name)} gains 1 Health">+</button>
+        <span class="stat" title="Grit">${e.grit ?? '—'} Grit</span></div></div>`).join('')
     + (gone ? `<p class="muted run-gone">${gone} down or fled — loot them in <a href="/combat">Combat Control</a>.</p>` : '')
     : `<p class="muted">No enemies standing.${gone ? ` ${gone} down or fled — <a href="/combat">loot them</a>.` : ' Add some in <a href="/combat">Combat Control</a>.'}</p>`;
   $('#enemies').querySelectorAll('[data-leave]').forEach((b) => b.addEventListener('click', () => act({ action: 'leave', id: b.dataset.leave })));
@@ -88,13 +88,13 @@ function renderPosse() {
   $('#posse').innerHTML = list.length ? list.map((p) => {
     const sweep = combat.sweeps?.[`pc:${p.id}`];
     const sitting = party && !party.includes(p.id);
-    return `<div class="run-row${combat.combat?.current === p.id ? ' now' : ''}${p.bleeding ? ' bleed' : ''}${sitting ? ' sitting' : ''}">
-      <div class="run-who"><a href="/posse#${esc(p.id)}"><b>${esc(p.name)}</b></a><small>${esc(p.trade)}${p.player ? ` · ${esc(p.player)}` : ''}${sitting ? ' · not in this fight' : ''}</small>${combat.combat?.active ? (sitting ? `<button type="button" class="run-out in" data-pjoin="${esc(p.id)}">join</button>` : `<button type="button" class="run-out" data-pleave="${esc(p.id)}" title="Take ${esc(p.name)} out of this fight">out</button>`) : ''}
-        ${p.bleeding ? '<span class="run-st hot">BLEEDING OUT</span>' : ''}${statusTags(p.statuses)}
-        ${p.forstall?.model ? `<span class="run-st fs">${gl('forstall')} ${esc(p.forstall.model.replace(/ Forstall$/, ''))} · ${p.forstall.charges ?? 0} ch${sweep ? ` · Sweep ${sweep.hits}` : ''}</span>` : ''}</div>
-      <div class="run-nums">${hpBar(p.health, p.maxHealth)}<span class="run-hpn">${p.health}/${p.maxHealth}</span>
-        <button type="button" class="run-pm" data-p="${esc(p.id)}" data-d="-1" aria-label="${esc(p.name)} loses 1 Health">−</button><button type="button" class="run-pm" data-p="${esc(p.id)}" data-d="1" aria-label="${esc(p.name)} gains 1 Health">+</button>
-        ${combat.combat?.active ? `<span class="run-grit" title="Grit">${p.grit ?? 0} Grit</span>` : `<span class="run-grit" title="Wallet">$${esc(String(p.wallet || 0))}</span>`}</div></div>`;
+    return `<div class="item-row${combat.combat?.current === p.id ? ' now' : ''}${p.bleeding ? ' bleed' : ''}${sitting ? ' sitting' : ''}">
+      <div class="item-who"><a href="/posse#${esc(p.id)}"><b>${esc(p.name)}</b></a><small>${esc(p.trade)}${p.player ? ` · ${esc(p.player)}` : ''}${sitting ? ' · not in this fight' : ''}</small>${combat.combat?.active ? (sitting ? `<button type="button" class="run-out in" data-pjoin="${esc(p.id)}">join</button>` : `<button type="button" class="run-out" data-pleave="${esc(p.id)}" title="Take ${esc(p.name)} out of this fight">out</button>`) : ''}
+        ${p.bleeding ? '<span class="pill hot">BLEEDING OUT</span>' : ''}${statusTags(p.statuses)}
+        ${p.forstall?.model ? `<span class="pill fs">${gl('forstall')} ${esc(p.forstall.model.replace(/ Forstall$/, ''))} · ${p.forstall.charges ?? 0} ch${sweep ? ` · Sweep ${sweep.hits}` : ''}</span>` : ''}</div>
+      <div class="item-nums">${hpBar(p.health, p.maxHealth)}<span class="hp-num">${p.health}/${p.maxHealth}</span>
+        <button type="button" class="pm-btn" data-p="${esc(p.id)}" data-d="-1" aria-label="${esc(p.name)} loses 1 Health">−</button><button type="button" class="pm-btn" data-p="${esc(p.id)}" data-d="1" aria-label="${esc(p.name)} gains 1 Health">+</button>
+        ${combat.combat?.active ? `<span class="stat" title="Grit">${p.grit ?? 0} Grit</span>` : `<span class="stat" title="Wallet">$${esc(String(p.wallet || 0))}</span>`}</div></div>`;
   }).join('') : '<p class="muted">No characters yet.</p>';
   $('#posse').querySelectorAll('[data-pleave]').forEach((b) => b.addEventListener('click', () => act({ action: 'leave', id: b.dataset.pleave })));
   $('#posse').querySelectorAll('[data-pjoin]').forEach((b) => b.addEventListener('click', () => act({ action: 'join', id: b.dataset.pjoin }, 'They’re in — turn order updated.')));
@@ -113,21 +113,21 @@ function renderRewards() {
   const alive = combat.posse.filter((p) => !p.dead);
   const keep = (id) => box.querySelector(`#${id}`)?.value || '';
   const vals = { p: keep('aw-prestige'), d: keep('aw-dollars'), s: keep('aw-scrap'), i: keep('aw-item'), r: keep('aw-reason') };
-  box.innerHTML = `<div class="rc-step"><span>WHO</span><button type="button" class="rc-chip${aw.who ? '' : ' on'}" data-aw-all>Everyone</button>
-      ${alive.map((p) => `<button type="button" class="rc-chip${aw.who?.has(p.id) ? ' on' : ''}" data-aw="${esc(p.id)}">${esc(p.name)}</button>`).join('') || '<span class="muted">No characters yet.</span>'}</div>
+  box.innerHTML = `<div class="field-step"><span>WHO</span><button type="button" class="chip-btn${aw.who ? '' : ' on'}" data-aw-all>Everyone</button>
+      ${alive.map((p) => `<button type="button" class="chip-btn${aw.who?.has(p.id) ? ' on' : ''}" data-aw="${esc(p.id)}">${esc(p.name)}</button>`).join('') || '<span class="muted">No characters yet.</span>'}</div>
     <div class="aw-nums">
       <label><span>${gl('star')} PRESTIGE</span><input id="aw-prestige" type="number" min="0" max="100" inputmode="numeric" placeholder="0" value="${esc(vals.p)}"></label>
       <label><span>$ DOLLARS</span><input id="aw-dollars" type="number" min="0" inputmode="numeric" placeholder="0" value="${esc(vals.d)}"></label>
       <label><span>${gl('wrench')} SCRAP</span><input id="aw-scrap" type="number" min="0" inputmode="numeric" placeholder="0" value="${esc(vals.s)}"></label>
     </div>
-    <div class="rc-step rc-note"><span>LOOT</span><input id="aw-item" maxlength="120" placeholder="e.g. Pristine Chupacabra pelt (goes into Other items)" value="${esc(vals.i)}"></div>
-    <div class="rc-step rc-note"><span>WHAT FOR</span><input id="aw-reason" maxlength="120" placeholder="e.g. Cleared the Copper Canyon mine" value="${esc(vals.r)}"></div>
+    <div class="field-step"><span>LOOT</span><input id="aw-item" maxlength="120" placeholder="e.g. Pristine Chupacabra pelt (goes into Other items)" value="${esc(vals.i)}"></div>
+    <div class="field-step"><span>WHAT FOR</span><input id="aw-reason" maxlength="120" placeholder="e.g. Cleared the Copper Canyon mine" value="${esc(vals.r)}"></div>
     <button type="button" class="btn" data-aw-go>${gl('trophy')} Award ${aw.who ? `${aw.who.size} character${aw.who.size === 1 ? '' : 's'}` : 'everyone'}</button>`;
   const jb = $('#jackpot');
   if (jb.contains(document.activeElement) && document.activeElement.tagName === 'INPUT') return;
   const why = jb.querySelector('#jp-why')?.value || '';
-  jb.innerHTML = `<div class="rc-step"><span>THE POSSE VOTES FOR</span>${alive.map((p) => `<button type="button" class="rc-chip${aw.jp === p.id ? ' on' : ''}" data-jp="${esc(p.id)}">${esc(p.name)}</button>`).join('') || '<span class="muted">No characters yet.</span>'}</div>
-    <div class="rc-step rc-note"><span>WHAT DID THEY DO?</span><input id="jp-why" maxlength="120" placeholder="e.g. roped the bear off the cliff" value="${esc(why)}"></div>
+  jb.innerHTML = `<div class="field-step"><span>THE POSSE VOTES FOR</span>${alive.map((p) => `<button type="button" class="chip-btn${aw.jp === p.id ? ' on' : ''}" data-jp="${esc(p.id)}">${esc(p.name)}</button>`).join('') || '<span class="muted">No characters yet.</span>'}</div>
+    <div class="field-step"><span>WHAT DID THEY DO?</span><input id="jp-why" maxlength="120" placeholder="e.g. roped the bear off the cliff" value="${esc(why)}"></div>
     <button type="button" class="btn" data-jp-go${aw.jp ? '' : ' disabled'}>${gl('star')} Jackpot! +1 Prestige</button>`;
 }
 document.addEventListener('click', async (e) => {
@@ -161,13 +161,13 @@ $('#town-all').addEventListener('click', async () => {
 
 // ---------- contents bar: sticks under the nav + Warden strip, highlights the band you're in ----------
 function tocTop() {
-  const h = [...document.querySelectorAll('.sitenav, .warden-strip, .hud-myturn')].reduce((n, el) => n + (el.offsetHeight || 0), 0);
-  document.documentElement.style.setProperty('--run-toc-top', `${h}px`);
+  const h = [...document.querySelectorAll('.sitenav, .hud-myturn')].reduce((n, el) => n + (el.offsetHeight || 0), 0);
+  document.documentElement.style.setProperty('--toc-top', `${h}px`);
 }
 window.addEventListener('resize', tocTop);
-const bands = () => [...document.querySelectorAll('.run-group')];
+const bands = () => [...document.querySelectorAll('.band')];
 window.addEventListener('scroll', () => {
-  const line = (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--run-toc-top')) || 0) + 80;
+  const line = (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--toc-top')) || 0) + 80;
   let cur = bands()[0]?.id;
   bands().forEach((g) => { if (g.getBoundingClientRect().top <= line) cur = g.id; });
   document.querySelectorAll('#run-toc a').forEach((a) => a.classList.toggle('on', a.getAttribute('href') === `#${cur}`));

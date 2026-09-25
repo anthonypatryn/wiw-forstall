@@ -6,6 +6,6 @@
 .rc-skill:disabled { opacity: .5; }
 .rc-skill .gl { width: 22px; height: 22px; color: var(--rust); }
 .rc-skill:hover .gl { color: #fff; }
-.rc-skill b { font: 20px/1 var(--display); letter-spacing: .06em; font-weight: 400; }
-.rc-skill small { font-size: 11px; opacity: .75; text-align: center; }
-.rc-tip { font-size: 13px; margin: 8px 0 0; }
+.rc-skill b { font: var(--fs-lg)/1 var(--display); letter-spacing: .06em; font-weight: 400; }
+.rc-skill small { font-size: var(--fs-xs); opacity: .75; text-align: center; }
+.rc-tip { font-size: var(--fs-xs); margin: 8px 0 0; }

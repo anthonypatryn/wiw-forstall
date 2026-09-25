@@ -3,25 +3,25 @@
 
 .need-btns { display: flex; gap: 6px; }
 
-.run-turn { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; padding: 10px 12px; border-radius: 6px; background: rgba(47,109,115,.1); border-left: 5px solid var(--teal); }
+.run-turn { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 12px; padding: 10px 12px; border-radius: var(--radius); background: rgba(47,109,115,.1); border-left: 5px solid var(--teal); }
 .run-turn.enemy { background: rgba(164,64,31,.12); border-left-color: var(--rust); }
-.run-turn small { font: 13px var(--display); letter-spacing: .1em; opacity: .7; width: 100%; }
-.run-turn b { font: 30px/1 var(--display); letter-spacing: .04em; font-weight: 400; }
-.run-turn span { font-size: 14px; }
-.run-order { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin: 10px 0; font-size: 14px; }
-.run-order span { padding: 2px 8px; border-radius: 10px; background: rgba(0,0,0,.06); }
-.run-order span.foe { color: #7a2e16; }
+.run-turn small { font: var(--fs-xs) var(--display); letter-spacing: .1em; opacity: .7; width: 100%; }
+.run-turn b { font: var(--fs-2xl)/1 var(--display); letter-spacing: .04em; font-weight: 400; }
+.run-turn span { font-size: var(--fs-sm); }
+.run-order { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin: 10px 0; font-size: var(--fs-sm); }
+.run-order span { padding: 2px 8px; border-radius: var(--radius); background: rgba(0,0,0,.06); }
+.run-order span.foe { color: var(--rust-dark); }
 .run-order span.now { background: var(--ink); color: #fff; }
 .run-order i { opacity: .4; font-style: normal; }
 .run-fight-btns { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .run-fight-btns .danger { margin-left: auto; }
 
-.run-gone { margin: 8px 0 0; font-size: 14px; }
+.run-gone { margin: 8px 0 0; font-size: var(--fs-sm); }
 
 
 .run-join { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 12px; padding-top: 10px; border-top: 1px dashed rgba(0,0,0,.2); }
 .run-join select { min-width: 0; flex: 1 1 160px; }
-.run-out { font: 12px var(--body); padding: 1px 7px; border-radius: 9px; border: 1px solid rgba(0,0,0,.3); background: transparent; cursor: pointer; opacity: .7; }
+.run-out { font: var(--fs-xs) var(--body); padding: 1px 7px; border-radius: var(--r-pill); border: 1px solid rgba(0,0,0,.3); background: transparent; cursor: pointer; opacity: .7; }
 .run-out:hover { opacity: 1; background: rgba(0,0,0,.06); }
 .run-out.in { border-color: var(--rust); color: var(--rust); opacity: 1; }
 
@@ -29,13 +29,13 @@
 
 /* Rewards */
 .aw-nums { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 10px; }
-.aw-nums label { display: flex; flex-direction: column; gap: 4px; font: 13px var(--display); letter-spacing: .1em; color: var(--ink-soft); min-width: 0; }
+.aw-nums label { display: flex; flex-direction: column; gap: 4px; font: var(--fs-xs) var(--display); letter-spacing: .1em; color: var(--ink-soft); min-width: 0; }
 .aw-nums label .gl { width: 1em; height: 1em; vertical-align: -2px; color: var(--rust); }
-.aw-nums input { width: 100%; min-width: 0; padding: 8px 10px; border: 1px solid rgba(0,0,0,.3); border-radius: 4px; background: var(--surface); font: 20px var(--display); letter-spacing: .04em; color: var(--ink); box-sizing: border-box; }
+.aw-nums input { width: 100%; min-width: 0; padding: 8px 10px; border: 1px solid rgba(0,0,0,.3); border-radius: var(--r-sm); background: var(--surface); font: var(--fs-lg) var(--display); letter-spacing: .04em; color: var(--ink); box-sizing: border-box; }
 #award .btn, #jackpot .btn { margin-top: 4px; }
 
 /* card headers: title left, button right (the shared header row wasn't loaded on this page) */
-.run-fight-btns .run-hint { font-size: 13px; flex: 1 1 0; min-width: 0; line-height: 1.3; }
+.run-fight-btns .run-hint { font-size: var(--fs-xs); flex: 1 1 0; min-width: 0; line-height: 1.3; }
 .run-fight-btns .danger { margin-left: 0; }
 .run-order { margin: 10px 0 12px; }
-.run-turn b { font-size: 26px; }
+.run-turn b { font-size: var(--fs-2xl); }

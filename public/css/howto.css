@@ -1,7 +1,7 @@
 .howto { display: grid; gap: 18px; max-width: 820px; }
 .howto .card { padding: 18px 20px 20px; }
 .ht-steps { margin: 0; padding-left: 22px; display: grid; gap: 12px; line-height: 1.5; }
-.ht-steps > li::marker { font: 18px var(--display); color: var(--rust); }
+.ht-steps > li::marker { font: var(--fs-lg) var(--display); color: var(--rust); }
 .ht-steps .muted { display: block; margin-top: 3px; }
 .ht-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 12px; line-height: 1.5; }
 .ht-list li { display: grid; grid-template-columns: 30px 1fr; gap: 10px; align-items: start; }

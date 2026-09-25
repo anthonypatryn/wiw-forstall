@@ -2,40 +2,40 @@
 .gate { max-width: 520px; margin: 30px auto; text-align: center; }
 
 .sess-tabs { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 12px; }
-.sess-tab { display: flex; flex-direction: column; align-items: flex-start; padding: 6px 12px 4px; border: 1.5px solid var(--ink-faint); border-radius: 5px; background: var(--surface); cursor: pointer; font: 15px var(--display); letter-spacing: .06em; color: var(--ink); }
-.sess-tab small { font: italic 12px var(--body); letter-spacing: 0; color: var(--ink-soft); }
+.sess-tab { display: flex; flex-direction: column; align-items: flex-start; padding: 6px 12px 4px; border: 1.5px solid var(--ink-faint); border-radius: var(--radius); background: var(--surface); cursor: pointer; font: var(--fs-sm) var(--display); letter-spacing: .06em; color: var(--ink); }
+.sess-tab small { font: italic var(--fs-xs) var(--body); letter-spacing: 0; color: var(--ink-soft); }
 .sess-tab.on { border-color: var(--ink); background: var(--ink); color: #fff; }
 .sess-tab.on small { color: rgba(255,255,255,.8); }
-.sess-tab { border-radius: 16px; padding: 5px 14px 3px; }
+.sess-tab { border-radius: var(--r-pill); padding: 5px 14px 3px; }
 
 .sess-head { display: grid; grid-template-columns: minmax(0, 1fr) 170px; gap: 10px 14px; margin-bottom: 10px; }
-.sess-head label, .sess-notes { display: flex; flex-direction: column; gap: 4px; font: 13px var(--display); letter-spacing: .12em; color: var(--ink-soft); min-width: 0; }
+.sess-head label, .sess-notes { display: flex; flex-direction: column; gap: 4px; font: var(--fs-xs) var(--display); letter-spacing: .12em; color: var(--ink-soft); min-width: 0; }
 .sess-notes { margin-bottom: 12px; }
-.sess-notes small { font: italic 12px var(--body); letter-spacing: 0; }
-.sess-head input, .sess-notes textarea { padding: 8px 10px; border: 1px solid var(--ink-faint); border-radius: 3px; background: var(--surface); font: 16px var(--body); letter-spacing: 0; color: var(--ink); min-width: 0; width: 100%; box-sizing: border-box; }
+.sess-notes small { font: italic var(--fs-xs) var(--body); letter-spacing: 0; }
+.sess-head input, .sess-notes textarea { padding: 8px 10px; border: 1px solid var(--ink-faint); border-radius: var(--r-sm); background: var(--surface); font: var(--fs-md) var(--body); letter-spacing: 0; color: var(--ink); min-width: 0; width: 100%; box-sizing: border-box; }
 .sess-notes textarea { min-height: 340px; resize: vertical; line-height: 1.45; }
 .sess-notes textarea.short { min-height: 110px; }
 .sess-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.sess-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px dashed rgba(0,0,0,.2); font-size: 13px; }
+.sess-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px dashed rgba(0,0,0,.2); font-size: var(--fs-xs); }
 @media (max-width: 560px) { .sess-head { grid-template-columns: 1fr; } .sess-notes textarea { min-height: 240px; } }
 
 .glance-log { max-height: 420px; }
 
-.hb-h { margin: 12px 0 4px; font: 14px var(--display); letter-spacing: .12em; font-weight: 400; color: var(--rust); }
-.hb-h small { font: italic 12px var(--body); letter-spacing: 0; color: var(--ink-soft); margin-left: 6px; }
+.hb-h { margin: 12px 0 4px; font: var(--fs-sm) var(--display); letter-spacing: .12em; font-weight: 400; color: var(--rust); }
+.hb-h small { font: italic var(--fs-xs) var(--body); letter-spacing: 0; color: var(--ink-soft); margin-left: 6px; }
 .hb-list { list-style: none; margin: 0; padding: 0; max-height: 320px; overflow-y: auto; }
 .hb-list li { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 5px 0; border-top: 1px dotted rgba(34,31,31,.3); }
 .hb-list li span { min-width: 0; }
-.hb-list small { display: block; font-size: 12px; color: var(--ink-soft); }
+.hb-list small { display: block; font-size: var(--fs-xs); color: var(--ink-soft); }
 
 /* open rolls (Run-the-Game style rows) */
-.ck-body { flex: 1 1 240px; min-width: 0; font-size: 15px; }
+.ck-body { flex: 1 1 240px; min-width: 0; font-size: var(--fs-sm); }
 .ck-body .gl { width: 1.1em; height: 1.1em; vertical-align: -3px; color: var(--rust); }
 .ck-who { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
-.run-st.wait { background: rgba(0,0,0,.05); font-style: italic; }
-.run-st.ok { background: var(--success); color: #fff; }
-.run-st.no { background: var(--danger); color: #fff; }
+.pill.wait { background: rgba(0,0,0,.05); font-style: italic; }
+.pill.ok { background: var(--success); color: #fff; }
+.pill.no { background: var(--danger); color: #fff; }
 .ck-win { margin-top: 5px; font-weight: 700; color: var(--success); }
-.sess-note { margin: 0 0 8px; font-size: 14px; }
-.run-grit small { font: 11px var(--body); letter-spacing: 0; }
-.gl-duel { font-size: 14px; }
+.sess-note { margin: 0 0 8px; font-size: var(--fs-sm); }
+.stat small { font: var(--fs-xs) var(--body); letter-spacing: 0; }
+.gl-duel { font-size: var(--fs-sm); }

@@ -77,7 +77,7 @@ Body text is 17px (16px on phones), line-height 1.5.
 | Toast | `toast(msg, isError)` | one line of feedback after an action |
 | Empty state | `.muted` / `.empty-note` | one friendly line: what's missing and where to add it |
 
-(Older `run-*`, `rc-*`, `need` class names are aliases of the above and will be removed as pages move over.)
+Small helpers: `.btn-row` (a row of buttons), `.fine` (12px note), `.small-text` (14px), `.mt-0`, `.mt-2`.
 
 ## Navigation
 - One site nav (`mountNav` in `common.js`), grouped by how often a page is used.
