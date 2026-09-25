@@ -400,3 +400,28 @@ test('Newspaper: drafts stay with the Warden until printed; one draft per sessio
   assert.match(logs[0], /Posse Routs Hogwilds/);
   assert.equal(papersAction(st, { action: 'save', sessionId: 's1', headline: 'Next' }, { warden: true }).no, 2); // printed issues aren't reused
 });
+
+test('Journal: players see only revealed quests/clues (no hidden steps); reveals and completions make news', async () => {
+  const { freshJournal, journalAction, journalView } = await import('../lib/journal.js');
+  const st = freshJournal(), W = { warden: true };
+  assert.throws(() => journalAction(st, { action: 'saveQuest', title: 'X' }, { warden: false }), /PIN/);
+  const q = journalAction(st, { action: 'saveQuest', title: 'Find the Kurtz crystal', steps: [{ text: 'Ask the barkeep' }, { text: 'The secret mine', hidden: true }] }, W);
+  const c = journalAction(st, { action: 'saveClue', title: 'Muddy boots', text: 'Size 13', quest: q.id }, W);
+  let pv = journalView(st, { warden: false });
+  assert.equal(pv.quests.length, 0); assert.equal(pv.clues.length, 0); assert.equal(pv.news.length, 0);
+  journalAction(st, { action: 'reveal', kind: 'clue', id: c.id, value: true }, W);
+  pv = journalView(st, { warden: false });
+  assert.equal(pv.clues[0].quest, '', 'a clue does not leak a hidden quest');
+  journalAction(st, { action: 'reveal', kind: 'quest', id: q.id, value: true }, W);
+  pv = journalView(st, { warden: false });
+  assert.equal(pv.quests[0].steps.length, 1); assert.equal(pv.clues[0].quest, q.id);
+  journalAction(st, { action: 'step', id: q.id, step: q.steps[1].id, hidden: false }, W);
+  journalAction(st, { action: 'status', id: q.id, status: 'done' }, W);
+  pv = journalView(st, { warden: false });
+  assert.equal(pv.quests[0].steps.length, 2);
+  assert.match(pv.news[0].text, /Quest complete/);
+  journalAction(st, { action: 'posseNote', id: q.id, text: 'Barkeep lied' }, { warden: false });
+  assert.equal(st.quests[0].posseNotes, 'Barkeep lied');
+  journalAction(st, { action: 'remove', id: q.id }, W);
+  assert.equal(st.clues[0].quest, '');
+});

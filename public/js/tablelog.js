@@ -30,6 +30,7 @@ export function mountTableLog() {
   import('./handouts.js').then((m) => m.watchHandouts()).catch(() => {}); // “The Warden hands you…” pop-ups
   import('./lockpick.js').then((m) => m.watchLocks()).catch(() => {}); // a lock sent to you opens the lock-picking scene
   import('./paper.js').then((m) => m.watchPapers()).catch(() => {}); // a new issue of the paper: “Extra! Extra!”
+  import('./journal-watch.js').then((m) => m.watchJournal()).catch(() => {}); // a new quest or clue the Warden reveals
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.className = 'log-fab';

@@ -946,3 +946,4 @@ input[type=range]::-moz-range-thumb { width: 16px; height: 16px; border-radius: 
 .duel-ask { width: min(520px, 100%); }
 .duel-ask .field-step { margin: 12px 0; }
 @media (max-width: 480px) { .duel-scene .duel-table tbody th { width: 58px; font-size: var(--fs-xs); } .duel-scene .duel-tray .die { width: 26px; } }
+.jw-list { margin: 6px 0 12px; padding-left: 20px; font: var(--fs-md)/1.4 var(--body); }
