@@ -77,6 +77,10 @@
 - Session write-up: every log() also appends to `combat.archive` (Warden-only, 2000 entries, undo trims it; never in views) because the Table Log keeps only 80. Session notes' **Write up this session** → `{action:'summarize', id}` in api/session.js: `sessionEntries` (from the session's `created` to the next session), then Claude (`ANTHROPIC_API_KEY` env on Vercel; model `SUMMARY_MODEL` or claude-haiku-4-5) writes STORY SO FAR / FIGHTS / LOOT / PEOPLE / LOOSE ENDS + a player RECAP (fills an empty recap); without a key `plainSummary` lists the events. `withSummary` puts it between `=== SUMMARY ===` and `=== MY NOTES ===`, keeping the Warden's notes below; re-running replaces only the summary. vercel.json gives api/session.js 30 s.
 - Session notes: `api/session.js` + `lib/session.js` (Redis key `session`), every request needs the PIN; shown on Run the Game.
 
+## Pictures
+- `api/image.js` stores uploaded pictures as base64 under `img-<ns>-<id>-<head|full>` (ns `pc` = portraits, anyone; `handout` = Warden only) and serves `GET /api/image?ns&id&size&v` with immutable caching. Uploading/clearing a pc portrait sets/removes `pc.portrait = {v}` in the combat doc.
+- `public/js/portrait.js`: `faceUrl(p)` (headshot or trade art), `portraitUrl(p, size)`, `pickPortrait(pc)` (file → in-page cropper, 256px round headshot + ≤1200px full), `clearPortrait`, `showImage(src, caption)` lightbox, `shrink(img)`. Used on the Posse list, sheet header (`faceHTML`, refreshed in `hydrate` when `portrait.v` changes), Battle Map tokens (`photo` in the battle view) and Run the Game rows.
+
 ## Sound
 - `public/js/sound.js`: `play(name, arg)` synthesizes effects with WebAudio (dice, card, gun, bow, swing, explosion, forstall, zap, lockClick, lockSnap, lockOpen, success, fail, chime); `weaponSound(weapon)` picks gun/bow/swing. Real recordings: put `public/sfx/<name>.mp3` and add the name to `public/sfx/manifest.json`. Mute/volume per device (`wiw.muted`, `wiw.volume`) via the nav speaker / phone Menu. Hooks: `animateRoll` (dice), NPC `flipUp` (card), Battle Map attacks/items/Forstalls, HUD pop-ups (chime), Skill results (success/fail).
 

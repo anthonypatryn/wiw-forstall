@@ -8,6 +8,8 @@ const G = {
   boot: `<path ${F} d="M8 2.5h6.4l-.4 8.3 5.3 3c1.3.7 2 1.7 2 2.9v1.5H7.3l-.7-2.4-1.8.2V14l2.2-.8z"/><circle ${S} cx="3.4" cy="16.4" r="1.7"/><path ${S} d="M5 16.4h1.4"/><path ${S} d="M7 21h14"/>`,
   // a quick swerve out of the way
   dodge: `<path ${S} d="M3 19c5.5 0 5-13 11.5-13H21"/><path ${S} d="M18 3l3 3-3 3"/><path ${S} stroke-dasharray="1.5 2.2" d="M3 9h5"/><path ${S} stroke-dasharray="1.5 2.2" d="M3 13h3"/>`,
+  // a camera (upload a picture)
+  camera: `<path ${S} d="M4 8.5h3l1.6-2.5h6.8L17 8.5h3a1 1 0 0 1 1 1V18a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5a1 1 0 0 1 1-1z"/><circle ${S} cx="12" cy="13.2" r="3.4"/>`,
   // speaker on / off (sound effects toggle)
   sound: `<path ${F} d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path ${S} d="M15.2 9a4.2 4.2 0 0 1 0 6M17.8 6.6a7.6 7.6 0 0 1 0 10.8"/>`,
   mute: `<path ${F} d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path ${S} d="M15.5 9.5l5 5M20.5 9.5l-5 5"/>`,

@@ -715,6 +715,7 @@ body.nav-open .fab-row, body.nav-open .hud-strip { display: none; }
 .item-row.sitting { opacity: .6; }
 .item-who { display: flex; flex-wrap: wrap; align-items: center; gap: 4px var(--sp-2); min-width: 0; flex: 1 1 200px; }
 .item-who a { color: var(--ink); }
+.row-face { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; flex: none; border: 1.5px solid var(--ink); }
 .item-who b { font: var(--fs-lg)/1.1 var(--display); letter-spacing: var(--track-tight); font-weight: 400; }
 .item-who small { font-size: var(--fs-xs); opacity: .7; }
 .item-nums { display: flex; align-items: center; gap: 6px; }
@@ -782,3 +783,16 @@ input[type=range]::-moz-range-thumb { width: 16px; height: 16px; border-radius: 
 .nav-sheet-sound { display: flex; align-items: center; gap: 12px; padding: 6px 8px; }
 .nav-sheet-sound button { flex: 1; margin: 0; }
 .nav-sheet-sound .nav-vol { flex: 1; }
+
+/* picture lightbox + portrait cropper */
+.lightbox { z-index: 500; cursor: zoom-out; background: rgba(10,8,6,.88); }
+.lightbox figure { margin: 0; max-width: 94vw; max-height: 90vh; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+.lightbox img { max-width: 94vw; max-height: 82vh; object-fit: contain; border: 3px solid var(--surface-2); border-radius: var(--r-sm); box-shadow: var(--shadow-soft); }
+.lightbox figcaption { color: var(--on-dark); font: var(--fs-lg) var(--display); letter-spacing: var(--track); }
+.lb-close { position: fixed; top: 14px; right: 16px; width: 40px; height: 40px; border-radius: 50%; border: 1.5px solid var(--on-dark); background: none; color: var(--on-dark); font-size: 18px; cursor: pointer; }
+.crop-modal { width: min(360px, 100%); }
+.crop-stage { position: relative; width: 280px; height: 280px; margin: 6px auto 12px; border-radius: var(--r-sm); overflow: hidden; background: var(--iron); touch-action: none; }
+.crop-stage canvas { display: block; cursor: grab; }
+.crop-ring { position: absolute; inset: 0; pointer-events: none; border-radius: 50%; box-shadow: 0 0 0 999px rgba(0,0,0,.55); outline: 2px dashed var(--brass); outline-offset: -2px; }
+.crop-zoom { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; font: var(--fs-xs) var(--display); letter-spacing: var(--track-wide); }
+.crop-zoom input { flex: 1; }

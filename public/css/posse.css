@@ -455,3 +455,13 @@ body.on-sheet .masthead { display: none; }
 #sheet-view.table-view .sk-name :is(small, em) { display: none; }
 .inv-item .inv-where { font-weight: 400; color: var(--teal); }
 .inv-item .inv-off { font-weight: 700; color: var(--rust); }
+
+/* portrait in the sheet header (replaces the trade art once uploaded) */
+.sh-art-wrap { grid-column: 5; align-self: end; display: flex; flex-direction: column; align-items: center; gap: 6px; position: relative; }
+.sh-art-wrap .sh-art { grid-column: auto; }
+.sh-face { width: 136px; height: 136px; padding: 0; border-radius: 50%; border: 4px solid var(--brass); overflow: hidden; background: var(--iron); cursor: zoom-in; box-shadow: 0 4px 14px rgba(0,0,0,.6); margin: 4px 0; }
+.sh-face img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.sh-face-btns { display: flex; gap: 6px; flex-wrap: wrap; justify-content: center; margin-bottom: 6px; }
+.sh-face-btns .btn.small { font-size: var(--fs-xs); padding: 5px 8px 3px; background: rgba(0,0,0,.45); color: var(--on-dark-bright); border-color: rgba(246,236,217,.5); }
+.sh-face-btns .btn.small:hover { background: var(--accent); }
+@media (max-width: 900px) { .sh-art-wrap { grid-column: 2; grid-row: 1 / span 2; } .sh-face { width: 96px; height: 96px; } }

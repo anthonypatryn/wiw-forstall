@@ -4,6 +4,7 @@ import { mountTableLog } from './tablelog.js';
 import { ICONS } from './icons.js';
 import { NPC } from './npc-data.js';
 import { gl } from './glyphs.js';
+import { faceUrl, portraitUrl, pickPortrait, clearPortrait, showImage } from './portrait.js';
 
 const EP = '/api/combat';
 injectDefs();
@@ -135,7 +136,7 @@ function renderList() {
     <div class="pc-tile${p.dead ? ' dead' : ''}${p.id === me ? ' mine' : ''}">
       <button type="button" class="me-star" data-me="${p.id}" aria-pressed="${p.id === me}" title="${p.id === me ? 'This is you — tap to unset' : 'This is me'}">${p.id === me ? '★ ME' : '☆ This is me'}</button>
       <a class="pc-open" href="#${p.id}" aria-label="Open ${esc(p.name)}’s sheet">
-        <img class="pc-face" src="/img/tokens/trade-${p.trade.toLowerCase()}.webp" alt="">
+        <img class="pc-face" src="${esc(faceUrl(p))}" alt="">
         <div class="t">THE ${esc(p.trade.toUpperCase())}${p.dead ? ' · FALLEN' : ''}</div>
         <div class="n">${esc(p.name)}</div>${p.player ? `<div class="tile-player">Played by ${esc(p.player)}</div>` : ''}${p.title ? `<div class="tile-title">“${esc(p.title)}”</div>` : ''}
         <div class="hp"><span class="bar"><i style="width:${Math.min(100, (p.health / Math.max(1, p.maxHealth)) * 100)}%"></i></span><span class="num">${p.health}/${p.maxHealth}</span></div>
@@ -245,7 +246,7 @@ function buildSheet(p) {
       <img class="sh-logo" src="/img/logo-light.svg" alt="Wild Imaginary West">
       <label class="sh-name"><span>NAME</span><input class="sheet-name" data-path="name" maxlength="40" aria-label="Character name"><em class="sh-title" data-dyn="title"></em></label>
       <label class="sh-player"><span>PLAYER</span><input class="sheet-player" data-path="player" maxlength="40" placeholder="who’s playing?" aria-label="Player name"></label>
-      <img class="sh-art" src="/img/trades/${p.trade.toLowerCase()}.webp" alt="The ${esc(p.trade)}">
+      <div class="sh-art-wrap" data-v="${p.portrait?.v || ''}">${faceHTML(p)}</div>
     </div>
 
     <section class="fight-panel" data-dyn="fight" id="sec-fight" hidden></section>
@@ -355,7 +356,15 @@ function wireSheet(p) {
     clearTimeout(timers.get(f.path));
     timers.set(f.path, setTimeout(() => saveField(f.path, fieldValue(e.target).value, e.target), 600));
   });
-  on('click', (e) => {
+  on('click', async (e) => {
+    const fb = e.target.closest('[data-face-pick], [data-face-clear], [data-face-view]');
+    if (fb) {
+      const pc = pcById(p.id);
+      if (fb.matches('[data-face-view]')) { showImage(portraitUrl(pc, 'full'), pc.name); return; }
+      const ok = fb.matches('[data-face-pick]') ? await pickPortrait(pc) : await clearPortrait(pc);
+      if (ok) poller?.now?.();
+      return;
+    }
     const j = e.target.closest('[data-jump]');
     if (!j) return;
     e.preventDefault();
@@ -861,9 +870,18 @@ function fillKz(view, p) {
   });
 }
 
+// the sheet header's picture: their uploaded headshot (tap for the full photo) or the trade art
+function faceHTML(p) {
+  const url = portraitUrl(p);
+  return `${url ? `<button type="button" class="sh-face" data-face-view title="See the whole picture"><img src="${esc(url)}" alt="${esc(p.name)}"></button>` : `<img class="sh-art" src="/img/trades/${p.trade.toLowerCase()}.webp" alt="The ${esc(p.trade)}">`}
+    <div class="sh-face-btns"><button type="button" class="btn small secondary" data-face-pick>${gl('camera')} ${url ? 'Change photo' : 'Add a photo'}</button>${url ? '<button type="button" class="btn small secondary" data-face-clear>Use default</button>' : ''}</div>`;
+}
+
 // Re-render the live bits (and fill inputs nobody is typing in).
 function hydrate(p) {
   const view = $('#sheet-view');
+  const fw = view.querySelector('.sh-art-wrap');
+  if (fw && fw.dataset.v !== String(p.portrait?.v || '')) { fw.dataset.v = String(p.portrait?.v || ''); fw.innerHTML = faceHTML(p); }
   fillKz(view, p);
   view.querySelectorAll('[data-path]').forEach((el) => { if (el !== document.activeElement) el.value = get(p, el.dataset.path) ?? ''; });
   view.querySelectorAll('select.pick').forEach((el) => {

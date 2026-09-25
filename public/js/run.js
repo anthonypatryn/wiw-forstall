@@ -3,6 +3,7 @@ import { $, esc, api, startPolling, toast, mountNav, tryWarden, savedPin, warden
 import { gl } from './glyphs.js';
 import { mountTableLog } from './tablelog.js';
 import { mountRollCaller } from './rollcall.js';
+import { faceUrl } from './portrait.js';
 import { mountDesk, renderChecks, renderRecent } from './desk.js';
 
 mountTableLog();
@@ -89,7 +90,7 @@ function renderPosse() {
     const sweep = combat.sweeps?.[`pc:${p.id}`];
     const sitting = party && !party.includes(p.id);
     return `<div class="item-row${combat.combat?.current === p.id ? ' now' : ''}${p.bleeding ? ' bleed' : ''}${sitting ? ' sitting' : ''}">
-      <div class="item-who"><a href="/posse#${esc(p.id)}"><b>${esc(p.name)}</b></a><small>${esc(p.trade)}${p.player ? ` · ${esc(p.player)}` : ''}${sitting ? ' · not in this fight' : ''}</small>${combat.combat?.active ? (sitting ? `<button type="button" class="run-out in" data-pjoin="${esc(p.id)}">join</button>` : `<button type="button" class="run-out" data-pleave="${esc(p.id)}" title="Take ${esc(p.name)} out of this fight">out</button>`) : ''}
+      <div class="item-who"><img class="row-face" src="${esc(faceUrl(p))}" alt=""><a href="/posse#${esc(p.id)}"><b>${esc(p.name)}</b></a><small>${esc(p.trade)}${p.player ? ` · ${esc(p.player)}` : ''}${sitting ? ' · not in this fight' : ''}</small>${combat.combat?.active ? (sitting ? `<button type="button" class="run-out in" data-pjoin="${esc(p.id)}">join</button>` : `<button type="button" class="run-out" data-pleave="${esc(p.id)}" title="Take ${esc(p.name)} out of this fight">out</button>`) : ''}
         ${p.bleeding ? '<span class="pill hot">BLEEDING OUT</span>' : ''}${statusTags(p.statuses)}
         ${p.forstall?.model ? `<span class="pill fs">${gl('forstall')} ${esc(p.forstall.model.replace(/ Forstall$/, ''))} · ${p.forstall.charges ?? 0} ch${sweep ? ` · Sweep ${sweep.hits}` : ''}</span>` : ''}</div>
       <div class="item-nums">${hpBar(p.health, p.maxHealth)}<span class="hp-num">${p.health}/${p.maxHealth}</span>

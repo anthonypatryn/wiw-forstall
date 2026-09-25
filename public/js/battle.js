@@ -169,11 +169,12 @@ function renderTokens() {
     const d = sel && sel.id !== t.id ? dist(sel, t) : null;
     const hasHp = t.maxHealth != null;
     const pct = hasHp ? Math.max(0, Math.min(100, (t.health / Math.max(1, t.maxHealth)) * 100)) : 0;
-    const bg = t.img ? `background:${color(t)} url('/img/tokens/${esc(t.img)}.webp') center / cover` : `background:${color(t)}`;
+    const art = t.photo || (t.img ? `/img/tokens/${t.img}.webp` : '');
+    const bg = art ? `background:${color(t)} url('${esc(art)}') center / cover` : `background:${color(t)}`;
     const nStatus = Object.keys(t.statuses || {}).length;
-    return `<div class="btoken ${t.kind}${t.img ? ' art' : ' stand-in'}${canMove(t) ? ' movable' : ''}${t.id === selected ? ' sel' : ''}${t.ref && t.ref === data.current ? ' turn' : ''}${t.hidden ? ' hidden-tok' : ''}${t.down ? ' down' : ''}${t.frenzied ? ' frenzied' : ''}"
+    return `<div class="btoken ${t.kind}${art ? ' art' : ' stand-in'}${canMove(t) ? ' movable' : ''}${t.id === selected ? ' sel' : ''}${t.ref && t.ref === data.current ? ' turn' : ''}${t.hidden ? ' hidden-tok' : ''}${t.down ? ' down' : ''}${t.frenzied ? ' frenzied' : ''}"
       data-id="${t.id}" data-size="${esc(t.size || '')}" style="left:${c.x}px;top:${c.y}px;width:${size}px;height:${size}px;${bg};font-size:${font}px;border-width:${data.grid.ppi * 0.05}px"
-      title="${esc(t.name)}">${t.img ? '' : esc(initials(t.name))}
+      title="${esc(t.name)}">${art ? '' : esc(initials(t.name))}
       ${t.holding ? `<span class="hold-dot" style="font-size:${labFont * 1.4}px" title="Prepared: ${esc(t.holding)}">${gl('watch')}</span>` : ''}
       ${t.dead ? `<span class="skull" style="font-size:${size * 0.62}px" aria-label="Down">${gl('skull')}</span>` : t.bleeding ? `<span class="skull bleed" style="font-size:${size * 0.5}px" aria-label="Bleeding Out">${gl('drop')}</span>` : ''}
       ${(data.forstalls || []).some((f) => f.owner && f.owner === t.ref) ? `<span class="fs-dot${(data.forstalls || []).find((f) => f.owner === t.ref)?.sweep ? ' on' : ''}" style="font-size:${labFont * 1.3}px" title="Carries a Forstall">${gl('forstall')}</span>` : ''}
@@ -214,7 +215,7 @@ function renderPanel() {
       ${sel.attacks?.length ? `<details class="d-atk"><summary>Attacks</summary>${sel.attacks.map((a) => `<p>${esc(a)}</p>`).join('')}</details>` : ''}
       ${combat?.combat?.active && sel.ref && sel.ref === combat.combat.current ? '<p class="tp-hint">Attacks and actions are in the turn panel above.</p>' : ''}`;
     const kindLabel = sel.kind === 'pc' ? `POSSE${sel.trade ? ` · THE ${esc(sel.trade.toUpperCase())}` : ''}` : sel.kind === 'enemy' ? 'ENEMY' : 'NPC';
-    box.innerHTML = `<div class="sel-card">${sel.img ? `<img class="sel-art" src="/img/tokens/${esc(sel.img)}.webp" alt="">` : ''}<div class="kind">${kindLabel}${sel.hidden ? ' · HIDDEN FROM POSSE' : ''}</div><h2>${esc(sel.name)}</h2>${detail}
+    box.innerHTML = `<div class="sel-card">${sel.photo || sel.img ? `<img class="sel-art" src="${esc(sel.photo || `/img/tokens/${sel.img}.webp`)}" alt="">` : ''}<div class="kind">${kindLabel}${sel.hidden ? ' · HIDDEN FROM POSSE' : ''}</div><h2>${esc(sel.name)}</h2>${detail}
       <h3 class="d-h">DISTANCES</h3>
       ${others.length ? others.map(({ t, d }) => `<div class="tok-row" data-pick="${t.id}"><span class="chip" style="background:${color(t)}">${esc(initials(t.name))}</span>
         <span class="n">${esc(t.name)}</span><span class="d ${band(d)}">${d}″ · ${BAND_LABEL[band(d)]}</span></div>`).join('') : '<p class="muted">Nobody else on the board.</p>'}</div>`;
