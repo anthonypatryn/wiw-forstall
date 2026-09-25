@@ -201,28 +201,86 @@ export function timeAgo(t) {
 }
 
 // ---------- site nav ----------
-const NAV = [
-  ['/', 'Forstall Scanner'],
-  ['/posse', 'Posse Sheets'],
-  ['/names', 'NPCs'],
-  ['/map', 'Map'],
-  ['/battle', 'Battle Map'],
-  ['/store', 'Store'],
-  ['/howto', 'How to Play'],
+// ---------- site nav: grouped by how often a page is used (see STYLEGUIDE.md → Navigation) ----------
+// An item is [href, label] or { label, items: [[href, label], …] } (a tap-to-open dropdown).
+// `phone: true` items stay on the bar on phones; everything else lives in the Menu there.
+const WORLD = { label: 'World', items: [['/map', 'Map'], ['/names', 'NPCs']] };
+const NAV_PLAYER = [
+  { href: '/posse', label: 'Posse', phone: true },
+  { href: '/battle', label: 'Battle Map', phone: true },
+  { href: '/', label: 'Forstall Scanner', phone: true },
+  WORLD,
+  { href: '/store', label: 'Store' },
 ];
+const NAV_WARDEN = [
+  { href: '/run', label: 'Run the Game', icon: 'star', phone: true },
+  { href: '/posse', label: 'Posse', phone: true },
+  { label: 'Fight', items: [['/battle', 'Battle Map'], ['/combat', 'Combat Control']] },
+  { href: '/warden', label: 'Forstall Scanner' },
+  WORLD,
+  { href: '/store', label: 'Store' },
+];
+let navActive = null;
+const pathIs = (href, cur) => href === cur;
 export function mountNav(active) {
   const el = document.querySelector('[data-nav]');
   if (!el) return;
-  // the Warden's Session page only shows up in the nav for the Warden
-  // Warden mode sticks until "Switch to player view": the scanner link goes to the Warden's scanner
+  navActive = active ?? navActive;
   const on = !!pinStore.get();
-  // the Warden's home is Run the Game (first in the nav)
-  const items = on ? [['/run', `${gl('star')} Run the Game`], ...NAV.map(([h, l]) => [h === '/' ? '/warden' : h, l]), ['/combat', `${gl('star')} Combat Control`]] : NAV;
-  const cur = active === '/warden' ? (on ? '/warden' : '/') : active === '/' && on ? '/warden' : active;
-  el.innerHTML = `<div class="sitenav-inner">${items.map(([href, label]) =>
-    `<a href="${href}"${href === cur ? ' aria-current="page"' : ''}>${label}</a>`).join('')}</div>`;
+  // Warden mode sticks until "Switch to player view": the scanner link goes to the Warden's scanner
+  const cur = navActive === '/warden' || (navActive === '/' && on) ? (on ? '/warden' : '/') : navActive;
+  const items = on ? NAV_WARDEN : NAV_PLAYER;
+  const link = (href, label, extra = '') => `<a href="${href}"${pathIs(href, cur) ? ' aria-current="page"' : ''}${extra}>${label}</a>`;
+  const top = items.map((it) => it.items
+    ? `<div class="nav-group${it.items.some(([h]) => pathIs(h, cur)) ? ' current' : ''}"><button type="button" class="nav-drop" aria-expanded="false">${esc(it.label)} <i>▾</i></button>
+        <div class="nav-menu" hidden>${it.items.map(([h, l]) => link(h, esc(l))).join('')}</div></div>`
+    : link(it.href, `${it.icon ? gl(it.icon) + ' ' : ''}${esc(it.label)}`, it.phone ? '' : ' class="nav-extra"')).join('');
+  const all = items.flatMap((it) => (it.items ? [[`<b>${esc(it.label)}</b>`, null], ...it.items] : [[it.href, it.label]]));
+  el.classList.toggle('warden', on);
+  el.innerHTML = `<div class="sitenav-inner">
+      <div class="nav-main">${top}</div>
+      <div class="nav-side">
+        ${link('/howto', '?', ' class="nav-help" title="How to Play" aria-label="How to Play"')}
+        ${on ? `<button type="button" class="nav-needs" aria-expanded="false" title="What's waiting on you"><span class="nn">Needs you</span> <b>·</b></button>
+          <div class="nav-group nav-warden"><button type="button" class="nav-drop" aria-expanded="false">${gl('star')} Warden <i>▾</i></button>
+            <div class="nav-menu right" hidden><a href="/run">Run the Game</a><a href="/combat">Combat Control</a><a href="/run#grp-tools">Backup &amp; homebrew</a><button type="button" data-player>Switch to player view</button></div></div>`
+          : `<button type="button" class="nav-unlock" title="Warden PIN">${gl('star')} <span>Warden</span></button>`}
+        <button type="button" class="nav-menu-btn" aria-expanded="false">Menu</button>
+      </div>
+    </div>
+    <div class="needs-list" hidden></div>
+    <div class="nav-sheet" hidden><nav aria-label="All pages">${all.map(([h, l]) => (h && h.startsWith('<b>') ? `<div class="nav-sheet-h">${h}</div>` : link(h, esc(l)))).join('')}${link('/howto', 'How to Play')}${on ? '<div class="nav-sheet-h">Warden</div><a href="/run#grp-tools">Backup &amp; homebrew</a><button type="button" data-player>Switch to player view</button>' : ''}</nav></div>`;
+  wireNav(el, on);
   // static pages mark icons as <span data-gl="name"> — draw them
   document.querySelectorAll('[data-gl]').forEach((s) => { s.outerHTML = gl(s.dataset.gl); });
+}
+function wireNav(el, on) {
+  const closeAll = (except) => el.querySelectorAll('.nav-group').forEach((g) => { if (g !== except) { g.querySelector('.nav-menu').hidden = true; g.querySelector('.nav-drop').setAttribute('aria-expanded', 'false'); } });
+  el.querySelectorAll('.nav-group').forEach((g) => g.querySelector('.nav-drop').addEventListener('click', (e) => {
+    e.stopPropagation();
+    const m = g.querySelector('.nav-menu');
+    closeAll(g); el.querySelector('.needs-list').hidden = true;
+    m.hidden = !m.hidden; g.querySelector('.nav-drop').setAttribute('aria-expanded', String(!m.hidden));
+  }));
+  const sheet = el.querySelector('.nav-sheet'), menuBtn = el.querySelector('.nav-menu-btn');
+  const sheetOpen = (v) => { sheet.hidden = !v; menuBtn.setAttribute('aria-expanded', String(v)); document.body.classList.toggle('nav-open', v); };
+  menuBtn.addEventListener('click', (e) => { e.stopPropagation(); sheetOpen(sheet.hidden); });
+  document.addEventListener('click', (e) => {
+    if (!el.contains(e.target)) { closeAll(); sheetOpen(false); el.querySelector('.needs-list').hidden = true; }
+  });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { closeAll(); sheetOpen(false); el.querySelector('.needs-list').hidden = true; } });
+  el.querySelectorAll('[data-player]').forEach((b) => b.addEventListener('click', () => { forgetWarden(); if (/^\/(warden|run|combat)/.test(location.pathname)) location.href = '/'; else location.reload(); }));
+  el.querySelector('.nav-unlock')?.addEventListener('click', async () => {
+    const own = document.querySelector('#warden-btn'); // pages that reconnect their own data in Warden mode
+    if (own) { own.click(); return; }
+    if (await wardenModal('/api/combat')) location.reload();
+  });
+  const needs = el.querySelector('.nav-needs');
+  if (needs) {
+    const list = el.querySelector('.needs-list');
+    needs.addEventListener('click', (e) => { e.stopPropagation(); closeAll(); list.hidden = !list.hidden; needs.setAttribute('aria-expanded', String(!list.hidden)); });
+    pollNeeds(needs, list);
+  } else clearInterval(needsTimer);
 }
 
 // ---------- Warden PIN (shared across pages) ----------
@@ -242,45 +300,24 @@ const pinStore = {
 };
 try { localStorage.removeItem('wiw.pin'); } catch {}
 
-// A strip under the nav so it's always obvious you're looking at the Warden's view.
 // Everything waiting on the Warden (store requests, open rolls, enemy turns…), refreshed every few seconds.
 let needsTimer = null;
-function pollNeeds(bar) {
-  const btn = bar.querySelector('.needs-btn'), list = bar.querySelector('.needs-list');
+function pollNeeds(btn, list) {
   const tick = async () => {
-    if (!document.body.contains(bar) || document.hidden) return;
+    if (!document.body.contains(btn) || document.hidden) return;
     try {
       const n = await api('GET', null, '?view=needs', '/api/combat');
-      btn.innerHTML = `Needs you <b class="${n.count ? 'hot' : ''}">${n.count}</b>`;
+      btn.innerHTML = `<span class="nn">Needs you</span> <b class="${n.count ? 'hot' : ''}">${n.count}</b>`;
       list.innerHTML = `${n.items.length ? n.items.map((x) => `<a class="${x.urgent ? 'urgent' : ''}" href="${esc(x.href)}">${esc(x.text)}</a>`).join('') : '<span class="muted">All quiet — nothing waiting on you.</span>'}
-        <div class="needs-links"><a href="/run"><b>Run the Game</b></a><a href="/combat">Combat Control</a><a href="/battle">Battle Map</a><a href="/store">Store</a><a href="/names">NPCs</a></div>`;
+        <div class="needs-links"><a href="/run"><b>Open Run the Game ›</b></a></div>`;
     } catch { /* offline for a moment */ }
   };
   clearInterval(needsTimer);
-  setTimeout(tick, 400); setTimeout(tick, 1500); // the page sets the PIN a moment after the strip appears
+  setTimeout(tick, 400); setTimeout(tick, 1500); // the page sets the PIN a moment after the nav appears
   needsTimer = setInterval(tick, 6000);
 }
-export function markWarden(on) {
-  let bar = document.querySelector('.warden-strip');
-  const inner = document.querySelector('.sitenav-inner');
-  if (inner && on && !inner.querySelector('a[href="/run"]')) {
-    inner.insertAdjacentHTML('afterbegin', `<a href="/run"${location.pathname.startsWith('/run') ? ' aria-current="page"' : ''}>${gl('star')} Run the Game</a>`);
-    inner.insertAdjacentHTML('beforeend', `<a href="/combat">${gl('star')} Combat Control</a>`);
-  }
-  if (inner && !on) { ['/session', '/combat', '/run'].forEach((h) => inner.querySelector(`a[href="${h}"]`)?.remove()); }
-  const scan = inner?.querySelector('a[href="/"], a[href="/warden"]');
-  if (scan) scan.setAttribute('href', on ? '/warden' : '/');
-  if (on && !bar) {
-    bar = document.createElement('div');
-    bar.className = 'warden-strip';
-    bar.innerHTML = gl('star') + ' WARDEN MODE <button type="button" class="needs-btn" aria-expanded="false">Needs you <b>·</b></button><button type="button" data-player>Switch to player view</button><div class="needs-list" hidden></div>';
-    bar.querySelector('[data-player]').addEventListener('click', () => { forgetWarden(); if (location.pathname.startsWith('/warden')) location.href = '/'; else location.reload(); });
-    const btn = bar.querySelector('.needs-btn'), list = bar.querySelector('.needs-list');
-    btn.addEventListener('click', () => { list.hidden = !list.hidden; btn.setAttribute('aria-expanded', String(!list.hidden)); });
-    (document.querySelector('.sitenav') || document.body.firstElementChild).after(bar);
-    pollNeeds(bar);
-  } else if (!on && bar) { clearInterval(needsTimer); bar.remove(); }
-}
+// Warden mode shows in the nav itself (red rule + star, Needs you, Warden ▾) — redraw it when it changes.
+export function markWarden() { if (document.querySelector('[data-nav]')?.innerHTML) mountNav(); }
 
 // ---------- dice-pool inputs: two numbers, never typed letters ----------
 export function parsePoolStr(s) {

@@ -42,10 +42,10 @@
 - Warden mode:
   - The PIN is kept in `sessionStorage` key `wiw.pin`, per tab.
   - Helpers in `public/js/common.js`: `tryWarden`, `forgetWarden`, `wardenModal`, `markWarden`.
-  - A red strip shows while the page is in Warden mode; its "Switch to player view" is the only way out.
-  - It sticks across pages: with a PIN, the nav's Forstall Scanner link points to `/warden`, and `/` (player.js) redirects to `/run`. Nav adds star Run the Game + Combat Control links.
+  - Warden mode shows in the nav (red rule, star items, **Needs you (n)**, **Warden ▾** with Switch to player view); `markWarden()` just redraws the nav. The masthead `#warden-btn` is hidden but kept: the nav's **Warden** button clicks it so each page runs its own unlock + reconnect (pages without one use `wardenModal` + reload).
+  - It sticks across pages: with a PIN, `/` (player.js) redirects to `/run`. The nav is grouped (`NAV_PLAYER` / `NAV_WARDEN` in common.js; see STYLEGUIDE.md → Navigation); phones get a Menu sheet.
   - **Run the Game** `/run` (public/run.html, js/run.js, css/run.css) is the Warden's home: first in the Warden nav, and `/` (player.js) redirects a Warden there. One page with Needs you (store requests get inline Approve/Deny via /api/shop `decide`), the fight (turn, order, Next turn, Start/End combat), enemies + posse rows with Health ± and Grit, and a Jump To grid. Reuses the combat warden view + `?view=needs`.
-  - **Needs you** (Warden strip, every page): `GET /api/combat?view=needs` → `wardenNeeds` (pending store requests, open Skill checks, triggered holds, Bleeding Out, Edison clashes, whose turn), polled every 6 s by `pollNeeds` in common.js; the dropdown also links Run the Game / Combat Control / Battle Map / Store / NPCs.
+  - **Needs you** (nav badge, every page): `GET /api/combat?view=needs` → `wardenNeeds` (pending store requests, open Skill checks, triggered holds, Bleeding Out, Edison clashes, whose turn), polled every 6 s by `pollNeeds` in common.js; the dropdown also links Run the Game / Combat Control / Battle Map / Store / NPCs.
   - `/combat` = **Combat Control**, Warden-only (gate card for players; not in the player nav). Players fight from the Battle Map + sheets.
   - NPC ledger: players see only the ledger (deal/table-felt hidden) and the server allows only `posseNote`/`where` without the PIN (`add` is Warden-only).
 - Dice:
