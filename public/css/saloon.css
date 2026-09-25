@@ -126,3 +126,30 @@
   .fr-case { gap: 1px; padding: 6px 4px; }
   .fr-col i { width: 8px; height: 8px; }
 }
+
+/* Liar's Dice */
+.ld-die { display: inline-grid; grid-template-columns: repeat(3, 1fr); grid-template-rows: repeat(3, 1fr); width: 44px; height: 44px; padding: 6px; gap: 2px; border-radius: 8px; background: linear-gradient(145deg, #fbf6ea, #ddd2bb); box-shadow: 0 3px 6px rgba(0,0,0,.5), inset 0 -2px 0 rgba(0,0,0,.15); vertical-align: middle; }
+.ld-die i { border-radius: 50%; }
+.ld-die i.on { background: #221f1f; }
+.ld-die.wild i.on { background: #a4401f; }
+.ld-die.sm { width: 26px; height: 26px; padding: 4px; gap: 1px; border-radius: 5px; }
+.ld-die.cup { background: radial-gradient(circle at 40% 30%, #6d4a2e, #3a2414); box-shadow: 0 2px 4px rgba(0,0,0,.6); }
+.ld-die.peeked { outline: 2px solid var(--brass); }
+.ld-die.hit { box-shadow: 0 0 0 2px #f0c46a, 0 2px 4px rgba(0,0,0,.5); }
+.ld-cup { display: flex; flex-wrap: wrap; justify-content: center; gap: 3px; margin: 6px 0 2px; }
+.ld-bid { margin: 6px 0 0; font: var(--fs-lg) var(--body); color: var(--on-dark-bright); }
+.ld-bid b { font: var(--fs-2xl) var(--western); color: #f0c46a; }
+.ld-bid small { display: block; font-size: var(--fs-sm); color: var(--felt-ink); }
+.ld-reveal { padding: 10px 12px; border-radius: var(--radius); background: rgba(0,0,0,.3); color: var(--on-dark); text-align: center; }
+.ld-reveal b { display: block; font: var(--fs-md) var(--body); margin-bottom: 6px; }
+.ld-reveal-cups { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px 16px; }
+.ld-reveal-cups > span { display: flex; gap: 2px; align-items: center; flex-wrap: wrap; }
+.ld-reveal-cups small { width: 100%; text-align: center; font: var(--fs-xs) var(--display); letter-spacing: var(--track); color: var(--felt-ink); }
+.ld-lbl { font: var(--fs-xs) var(--display); letter-spacing: var(--track-wide); color: var(--felt-ink); }
+.ld-mine { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.ld-picker { display: grid; justify-items: center; gap: 6px; width: 100%; }
+.ld-picker .fr-amt b { color: var(--on-dark-bright); }
+.ld-faces { display: flex; gap: 6px; justify-content: center; }
+.ld-face { padding: 4px; border: 2px solid transparent; border-radius: 8px; background: none; cursor: pointer; }
+.ld-face.on { border-color: #f0c46a; }
+@media (max-width: 600px) { .ld-die { width: 38px; height: 38px; padding: 5px; } }

@@ -10,7 +10,7 @@ const PHASE = { bet1: 'First betting round', draw: 'The draw', bet2: 'Second bet
 const $$ = (n) => `$${Number(n || 0).toFixed(2)}`;
 export function saloonStyles() {
   if (document.getElementById('saloon-css')) return;
-  document.head.insertAdjacentHTML('beforeend', '<link id="saloon-css" rel="stylesheet" href="/css/saloon.css?v=2">');
+  document.head.insertAdjacentHTML('beforeend', '<link id="saloon-css" rel="stylesheet" href="/css/saloon.css?v=4">');
 }
 // "A♠" → a playing card (same look as the lock-picking cards)
 const RANKV = { A: 'A', K: 'K', Q: 'Q', J: 'J' };
@@ -65,6 +65,7 @@ function render() {
   const t = view.table;
   if (!t) { closeTable(); return; }
   if (t.game === 'faro') { renderFaro(t); return; }
+  if (t.game === 'liars') { renderLiars(t); return; }
   const h = t.hand, key = `pc:${me()}`;
   const npcs = t.seats.filter((s) => s.kind === 'npc'), pcs = t.seats.filter((s) => s.kind !== 'npc' && (asWarden || s.key !== key));
   const mine = asWarden ? null : h?.mine;
@@ -86,6 +87,68 @@ async function act(body) {
   view = r.state; render();
   return r.result;
 }
+// ---------- Liar's Dice ----------
+const FACE = { 2: 'twos', 3: 'threes', 4: 'fours', 5: 'fives', 6: 'sixes' };
+const bidText = (b) => `${b.qty} ${b.qty === 1 ? FACE[b.face].replace(/s$/, '').replace(/xe$/, 'x') : FACE[b.face]}`;
+const PIPS = { 1: [5], 2: [1, 9], 3: [1, 5, 9], 4: [1, 3, 7, 9], 5: [1, 3, 5, 7, 9], 6: [1, 3, 4, 6, 7, 9] };
+const die = (n, cls = '') => (n ? `<span class="ld-die ${cls}${n === 1 ? ' wild' : ''}" aria-label="${n}">${[1, 2, 3, 4, 5, 6, 7, 8, 9].map((p) => `<i class="${PIPS[n].includes(p) ? 'on' : ''}"></i>`).join('')}</span>` : `<span class="ld-die cup ${cls}"></span>`);
+const legal = (bid, qty, face) => !bid || qty > bid.qty || (qty === bid.qty && face > bid.face);
+let lb = null; // the bid picker: { qty, face, for: bid signature }
+function renderLiars(t) {
+  const L = t.liars, key = `pc:${me()}`, seated = !asWarden && t.seats.some((s) => s.key === key);
+  const inGame = seated && L && !L.over && L.counts[key] > 0, myTurn = inGame && L.turn === key;
+  const sig = JSON.stringify(L?.bid || null) + (L?.round || 0);
+  if (!lb || lb.for !== sig) {
+    const b = L?.bid;
+    lb = { for: sig, qty: b ? b.qty : 1, face: b ? b.face : 2 };
+    if (b) { if (b.face < 6) lb.face = b.face + 1; else { lb.qty = b.qty + 1; lb.face = 2; } }
+  }
+  const seatBox = (s) => {
+    const n = L?.counts?.[s.key] || 0, peeks = (L?.peeks || []).filter((p) => p.seat === s.key).map((p) => p.die);
+    const shown = asWarden && L?.all?.[s.key];
+    return `<div class="sl-seat${L?.turn === s.key ? ' turn' : ''}${L && !n ? ' folded' : ''}${L?.winner === s.key ? ' won' : ''}">
+      <div class="sl-who"><b>${esc(s.name)}</b><small>${s.kind === 'npc' ? `${asWarden ? `${esc(STYLE[s.style] || '')} · ` : ''}bank ${$$(s.bank)}` : `${s.net >= 0 ? '+' : '−'}${$$(Math.abs(s.net))}`}</small></div>
+      ${L && L.order.includes(s.key) ? `<div class="ld-cup">${n ? Array.from({ length: n }, (_, i) => (shown ? die(shown[i], 'sm') : die(peeks[i] || 0, `sm${peeks[i] ? ' peeked' : ''}`))).join('') : '<span class="sl-out">out of dice</span>'}</div>` : '<div class="sl-out">sitting out</div>'}
+      <div class="sl-state">${L?.bid?.by === s.key ? `bid ${esc(bidText(L.bid))}` : ''}${peeks.length && !shown ? ' <i>you peeked</i>' : ''}</div></div>`;
+  };
+  const others = t.seats.filter((s) => asWarden || s.key !== key);
+  const last = L?.last;
+  const reveal = last ? `<div class="ld-reveal"><b>${esc(last.caller)} called ${esc(last.by)} a liar on ${esc(bidText(last.bid))}: there ${last.count === 1 ? 'was' : 'were'} ${last.count}. ${esc(last.loser)} lost a die.</b>
+    <div class="ld-reveal-cups">${Object.entries(last.dice).map(([k, d]) => `<span><small>${esc(t.seats.find((s) => s.key === k)?.name || '?')}</small>${d.map((n) => die(n, `sm${n === last.bid.face || n === 1 ? ' hit' : ''}`)).join('')}</span>`).join('')}</div></div>` : '';
+  const btns = [];
+  if (asWarden) {
+    btns.push(!L || L.over ? `<button type="button" class="btn" data-sl="deal">${gl('die')} ${L ? 'Start another game' : 'Start the game'}</button>` : `<span class="muted">Waiting on ${esc(t.seats.find((s) => s.key === L.turn)?.name || '…')}</span>`);
+    btns.push('<button type="button" class="btn secondary" data-sl="close">Close the table</button>');
+  } else if (!seated) {
+    if (t.status !== 'closed') btns.push('<button type="button" class="btn" data-sl="join">Pull up a chair</button>');
+  } else if (!L || L.over) {
+    btns.push(`<button type="button" class="btn" data-sl="deal">${gl('die')} ${L ? 'Another game' : 'Start the game'}</button>`, '<button type="button" class="btn secondary" data-sl="leave">Cash out &amp; leave</button>');
+  } else if (myTurn) {
+    const ok = legal(L.bid, lb.qty, lb.face) && lb.qty <= L.total;
+    btns.push(`<div class="ld-picker"><div class="fr-amt"><button type="button" class="pm-btn" data-lq="-1">−</button><b>${lb.qty}</b><button type="button" class="pm-btn" data-lq="1">+</button></div>
+      <div class="ld-faces">${[2, 3, 4, 5, 6].map((f) => `<button type="button" class="ld-face${lb.face === f ? ' on' : ''}" data-lf="${f}">${die(f, 'sm')}</button>`).join('')}</div></div>`);
+    btns.push(`<button type="button" class="btn" data-ld="bid"${ok ? '' : ' disabled'}>Bid ${esc(bidText({ qty: lb.qty, face: lb.face }))}</button>`);
+    if (L.bid) btns.push('<button type="button" class="btn danger" data-ld="call">Liar!</button>');
+    const used = new Set(L.used || []);
+    if (t.hooks.stare && !used.has('stare')) btns.push(`<button type="button" class="btn small secondary skill" data-ld="stare">${gl('hat')} Stare them down (Charm)</button>`);
+  } else btns.push(`<span class="muted">Waiting on ${esc(t.seats.find((s) => s.key === L.turn)?.name || '…')}…</span>`);
+  const peekable = inGame && t.hooks.peek && !(L.used || []).includes('peek') ? t.seats.filter((s) => s.kind === 'npc' && L.counts[s.key] > 0) : [];
+  const title = L ? (L.over ? `Game ${L.game} is over` : `Game ${L.game} — round ${L.round} · ${L.total} dice on the table`) : t.status === 'closed' ? 'The game has broken up' : 'Waiting for the first roll';
+  scene.innerHTML = `<div class="sl-table" role="dialog" aria-modal="true" aria-label="Liar’s Dice at ${esc(t.where)}">
+    <div class="sl-top"><div><small>LIAR’S DICE · ${esc(t.where.toUpperCase())}</small><b>${title}</b></div>
+      <span class="sl-stakes">${$$(t.stakes.ante)} a head · ones are wild</span><button type="button" class="sl-x" data-sl="hide" aria-label="Step away">×</button></div>
+    <div class="sl-felt">
+      <div class="sl-seats">${others.map(seatBox).join('')}</div>
+      <div class="sl-pot">${L ? `<b>POT ${$$(L.pot)}</b>` : ''}${L?.bid && !L.over ? `<p class="ld-bid">The bid: <b>${esc(bidText(L.bid))}</b> <small>by ${esc(t.seats.find((s) => s.key === L.bid.by)?.name || '?')}</small></p>` : ''}${L?.over && L.winner ? `<p class="sl-result">${esc(t.seats.find((s) => s.key === L.winner)?.name || '')} takes the pot.</p>` : ''}</div>
+      ${reveal}
+      ${L?.mine?.length && inGame ? `<div class="sl-mine"><small class="ld-lbl">UNDER YOUR CUP</small><div class="ld-mine">${L.mine.map((n) => die(n)).join('')}</div></div>` : ''}
+    </div>
+    ${peekable.length ? `<p class="sl-tell">${gl('target')} Peek under a cup (Intuition): ${peekable.map((s) => `<button type="button" class="linkish" data-lpeek="${esc(s.key)}">${esc(s.name)}</button>`).join(' ')}</p>` : ''}
+    <div class="sl-controls"><div class="btn-row sl-moves">${btns.join('')}</div></div>
+    ${L?.log?.length ? `<ol class="sl-log">${L.log.slice(-6).map((l) => `<li>${esc(l)}</li>`).join('')}</ol>` : ''}
+  </div>`;
+}
+
 // ---------- faro ----------
 const LAYOUT = [14, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
 const RN = { 14: 'A', 11: 'J', 12: 'Q', 13: 'K' };
@@ -202,6 +265,22 @@ async function onClick(e) {
   busy = true;
   try {
     if (d.sl === 'hide') { hideTable(); return; }
+    if (d.lq) { lb.qty = Math.max(1, Math.min(view.table.liars?.total || 30, lb.qty + Number(d.lq))); render(); return; }
+    if (d.lf) { lb.face = Number(d.lf); render(); return; }
+    if (d.ld === 'bid') { await act({ action: 'liarsBid', qty: lb.qty, face: lb.face }); play('dice'); return; }
+    if (d.ld === 'call') { const r = await act({ action: 'liarsCall' }); play('dice'); if (r) toast(`There ${r.count === 1 ? 'was' : 'were'} ${r.count}. ${r.loser} loses a die.`, r.loser === view.table.seats.find((s) => s.key === `pc:${me()}`)?.name); return; }
+    if (d.ld === 'stare') {
+      const r = await act({ action: 'liarsStare' });
+      await showRoll('Charm'); play(r.won ? 'success' : 'fail');
+      toast(r.won ? `${r.seat} looks away. Whatever you bid, they won’t call it.` : `${r.seat} stares right back.`, !r.won);
+      return;
+    }
+    if (d.lpeek) {
+      const r = await act({ action: 'liarsPeek', target: d.lpeek });
+      await showRoll('Intuition'); play(r.won ? 'success' : 'fail');
+      toast(r.won ? `You glimpse a ${r.die} under ${r.seat}’s cup.` : `${r.seat} keeps the cup tight.`, !r.won);
+      return;
+    }
     if (d.frRank) {
       const t = view.table, r = Number(d.frRank), cur = t.faro?.bets?.[`pc:${me()}`]?.[r];
       const bet = await betDialog(t, r, cur);
@@ -293,7 +372,7 @@ export function watchSaloon() {
     if (!seated && invited && store.get('wiw.saloonAsked', '') !== t.id && !scene && !busy) {
       store.set('wiw.saloonAsked', t.id);
       play('chime');
-      const pitch = t.game === 'faro' ? `A faro bank at ${t.where}\n\nBet on any card from ${$$(t.stakes.ante)} to ${$$(t.stakes.bet * 5)}. It’s your real money.` : `A card game at ${t.where}\n\nFive-card draw, ${$$(t.stakes.ante)} ante, bets of ${$$(t.stakes.bet)} (${$$(t.stakes.bet * 2)} after the draw). It’s your real money.`;
+      const pitch = t.game === 'liars' ? `Liar’s Dice at ${t.where}\n\n${$$(t.stakes.ante)} a head, winner takes the pot. Five dice each, ones are wild. It’s your real money.` : t.game === 'faro' ? `A faro bank at ${t.where}\n\nBet on any card from ${$$(t.stakes.ante)} to ${$$(t.stakes.bet * 5)}. It’s your real money.` : `A card game at ${t.where}\n\nFive-card draw, ${$$(t.stakes.ante)} ante, bets of ${$$(t.stakes.bet)} (${$$(t.stakes.bet * 2)} after the draw). It’s your real money.`;
       if (await ask(pitch, { ok: 'Take a seat', cancel: 'Not tonight', danger: false })) {
         try { await act({ action: 'join' }); openTable(false); } catch (err) { toast(err.message, true); }
       }
@@ -308,7 +387,7 @@ export function watchSaloon() {
 
 // ---------- the Warden's Saloon card (Run the Game) ----------
 export function mountSaloonDesk(el, getCombat) {
-  const st = { game: 'poker', crooked: false, where: 'the saloon', ante: 1, bet: 2, npcs: [{ name: '', profile: 'npc:Human - Moderate Combatant', style: 'loose', bank: 50 }], invite: null, tell: true, bluff: true, palm: true };
+  const st = { game: 'poker', crooked: false, peek: true, stare: true, where: 'the saloon', ante: 1, bet: 2, npcs: [{ name: '', profile: 'npc:Human - Moderate Combatant', style: 'loose', bank: 50 }], invite: null, tell: true, bluff: true, palm: true };
   let ledger = [], data = null;
   api('GET', null, '?view=warden', '/api/npcs').then((d) => { ledger = d.npcs || []; draw(); }).catch(() => {});
   const refresh = () => api('GET', null, '?view=warden', EP).then((d) => { data = d; view = d; draw(); if (scene) render(); }).catch(() => {});
@@ -318,16 +397,17 @@ export function mountSaloonDesk(el, getCombat) {
     const t = data?.table;
     if (t && t.status !== 'closed') {
       const h = t.hand;
-      el.innerHTML = `<p class="sl-desk-sum"><b>${t.game === 'faro' ? 'Faro' : 'Poker'} at ${esc(t.where)}</b> · ${t.handsPlayed || 0} hand${t.handsPlayed === 1 ? '' : 's'} played${h && h.phase !== 'over' ? ` · hand ${h.no}: ${esc(PHASE[h.phase])}, pot ${$$(h.pot)}` : ''}</p>
-        <div class="sl-desk-seats">${t.seats.map((s) => `<div class="item-row"><span class="item-who"><b>${esc(s.name)}</b><small class="muted">${s.kind === 'npc' ? `${t.game === 'faro' ? 'the dealer' : esc(STYLE[s.style] || '')} · bank ${$$(s.bank)}` : `${s.net >= 0 ? 'up' : 'down'} ${$$(Math.abs(s.net))}`}${h?.all?.[s.key] ? ` · ${esc(h.all[s.key].name)}` : ''}</small></span>${s.kind === 'pc' ? `<button type="button" class="btn small secondary" data-kick="${esc(s.key)}">Remove</button>` : ''}</div>`).join('')}</div>
-        <div class="btn-row"><button type="button" class="btn" data-watch>${gl('die')} Watch the table</button>${t.game === 'faro' ? (!t.faro || t.faro.over ? '<button type="button" class="btn secondary" data-deal>Shuffle a deal</button>' : '') : !h || h.phase === 'over' ? '<button type="button" class="btn secondary" data-deal>Deal a hand</button>' : ''}<button type="button" class="btn secondary" data-close>Close the table</button></div>`;
+      el.innerHTML = `<p class="sl-desk-sum"><b>${t.game === 'faro' ? 'Faro' : t.game === 'liars' ? 'Liar’s Dice' : 'Poker'} at ${esc(t.where)}</b> · ${t.handsPlayed || 0} hand${t.handsPlayed === 1 ? '' : 's'} played${h && h.phase !== 'over' ? ` · hand ${h.no}: ${esc(PHASE[h.phase])}, pot ${$$(h.pot)}` : ''}</p>
+        <div class="sl-desk-seats">${t.seats.map((s) => `<div class="item-row"><span class="item-who"><b>${esc(s.name)}</b><small class="muted">${s.kind === 'npc' ? `${t.game === 'faro' ? 'the dealer' : esc(STYLE[s.style] || '')} · bank ${$$(s.bank)}` : `${s.net >= 0 ? 'up' : 'down'} ${$$(Math.abs(s.net))}`}${h?.all?.[s.key] ? ` · ${esc(h.all[s.key].name)}` : ''}${t.liars?.all?.[s.key] ? ` · cup: ${t.liars.all[s.key].join(' ')}` : ''}</small></span>${s.kind === 'pc' ? `<button type="button" class="btn small secondary" data-kick="${esc(s.key)}">Remove</button>` : ''}</div>`).join('')}</div>
+        <div class="btn-row"><button type="button" class="btn" data-watch>${gl('die')} Watch the table</button>${t.game === 'liars' ? (!t.liars || t.liars.over ? '<button type="button" class="btn secondary" data-deal>Start a game</button>' : '') : t.game === 'faro' ? (!t.faro || t.faro.over ? '<button type="button" class="btn secondary" data-deal>Shuffle a deal</button>' : '') : !h || h.phase === 'over' ? '<button type="button" class="btn secondary" data-deal>Deal a hand</button>' : ''}<button type="button" class="btn secondary" data-close>Close the table</button></div>`;
       return;
     }
     const posse = (getCombat()?.posse || []).filter((p) => !p.dead);
     const faro = st.game === 'faro';
-    el.innerHTML = `<div class="field-step"><span>GAME</span><button type="button" class="chip-btn${faro ? '' : ' on'}" data-game="poker">Poker<small>five-card draw</small></button><button type="button" class="chip-btn${faro ? ' on' : ''}" data-game="faro">Faro<small>bet against the bank</small></button></div>
+    el.innerHTML = `<div class="field-step"><span>GAME</span><button type="button" class="chip-btn${st.game === 'poker' ? ' on' : ''}" data-game="poker">Poker<small>five-card draw</small></button><button type="button" class="chip-btn${faro ? ' on' : ''}" data-game="faro">Faro<small>bet against the bank</small></button><button type="button" class="chip-btn${st.game === 'liars' ? ' on' : ''}" data-game="liars">Liar’s Dice<small>bid and bluff</small></button></div>
       <div class="field-step"><span>WHERE</span><input data-s="where" maxlength="60" value="${esc(st.where)}" placeholder="e.g. the Long Branch Saloon"></div>
       ${faro ? `<div class="field-step"><span>BETS</span><label class="lp-num">Least $<input type="number" min="0.25" step="0.25" data-s="ante" value="${st.ante}"></label><label class="lp-num">Most a card $<input type="number" min="1" step="1" data-faromax value="${st.bet * 5}"></label></div>`
+        : st.game === 'liars' ? `<div class="field-step"><span>STAKES</span><label class="lp-num">Each player puts in $<input type="number" min="0.25" step="0.25" data-s="ante" value="${st.ante}"></label><small class="muted">winner takes the pot</small></div>`
         : `<div class="field-step"><span>STAKES</span><label class="lp-num">Ante $<input type="number" min="0.25" step="0.25" data-s="ante" value="${st.ante}"></label><label class="lp-num">Bet $<input type="number" min="0.5" step="0.5" data-s="bet" value="${st.bet}"></label><small class="muted">doubles after the draw</small></div>`}
       <div class="field-step"><span>${faro ? 'THE DEALER — banks the game' : 'AT THE TABLE — NPCs'}</span></div>
       ${(faro ? st.npcs.slice(0, 1) : st.npcs).map((n, i) => `<div class="sl-npc-row">
@@ -340,6 +420,7 @@ export function mountSaloonDesk(el, getCombat) {
       ${st.npcs.length < 4 && !faro ? '<button type="button" class="btn small secondary" data-addnpc>+ Another NPC</button>' : ''}
       <div class="field-step"><span>WHO’S INVITED</span><button type="button" class="chip-btn${st.invite ? '' : ' on'}" data-inv-all>Everyone</button>${posse.map((p) => `<button type="button" class="chip-btn${st.invite?.has(p.id) ? ' on' : ''}" data-inv="${esc(p.id)}">${esc(p.name)}</button>`).join('')}</div>
       ${faro ? `<div class="field-step"><span>THE DEALING BOX — only you see this</span><button type="button" class="chip-btn${st.crooked ? '' : ' on'}" data-crook="0">Square</button><button type="button" class="chip-btn${st.crooked ? ' on' : ''}" data-crook="1">Crooked<small>stacks cards against big bets; Intuition can catch it</small></button></div>`
+        : st.game === 'liars' ? `<div class="field-step"><span>SKILL MOVES</span>${[['peek', 'Peek under a cup', 'Intuition'], ['stare', 'Stare them down', 'Charm']].map(([k, l, s]) => `<button type="button" class="chip-btn${st[k] ? ' on' : ''}" data-hook="${k}">${l}<small>${s}</small></button>`).join('')}</div>`
         : `<div class="field-step"><span>SKILL MOVES</span>${[['tell', 'Read a tell', 'Intuition'], ['bluff', 'Bluff', 'Charm'], ['palm', 'Palm a card', 'Finesse']].map(([k, l, s]) => `<button type="button" class="chip-btn${st[k] ? ' on' : ''}" data-hook="${k}">${l}<small>${s}</small></button>`).join('')}</div>`}
       <button type="button" class="btn" data-open>${gl('die')} Open the table</button>`;
   }
@@ -362,7 +443,7 @@ export function mountSaloonDesk(el, getCombat) {
       if (d.game) { st.game = d.game; draw(); return; }
       if (d.crook !== undefined) { st.crooked = d.crook === '1'; draw(); return; }
       if (d.open !== undefined) {
-        const r = await api('POST', { action: 'open', game: st.game, crooked: st.crooked, where: st.where, ante: st.ante, bet: st.bet, npcs: st.game === 'faro' ? st.npcs.slice(0, 1) : st.npcs, invite: st.invite ? [...st.invite] : [], tell: st.tell, bluff: st.bluff, palm: st.palm }, '', EP);
+        const r = await api('POST', { action: 'open', game: st.game, crooked: st.crooked, where: st.where, ante: st.ante, bet: st.bet, npcs: st.game === 'faro' ? st.npcs.slice(0, 1) : st.npcs, invite: st.invite ? [...st.invite] : [], tell: st.tell, bluff: st.bluff, palm: st.palm, peek: st.peek, stare: st.stare }, '', EP);
         data = r.state; view = r.state; draw(); toast('The table is open — the posse gets an invite.');
         return;
       }

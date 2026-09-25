@@ -589,3 +589,54 @@ test('Faro: a crooked box can be spotted with Intuition', async () => {
   assert.equal(saloonView(st, { warden: true }).table.faro.crooked, false);
   assert.throws(() => saloonAction(st, { action: 'faroWatch', pc: 'a' }, ctx), /look/);
 });
+
+test('Liar’s Dice: ones wild, raises must go up, a Liar call costs the wrong side a die, last one with dice takes the pot', async () => {
+  const { freshSaloon, saloonAction, saloonView } = await import('../lib/saloon.js');
+  const { legalRaise, bidText } = await import('../lib/liars.js');
+  assert.ok(legalRaise(null, 1, 2)); assert.ok(legalRaise({ qty: 3, face: 4 }, 3, 5)); assert.ok(legalRaise({ qty: 3, face: 6 }, 4, 2));
+  assert.ok(!legalRaise({ qty: 3, face: 4 }, 3, 4)); assert.ok(!legalRaise({ qty: 3, face: 4 }, 2, 6));
+  assert.equal(bidText({ qty: 1, face: 6 }), '1 six'); assert.equal(bidText({ qty: 4, face: 3 }), '4 threes');
+  const seq = [2, 2, 3, 4, 5, 6, 6, 6, 1, 2]; let i = 0;
+  const posse = [{ id: 'a', name: 'Lila', wallet: '20.00', skills: {} }];
+  const st = freshSaloon(), logs = [];
+  const ctx = { posse, rand: () => 0.99, d6: () => seq[i++ % seq.length], npcSkills: () => ({}), roll: (seat) => ({ hits: seat.kind === 'npc' ? 0 : 2 }), log: (t) => logs.push(t) };
+  saloonAction(st, { action: 'open', game: 'liars', ante: 2, npcs: [{ name: 'Doc', style: 'tight', bank: 30 }] }, { ...ctx, warden: true });
+  saloonAction(st, { action: 'join', pc: 'a' }, ctx);
+  saloonAction(st, { action: 'deal' }, { ...ctx, warden: true });
+  let v = saloonView(st, { pc: 'a' }).table.liars;
+  assert.equal(v.turn, 'pc:a'); assert.equal(v.pot, 4); assert.equal(posse[0].wallet, '18.00');
+  assert.deepEqual(v.mine, [1, 2, 6, 6, 6]); assert.equal(v.all, undefined, 'players never see the other cups');
+  assert.throws(() => saloonAction(st, { action: 'liarsCall', pc: 'a' }, ctx), /bid yet/);
+  assert.throws(() => saloonAction(st, { action: 'liarsBid', pc: 'a', qty: 11, face: 6 }, ctx), /only 10/);
+  // a tight NPC with no sixes calls; there are four (three sixes + a wild one), so Doc loses a die
+  saloonAction(st, { action: 'liarsBid', pc: 'a', qty: 3, face: 6 }, ctx);
+  v = saloonView(st, { pc: 'a' }).table.liars;
+  assert.equal(v.last.count, 4); assert.equal(v.last.loser, 'Doc'); assert.equal(v.counts['npc:0'], 4); assert.equal(v.round, 2);
+  // down to the last die: whoever loses it is out, and the other takes the pot
+  st.table.liars.counts['npc:0'] = 1; st.table.liars.dice['npc:0'] = [3];
+  st.table.liars.turn = 'pc:a'; st.table.liars.bid = null;
+  st.table.liars.dice['pc:a'] = [6, 6, 6, 6, 6];
+  saloonAction(st, { action: 'liarsBid', pc: 'a', qty: 5, face: 6 }, ctx); // Doc expects ~1.7 sixes: calls, and is wrong
+  v = saloonView(st, { pc: 'a' }).table.liars;
+  assert.ok(v.over); assert.equal(v.winner, 'pc:a'); assert.equal(posse[0].wallet, '22.00');
+  assert.match(logs.at(-1), /Lila is the last one holding dice/);
+});
+
+test('Liar’s Dice skill moves: a peek shows one NPC die; a stare-down makes the next NPC raise instead of calling', async () => {
+  const { freshSaloon, saloonAction, saloonView } = await import('../lib/saloon.js');
+  const seq = [2, 2, 3, 4, 5, 6, 6, 6, 1, 2]; let i = 0;
+  const posse = [{ id: 'a', name: 'Lila', wallet: '20.00', skills: {} }];
+  const st = freshSaloon();
+  const ctx = { posse, rand: () => 0.99, d6: () => seq[i++ % seq.length], npcSkills: () => ({}), roll: (seat) => ({ hits: seat.kind === 'npc' ? 0 : 2 }), log: () => {} };
+  saloonAction(st, { action: 'open', game: 'liars', npcs: [{ name: 'Doc', style: 'tight' }] }, { ...ctx, warden: true });
+  saloonAction(st, { action: 'join', pc: 'a' }, ctx);
+  saloonAction(st, { action: 'deal' }, { ...ctx, warden: true });
+  const p = saloonAction(st, { action: 'liarsPeek', pc: 'a', target: 'npc:0' }, ctx);
+  assert.ok(p.won && p.die >= 1 && p.die <= 6);
+  assert.equal(saloonView(st, { pc: 'a' }).table.liars.peeks.length, 1);
+  assert.throws(() => saloonAction(st, { action: 'liarsPeek', pc: 'a', target: 'npc:0' }, ctx), /One peek/);
+  assert.deepEqual(saloonAction(st, { action: 'liarsStare', pc: 'a' }, ctx), { won: true, seat: 'Doc' });
+  saloonAction(st, { action: 'liarsBid', pc: 'a', qty: 7, face: 6 }, ctx); // wildly high — but Doc is stared down, so he raises
+  const v = saloonView(st, { pc: 'a' }).table.liars;
+  assert.equal(v.bid.by, 'npc:0'); assert.equal(v.turn, 'pc:a');
+});
