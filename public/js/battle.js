@@ -258,7 +258,14 @@ function renderTurnBar() {
   const bar = $('#turn-bar');
   if (bar.contains(document.activeElement) && /^(SELECT|INPUT)$/.test(document.activeElement.tagName)) return;
   const c = combat?.combat;
-  if (!c?.active) { bar.hidden = !warden; bar.innerHTML = warden ? '<div class="turn-bar"><span class="muted">No combat running — start it on the Combat page.</span><a class="btn small secondary" href="/combat">Combat</a></div>' : ''; return; }
+  if (!c?.active) {
+    bar.hidden = !warden;
+    const n = (combat?.enemies || []).filter((e) => !e.defeated).length, pcs = (combat?.posse || []).filter((p) => !p.dead).length;
+    bar.innerHTML = warden ? `<div class="turn-bar"><div><small>NO COMBAT RUNNING</small><span class="muted">${pcs} in the posse · ${n} enem${n === 1 ? 'y' : 'ies'} ready${n ? '' : ' — add them on the Combat page'}</span></div>
+      <button type="button" class="btn" data-startfight${pcs + n ? '' : ' disabled'}>⚔ Start combat</button></div><p class="muted tp-empty">Rolls everyone’s Finesse for turn order (the Warden rolls once for all enemies, p. 40) and puts every fighter on the board.</p>` : '';
+    bar.querySelector('[data-startfight]')?.addEventListener('click', async () => { if (await tpAct({ action: 'start' }, 'Combat begins — tokens placed.')) poller?.now?.(); });
+    return;
+  }
   bar.hidden = false;
   const cur = currentActor();
   const nm = (k) => combat.posse.find((p) => p.id === k)?.name || combat.enemies.find((e) => e.id === k)?.name || '—';
@@ -291,7 +298,7 @@ function renderTurnBar() {
       ${isPc ? row('PREPARE', `<input type="number" min="0" max="12" data-tp="prep" value="${tp.prep}"> Grit <input data-tp="prepLabel" maxlength="60" placeholder="e.g. shoot whoever comes round the corner" value="${esc(tp.prepLabel)}"><button type="button" class="btn small secondary" data-tp-prep${a.prepared ? ' disabled' : ''}>${a.prepared ? 'Prepared' : 'Prepare'}</button>`) : ''}
       ${isPc && sts.length ? row('RELIEVE', `<select data-tp="rl">${sts.map(([st, v]) => `<option value="${st}"${st === tp.rl ? ' selected' : ''}>${st} [${v}]</option>`).join('')}</select><input type="number" min="1" max="12" data-tp="rlDice" value="${tp.rlDice}"> dice (1 Grit each)<button type="button" class="btn small secondary" data-tp-rl>Roll</button>`) : ''}
       ${isPc ? row('FOOL’S GRIT', `<button type="button" class="btn small secondary" data-tp-fool${a.foolUsed ? ' disabled' : ''}>+1 Grit for 1 Health</button><span class="muted">once per turn</span>`) : ''}
-      <div class="tp-end">${warden ? '<button type="button" class="btn" data-nextturn>Next turn ⏭</button>' : '<button type="button" class="btn" data-endmine>End my turn ⏭</button>'}</div>`
+      <div class="tp-end">${warden ? '<button type="button" class="btn small secondary" data-endfight>End combat</button><button type="button" class="btn" data-nextturn>Next turn ⏭</button>' : '<button type="button" class="btn" data-endmine>End my turn ⏭</button>'}</div>`
     : `<p class="muted tp-empty">${isPc ? 'Only that player (or the Warden) acts on this turn.' : 'The enemies are acting.'}</p>`}
   </div>`;
   wireTurnBar(bar, cur);
@@ -304,6 +311,10 @@ async function tpAct(body, msg) {
 function wireTurnBar(bar, cur) {
   const c = combat?.combat;
   bar.querySelector('[data-nextturn]')?.addEventListener('click', () => tpAct({ action: 'next' }));
+  bar.querySelector('[data-endfight]')?.addEventListener('click', async () => {
+    if (!confirm('End combat? Grit refills and Dodge/Aim clear. Health and Statuses stay as they are.')) return;
+    if (await tpAct({ action: 'end' }, 'Combat is over. Loot the fallen on the Combat page.')) poller?.now?.();
+  });
   bar.querySelector('[data-endmine]')?.addEventListener('click', () => tpAct({ action: 'pc', id: c.current, op: 'endTurn' }));
   bar.querySelector('[data-goto]')?.addEventListener('click', () => {
     const t = data?.tokens.find((x) => x.ref === c.current);

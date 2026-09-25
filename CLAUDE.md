@@ -13,6 +13,7 @@
   - pp. 41–43, 49: combat helpers — pcOps `attack` (weapon Grit, Aim reroll, Special Ammo fx, auto target Defense), `dodge` (banked `pc.dodge`, cleared in startTurn), `relieve` (1 Grit/die, once per Status per turn), `endTurn`; Warden `enemyAttack` (damage vs Defense+Cover+Dodge, Piercing, statuses). Sheet `renderFight` panel + turn alert.
   - pp. 12–13: Skill checks — Warden `checkStart`/`checkClose` (Session page card), pcOp `checkRoll` (Helping = half dice, best helper added), `state.checks` in the player view, prompt on the sheet's fight panel. Health never exceeds Max (changeHealth + setSheetField); rests refill Grit.
   - p. 13 Challenge rolls (check `kind:'challenge'`, NPC side via duelist refs, ties reroll). p. 34: `autoAchievements` (The Scrapper at 100 Scrap) runs after every /api/combat POST. Backup: `api/backup.js` (Warden) dumps all Redis docs; Session page download button.
+  - Grit engine (pp. 40–43): every Action spends Grit via `spendGrit` and is noted in `actor.turnLog` (reset in startTurn). Map moves: api/battle.js calls `chargeMove` (speed: Fast/Normal/Slow/Very Slow, rough ×2, mounted horse = Fast, mech = its speed, Compromised ×2 max 6) and saves the combat doc; `undoMove` refunds. `autoSync` in lib/battle.js keeps tokens in step with the fight. Turn panel = `renderTurnBar` in public/js/battle.js.
   - p. 33: Prestige tiers + Starting at Higher Prestige loadouts (`TIERS` in lib/sheets.js, pcOp `tierKit`)
   - p. 85: ranges
   - pp. 83–84: scanning

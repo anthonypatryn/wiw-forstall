@@ -1,6 +1,6 @@
 import { load, save } from '../lib/store.js';
 import { pinOk, send, readBody } from '../lib/http.js';
-import { freshBattle, battleAction, battleView, hexDist, clampHex } from '../lib/battle.js';
+import { freshBattle, battleAction, battleView, hexDist, clampHex, autoSync } from '../lib/battle.js';
 import { chargeMove, undoMove, freshCombat } from '../lib/combat.js';
 
 const KEY = 'battle';
@@ -25,6 +25,7 @@ export default async function handler(req, res) {
     const [stored, combat] = await Promise.all([load(KEY), load('combat')]);
     const state = stored || freshBattle();
     const view = () => battleView(state, { warden, combat });
+    if (autoSync(state, combat)) { state.v = (state.v || 0) + 1; await save(state, KEY); }
 
     if (req.method === 'GET') {
       if (url.searchParams.get('view') === 'warden' && !warden) return send(res, 401, { error: 'Wrong PIN.' });
