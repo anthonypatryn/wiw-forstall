@@ -32,7 +32,7 @@ function renderEditor(force) {
   box.innerHTML = `
     <div class="sess-head">
       <label>TITLE<input data-f="title" maxlength="80" value="${esc(s.title)}"></label>
-      <label>DATE<input data-f="date" type="date" value="${esc(s.date)}"></label>
+      <label>DATE<input data-f="date" inputmode="numeric" maxlength="10" placeholder="2026-09-25" value="${esc(s.date)}"></label>
     </div>
     <label class="sess-notes">NOTES <small>just for you — plans, secrets, what happened, loose ends</small>
       <textarea data-f="notes" maxlength="20000" placeholder="Where the posse is, who they met, what they owe, what’s coming…">${esc(s.notes)}</textarea></label>

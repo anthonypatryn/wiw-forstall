@@ -1,5 +1,6 @@
 import { ICONS } from './icons.js';
 import { gl } from './glyphs.js';
+import './controls.js'; // styled drop-downs, suggestion lists and tooltips (no browser pop-up UI)
 
 export const $ = (s, r = document) => r.querySelector(s);
 export const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));

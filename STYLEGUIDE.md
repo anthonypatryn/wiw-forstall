@@ -80,6 +80,17 @@ Body text is 17px (16px on phones), line-height 1.5.
 
 Small helpers: `.btn-row` (a row of buttons), `.fine` (12px note), `.small-text` (14px), `.mt-0`, `.mt-2`.
 
+## Controls — never ship a raw native control
+`public/js/controls.js` (loaded by `common.js` on every page) and the CONTROLS block in `style.css` restyle everything the browser would draw itself:
+- **`<select>`** — keep writing normal selects (optgroups welcome). They're restyled (ink caret) and open a styled list (`.sel-pop`) with keyboard support and a search box over 12 options. The select stays the source of truth, so `value`, `change` and "skip redraw while a select is focused" all keep working. Add `data-native` only if you truly need the browser's list.
+- **Suggestions** — `<input list="…">` + `<datalist>` opens the same styled list, filtered as you type.
+- **Checkboxes** — styled automatically (rust when ticked). For choosing people/options prefer `.chip-btn`s.
+- **Number fields** — no spinner arrows; add ± buttons (`.pm-btn`) where stepping matters.
+- **Sliders** — styled `input[type=range]`.
+- **Dates** — a plain text field (`2026-09-25`), no calendar pop-up.
+- **Tooltips** — just use `title="…"`; it's shown as a styled `.tip-pop`.
+- **Pop-ups/dialogs** — `ask()`, `askText()`, `tell()`, `pickFighters()`; never `alert/confirm/prompt`.
+
 ## Navigation
 - One site nav (`mountNav` in `common.js`), grouped by how often a page is used.
   - **Player:** Posse · Battle Map · Forstall Scanner · World ▾ (Map, NPCs) · Store · ? (How to Play)
