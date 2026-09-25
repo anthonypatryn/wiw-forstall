@@ -565,3 +565,5 @@ button { cursor: pointer; }
 .who-pick .gl { width: 28px; height: 28px; flex: none; }
 .who-pick b { display: block; font: 19px var(--display); letter-spacing: .06em; font-weight: 400; }
 .who-pick small { display: block; font-size: 13px; opacity: .75; }
+
+.log-drawer-head .log-clock { font-size: 13px; opacity: .75; margin-right: auto; margin-left: 8px; white-space: nowrap; }

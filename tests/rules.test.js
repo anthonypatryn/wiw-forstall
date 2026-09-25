@@ -136,3 +136,22 @@ test('a Sweep in combat spends Grit + a charge and a monster’s turn start cost
   sweepHit(state, ctx().list, tokens, e.id, 'start');
   assert.equal(e.grit, 4);
 });
+
+test('game clock: Sweeps burn a charge per 2 hours, then stop; a new day resets 2/day uses', async () => {
+  const { passTime, clockLabel, sweepHours } = await import('../lib/combat.js');
+  const state = freshCombat();
+  const pc = publicAction(state, { action: 'addPc', trade: 'Hunter', name: 'Tess' }, { warden: true });
+  Object.assign(pc.forstall, forstallFields(item('models-backpack-forstall')));
+  pc.abilityUses = { 'Fired Up': 2 };
+  const tokens = [{ kind: 'pc', ref: pc.id, col: 0, row: 0, id: 'p' }];
+  publicAction(state, { action: 'forstall', op: 'sweep', key: `pc:${pc.id}` }, { warden: false, ctx: { list: fields({ tokens }, state), tokens, cave: false } });
+  assert.equal(pc.forstall.charges, 1);           // 8 AM: first charge in, runs to 10 AM
+  assert.equal(clockLabel(state.sweeps[`pc:${pc.id}`].until), 'Day 1 · 10 AM');
+  passTime(state, 2);                              // 10 AM: second charge
+  assert.equal(pc.forstall.charges, 0);
+  passTime(state, 2);                              // noon: nothing left
+  assert.equal(state.sweeps[`pc:${pc.id}`], undefined);
+  passTime(state, 20);                             // past midnight
+  assert.deepEqual(pc.abilityUses, {});
+  assert.equal(sweepHours({ duration: '2', upgrades: ['Sweeping Duration L2 (6 hours)'] }), 6);
+});

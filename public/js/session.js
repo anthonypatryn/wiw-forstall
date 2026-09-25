@@ -79,6 +79,16 @@ function onSessions(d) {
 
 // ---------- at a glance (live from the Combat & sheets data) ----------
 const STATUS_SHORT = (st) => Object.entries(st || {}).filter(([, v]) => v).map(([k, v]) => `${k}${v > 1 ? ` [${v}]` : ''}`).join(', ');
+function renderClock() {
+  if (!combat) return;
+  $('#clock-now').textContent = combat.clock?.label || 'Day 1 · 8 AM';
+  const sweeping = (combat.posse || []).filter((p) => p.forstall?.model && combat.sweeps?.[`pc:${p.id}`]);
+  $('#clock-sweeps').textContent = sweeping.length ? `Sweeping: ${sweeping.map((p) => `${p.name} (${p.forstall.charges} charge${Number(p.forstall.charges) === 1 ? '' : 's'} left, next one at ${combat.sweeps[`pc:${p.id}`].untilLabel || '?'})`).join(' · ')}` : 'No character is Sweeping.';
+}
+document.querySelectorAll('#clock-card [data-hours], #clock-card [data-morning]').forEach((b) => b.addEventListener('click', async () => {
+  const r = await combatAct(b.dataset.morning !== undefined ? { action: 'clock', morning: true } : { action: 'clock', hours: Number(b.dataset.hours) });
+  if (r) { toast(`${r.clock}${r.notes.length ? ` — ${r.notes.join('. ')}` : ''}`); renderClock(); }
+}));
 function renderGlance() {
   if (!combat) return;
   const posse = combat.posse || [];
@@ -212,7 +222,7 @@ function open() {
   poller?.stop(); combatPoller?.stop();
   poller = startPolling('warden', onSessions, (ok, e) => { if (e?.status === 401) lockUp(); }, EP);
   loadHomebrew();
-  combatPoller = startPolling('warden', (d) => { combat = d; renderGlance(); renderChecks(); }, (ok) => { $('#glance-conn').textContent = ok ? '● live' : 'reconnecting…'; }, '/api/combat');
+  combatPoller = startPolling('warden', (d) => { combat = d; renderClock(); renderGlance(); renderChecks(); }, (ok) => { $('#glance-conn').textContent = ok ? '● live' : 'reconnecting…'; }, '/api/combat');
 }
 function lockUp() {
   poller?.stop(); combatPoller?.stop();

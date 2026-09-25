@@ -35,7 +35,7 @@ export function mountTableLog() {
   panel.className = 'log-drawer';
   panel.setAttribute('aria-label', 'Table Log');
   panel.hidden = true;
-  panel.innerHTML = `<div class="log-drawer-head"><b>TABLE LOG</b><a href="/battle">Battle Map ›</a><button type="button" class="log-clear" hidden>Clear</button><button type="button" class="log-close" aria-label="Close">✕</button></div><div class="log"></div>`;
+  panel.innerHTML = `<div class="log-drawer-head"><b>TABLE LOG</b><span class="log-clock"></span><a href="/battle">Battle Map ›</a><button type="button" class="log-clear" hidden>Clear</button><button type="button" class="log-close" aria-label="Close">✕</button></div><div class="log"></div>`;
   // Roll dice + Table Log share one bottom-right row, so a wider button (unread badge) never overlaps
   const row = document.createElement('div');
   row.className = 'fab-row';
@@ -63,6 +63,7 @@ export function mountTableLog() {
 
   startPolling('log', (d) => {
     renderHud(d.hud);
+    const clk = panel.querySelector('.log-clock'); if (clk) clk.textContent = d.hud?.clock || '';
     latest = d.log;
     const topId = latest[0]?.id ?? null;
     if (seenTop !== null && topId !== seenTop) {
