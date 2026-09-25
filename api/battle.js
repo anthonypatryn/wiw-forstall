@@ -1,7 +1,8 @@
 import { load, save } from '../lib/store.js';
 import { pinOk, send, readBody } from '../lib/http.js';
 import { freshBattle, battleAction, battleView, hexDist, clampHex, autoSync } from '../lib/battle.js';
-import { chargeMove, undoMove, pushUndo, checkHoldTriggers } from '../lib/combat.js';
+import { chargeMove, undoMove, pushUndo, checkHoldTriggers, sweepHit } from '../lib/combat.js';
+import { fields, inRange } from '../lib/forstall.js';
 
 const KEY = 'battle';
 const IMG_KEY = 'battle-img';
@@ -48,6 +49,8 @@ export default async function handler(req, res) {
 
     // Moving in combat spends the mover's Grit (p. 41), which lives in the combat document.
     let combatDirty = false, moveResult = null;
+    const moving = body.action === 'move' ? state.tokens.find((x) => x.id === body.id) : null;
+    const movedFrom = moving ? { col: moving.col, row: moving.row } : null;
     if (body.action === 'move' && combat?.combat?.active) {
       const t = state.tokens.find((x) => x.id === body.id);
       if (t && t.ref && (t.kind === 'pc' || t.kind === 'enemy')) {
@@ -76,6 +79,11 @@ export default async function handler(req, res) {
         checkHoldTriggers(combat, { type: 'enemyMoved', enemy: t.ref, name: t.name, distTo });
         if (JSON.stringify(combat.posse.map((p) => p.hold?.triggeredBy || null)) !== before) combatDirty = true;
       }
+    }
+    // a monster walking into a Sweeping Forstall's Range loses Grit and cries out (p. 82)
+    if (moving?.kind === 'enemy' && moving.ref && combat) {
+      const entered = fields(state, combat).filter((f) => f.sweep && !inRange(f, movedFrom) && inRange(f, moving));
+      if (entered.length && sweepHit(combat, entered, state.tokens, moving.ref, 'enter')) combatDirty = true;
     }
     if (combatDirty) { combat.v = (combat.v || 0) + 1; await save(combat, 'combat'); }
     state.v = (state.v || 0) + 1;

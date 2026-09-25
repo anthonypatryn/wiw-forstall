@@ -86,7 +86,7 @@ $('#roll-btn').addEventListener('click', async () => {
   if (busy) return;
   busy = true; renderPool();
   try {
-    const res = await api('POST', { action: 'roll', black: pool.B, gold: pool.G, spurTalent: spur.checked, who: scanner()?.name || '' });
+    const res = await api('POST', { action: 'roll', black: pool.B, gold: pool.G, spurTalent: spur.checked, who: scanner()?.name || '', whoId: scanner()?.id || '' });
     shownRollAt = res.result.at;
     poller.push(res.state);
     await showRoll(res.result, true);

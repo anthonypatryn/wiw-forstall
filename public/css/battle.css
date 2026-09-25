@@ -212,3 +212,54 @@
 .btoken .skull.bleed .gl { color: #b3261e; filter: drop-shadow(0 0 2px #fff) drop-shadow(0 2px 3px rgba(0,0,0,.8)); }
 .btoken .hold-dot .gl { width: 1em; height: 1em; color: #f0c46a; background: #221f1f; border-radius: 50%; padding: 2px; }
 .tp-hold .gl { color: #a4401f; }
+
+/* ---------- Forstalls: Range fields, markers, cards ---------- */
+.fields .fs-field { fill: rgba(70,214,214,.17); }
+.fields .fs-field.on { fill: rgba(70,214,214,.32); animation: fs-hum 2.4s ease-in-out infinite; }
+.fields .fs-field.clash { fill: rgba(214,58,40,.3); }
+.fields .fs-field.whole { fill: none; stroke: rgba(92,196,196,.8); stroke-width: 14; stroke-dasharray: 36 18; }
+.fields .fs-field.whole.on { stroke: #5cc4c4; }
+.fields .fs-field.whole.clash { stroke: #d63a28; }
+@keyframes fs-hum { 50% { opacity: .55; } }
+.fstoken {
+  position: absolute; transform: translate(-50%, -50%); border-radius: 50%; display: grid; place-items: center; cursor: pointer; touch-action: none;
+  background: #1d3b3d; color: #bdf0ee; border: 3px solid #5cc4c4; box-shadow: 0 3px 8px rgba(0,0,0,.6); z-index: 2;
+}
+.fstoken .gl { width: 1em; height: 1em; }
+.fstoken.movable { cursor: grab; }
+.fstoken.on { box-shadow: 0 0 0 4px rgba(92,196,196,.35), 0 0 22px 6px rgba(92,196,196,.6); }
+.fstoken.clash { border-color: #d63a28; color: #ffb4a6; }
+.fstoken.sel { box-shadow: 0 0 0 5px var(--brass), 0 0 26px 8px rgba(201,164,92,.85); }
+.fstoken.hidden-tok { opacity: .55; outline: 4px dashed #b58ad0; outline-offset: 4px; }
+.fstoken .lab { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 6%; white-space: nowrap; background: rgba(20,16,14,.85); color: #bdf0ee; padding: 2px 6px; border-radius: 4px; font-family: var(--display); letter-spacing: .03em; line-height: 1.2; }
+.btoken .fs-dot, .btoken .sw-dot { position: absolute; line-height: 1; }
+.btoken .fs-dot { right: -8%; bottom: 8%; }
+.btoken .sw-dot { left: -8%; bottom: 8%; }
+.btoken .fs-dot .gl, .btoken .sw-dot .gl { width: 1em; height: 1em; padding: 2px; border-radius: 50%; background: #1d3b3d; color: #bdf0ee; border: 1px solid #5cc4c4; }
+.btoken .fs-dot.on .gl { background: #5cc4c4; color: #10292a; }
+.btoken .sw-dot .gl { background: #5cc4c4; color: #10292a; animation: fs-hum 1.6s ease-in-out infinite; }
+
+.fs-card { border: 2px solid #2f6d73; border-radius: var(--radius); padding: 10px 12px; margin: 10px 0; background: rgba(47,109,115,.07); }
+.fs-card.on { border-color: #1f8f8f; background: rgba(92,196,196,.14); }
+.fs-head { display: flex; gap: 10px; align-items: center; }
+.fs-head .fs-ic .gl { width: 30px; height: 30px; color: #2f6d73; }
+.fs-head b { display: block; font: 19px/1.1 var(--display); letter-spacing: .05em; font-weight: 400; }
+.fs-head small { display: block; font-size: 13px; opacity: .8; }
+.fs-state { margin: 8px 0; font-size: 14px; line-height: 1.4; }
+.fs-warn { margin: 6px 0; padding: 6px 8px; border-radius: 6px; background: rgba(214,58,40,.12); color: #8e2414; font-size: 14px; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.fs-warn .gl { width: 1.1em; height: 1.1em; }
+.fs-btns, .fs-burst { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+.fs-btns .gl, .fs-burst .gl { width: 1.1em; height: 1.1em; vertical-align: -3px; }
+.fs-slots { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 8px 0 4px; }
+.fs-slots span { grid-column: 1 / -1; font: 13px var(--display); letter-spacing: .08em; opacity: .75; }
+.fs-slots select, .fs-burst select { min-width: 0; width: 100%; font-size: 13px; }
+.fs-burst select { flex: 1; width: auto; }
+.fs-note { font-size: 13px; margin: 4px 0 0; }
+.fs-prev { display: flex; gap: 6px; align-items: center; }
+.fs-prev .gl { width: 1.1em; height: 1.1em; flex: none; }
+.fs-add { flex-wrap: wrap; }
+.fs-add select { flex: 1 1 100%; }
+.tok-row .fs-chip { background: #1d3b3d; color: #bdf0ee; }
+.tok-row .fs-chip.on { background: #5cc4c4; color: #10292a; }
+.tok-row .fs-chip .gl { width: 15px; height: 15px; }
+@media (max-width: 600px) { .fs-slots { grid-template-columns: 1fr; } }

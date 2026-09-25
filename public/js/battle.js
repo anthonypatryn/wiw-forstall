@@ -84,8 +84,8 @@ function attackHTML(sel) {
 }
 const vp = $('#viewport'), stage = $('#stage');
 const pz = panZoom(vp, stage, {
-  maxScale: 2.5, ignore: '.btoken, .map-ctrls',
-  onTap: (target) => { if (!target.closest('.btoken')) select(null); },
+  maxScale: 2.5, ignore: '.btoken, .fstoken, .map-ctrls',
+  onTap: (target) => { if (!target.closest('.btoken, .fstoken')) select(null); },
 });
 $('#zoom-in').addEventListener('click', () => pz.zoom(1.35));
 $('#zoom-out').addEventListener('click', () => pz.zoom(1 / 1.35));
@@ -175,18 +175,25 @@ function renderTokens() {
       title="${esc(t.name)}">${t.img ? '' : esc(initials(t.name))}
       ${t.holding ? `<span class="hold-dot" style="font-size:${labFont * 1.4}px" title="Prepared: ${esc(t.holding)}">${gl('watch')}</span>` : ''}
       ${t.dead ? `<span class="skull" style="font-size:${size * 0.62}px" aria-label="Down">${gl('skull')}</span>` : t.bleeding ? `<span class="skull bleed" style="font-size:${size * 0.5}px" aria-label="Bleeding Out">${gl('drop')}</span>` : ''}
+      ${(data.forstalls || []).some((f) => f.owner && f.owner === t.ref) ? `<span class="fs-dot${(data.forstalls || []).find((f) => f.owner === t.ref)?.sweep ? ' on' : ''}" style="font-size:${labFont * 1.3}px" title="Carries a Forstall">${gl('forstall')}</span>` : ''}
+      ${t.swept ? `<span class="sw-dot" style="font-size:${labFont * 1.3}px" title="${esc(t.sweepPreview || 'In a Sweeping Forstall’s Range')}">${gl('forstall')}</span>` : ''}
       ${nStatus ? `<span class="st-dot" style="font-size:${labFont}px" title="${esc(Object.entries(t.statuses).map(([k, v]) => `${k} ${v}`).join(', '))}">${nStatus}</span>` : ''}
       <span class="lab" style="font-size:${labFont}px">${esc(t.name)}${hasHp ? `<i class="hpbar"><i style="width:${pct}%"></i></i><em>${t.health}/${t.maxHealth}</em>` : ''}</span>
       ${d !== null ? `<span class="dist ${band(d)}" style="font-size:${labFont}px">${d}″ · ${BAND_LABEL[band(d)]}</span>` : ''}</div>`;
-  }).join('');
+  }).join('') + fsMarkers();
   layer.querySelectorAll('.btoken').forEach(wireToken);
+  layer.querySelectorAll('.fstoken').forEach(wireFsMarker);
 }
 
 function renderPanel() {
   const sel = selected && data.tokens.find((x) => x.id === selected);
   const box = $('#sel-box');
   if (box.contains(document.activeElement) && document.activeElement.tagName === 'SELECT') return;
-  if (!sel) {
+  const selF = !sel && selFs ? fsOf(selFs) : null;
+  if (selF) {
+    box.innerHTML = `<div class="sel-card"><div class="kind">FORSTALL${selF.hidden ? ' · HIDDEN FROM POSSE' : ''}</div>${forstallCard(selF)}</div>`;
+    wireFs(box);
+  } else if (!sel) {
     box.innerHTML = `<div class="sel-card"><div class="kind">RANGE METER</div><h2>Tap a token</h2>
       <p>You’ll see its Arm’s Reach, Short and Long Range, and how far away everyone else is.</p></div>`;
   } else {
@@ -199,6 +206,9 @@ function renderPanel() {
       ${st.length ? `<div class="d-st">${st.map(([k, v]) => `<span class="st">${esc(k)} <b>${v}</b></span>`).join('')}</div>` : ''}
       <div class="d-row">${sel.grit != null ? `<span><b>GRIT</b> ${sel.grit}</span>` : ''}${sel.defense ? `<span><b>DEFENSE</b> ${esc(sel.defense)}</span>` : ''}${sel.speed ? `<span><b>SPEED</b> ${esc(sel.speed)}</span>` : ''}${sel.finesse ? `<span><b>FINESSE</b> ${esc(sel.finesse)}</span>` : ''}${sel.aces ? `<span><b>ACES</b> ${sel.aces}/6</span>` : ''}${sel.size ? `<span><b>SIZE</b> ${esc(sel.size)}</span>` : ''}</div>
       ${sel.frenzyText?.length ? `<div class="d-note">${sel.frenzyText.map(esc).join('<br>')}</div>` : ''}
+      ${sel.sweepPreview ? `<div class="d-note fs-prev">${gl('forstall')} ${esc(sel.sweepPreview)}</div>` : ''}
+      ${warden && sel.kind === 'enemy' && sel.ref ? `<label class="check"><input type="checkbox" data-submerged="${esc(sel.ref)}"${sel.submerged ? ' checked' : ''}> Submerged — Forstalls can’t reach it</label>` : ''}
+      ${(() => { const f = sel.kind === 'pc' && (data.forstalls || []).find((x) => x.owner === sel.ref); return f ? forstallCard(f) : ''; })()}
       ${sel.attacks?.length ? `<details class="d-atk"><summary>Attacks</summary>${sel.attacks.map((a) => `<p>${esc(a)}</p>`).join('')}</details>` : ''}
       ${combat?.combat?.active && sel.ref && sel.ref === combat.combat.current ? '<p class="tp-hint">Attacks and actions are in the turn panel above.</p>' : ''}`;
     const kindLabel = sel.kind === 'pc' ? `POSSE${sel.trade ? ` · THE ${esc(sel.trade.toUpperCase())}` : ''}` : sel.kind === 'enemy' ? 'ENEMY' : 'NPC';
@@ -207,6 +217,8 @@ function renderPanel() {
       ${others.length ? others.map(({ t, d }) => `<div class="tok-row" data-pick="${t.id}"><span class="chip" style="background:${color(t)}">${esc(initials(t.name))}</span>
         <span class="n">${esc(t.name)}</span><span class="d ${band(d)}">${d}″ · ${BAND_LABEL[band(d)]}</span></div>`).join('') : '<p class="muted">Nobody else on the board.</p>'}</div>`;
   }
+  if (sel) wireFs(box);
+  box.querySelector('[data-submerged]')?.addEventListener('change', (e) => fsAct({ action: 'enemy', id: e.target.dataset.submerged, op: 'submerged' }));
   const list = $('#token-list');
   list.innerHTML = data.tokens.length ? data.tokens.map((t) => `<div class="tok-row${t.id === selected ? ' sel' : ''}" data-pick="${t.id}">
       <span class="chip" style="background:${color(t)}">${esc(initials(t.name))}</span>
@@ -292,6 +304,7 @@ function renderTurnBar() {
     ...(gear.length ? [['item', 'satchel', 'Use Item', 'item’s Grit']] : []),
     ...(sts.length ? [['relieve', 'bandage', 'Relieve', '1 per die']] : []),
     ['improvise', 'lasso', 'Improvise', '1+'],
+    ...(isPc && a.forstall?.model ? [['forstall', 'forstall', 'Forstall', `${parseInt(a.forstall.grit, 10) || 4} Grit`]] : []),
     ...(isPc ? [['prepare', 'watch', 'Prepare', 'held', a.prepared]] : []),
     ...(isPc ? [['fool', 'heart', 'Fool’s Grit', '+1 for 1 HP', a.foolUsed]] : []),
   ];
@@ -307,6 +320,11 @@ function renderTurnBar() {
         ${isPc && (a.horse?.breed || a.mech?.class) ? `<select data-tp-mount aria-label="On foot or mounted"><option value="">On foot (Normal)</option>${a.horse?.breed ? `<option value="horse"${a.mounted === 'horse' ? ' selected' : ''}>Riding ${esc(a.horse.name || a.horse.breed)} (Fast)</option>` : ''}${a.mech?.class ? `<option value="mech"${a.mounted === 'mech' ? ' selected' : ''}>Driving the ${esc(a.mech.class)} mech</option>` : ''}</select>` : ''}
         ${isPc && /arabian/i.test(a.horse?.breed || '') && a.horse?.bond === 'Revered' && a.mounted === 'horse' ? `<button type="button" class="btn small secondary" data-tp-horse${(a.horseGrit || 0) >= 2 ? ' disabled' : ''}>${gl('horseshoe')} Arabian +1 Grit (${a.horseGrit || 0}/2)</button>` : ''}`;
       break;
+    case 'forstall': {
+      const f = fsOf(`pc:${a.id}`);
+      drawer = f ? forstallCard(f) : '<p class="muted">Put their token on the board first.</p>';
+      break;
+    }
     case 'dodge':
       drawer = `<p class="tp-hint">Spend Grit, roll that many Black dice. The Hits soak the next attack on ${esc(a.name)} — gone at their next turn.</p>
         <div class="tp-form"><input type="number" min="1" max="12" data-tp="dodge" value="${tp.dodge}"> Grit <button type="button" class="btn small" data-tp-dodge>${gl('dodge')} Dodge</button></div>`;
@@ -481,6 +499,7 @@ function wireTurnBar(bar, cur, tok) {
     if (r) { tp.open = ''; toast(`Holding ${r.label} — when ${r.when}.`); }
   });
   wireHolds(bar);
+  wireFs(bar);
   bar.querySelector('[data-tp-rl]')?.addEventListener('click', async () => {
     const r = await tpAct({ ...base, op: 'relieve', status: tp.rl, dice: tp.rlDice });
     if (r?.dice) rollPopup(r, `${a.name} · Relieve ${tp.rl} · ${r.pool}`);
@@ -541,17 +560,19 @@ function renderWarden() {
   if (document.activeElement?.id !== 'g-ppi') $('#g-ppi').value = data.grid.ppi;
   if (document.activeElement?.id !== 'g-op') $('#g-op').value = data.grid.opacity;
   $('#g-show').checked = data.grid.show;
+  renderFsWarden();
 }
 
 function render() {
   if (dragging) return; // don't yank a token out from under a drag
   renderStage();
+  renderFields();
   renderRanges();
   renderTokens();
   renderPanel();
   renderWarden();
 }
-function select(id) { selected = id; renderRanges(); renderTokens(); renderPanel(); }
+function select(id) { selected = id; selFs = null; renderRanges(); renderTokens(); renderPanel(); if (warden && data) renderFsWarden(); }
 
 // ---------- dragging tokens ----------
 function wireToken(el) {
@@ -633,6 +654,184 @@ $('#upload').addEventListener('change', async (e) => {
   } catch { toast('Couldn’t read that image.', true); }
 });
 
+// ---------- Forstalls (pp. 81–87): Range fields, Sweep, memory slots, Burst, Edison's Rule 1 ----------
+let kzList = [], selFs = null, fieldsKey = '';
+const fsOf = (key) => data?.forstalls?.find((f) => f.key === key) || null;
+const inField = (f, t) => !!f.pos && (f.rangeIn >= 999 || dist(f.pos, t) <= f.rangeIn);
+const clashKeys = () => new Set((data?.edison || []).flat());
+// What a slot can be programmed with: decoded monsters for the posse, every monster for the Warden.
+async function loadKz() {
+  try {
+    kzList = warden ? ((await api('GET', null, '?view=warden', '/api/scan')).monsters || []).map((m) => ({ name: m.name, kz: m.kz }))
+      : ((await api('GET', null, '?view=player', '/api/scan')).notebook || []).filter((e) => e.solved).map((e) => ({ name: e.name, kz: e.kz }));
+    kzList.sort((a, b) => a.name.localeCompare(b.name));
+  } catch { kzList = []; }
+}
+function renderFields() {
+  const svg = $('#fields');
+  const fs = data.forstalls || [], clash = clashKeys();
+  const key = JSON.stringify([fs.map((f) => [f.key, f.pos, f.rangeIn, !!f.sweep]), [...clash], data.map.w, data.map.h, data.grid]);
+  if (key === fieldsKey) return;
+  fieldsKey = key;
+  svg.setAttribute('width', data.map.w); svg.setAttribute('height', data.map.h);
+  svg.innerHTML = fs.map((f) => {
+    const cls = `fs-field${f.sweep ? ' on' : ''}${clash.has(f.key) ? ' clash' : ''}`;
+    if (f.rangeIn >= 999) return `<rect class="${cls} whole" x="8" y="8" width="${data.map.w - 16}" height="${data.map.h - 16}"/>`;
+    let d = '';
+    const r = f.rangeIn;
+    for (let row = Math.max(0, f.pos.row - r); row <= Math.min(data.size.rows - 1, f.pos.row + r); row++) {
+      for (let col = Math.max(0, f.pos.col - r - 1); col <= Math.min(data.size.cols - 1, f.pos.col + r + 1); col++) {
+        if (dist(f.pos, { col, row }) <= r) d += hexPath(col, row);
+      }
+    }
+    return `<path class="${cls}" d="${d}"/>`;
+  }).join('');
+}
+// the Warden's free-standing Forstalls, drawn with the tokens
+function fsMarkers() {
+  const size = data.grid.ppi * 0.66, labFont = data.grid.ppi * 0.2, clash = clashKeys();
+  return (data.forstalls || []).filter((f) => !f.owner).map((f) => {
+    const c = center(f.pos.col, f.pos.row);
+    return `<div class="fstoken${f.sweep ? ' on' : ''}${clash.has(f.key) ? ' clash' : ''}${selFs === f.key ? ' sel' : ''}${f.hidden ? ' hidden-tok' : ''}${warden ? ' movable' : ''}" data-fs="${esc(f.key)}"
+      style="left:${c.x}px;top:${c.y}px;width:${size}px;height:${size}px;font-size:${size * 0.62}px" title="${esc(f.name)} · ${esc(f.range)} Range">${gl('forstall')}
+      <span class="lab" style="font-size:${labFont}px">${esc(f.name)}${f.sweep ? ` · Sweep ${f.sweep.hits}` : ''}</span></div>`;
+  }).join('');
+}
+function slotOptions(cur) {
+  const opts = kzList.map((o) => `${o.name} · ${o.kz}`);
+  if (cur && !opts.includes(cur)) opts.unshift(cur);
+  return `<option value="">— empty —</option>${opts.map((v) => `<option value="${esc(v)}"${v === cur ? ' selected' : ''}>${esc(v)}</option>`).join('')}`
+    + (kzList.length ? '' : `<option value="" disabled>${warden ? 'No monsters found' : 'Nothing decoded yet — use the Forstall Scanner'}</option>`);
+}
+function forstallCard(f) {
+  const may = warden || (f.owner && myId() === f.owner);
+  const fight = combat?.combat?.active;
+  const clashWith = (data.edison || []).filter((p) => p.includes(f.key)).map((p) => fsOf(p.find((k) => k !== f.key))?.name).filter(Boolean);
+  const cost = f.owner ? `${fight ? `${f.grit} Grit · ` : ''}1 charge` : 'Warden';
+  return `<div class="fs-card${f.sweep ? ' on' : ''}">
+    <div class="fs-head"><span class="fs-ic">${gl('forstall')}</span><div><b>${esc(f.name)}</b><small>${esc(f.range)} Range${f.rangeIn < 999 ? ` (${f.rangeIn}″)` : ''} · Sweep ${esc(f.pool)}${data.cave ? ' −1 (cave)' : ''}${f.charges != null ? ` · ${f.charges} charge${f.charges === 1 ? '' : 's'} left` : ''}${f.ownerName ? ` · ${esc(f.ownerName)}` : ''}</small></div></div>
+    <p class="fs-state">${f.sweep ? `<b>Sweeping · ${f.sweep.hits} Hit${f.sweep.hits === 1 ? '' : 's'}.</b> Monsters in Range lose that much Grit when their turn starts or they come into Range (+1 for programmed frequencies, minus their Sweep Tolerance).` : 'Switched off.'}</p>
+    ${clashWith.length ? `<p class="fs-warn">${gl('flash')} Edison’s Rule 1: its waves cross ${esc(clashWith.join(' and '))}’s.</p>` : ''}
+    ${may ? `<div class="fs-btns"><button type="button" class="btn small" data-fs-sweep="${esc(f.key)}"${f.owner && !f.charges ? ' disabled' : ''}>${gl('forstall')} ${f.sweep ? 'Readjust' : 'Sweep'} · ${cost}</button>
+        ${f.sweep ? `<button type="button" class="btn small secondary" data-fs-off="${esc(f.key)}">Switch off</button>` : ''}</div>
+      <div class="fs-slots"><span>MEMORY SLOTS</span>${[0, 1, 2, 3].map((i) => `<select data-fs-slot="${esc(f.key)}" data-i="${i}" aria-label="Memory slot ${i + 1}">${slotOptions(f.slots[i] || '')}</select>`).join('')}</div>
+      ${f.fuse ? (f.burst?.length ? `<div class="fs-burst"><select data-fs-bt="${esc(f.key)}" aria-label="Burst target">${f.burst.map((b) => `<option value="${esc(b.ref)}">${esc(b.name)}</option>`).join('')}</select>
+          <button type="button" class="btn small danger" data-fs-burst="${esc(f.key)}">${gl('flash')} Burst${f.owner ? ' · 1 crystal' : ''}</button></div>`
+        : '<p class="muted fs-note">Burst: no programmed monster in Range.</p>')
+        : f.owner ? '<p class="muted fs-note">Add a Crystal Burst Fuse upgrade to Burst.</p>' : ''}` : ''}
+  </div>`;
+}
+async function fsAct(body) {
+  try {
+    const res = await api('POST', body, '', '/api/combat');
+    combat = res.state || combat; combatPoller?.now?.(); poller?.now?.();
+    return res.result ?? true;
+  } catch (e) {
+    if (!/^EDISON: /.test(e.message)) { toast(e.message, true); return null; }
+    if (!await ask(`Edison’s Rule 1\n\n${e.message.slice(8)}`, { ok: 'Do it anyway', danger: true })) return null;
+    return fsAct({ ...body, force: true });
+  }
+}
+function wireFs(box) {
+  box.querySelectorAll('[data-fs-sweep]').forEach((b) => b.addEventListener('click', async () => {
+    const r = await fsAct({ action: 'forstall', op: 'sweep', key: b.dataset.fsSweep });
+    if (r?.dice) { await rollPopup(r, `${r.label} · ${r.pool}`); toast(`Sweep ${r.hits} — monsters in Range lose ${r.hits} Grit at their turn (+1 if programmed).`); }
+    else if (r?.melted) toast('The waves crossed — sparks, Electrocuted, batteries melted.', true);
+  }));
+  box.querySelectorAll('[data-fs-off]').forEach((b) => b.addEventListener('click', () => fsAct({ action: 'forstall', op: 'off', key: b.dataset.fsOff })));
+  box.querySelectorAll('[data-fs-slot]').forEach((el) => el.addEventListener('change', async () => {
+    const f = fsOf(el.dataset.fsSlot), i = Number(el.dataset.i);
+    el.blur();
+    if (!f) return;
+    if (el.value && f.slots.some((v, k) => k !== i && v === el.value)) { toast('That frequency is already in another slot.', true); el.value = f.slots[i] || ''; return; }
+    if (f.owner) {
+      try { await api('POST', { action: 'sheet', id: f.owner, path: `forstall.kz.${i}`, value: el.value }, '', '/api/combat'); combatPoller?.now?.(); poller?.now?.(); toast(el.value ? `Programmed ${el.value.split(' · ')[0]}.` : 'Slot cleared.'); }
+      catch (e) { toast(e.message, true); }
+    } else {
+      const slots = [...f.slots]; slots[i] = el.value;
+      act({ action: 'editForstall', id: f.key, slots }, el.value ? `Programmed ${el.value.split(' · ')[0]}.` : 'Slot cleared.');
+    }
+  }));
+  box.querySelectorAll('[data-fs-burst]').forEach((b) => b.addEventListener('click', async () => {
+    const f = fsOf(b.dataset.fsBurst), sel = box.querySelector(`[data-fs-bt="${CSS.escape(b.dataset.fsBurst)}"]`);
+    const tgt = f?.burst.find((x) => x.ref === sel?.value);
+    if (!tgt || !await ask(`Burst ${f.name} on the ${tgt.name}’s frequency?\n\nThe crystal shatters and the monster flees for at least two hours.`, { ok: 'Burst', danger: true })) return;
+    const r = await fsAct({ action: 'forstall', op: 'burst', key: f.key, enemy: tgt.ref });
+    if (r?.fled) toast(`${r.fled} flees!`);
+  }));
+}
+function renderFsWarden() {
+  const list = $('#fs-list');
+  if (document.activeElement?.id !== 'fs-cave') $('#fs-cave').checked = !!data.cave;
+  const mine = (data.forstalls || []).filter((f) => !f.owner), carried = (data.forstalls || []).filter((f) => f.owner);
+  const pairs = (data.edison || []).map(([a, b]) => [fsOf(a), fsOf(b)]).filter(([a, b]) => a && b);
+  list.innerHTML = `${pairs.map(([a, b]) => `<div class="fs-warn">${gl('flash')} <b>${esc(a.name)}</b> and <b>${esc(b.name)}</b> are Sweeping in each other’s Range.
+      <button type="button" class="btn small danger" data-edison="${esc(a.key)}|${esc(b.key)}">Apply Rule 1</button></div>`).join('')}
+    ${[...mine, ...carried].map((f) => `<div class="tok-row fs-row${selFs === f.key ? ' sel' : ''}" data-fs-pick="${esc(f.key)}"><span class="chip fs-chip${f.sweep ? ' on' : ''}">${gl('forstall')}</span>
+      <span class="n">${esc(f.name)}<small>${f.owner ? `carried by ${esc(f.ownerName)}` : esc(f.range)}${f.sweep ? ` · Sweep ${f.sweep.hits}` : ''}</small></span>
+      ${f.owner ? '' : `<button type="button" data-fs-hide="${esc(f.key)}">${f.hidden ? 'Reveal' : 'Hide'}</button><button type="button" data-fs-rm="${esc(f.key)}">✕</button>`}</div>`).join('')
+    || '<p class="muted">No Forstalls on the board. A character’s own Forstall appears on their token.</p>'}`;
+  list.querySelectorAll('[data-edison]').forEach((b) => b.addEventListener('click', async () => {
+    if (!await ask('Apply Edison’s Rule 1? Everyone within Short Range of either Forstall is Electrocuted [6], and both batteries melt.', { ok: 'Apply', danger: true })) return;
+    fsAct({ action: 'forstall', op: 'edison', keys: b.dataset.edison.split('|') });
+  }));
+  list.querySelectorAll('[data-fs-pick]').forEach((el) => el.addEventListener('click', (e) => {
+    if (e.target.closest('button')) return;
+    const f = fsOf(el.dataset.fsPick);
+    if (!f) return;
+    if (f.owner) select(f.tokenId); else selectFs(f.key);
+    const c = center(f.pos.col, f.pos.row); pz.centerOn(c.x, c.y, Math.max(pz.view.s, 0.35));
+  }));
+  list.querySelectorAll('[data-fs-hide]').forEach((b) => b.addEventListener('click', () => act({ action: 'editForstall', id: b.dataset.fsHide, hidden: !fsOf(b.dataset.fsHide)?.hidden })));
+  list.querySelectorAll('[data-fs-rm]').forEach((b) => b.addEventListener('click', async () => {
+    if (!await ask(`Remove ${fsOf(b.dataset.fsRm)?.name || 'this Forstall'} from the board?`)) return;
+    if (selFs === b.dataset.fsRm) selFs = null;
+    act({ action: 'removeForstall', id: b.dataset.fsRm });
+  }));
+}
+function selectFs(key) { selFs = key; selected = null; renderRanges(); renderTokens(); renderPanel(); if (warden) renderFsWarden(); }
+// dragging a Warden Forstall around the board
+function wireFsMarker(el) {
+  const key = el.dataset.fs;
+  let drag = null;
+  el.addEventListener('pointerdown', (e) => {
+    e.stopPropagation();
+    if (!warden) { selectFs(key); return; }
+    const f = fsOf(key); if (!f) return;
+    try { el.setPointerCapture(e.pointerId); } catch {}
+    const c = center(f.pos.col, f.pos.row);
+    drag = { cx: e.clientX, cy: e.clientY, x: c.x, y: c.y, moved: false, hex: { ...f.pos } };
+    dragging = { id: key };
+  });
+  el.addEventListener('pointermove', (e) => {
+    if (!drag) return;
+    if (Math.abs(e.clientX - drag.cx) + Math.abs(e.clientY - drag.cy) > 4) drag.moved = true;
+    if (!drag.moved) return;
+    const dx = (e.clientX - drag.cx) / pz.view.s, dy = (e.clientY - drag.cy) / pz.view.s;
+    el.style.left = `${drag.x + dx}px`; el.style.top = `${drag.y + dy}px`;
+    drag.hex = toHex(drag.x + dx, drag.y + dy);
+  });
+  const end = async () => {
+    if (!drag) return;
+    const d = drag; drag = null; dragging = null;
+    if (!d.moved) { selectFs(key); return; }
+    const f = fsOf(key);
+    if (f) f.pos = d.hex;
+    fieldsKey = '';
+    render();
+    await act({ action: 'moveForstall', id: key, ...d.hex });
+  };
+  el.addEventListener('pointerup', end);
+  el.addEventListener('pointercancel', end);
+}
+$('#fs-add').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const sel = selected && data.tokens.find((t) => t.id === selected);
+  const f = await act({ action: 'addForstall', kind: $('#fs-kind').value, name: $('#fs-name').value.trim(), ...(sel ? { col: sel.col, row: sel.row } : {}) }, 'Forstall placed — drag it where you want it.');
+  if (f?.id) { $('#fs-name').value = ''; selFs = f.id; }
+});
+$('#fs-cave').addEventListener('change', (e) => act({ action: 'cave', value: e.target.checked }, e.target.checked ? 'Cave: Sweeps roll 1 fewer die.' : 'Out of the cave.'));
+
 // ---------- data & boot ----------
 async function act(body, okMsg) {
   try {
@@ -649,6 +848,7 @@ function connect() {
   poller = startPolling(warden ? 'warden' : 'player', (d) => {
     data = d;
     if (selected && !data.tokens.some((t) => t.id === selected)) selected = null;
+    if (selFs && !fsOf(selFs)) selFs = null;
     render();
   }, (ok, e) => { if (e?.status === 401) { warden = false; forgetWarden(); setWarden(); connect(); } }, EP);
 }
@@ -659,7 +859,7 @@ function setWarden() {
 $('#warden-btn').addEventListener('click', async () => {
   if (warden) { warden = false; forgetWarden(); }
   else if (!(warden = await wardenModal(EP))) return;
-  setWarden(); connect();
+  setWarden(); connect(); loadKz();
 });
 
 (async () => {
@@ -667,4 +867,5 @@ $('#warden-btn').addEventListener('click', async () => {
   if (pin) warden = await tryWarden(pin, EP);
   setWarden();
   connect();
+  loadKz();
 })();

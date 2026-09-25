@@ -3,6 +3,7 @@ import { pinOk, send, readBody, sinceParam } from '../lib/http.js';
 import { freshState, playerView, wardenView, doRoll, doGuess, doNote, wardenAction } from '../lib/game.js';
 import { freshCombat, addLog } from '../lib/combat.js';
 import { poolLabel } from '../lib/dice.js';
+import { fields, inRange, hexDist } from '../lib/forstall.js';
 
 // Scanner rolls and breakthroughs also go in the shared Table Log (combat document).
 async function tableLog(entry) {
@@ -12,6 +13,19 @@ async function tableLog(entry) {
     c.v = (c.v || 0) + 1;
     await save(c, 'combat');
   } catch { /* the scan itself already succeeded */ }
+}
+
+// p. 83: the monster has to be within the Forstall's Range. Only checked when both are on the Battle Map in a fight.
+async function scanRange(state, body) {
+  if (!state.active || !body.whoId) return;
+  const [combat, battle] = await Promise.all([load('combat'), load('battle')]);
+  if (!combat?.combat?.active || !battle) return;
+  const f = fields(battle, combat).find((x) => x.key === `pc:${body.whoId}` && x.pos);
+  const foes = (combat.enemies || []).filter((e) => e.profile === state.active && !e.defeated)
+    .map((e) => battle.tokens.find((t) => t.kind === 'enemy' && t.ref === e.id)).filter(Boolean);
+  if (!f || !foes.length || foes.some((t) => inRange(f, t))) return;
+  const d = Math.min(...foes.map((t) => hexDist(f.pos, t)));
+  throw new Error(`The ${state.active} is ${d}″ away — out of ${f.name}’s ${f.range} Range (${f.rangeIn}″). Get closer to Scan it.`);
 }
 
 export default async function handler(req, res) {
@@ -38,7 +52,7 @@ export default async function handler(req, res) {
     switch (body.action) {
       case 'auth':
         return send(res, warden ? 200 : 401, warden ? { ok: true } : { error: 'Wrong PIN.' });
-      case 'roll': result = doRoll(state, body); break;
+      case 'roll': await scanRange(state, body); result = doRoll(state, body); break;
       case 'guess': result = doGuess(state, body); break;
       case 'note': doNote(state, body); break;
       default:

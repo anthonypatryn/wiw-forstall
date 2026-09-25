@@ -8,6 +8,8 @@ const G = {
   boot: `<path ${F} d="M8 2.5h6.4l-.4 8.3 5.3 3c1.3.7 2 1.7 2 2.9v1.5H7.3l-.7-2.4-1.8.2V14l2.2-.8z"/><circle ${S} cx="3.4" cy="16.4" r="1.7"/><path ${S} d="M5 16.4h1.4"/><path ${S} d="M7 21h14"/>`,
   // a quick swerve out of the way
   dodge: `<path ${S} d="M3 19c5.5 0 5-13 11.5-13H21"/><path ${S} d="M18 3l3 3-3 3"/><path ${S} stroke-dasharray="1.5 2.2" d="M3 9h5"/><path ${S} stroke-dasharray="1.5 2.2" d="M3 13h3"/>`,
+  // a Forstall dish sending out Kurtz waves
+  forstall: `<path ${S} d="M3.6 9.6a7 7 0 0 0 9.8 7.3z"/><path ${S} d="M8.5 13.2l3.4-3.4"/><circle ${F} cx="12.6" cy="9.1" r="1.3"/><path ${S} d="M15.2 6.3a3.8 3.8 0 0 1 2.4 2.4M17 3.3a7.6 7.6 0 0 1 3.6 3.6"/><path ${S} d="M7.4 17.6 6 21h6.6l-1.4-3.4"/>`,
   // a six-point sheriff's star
   star: `<path ${F} d="M12.00 2.40 L14.20 8.19 L20.31 7.20 L16.40 12.00 L20.31 16.80 L14.20 15.81 L12.00 21.60 L9.80 15.81 L3.69 16.80 L7.60 12.00 L3.69 7.20 L9.80 8.19Z"/>`
     + ['12,1.8', '20.8,6.9', '20.8,17.1', '12,22.2', '3.2,17.1', '3.2,6.9'].map((p) => { const [x, y] = p.split(','); return `<circle ${F} cx="${x}" cy="${y}" r="1.3"/>`; }).join('')

@@ -1,6 +1,5 @@
 import {
-  $, esc, api, startPolling, tryWarden, forgetWarden, savedPin, wardenModal, store, injectDefs, toast, mountNav, poolHTML, readPool, fillPool, rollPopup, bleedPanel, ask, askText,
-} from './common.js';
+  $, esc, api, startPolling, tryWarden, forgetWarden, savedPin, wardenModal, store, injectDefs, toast, mountNav, poolHTML, readPool, fillPool, rollPopup, bleedPanel, ask, askText, tell } from './common.js';
 import { mountTableLog } from './tablelog.js';
 import { ICONS } from './icons.js';
 import { NPC } from './npc-data.js';
@@ -322,8 +321,8 @@ function buildSheet(p) {
           <div class="row2" data-dyn="charges"></div>
           <div class="w-grid">${[0, 1, 2, 3].map((u) => inp(`forstall.upgrades.${u}`, `${u + 1}.`)).join('')}</div>
           <div class="upg" data-upg-box="forstall" data-i="0"></div>
-          <div class="w-grid">${[0, 1, 2, 3].map((u) => inp(`forstall.kz.${u}`, 'Kurtz Frequency (Kz)', { list: 'kz-list', ph: '0-0-0000' })).join('')}</div>
-          <datalist id="kz-list"></datalist>`, 'forstall')}
+          <p class="muted kz-help">Memory slots: program a frequency the posse has decoded on the Forstall Scanner. Monsters in these slots take +1 from your Sweeps and can be Burst.</p>
+          <div class="w-grid">${[0, 1, 2, 3].map((u) => `<label class="f"><span>Memory slot ${u + 1}</span><select data-path="forstall.kz.${u}" data-kz></select></label>`).join('')}</div>`, 'forstall')}
       ${box('HORSE', 'you’re only as good as your loyal steed', `
           <div class="w-top">${pick('horse', 0, [['Horse breeds', horses]], '— pick a breed —')}<button type="button" class="rm-btn" data-rm-thing="horse" data-i="0" title="Remove the horse" aria-label="Remove the horse">✕</button></div>
           <img class="ride-art" data-art="horse" alt="" hidden>
@@ -511,7 +510,7 @@ function wireSheet(p) {
       const pc = pcById(p.id), i = Number(b.dataset.i);
       const label = t === 'weapon' ? (pc.weapons[i].model || pc.weapons[i].manufacturer) : t === 'gear' ? pc.gear[i].item : t === 'horse' ? (pc.horse.name || pc.horse.breed) : t === 'mech' ? pc.mech.class : pc.forstall.model;
       if (!label) return toast('That slot is already empty.');
-      if (!await ask(`Remove ${label}? Everything in that section is cleared (upgrades, ammo, notes).`)) return;
+      if (!await ask(`Remove ${label}?\n\nEverything in that section is cleared (upgrades, ammo, notes), and it leaves the inventory.`)) return;
       if (await act({ action: 'pc', id: p.id, op: 'removeThing', target: t, index: i })) toast(`${label} removed.`);
     } else if (e.target.closest('[data-ck-roll]')) {
       const b = e.target.closest('[data-ck-roll]'); b.blur();
@@ -803,7 +802,7 @@ function renderAch(view, p) {
 let starterMissing = [];
 const editMode = new Set();
 const isEditing = (p) => p.done === false || editMode.has(p.id);
-const PLAY_PATHS = /^(wallet|scrap|supplies|horse\.health|mech\.health|mech\.state|mech\.toppled|weapons\.\d\.ammo\.\d\.(rds|name))$/;
+const PLAY_PATHS = /^(wallet|scrap|supplies|forstall\.kz\.\d|horse\.health|mech\.health|mech\.state|mech\.toppled|weapons\.\d\.ammo\.\d\.(rds|name))$/;
 function applyMode(view, p) {
   const locked = !isEditing(p);
   view.classList.toggle('viewing', locked);
@@ -888,9 +887,25 @@ function renderStarter(view, p) {
   if (!det.dataset.init) { det.dataset.init = '1'; det.open = done < steps.length; }
 }
 
+// Forstall memory slots: a drop-down of decoded frequencies ("Golden Bear · 6-1-2829"). An older typed value stays as its own option.
+function fillKz(view, p) {
+  const cur = [0, 1, 2, 3].map((u) => String(p.forstall?.kz?.[u] || ''));
+  const digits = (v) => v.replace(/\D/g, '').slice(0, 6);
+  view.querySelectorAll('select[data-kz]').forEach((el) => {
+    if (el === document.activeElement) return;
+    const u = Number(el.dataset.path.split('.').pop()), mine = cur[u];
+    const opts = kzOptions.map((o) => ({ v: `${o.name} · ${o.kz}`, d: digits(o.kz) }));
+    if (mine && !opts.some((o) => o.v === mine)) opts.unshift({ v: mine, d: digits(mine) });
+    const taken = new Set(cur.filter((v, i) => i !== u && v).map(digits));
+    el.innerHTML = `<option value="">— empty —</option>${opts.map((o) => `<option value="${esc(o.v)}"${o.v !== mine && o.d && taken.has(o.d) ? ' disabled' : ''}>${esc(o.v)}</option>`).join('')}`
+      + (kzOptions.length ? '' : '<option value="" disabled>Nothing decoded yet — use the Forstall Scanner</option>');
+  });
+}
+
 // Re-render the live bits (and fill inputs nobody is typing in).
 function hydrate(p) {
   const view = $('#sheet-view');
+  fillKz(view, p);
   view.querySelectorAll('[data-path]').forEach((el) => { if (el !== document.activeElement) el.value = get(p, el.dataset.path) ?? ''; });
   view.querySelectorAll('select.pick').forEach((el) => {
     if (el === document.activeElement) return;
@@ -912,7 +927,9 @@ function hydrate(p) {
   const tt = tierByPrestige(p.prestige.total), nx = meta.tiers[meta.tiers.indexOf(tt) + 1];
   view.querySelector('[data-dyn="tier-title"]').innerHTML = `Prestige tier: <b>${tt.name}</b>${nx ? ` <span class="muted">· ${nx.name} at ${nx.prestige}</span>` : ''}`;
   for (const k of ['horse', 'mech']) {
-    const img = view.querySelector(`[data-art="${k}"]`), it = p[k]?.itemId && itemById(p[k].itemId);
+    // the picture follows the item — gone as soon as the section is emptied
+    const named = k === 'horse' ? p.horse?.breed : p.mech?.class;
+    const img = view.querySelector(`[data-art="${k}"]`), it = named && p[k]?.itemId && itemById(p[k].itemId);
     img.hidden = !it?.img;
     if (it?.img && img.dataset.src !== it.img) { img.dataset.src = it.img; img.src = `/img/store/${it.img}.webp`; img.alt = it.name; }
   }
@@ -1015,9 +1032,21 @@ function hydrate(p) {
   // bought items (from the Store)
   const itemsBox = view.querySelector('[data-dyn="items"]');
   const items = p.items || [];
+  // things that belong in a sheet section but aren't there yet (e.g. bought before the Store filled sheets in)
+  const offSheet = (it) => {
+    const { cat, sub, itemId } = it;
+    if (cat === 'Weapons') return p.weapons.filter((w) => w.itemId === itemId).length < items.filter((x) => x.itemId === itemId).length;
+    if (cat === 'Forstalls' && !/crystal/i.test(it.name)) return p.forstall?.itemId !== itemId && p.forstall?.model !== it.name;
+    if (cat === 'Mechs') return p.mech?.itemId !== itemId;
+    if (sub === 'Horse Breeds' || sub === 'Legendary Steeds') return p.horse?.itemId !== itemId && p.horse?.breed !== it.name;
+    if (sub === 'Special Ammo & Arrows') return !p.weapons.some((w) => (w.ammo || []).some((a) => a.name === it.name));
+    if (cat === 'Upgrades') return sub !== 'Trap Upgrades' && ![...p.weapons, p.forstall, p.mech].some((t) => (t?.upgradeIds || []).includes(itemId));
+    if (cat === 'Gear' || cat === 'Traps' || cat === 'Forstalls') return !p.gear.some((g) => g.itemId === itemId);
+    return false;
+  };
   itemsBox.innerHTML = items.length ? `<div class="items-list">${items.map((it, i) => `<div class="inv-item"><span>${esc(it.name)}<small>${esc(it.sub || it.cat || '')}</small></span>
       <span class="qty"><button type="button" data-q="${i}" data-d="-1" aria-label="One fewer">−</button><b>${it.qty}</b><button type="button" data-q="${i}" data-d="1" aria-label="One more">+</button></span>
-      <button type="button" class="btn small secondary" data-sell="${esc(it.uid)}">Sell…</button><button type="button" class="rm-btn" data-rm-item="${i}" title="Remove this item" aria-label="Remove ${esc(it.name)}">✕</button></div>`).join('')}</div>`
+      ${offSheet(it) ? `<button type="button" class="btn small" data-equip="${esc(it.uid)}" title="Fill it into the right section of the sheet">Put on sheet</button>` : ''}<button type="button" class="btn small secondary" data-sell="${esc(it.uid)}">Sell…</button><button type="button" class="rm-btn" data-rm-item="${i}" title="Remove this item" aria-label="Remove ${esc(it.name)}">✕</button></div>`).join('')}</div>`
     : '<p class="muted" style="margin:4px 0;font-size:14px">Nothing from the <a href="/store">Store</a> yet.</p>';
   itemsBox.querySelectorAll('[data-q]').forEach((b) => b.addEventListener('click', () => {
     const it = items[b.dataset.q];
@@ -1025,7 +1054,18 @@ function hydrate(p) {
   }));
   itemsBox.querySelectorAll('[data-rm-item]').forEach((b) => b.addEventListener('click', async () => {
     const it = items[Number(b.dataset.rmItem)];
-    if (await ask(`Remove ${it.name} from ${p.name}’s inventory?`)) act({ action: 'sheet', id: p.id, path: `items.${b.dataset.rmItem}.qty`, value: 0 });
+    if (!await ask(`Remove ${it.name}?\n\nIt leaves ${p.name}’s inventory${offSheet(it) ? '' : ' and comes off the sheet'}.`)) return;
+    const r = await act({ action: 'pc', id: p.id, op: 'dropItem', uid: it.uid });
+    if (r) toast(`${r.name} removed${r.also ? ` (and from ${r.also})` : ''}.`);
+  }));
+  itemsBox.querySelectorAll('[data-equip]').forEach((b) => b.addEventListener('click', async () => {
+    try {
+      const r = await api('POST', { action: 'equip', pc: p.id, uid: b.dataset.equip }, '', '/api/shop');
+      toast(`Added to the sheet (${r.result?.placed || 'done'}).`);
+      poller?.now?.();
+    } catch (e) { tell(e.message.startsWith('No room') ? `No room on the sheet
+
+${e.message}` : e.message); }
   }));
   itemsBox.querySelectorAll('[data-sell]').forEach((b) => b.addEventListener('click', async () => {
     const it = items.find((x) => x.uid === b.dataset.sell);
@@ -1036,8 +1076,6 @@ function hydrate(p) {
   }));
 
   view.querySelectorAll('.dp[data-pool]').forEach((dp) => fillPool(dp, get(p, dp.dataset.pool)));
-  const dl = view.querySelector('#kz-list');
-  if (dl && !dl.children.length) dl.innerHTML = kzOptions.map((o) => `<option value="${esc(o.kz)}">${esc(o.name)}</option>`).join('');
 }
 
 // ---------- routing & boot ----------
@@ -1069,7 +1107,7 @@ $('#sheet-view').addEventListener('focusout', () => setTimeout(() => { if (vital
     catalog = [...c.catalog, ...(shop.custom || [])];
   } catch { catalog = []; }
   try { factions = (await api('GET', null, '?view=factions', '/api/npcs')).factions || []; } catch {}
-  // Decoded frequencies from the Forstall notebook make handy suggestions for the sheet's Kz boxes.
+  // Decoded frequencies from the Forstall notebook are what a Forstall's memory slots can be programmed with.
   try {
     const scan = await api('GET', null, '?view=player');
     kzOptions = (scan.notebook || []).filter((e) => e.solved).map((e) => ({ kz: e.kz, name: e.name }));

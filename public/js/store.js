@@ -1,7 +1,6 @@
 import {
   $, esc, api, startPolling, toast, store, mountNav, tryWarden, forgetWarden, savedPin, wardenModal, injectDefs,
-  poolIcons, poolHTML, readPool, ask, askText,
-} from './common.js';
+  poolIcons, poolHTML, readPool, ask, askText, tell } from './common.js';
 import { mountTableLog } from './tablelog.js';
 import { gl } from './glyphs.js';
 
@@ -25,6 +24,14 @@ async function act(body, okMsg) {
   } catch (e) { toast(e.message, true); return null; }
 }
 const items = () => [...catalog, ...(data?.custom || [])];
+// after a buy/give: say where it landed on the sheet, or explain why it couldn't go on
+async function placedNote(r, done) {
+  if (r === null) return;
+  if (r?.warning) await tell(`No room on the sheet
+
+${r.warning}`);
+  else toast(r?.placed ? `${done} — added to the sheet (${r.placed}).` : `${done} — it’s in their inventory.`);
+}
 
 // ---------- catalog browsing ----------
 function renderTabs() {
@@ -83,7 +90,7 @@ function renderItems() {
     const iid = card.dataset.id;
     const qty = () => Number(card.querySelector('[data-qty]')?.value) || 1;
     card.querySelector('[data-buy]')?.addEventListener('click', () => act({ action: 'request', kind: 'buy', pc: $('#shopper').value, itemId: iid, qty: qty() }, 'Request sent to the Warden.'));
-    card.querySelector('[data-give]')?.addEventListener('click', () => act({ action: 'give', pc: $('#shopper').value, itemId: iid, qty: qty() }, 'Given.'));
+    card.querySelector('[data-give]')?.addEventListener('click', async () => placedNote(await act({ action: 'give', pc: $('#shopper').value, itemId: iid, qty: qty() }), 'Given'));
     card.querySelector('[data-rm]')?.addEventListener('click', async () => { if (await ask('Remove this item from the store?')) act({ action: 'removeCustom', id: iid }); });
     card.querySelector('[data-edit]')?.addEventListener('click', () => fillCreate(items().find((i) => i.id === iid)));
   });
@@ -116,7 +123,7 @@ function renderSide() {
         <button class="btn small" data-yes type="button">Approve</button><button class="btn small secondary danger" data-no type="button">Deny</button></div>`)).join('')
       : '<p class="empty-note">Nobody at the counter.</p>';
     $('#queue').querySelectorAll('.req').forEach((row) => {
-      row.querySelector('[data-yes]').addEventListener('click', () => act({ action: 'decide', id: row.dataset.id, approve: true, price: row.querySelector('[data-price]').value }, 'Done — the sheet is updated.'));
+      row.querySelector('[data-yes]').addEventListener('click', async () => placedNote(await act({ action: 'decide', id: row.dataset.id, approve: true, price: row.querySelector('[data-price]').value }), 'Done'));
       row.querySelector('[data-no]').addEventListener('click', () => act({ action: 'decide', id: row.dataset.id, approve: false }));
     });
   }

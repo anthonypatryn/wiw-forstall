@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Rye&family=Special+Elite&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css?v=24">
-  <link rel="stylesheet" href="/css/battle.css?v=13">
+  <link rel="stylesheet" href="/css/battle.css?v=14">
 </head>
 <body>
   <header class="masthead">
@@ -31,6 +31,7 @@
       <div class="stage" id="stage">
         <img id="bg" alt="" draggable="false">
         <svg class="grid" id="grid" aria-hidden="true"></svg>
+        <svg class="fields" id="fields" aria-hidden="true"></svg>
         <svg class="ranges" id="ranges" aria-hidden="true"></svg>
         <div class="tokens" id="tokens"></div>
       </div>
@@ -65,6 +66,19 @@
         <label class="field-inline">Hex size <input type="range" id="g-ppi" min="20" max="400" step="1"></label>
         <label class="field-inline">Lines <input type="range" id="g-op" min="0" max="1" step="0.05"></label>
         <div class="nudge"><span>Nudge grid</span><button type="button" data-n="-5,0" aria-label="Left">←</button><button type="button" data-n="5,0" aria-label="Right">→</button><button type="button" data-n="0,-5" aria-label="Up">↑</button><button type="button" data-n="0,5" aria-label="Down">↓</button></div>
+        <h3>WARDEN · FORSTALLS</h3>
+        <form class="npc-add fs-add" id="fs-add">
+          <select id="fs-kind" aria-label="Kind of Forstall">
+            <option value="backpack">Backpack · Short · 2B</option>
+            <option value="saddlebag">Saddlebag · Short · 3B</option>
+            <option value="mech">Mech · Long · 4B</option>
+            <option value="town">Town · whole map · 6B</option>
+          </select>
+          <input id="fs-name" maxlength="40" placeholder="Name (optional)" aria-label="Forstall name">
+          <button class="btn small" type="submit">+ Forstall</button>
+        </form>
+        <label class="check"><input type="checkbox" id="fs-cave"> In a cave or tunnels (Sweeps roll 1 fewer die)</label>
+        <div id="fs-list"></div>
         <h3>WARDEN · TOKENS</h3>
         <button class="btn small" id="sync" type="button"><span data-gl="revolver"></span> Add posse &amp; enemies from Combat</button>
         <label class="check"><input type="checkbox" id="sync-hidden"> New enemies start hidden (ambush)</label>
@@ -74,6 +88,6 @@
     </aside>
   </main>
 
-  <script type="module" src="/js/battle.js?v=27"></script>
+  <script type="module" src="/js/battle.js?v=29"></script>
 </body>
 </html>
