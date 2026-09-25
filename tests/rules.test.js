@@ -709,3 +709,30 @@ test('Blackjack: totals, a dealer bust, blackjack pays 3 to 2, double down, the 
   assert.equal(posse[0].wallet, '30.00');
   assert.ok(logs.some((l) => /cheating at blackjack/.test(l)));
 });
+
+test('Bounties: taking a poster makes a Journal quest; captured and paid tick it off; a torn-down poster fails it', async () => {
+  const { freshWanted, wantedAction, allTowns } = await import('../lib/wanted.js');
+  const { freshJournal, journalView } = await import('../lib/journal.js');
+  const st = freshWanted(), journal = freshJournal(), towns = allTowns(st, []), dodge = towns.find((t) => t.name.includes('Dodge'));
+  const posse = [{ id: 'a', name: 'Lila', wallet: '' }, { id: 'b', name: 'Doc', wallet: '' }], logs = [];
+  const W = { warden: true, towns, posse, journal, log: (t) => logs.push(t) }, P = { ...W, warden: false };
+  const p = wantedAction(st, { action: 'add', town: dodge.id, name: 'Black Bart', reward: 100, crime: 'Train robbery' }, W);
+  assert.throws(() => wantedAction(st, { action: 'take', id: p.id, pc: 'zz' }, P), /playing/);
+  wantedAction(st, { action: 'take', id: p.id, pc: 'a' }, P);
+  wantedAction(st, { action: 'take', id: p.id, pc: 'b' }, P);
+  assert.deepEqual(p.takenBy, ['a', 'b']);
+  const q = journalView(journal, { warden: false }).quests;
+  assert.equal(q.length, 1, 'one quest, the second taker joins it');
+  assert.equal(q[0].title, 'Bounty: Black Bart'); assert.equal(q[0].steps.length, 3); assert.match(q[0].reward, /\$100/);
+  assert.ok(logs.some((l) => /Lila takes the bounty/.test(l)));
+  assert.throws(() => wantedAction(st, { action: 'edit', id: p.id, status: 'dead' }, P), /PIN/);
+  wantedAction(st, { action: 'edit', id: p.id, status: 'captured' }, W);
+  assert.deepEqual(journal.quests[0].steps.map((s) => s.done), [true, true, false]);
+  wantedAction(st, { action: 'payout', id: p.id, to: ['a', 'b'] }, W);
+  assert.equal(journal.quests[0].status, 'done');
+  assert.throws(() => wantedAction(st, { action: 'take', id: p.id, pc: 'a' }, P), /already/);
+  const p2 = wantedAction(st, { action: 'add', town: dodge.id, name: 'Slim' }, W);
+  wantedAction(st, { action: 'take', id: p2.id, pc: 'a' }, P);
+  wantedAction(st, { action: 'remove', id: p2.id }, W);
+  assert.equal(journal.quests.find((x) => x.bounty === p2.id).status, 'failed');
+});

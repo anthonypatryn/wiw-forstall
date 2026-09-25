@@ -1,5 +1,5 @@
 // Wanted posters, town by town. Everyone reads the board; the Warden puts posters up, edits, hides and pays them out.
-import { $, esc, api, startPolling, toast, mountNav, tryWarden, savedPin, ask, askText } from './common.js';
+import { $, esc, api, startPolling, toast, mountNav, tryWarden, savedPin, ask, askText, store } from './common.js';
 import { mountTableLog } from './tablelog.js';
 import { gl } from './glyphs.js';
 import { shrink, showImage } from './portrait.js';
@@ -7,6 +7,8 @@ import { shrink, showImage } from './portrait.js';
 mountTableLog();
 mountNav('/wanted');
 const EP = '/api/wanted';
+const me = () => store.get('wiw.me', null);
+const takers = (p) => (p.takenBy || []).map((id) => data?.names?.[id]).filter(Boolean);
 const STAMP = { captured: 'CAPTURED', dead: 'DEAD', claimed: 'BOUNTY PAID' };
 let data = null, warden = false, town = decodeURIComponent(location.hash.slice(1)) || null;
 
@@ -43,7 +45,7 @@ function render() {
   $('#wt-here').textContent = data.here ? (town === data.here ? `The posse is in ${townName(town)}.` : `The posse is in ${townName(data.here)}.`) : '';
   const list = posters.filter((p) => p.town === town).sort((a, b) => (a.status === 'wanted' ? 0 : 1) - (b.status === 'wanted' ? 0 : 1) || b.at - a.at);
   $('#wt-board').innerHTML = list.length
-    ? list.map((p) => `<button type="button" class="ps-tile" data-p="${esc(p.id)}" style="--tilt:${tilt(p.id)}deg">${posterHTML(p)}${warden && p.hidden ? '<span class="pill ps-flag">hidden</span>' : ''}</button>`).join('')
+    ? list.map((p) => `<button type="button" class="ps-tile" data-p="${esc(p.id)}" style="--tilt:${tilt(p.id)}deg">${posterHTML(p)}${warden && p.hidden ? '<span class="pill ps-flag">hidden</span>' : ''}${p.status === 'wanted' && p.takenBy?.length ? `<span class="pill info ps-taken">taken by ${esc(takers(p).join(', '))}</span>` : ''}</button>`).join('')
     : `<p class="empty-note">${warden ? `No posters in ${esc(townName(town))} yet. Put one up with “New poster”.` : `Nobody’s wanted in ${esc(townName(town))} right now. Must be a quiet town.`}</p>`;
   $('#wt-tools').innerHTML = warden ? `<button type="button" class="btn small secondary" data-newtown>+ New town</button> <button type="button" class="btn small" data-new>${gl('pin')} New poster</button>` : '';
 }
@@ -62,6 +64,8 @@ function openPoster(p) {
   const draw = () => {
     back.innerHTML = `<div class="wt-view" role="dialog" aria-modal="true" aria-label="${esc(p.name)}">
       ${posterHTML(p, { big: true })}
+      ${p.takenBy?.length ? `<p class="wt-taken">${gl('pin')} On the trail: <b>${esc(takers(p).join(', '))}</b> · <a href="/journal#quests">see the Journal</a></p>` : ''}
+      ${!warden && p.status === 'wanted' && !(p.takenBy || []).includes(me()) ? `<div class="btn-row wt-take"><button type="button" class="btn" data-take>${gl('revolver')} Take the bounty</button><small class="muted">It goes in the Journal as a quest for the posse.</small></div>` : ''}
       ${warden ? `<div class="wt-admin">
         ${p.wardenNote ? `<p class="secret-note small-text"><b>Warden note:</b> ${esc(p.wardenNote)}</p>` : ''}
         <div class="field-step"><span>STATUS</span>${['wanted', 'captured', 'dead'].map((s) => `<button type="button" class="chip-btn${p.status === s ? ' on' : ''}" data-status="${s}"${p.status === 'claimed' ? ' disabled' : ''}>${s[0].toUpperCase() + s.slice(1)}</button>`).join('')}${p.status === 'claimed' ? `<span class="pill ok">Paid to ${esc(p.claimedBy)}</span>` : ''}</div>
@@ -81,6 +85,12 @@ function openPoster(p) {
     const b = e.target.closest('button'); if (!b) return;
     try {
       if (b.dataset.close !== undefined) close();
+      else if (b.dataset.take !== undefined) {
+        if (!me()) { toast('Tap “This is me” on your character sheet first.', true); return; }
+        if (!await ask(`Take the bounty on ${p.name}?\n\nIt goes in the Journal as a quest for the posse${p.reward ? `, worth ${reward(p.reward)}` : ''}. The Warden pays out when you bring them in.`, { ok: 'Take it', danger: false })) return;
+        await act({ action: 'take', id: p.id, pc: me() }, 'It’s in the Journal. Happy hunting.');
+        p = data.posters.find((x) => x.id === p.id); draw();
+      }
       else if (b.dataset.photo !== undefined) showImage(p.photo, p.name);
       else if (b.dataset.status) { await act({ action: 'edit', id: p.id, status: b.dataset.status }); p = data.posters.find((x) => x.id === p.id); draw(); }
       else if (b.dataset.hide !== undefined) { await act({ action: 'edit', id: p.id, hidden: !p.hidden }, p.hidden ? 'Posted for the posse.' : 'Taken down.'); p = data.posters.find((x) => x.id === p.id); draw(); }

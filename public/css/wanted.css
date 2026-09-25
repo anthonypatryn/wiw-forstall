@@ -77,3 +77,10 @@
   .poster.big .ps-wanted { font-size: 52px; }
   .poster.big .ps-crime { display: block; }
 }
+
+/* bounties the posse has taken */
+.ps-taken { position: absolute; left: 50%; bottom: 6px; transform: translateX(-50%); max-width: 90%; overflow: hidden; text-overflow: ellipsis; }
+.wt-taken { margin: 10px 0 0; color: var(--surface); text-align: center; font: var(--fs-sm) var(--body); }
+.wt-taken a { color: var(--brass); }
+.wt-take { justify-content: center; margin-top: 10px; }
+.wt-take small { width: 100%; text-align: center; color: var(--surface); opacity: .8; }
