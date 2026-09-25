@@ -7,6 +7,9 @@ import { findItem, freshShop } from '../lib/shop.js';
 import { rollPool, parsePool, poolLabel } from '../lib/dice.js';
 
 const KEY = 'locks';
+// how many lockpicks each picker is carrying (from their sheet's Inventory)
+const pickCount = (pc) => (pc?.items || []).filter((i) => /lock ?pick/i.test(i.name)).reduce((n, i) => n + (Number(i.qty) || 0), 0);
+const withPicks = (view, combat) => ({ ...view, list: view.list.map((a) => ({ ...a, picks: pickCount(combat.posse.find((p) => p.id === a.pc)) })) });
 
 export default async function handler(req, res) {
   try {
@@ -18,7 +21,8 @@ export default async function handler(req, res) {
       if (asWarden && !warden) return send(res, 401, { error: 'Wrong PIN.' });
       const v = `${state.v}`;
       if (url.searchParams.get('since') === v) return send(res, 200, { v, unchanged: true });
-      return send(res, 200, lockView(state, { warden: asWarden, pc: String(url.searchParams.get('pc') || '') }));
+      const combat = (await load('combat')) || freshCombat();
+      return send(res, 200, withPicks(lockView(state, { warden: asWarden, pc: String(url.searchParams.get('pc') || '') }), combat));
     }
     if (req.method !== 'POST') return send(res, 405, { error: 'Method not allowed' });
     const body = await readBody(req);
@@ -80,7 +84,7 @@ export default async function handler(req, res) {
     state.v = (state.v || 0) + 1;
     await save(state, KEY);
     if (logged) { combat.v = (combat.v || 0) + 1; await save(combat, 'combat'); }
-    return send(res, 200, { result, state: lockView(state, { warden, pc: String(body.pc || '') }) });
+    return send(res, 200, { result, state: withPicks(lockView(state, { warden, pc: String(body.pc || '') }), combat) });
   } catch (err) {
     return send(res, 400, { error: err.message || String(err) });
   }

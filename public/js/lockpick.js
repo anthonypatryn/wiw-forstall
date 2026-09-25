@@ -53,14 +53,14 @@ function render(anim = '') {
   scene.className = `modal-back lock-back${a.status === 'picked' ? ' opened' : ''}${a.status === 'failed' ? ' snapped' : ''}${anim ? ` ${anim}` : ''}`;
   scene.innerHTML = `<div class="lock-scene" role="dialog" aria-modal="true" aria-label="Pick the lock">
     <div class="lock-head"><small>PICK THE LOCK · ${DIFF[a.need - 1].toUpperCase()}</small><b>${esc(a.what)}</b>
-      <span class="lock-prog">${Array.from({ length: a.need }, (_, i) => `<i class="${i < a.wins ? 'on' : ''}"></i>`).join('')}<em>${a.wins}/${a.need} pins</em></span></div>
+      ${a.picks != null ? `<span class="lock-picks">${gl('wrench')} ${a.picks} lockpick${a.picks === 1 ? '' : 's'}</span>` : ''}<span class="lock-prog">${Array.from({ length: a.need }, (_, i) => `<i class="${i < a.wins ? 'on' : ''}"></i>`).join('')}<em>${a.wins}/${a.need} pins</em></span></div>
     <div class="lock-stage">${lockSVG(a.need, a.wins)}
       <div class="lock-cards">${a.status === 'finesse' ? '' : `
         <div class="lc-col"><small>CURRENT</small>${cardHTML(a.cur)}${a.cur?.r === 14 && a.status !== 'ace' ? `<span class="ace-note">Ace counts ${a.curVal === 1 ? 'LOW' : 'HIGH'}</span>` : ''}</div>
         <div class="lc-col"><small>NEXT</small>${done && last ? cardHTML(last.card, last.ok ? 'flip-in' : 'flip-in bad') : `<div class="lk-card lk-back">${a.peek ? `<span class="peek-chip ${a.peek}">${a.peek}</span>` : ''}</div>`}</div>`}</div>
     </div>
     <div class="lock-controls">${controls(a, last)}</div>
-    ${a.history?.length ? `<div class="lock-trail">${a.history.map((h) => `<span class="${h.ok ? 'ok' : 'no'}">${RANK[h.from.r] || h.from.r}${h.from.s} ${h.dir === 'higher' ? '▲' : '▼'} ${RANK[h.card.r] || h.card.r}${h.card.s}</span>`).join('')}</div>` : ''}
+    ${a.history?.length ? `<div class="lock-trail"><small>CARDS PLAYED</small><div class="lt-row">${cardHTML(a.history[0].from, 'mini')}${a.history.map((h) => `<span class="lt-call ${h.ok ? 'ok' : 'no'}">${h.dir === 'higher' ? '▲' : '▼'}</span>${cardHTML(h.card, `mini ${h.ok ? '' : 'miss'}`)}`).join('')}</div></div>` : ''}
   </div>`;
 }
 function controls(a) {
@@ -94,8 +94,8 @@ async function onClick(e) {
       await act('retry'); render();
     } else if (k === 'walk') {
       if (!await ask('Walk away from the lock? It stays locked.', { ok: 'Walk away' })) { busy = false; return; }
-      await act('giveUp'); closeScene();
-    } else if (k === 'close') { await act('giveUp'); closeScene(); }
+      await leave();
+    } else if (k === 'close') await leave();
   } catch (err) { toast(err.message, true); }
   busy = false;
 }
@@ -108,12 +108,15 @@ function openScene(a) {
   render();
 }
 function closeScene() { scene?.remove(); scene = null; cur = null; }
+// done with this lock: tell the server, and never reopen it on this device (a poll already in flight can't bring it back)
+const gone = new Set();
+async function leave() { const id = cur?.id; if (id) gone.add(id); try { await act('giveUp'); } finally { closeScene(); } }
 
 // a lock sent to this device's character opens the scene on any page
 export function watchLocks() {
   if (!me() || savedPin()) return;
   startPolling(`player&pc=${encodeURIComponent(me())}`, (d) => {
-    const a = (d.list || [])[0];
+    const a = (d.list || []).find((x) => !gone.has(x.id));
     if (!a) { if (scene && !busy) closeScene(); return; }
     if (!scene) openScene(a);
     else if (!busy && a.id === cur?.id && JSON.stringify(a) !== JSON.stringify(cur)) { cur = a; render(); }
@@ -130,7 +133,7 @@ export function mountLockSend(el, getCombat) {
   setInterval(refresh, 5000); refresh();
   function draw(listOnly) {
     const list = el.querySelector('.lp-recent');
-    const listHTML = recent.slice(0, 6).map((a) => `<div class="notice${a.status === 'picked' ? '' : a.status === 'failed' ? ' urgent' : ''}"><span><b>${esc(a.name)}</b> · ${esc(a.what)} · ${a.wins}/${a.need} · <i>${{ finesse: 'rolling Finesse', ace: 'calling an Ace', playing: 'picking…', picked: 'OPENED', failed: a.retriesLeft ? `failed (${a.retriesLeft} tr${a.retriesLeft === 1 ? 'y' : 'ies'} left)` : 'failed' }[a.status]}</i>${a.tries > 1 ? ` · try ${a.tries}` : ''}</span><button type="button" class="btn small secondary" data-lp-clear="${esc(a.id)}">Clear</button></div>`).join('') || '<p class="muted small-text">No locks out right now.</p>';
+    const listHTML = recent.filter((a) => !a.closed).slice(0, 6).map((a) => `<div class="notice${a.status === 'picked' ? '' : a.status === 'failed' ? ' urgent' : ''}"><span><b>${esc(a.name)}</b> · ${esc(a.what)} · ${a.wins}/${a.need} · <i>${{ finesse: 'rolling Finesse', ace: 'calling an Ace', playing: 'picking…', picked: 'OPENED', failed: a.retriesLeft ? `failed (${a.retriesLeft} tr${a.retriesLeft === 1 ? 'y' : 'ies'} left)` : 'failed' }[a.status]}</i>${a.tries > 1 ? ` · try ${a.tries}` : ''}</span><button type="button" class="btn small secondary" data-lp-clear="${esc(a.id)}">Clear</button></div>`).join('') || '<p class="muted small-text">No locks out right now.</p>';
     if (listOnly && list) { list.innerHTML = listHTML; return; }
     if (el.contains(document.activeElement) && ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) { if (list) list.innerHTML = listHTML; return; }
     const posse = (getCombat()?.posse || []).filter((p) => !p.dead);
