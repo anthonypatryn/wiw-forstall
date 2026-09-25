@@ -1,6 +1,6 @@
 import { load, save, storeKind } from '../lib/store.js';
 import { pinOk, send, readBody, sinceParam } from '../lib/http.js';
-import { freshCombat, publicAction, playerCombatView, wardenCombatView, logView, META } from '../lib/combat.js';
+import { freshCombat, publicAction, playerCombatView, wardenCombatView, logView, META, autoAchievements } from '../lib/combat.js';
 
 const KEY = 'combat';
 
@@ -23,6 +23,7 @@ export default async function handler(req, res) {
     const body = await readBody(req);
     if (body.action === 'auth') return send(res, warden ? 200 : 401, warden ? { ok: true } : { error: 'Wrong PIN.' });
     const result = publicAction(state, body, { warden }) ?? null;
+    autoAchievements(state);
     state.v = (state.v || 0) + 1;
     await save(state, KEY);
     return send(res, 200, { result: warden || !result?.hidden ? result : null, state: view() });

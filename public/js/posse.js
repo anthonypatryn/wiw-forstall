@@ -531,7 +531,8 @@ function wireSheet(p) {
       if (r?.dice) {
         await rollPopup(r, `${pcById(p.id).name} · ${r.label}`);
         if (r.helping) toast(`🤝 You added ${r.hits} Hit${r.hits === 1 ? '' : 's'} of help.`);
-        else toast(r.outcome.ok ? `✅ Success — ${r.outcome.total}/${r.target} Hits!` : `❌ Short — ${r.outcome.total}/${r.target} Hits.`, !r.outcome.ok);
+        else if (r.outcome) toast(r.outcome.ok ? `✅ Success — ${r.outcome.total}/${r.target} Hits!` : `❌ Short — ${r.outcome.total}/${r.target} Hits.`, !r.outcome.ok);
+        else toast(`${r.hits} Hit${r.hits === 1 ? '' : 's'} — see the Table Log for who won.`);
       }
     } else if (e.target.closest('[data-endturn]')) {
       e.target.closest('[data-endturn]').blur();
@@ -785,7 +786,7 @@ function renderFight(view, p) {
   } else if (!mine) turnSeen = key;
   document.title = `${mine ? '⚔ ' : ''}${p.name} · Posse Sheets`;
   const statuses = Object.entries(p.statuses || {}).filter(([, v]) => v);
-  const checks = (data.checks || []).filter((ck) => ck.who.includes(p.id) ? !ck.rolls[p.id] : !ck.helps[p.id]);
+  const checks = (data.checks || []).filter((ck) => (ck.who.includes(p.id) ? !ck.rolls[p.id] && !ck.winner : ck.kind !== 'challenge' && !ck.helps[p.id]));
   // a new roll called for this character: buzz once
   checks.filter((ck) => ck.who.includes(p.id)).forEach((ck) => {
     if (!checkSeen.has(ck.id)) { if (checkSeen.size || checksPrimed) { toast(`🎯 The Warden wants a ${ck.skill} roll from ${p.name}!`); try { navigator.vibrate?.(150); } catch {} } checkSeen.add(ck.id); }
@@ -810,8 +811,9 @@ function renderFight(view, p) {
   const skillPool = (sk) => String(p.skills[sk.toLowerCase()] || '—').toUpperCase();
   box.innerHTML = `
     ${checks.map((ck) => { const mineCk = ck.who.includes(p.id);
-      return `<div class="ck-prompt${mineCk ? ' mine' : ''}"><div><small>${mineCk ? 'THE WARDEN ASKS YOU TO ROLL' : 'SOMEONE ELSE IS ROLLING — YOU CAN HELP'}</small>
-        <b>${esc(ck.skill)}</b> · ${esc(ck.diff)} — ${ck.target} Hit${ck.target === 1 ? '' : 's'}${ck.note ? ` · <i>${esc(ck.note)}</i>` : ''}</div>
+      const vs = ck.kind === 'challenge' ? [...ck.who.filter((x) => x !== p.id).map((x) => data.posse.find((q) => q.id === x)?.name), ck.npc?.name].filter(Boolean).join(' & ') : '';
+      return `<div class="ck-prompt${mineCk ? ' mine' : ''}"><div><small>${ck.kind === 'challenge' ? `CHALLENGE${ck.round > 1 ? ` · ROUND ${ck.round} (TIE)` : ''} — MOST HITS WINS` : mineCk ? 'THE WARDEN ASKS YOU TO ROLL' : 'SOMEONE ELSE IS ROLLING — YOU CAN HELP'}</small>
+        <b>${esc(ck.skill)}</b> · ${ck.kind === 'challenge' ? `vs ${esc(vs)}` : `${esc(ck.diff)} — ${ck.target} Hit${ck.target === 1 ? '' : 's'}`}${ck.note ? ` · <i>${esc(ck.note)}</i>` : ''}</div>
         <button type="button" class="btn small${mineCk ? '' : ' secondary'}" data-ck-roll="${ck.id}">${mineCk ? `🎲 Roll ${esc(ck.skill)} (${skillPool(ck.skill)})` : '🤝 Help (½ dice)'}</button></div>`; }).join('')}
     ${c.active ? (mine ? `<div class="turn-banner mine">⚔ YOUR TURN · <b>${p.grit}</b> Grit${p.dodge ? ` · 🛡 ${p.dodge} Dodge ready` : ''}<button type="button" class="btn small" data-endturn>End my turn ⏭</button></div>`
       : `<div class="turn-banner">Round ${c.round || 1} · <b>${esc(whoseName(c.current))}</b>’s turn${ahead ? ` · you’re up in ${ahead}` : ''}${p.dodge ? ` · 🛡 ${p.dodge} Dodge ready` : ''}</div>`) : ''}

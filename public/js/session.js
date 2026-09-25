@@ -114,8 +114,11 @@ function renderChecks(force) {
     form.innerHTML = `<div class="ck-who">${alive.map((p) => `<label class="check"><input type="checkbox" data-ck-who value="${p.id}"${ckSel.who.has(p.id) ? ' checked' : ''}> ${esc(p.name)}</label>`).join('') || '<span class="muted">No characters yet.</span>'}</div>
       <div class="ck-row">
         <label>SKILL<select data-ck="skill">${['Charm', 'Finesse', 'Intuition', 'Nerve'].map((s) => `<option${s === ckSel.skill ? ' selected' : ''}>${s}</option>`).join('')}</select></label>
-        <label>DIFFICULTY<select data-ck="diff">${DIFF.map(([n, t]) => `<option value="${n}"${n === ckSel.diff ? ' selected' : ''}>${n} · ${t} Hit${t > 1 ? 's' : ''}</option>`).join('')}<option value="custom"${ckSel.diff === 'custom' ? ' selected' : ''}>Custom…</option></select></label>
+        <label>DIFFICULTY<select data-ck="diff">${DIFF.map(([n, t]) => `<option value="${n}"${n === ckSel.diff ? ' selected' : ''}>${n} · ${t} Hit${t > 1 ? 's' : ''}</option>`).join('')}<option value="custom"${ckSel.diff === 'custom' ? ' selected' : ''}>Custom…</option><option value="challenge"${ckSel.diff === 'challenge' ? ' selected' : ''}>⚔️ Challenge (opposed roll)</option></select></label>
         ${ckSel.diff === 'custom' ? `<label>HITS<input type="number" min="1" max="20" data-ck="target" value="${ckSel.target}"></label>` : ''}
+        ${ckSel.diff === 'challenge' ? `<label>AGAINST<select data-ck="npc"><option value="">— just the ticked characters —</option>
+          ${(combat.enemies || []).filter((e) => !e.defeated).length ? `<optgroup label="In the fight">${combat.enemies.filter((e) => !e.defeated).map((e) => `<option value="en:${e.id}"${ckSel.npc === `en:${e.id}` ? ' selected' : ''}>${esc(e.name)}</option>`).join('')}</optgroup>` : ''}
+          <optgroup label="Book NPCs">${(combat.npcCatalog || []).map((n) => `<option value="np:${esc(n.key)}|${esc(n.faction ? n.name : '')}"${ckSel.npc === `np:${n.key}|${n.faction ? n.name : ''}` ? ' selected' : ''}>${esc(n.name.replace('Human - ', 'Human: '))}</option>`).join('')}</optgroup></select></label>` : ''}
         <label class="wide">FOR WHAT <input data-ck="note" maxlength="80" placeholder="e.g. climb the cliff" value="${esc(ckSel.note)}"></label>
       </div>
       <button type="button" class="btn" data-ck-go>🎯 Call for a roll</button>
@@ -124,6 +127,11 @@ function renderChecks(force) {
   const nm = (pid) => combat.posse.find((p) => p.id === pid)?.name || '—';
   $('#check-list').innerHTML = (combat.checks || []).map((ck) => {
     const help = Math.max(0, ...Object.values(ck.helps || {}).map((h) => h.hits));
+    if (ck.kind === 'challenge') {
+      return `<div class="ck-item"><div class="ck-head"><b>⚔️ ${esc(ck.skill)} Challenge</b>${ck.round > 1 ? ` · round ${ck.round}` : ''}${ck.note ? ` · <i>${esc(ck.note)}</i>` : ''}<button type="button" class="btn small secondary" data-ck-close="${ck.id}">Done</button></div>
+        <ul>${ck.who.map((pid) => `<li>${esc(nm(pid))}: ${ck.rolls[pid] ? `<b>${ck.rolls[pid].hits}</b>` : '<span class="muted">waiting…</span>'}</li>`).join('')}${ck.npc ? `<li>${esc(ck.npc.name)}: <span class="muted">rolls when the posse has</span></li>` : ''}</ul>
+        ${ck.winner ? `<p class="ck-win">🏆 ${esc(ck.winner)} wins — ${(ck.last || []).map((x) => `${esc(x.name)} ${x.hits}`).join(' · ')}</p>` : ck.last ? `<p class="muted">Tied last round (${ck.last.map((x) => `${esc(x.name)} ${x.hits}`).join(' · ')}) — rolling again.</p>` : ''}</div>`;
+    }
     return `<div class="ck-item"><div class="ck-head"><b>${esc(ck.skill)}</b> · ${esc(ck.diff)} (${ck.target})${ck.note ? ` · <i>${esc(ck.note)}</i>` : ''}<button type="button" class="btn small secondary" data-ck-close="${ck.id}">Done</button></div>
       <ul>${ck.who.map((pid) => { const r = ck.rolls[pid]; const tot = r ? r.hits + help : null;
         return `<li>${esc(nm(pid))}: ${r ? `<b class="${tot >= ck.target ? 'ok' : 'no'}">${tot >= ck.target ? '✓' : '✗'} ${tot}/${ck.target}</b>${help ? ` <small>(+${help} help)</small>` : ''}` : '<span class="muted">waiting…</span>'}</li>`; }).join('')}
@@ -140,7 +148,7 @@ $('#check-form').addEventListener('input', (e) => { if (e.target.dataset.ck === 
 $('#check-form').addEventListener('click', async (e) => {
   if (!e.target.closest('[data-ck-go]')) return;
   if (!ckSel.who.size) return toast('Tick who rolls.', true);
-  const r = await combatAct({ action: 'checkStart', who: [...ckSel.who], skill: ckSel.skill, diff: ckSel.diff === 'custom' ? '' : ckSel.diff, target: ckSel.target, note: ckSel.note });
+  const r = await combatAct({ action: 'checkStart', who: [...ckSel.who], skill: ckSel.skill, diff: ckSel.diff === 'custom' ? '' : ckSel.diff, target: ckSel.target, note: ckSel.note, npc: ckSel.diff === 'challenge' ? ckSel.npc : '' });
   if (r) { toast('Roll called — it’s on their sheets.'); ckSel.note = ''; renderChecks(true); }
 });
 
@@ -177,6 +185,21 @@ async function loadHomebrew() {
   }));
 }
 $('#hb-refresh').addEventListener('click', loadHomebrew);
+
+// ---------- backup ----------
+$('#backup').addEventListener('click', async () => {
+  try {
+    const b = await api('GET', null, '', '/api/backup');
+    const blob = new Blob([JSON.stringify(b, null, 1)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `wiw-backup-${b.savedAt.slice(0, 16).replace(/[:T]/g, '-')}.json`;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+    const n = (b.data.combat?.posse || []).length;
+    $('#backup-note').textContent = ` Saved ${n} character${n === 1 ? '' : 's'} and everything else — ${new Date().toLocaleTimeString()}.`;
+  } catch (e) { toast(e.message, true); }
+});
 
 // ---------- boot ----------
 function open() {

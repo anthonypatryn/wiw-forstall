@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Rye&family=Special+Elite&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css?v=13">
-  <link rel="stylesheet" href="/css/session.css?v=3">
+  <link rel="stylesheet" href="/css/session.css?v=4">
 </head>
 <body>
   <header class="masthead">
@@ -55,6 +55,13 @@
           <p class="muted" style="margin-top:0">Everything you’ve made up, in one place. Deleting can’t be undone.</p>
           <div id="homebrew"></div>
         </section>
+
+        <section class="card corner">
+          <h2 class="section-title">Backup</h2>
+          <p class="muted" style="margin-top:0">Saves everything — sheets, NPCs, factions, map, battle map, store, notes and the Table Log — to one file on this device. Do it after each session.</p>
+          <button class="btn" id="backup" type="button">💾 Download a backup</button>
+          <span class="muted" id="backup-note"></span>
+        </section>
       </div>
 
       <aside>
@@ -70,6 +77,6 @@
     </div>
   </main>
 
-  <script type="module" src="/js/session.js?v=4"></script>
+  <script type="module" src="/js/session.js?v=5"></script>
 </body>
 </html>
