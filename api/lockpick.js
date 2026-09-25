@@ -1,7 +1,9 @@
 import { load, save } from '../lib/store.js';
 import { pinOk, send, readBody } from '../lib/http.js';
 import { freshLocks, lockAction, lockView } from '../lib/lockpick.js';
-import { freshCombat, addLog } from '../lib/combat.js';
+import { freshCombat, addLog, publicAction } from '../lib/combat.js';
+import { equipItem } from '../lib/sheets.js';
+import { findItem, freshShop } from '../lib/shop.js';
 import { rollPool, parsePool, poolLabel } from '../lib/dice.js';
 
 const KEY = 'locks';
@@ -37,7 +39,30 @@ export default async function handler(req, res) {
       logged = true;
       return { ...r, pool: poolLabel({ black: b, gold: g }) };
     };
-    const result = lockAction(state, body, { warden, names, rollFinesse, log }) ?? null;
+    // the lock opened: spring its trap and hand over what's inside (Money/Scrap to the sheet, items to the inventory)
+    const shop = body.action === 'guess' ? (await load('shop')) || freshShop() : null;
+    const onOpen = (a, what) => {
+      const pc = combat.posse.find((p) => p.id === a.pc);
+      if (!pc) return;
+      if (what === 'trap') {
+        if (a.trap.damage) publicAction(combat, { action: 'pc', id: pc.id, op: 'health', delta: -a.trap.damage }, { warden: true });
+        if (a.trap.status) publicAction(combat, { action: 'pc', id: pc.id, op: 'status', status: a.trap.status, value: Math.min(6, (pc.statuses?.[a.trap.status] || 0) + a.trap.sev) }, { warden: true });
+        return;
+      }
+      const l = a.loot, money = (v) => Number(String(v ?? '').replace(/[^0-9.\-]/g, '')) || 0;
+      if (l.kind === 'money') pc.wallet = (money(pc.wallet) + l.amount).toFixed(2);
+      else if (l.kind === 'scrap') pc.scrap = String(money(pc.scrap) + l.amount);
+      else {
+        const it = l.kind === 'item' ? findItem(shop, l.itemId) : null;
+        if (it) l.name = it.name;
+        pc.items ||= [];
+        pc.items.push({ uid: Math.random().toString(36).slice(2, 10), itemId: it?.id || `found-${a.id}`, name: it?.name || l.name, cat: it?.cat || 'Goods & Services', sub: it?.sub || 'Found', qty: 1, ...(l.desc ? { note: l.desc } : {}) });
+        if (it) equipItem(pc, it, 1);
+      }
+      pc.updated = Date.now();
+      logged = true;
+    };
+    const result = lockAction(state, body, { warden, names, rollFinesse, log, onOpen }) ?? null;
     state.v = (state.v || 0) + 1;
     await save(state, KEY);
     if (logged) { combat.v = (combat.v || 0) + 1; await save(combat, 'combat'); }

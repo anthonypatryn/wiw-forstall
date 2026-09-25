@@ -285,3 +285,24 @@ test('lock picking (High/Low): ties lose, Ace rules, win N in a row, peeks, retr
   // someone else can't touch your lock
   assert.throws(() => lockAction(t.st, { action: 'peek', id: t.id, pc: 'b' }, { warden: false, names }), /someone else/);
 });
+
+test('lock loot and traps: hidden until it opens, then handed over once', async () => {
+  const { freshLocks, lockAction, lockView } = await import('../lib/lockpick.js');
+  const names = { a: 'Ann' }, opened = [];
+  const st = freshLocks();
+  const { ids: [id] } = lockAction(st, { action: 'start', to: ['a'], difficulty: 1, loot: { kind: 'money', amount: '12.5' }, trap: { damage: 3, status: 'Poisoned', sev: 2 } }, { warden: true, names });
+  assert.deepEqual(st.list[0].loot, { kind: 'money', amount: 12.5 });
+  assert.equal(lockView(st, { warden: false, pc: 'a' }).list[0].loot, undefined);
+  assert.equal(lockView(st, { warden: true }).list[0].trap.damage, 3);
+  const deck = () => [{ r: 9, s: '♠' }, { r: 5, s: '♠' }];
+  const o = { warden: false, names, rollFinesse: () => ({ hits: 0 }), deck, onOpen: (a, what) => opened.push(what) };
+  lockAction(st, { action: 'finesse', id, pc: 'a' }, o);
+  lockAction(st, { action: 'guess', id, pc: 'a', dir: 'higher' }, o);
+  assert.deepEqual(opened, ['trap', 'loot']);
+  assert.equal(st.list[0].found, '$12.5');
+  assert.equal(st.list[0].sprung, '−3 Health, Poisoned [2]');
+  // nothing inside, no trap: no loot calls
+  const s2 = freshLocks();
+  lockAction(s2, { action: 'start', to: ['a'], difficulty: 1, loot: { kind: 'item' }, trap: { damage: 0 } }, { warden: true, names });
+  assert.equal(s2.list[0].loot, null); assert.equal(s2.list[0].trap, null);
+});
