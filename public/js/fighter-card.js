@@ -160,3 +160,25 @@ export function wireFighters(box, ctx) {
     });
   });
 }
+
+// ---------- spoils: when a fight ends, loot the fallen (p. 79) ----------
+// getData() → the latest Warden combat view; act(body) → result (and refreshes that view)
+export function openSpoils({ getData, meta, act }) {
+  const fallen = () => (getData()?.enemies || []).filter((e) => e.defeated);
+  if (!fallen().length) return;
+  const back = document.createElement('div');
+  back.className = 'modal-back ask-back';
+  const draw = () => {
+    const data = getData();
+    back.innerHTML = `<div class="modal ask trade-modal spoils" role="dialog" aria-modal="true" aria-label="Spoils">
+      <div class="ho-kicker">${gl('trophy')} THE FIGHT IS OVER</div><h2>Spoils</h2>
+      <p class="ask-body">Pick who takes a trophy or searches each body. Trophies go straight into their Inventory; for a search, you decide what they find.</p>
+      ${fallen().map((e) => `<article class="fighter down lootable" data-fc-enemy="${e.id}"><div class="f-head"><div class="f-name">${esc(e.name)}</div><span class="f-tag">${e.fled ? 'FLED' : 'DOWN'}</span></div>
+        ${lootHTML(e, e.profile ? data.profiles[e.profile] : null, data)}</article>`).join('')}
+      <div class="ask-btns"><button type="button" class="btn" data-close>Done</button></div></div>`;
+    wireFighters(back, { data, meta, act: async (body) => { const r = await act(body); draw(); return r; } });
+  };
+  draw();
+  document.body.append(back);
+  back.addEventListener('click', (e) => { if (e.target === back || e.target.closest('[data-close]')) back.remove(); });
+}

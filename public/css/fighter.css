@@ -101,3 +101,7 @@ details.more p { font-size: var(--fs-sm); margin: 6px 0; }
 /* in a narrow column the Health bar takes its own line */
 .fighter .hp { flex-wrap: wrap; }
 .fighter .hp .bar { min-width: 140px; }
+
+/* the Spoils pop-up at the end of a fight */
+.spoils .fighter { margin: 10px 0; }
+.spoils .fighter .f-head { align-items: center; }

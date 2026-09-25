@@ -5,7 +5,7 @@ let meta = null;
 // the Ability button depends on this, so redraw the turn panel once it arrives
 api('GET', null, '?view=meta', '/api/combat').then((m) => { meta = m; renderTurnBar(); }).catch(() => {});
 import { mountTableLog } from './tablelog.js';
-import { pcCardHTML, enemyCardHTML, wireFighters } from './fighter-card.js';
+import { pcCardHTML, enemyCardHTML, wireFighters, openSpoils } from './fighter-card.js';
 import { openAddEnemies } from './enemy-add.js';
 import { panZoom } from './panzoom.js';
 
@@ -459,7 +459,10 @@ function wireTurnBar(bar, cur, tok) {
   bar.querySelector('[data-endmine]')?.addEventListener('click', () => { tp.open = ''; tpAct({ action: 'pc', id: c.current, op: 'endTurn' }); });
   bar.querySelector('[data-endfight]')?.addEventListener('click', async () => {
     if (!await ask('End combat? Grit refills and Dodge/Aim clear. Health and Statuses stay as they are.')) return;
-    if (await tpAct({ action: 'end' }, 'Combat is over. Tap a downed enemy to loot it.')) poller?.now?.();
+    if (!await tpAct({ action: 'end' }, 'Combat is over.')) return;
+    poller?.now?.();
+    // loot the fallen now, while it matters (p. 79)
+    openSpoils({ getData: () => combat, meta, act: async (body) => { const r = await combatAct(body); renderPanel(); return r; } });
   });
   bar.querySelector('[data-goto]')?.addEventListener('click', () => {
     const t = data?.tokens.find((x) => x.ref === c.current);
