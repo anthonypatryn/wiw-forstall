@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Scene Prep · Wild Imaginary West</title>
+  <meta name="description" content="The Warden’s scene prep.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>★</text></svg>">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Rye&family=Special+Elite&family=Reenie+Beanie&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css?v=53">
+  <link rel="stylesheet" href="/css/prep.css?v=1">
+</head>
+<body>
+  <header class="masthead">
+    <div class="masthead-inner">
+      <img class="brand-logo" src="/img/logo-light.svg" alt="Wild Imaginary West">
+      <div class="brand-title">
+        <div class="kicker">WARDEN ONLY</div>
+        <h1>Scene Prep</h1>
+        <div class="sub">Build it before game night, run it with one tap per beat</div>
+      </div>
+    </div>
+  </header>
+  <nav class="sitenav" data-nav aria-label="Site"></nav>
+
+  <main class="wrap">
+    <section class="card corner" id="gate" hidden>
+      <h2 class="section-title">Warden only</h2>
+      <p class="muted">Scene prep is just for the Warden.</p>
+      <button class="btn" id="unlock" type="button"><span data-gl="star"></span> Enter the Warden PIN</button>
+    </section>
+    <div class="prep-grid" id="prep" hidden>
+      <section class="card corner prep-list">
+        <div class="head-row"><h2 class="section-title">Scenes</h2><button type="button" class="btn small" data-new>+ New scene</button></div>
+        <div id="scene-list"></div>
+      </section>
+      <section class="card corner prep-edit" id="editor"></section>
+    </div>
+  </main>
+
+  <script type="module" src="/js/prep.js?v=1"></script>
+</body>
+</html>

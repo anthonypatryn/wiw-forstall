@@ -425,3 +425,21 @@ test('Journal: players see only revealed quests/clues (no hidden steps); reveals
   journalAction(st, { action: 'remove', id: q.id }, W);
   assert.equal(st.clues[0].quest, '');
 });
+
+test('Scene prep: Warden-only, tidy fields, beats marked used, done clears tonight', async () => {
+  const { freshScenes, sceneAction } = await import('../lib/scenes.js');
+  const st = freshScenes(), W = { warden: true };
+  assert.throws(() => sceneAction(st, { action: 'save', scene: { title: 'x' } }, { warden: false }), /PIN/);
+  assert.throws(() => sceneAction(st, { action: 'save', scene: {} }, W), /name/);
+  const s = sceneAction(st, { action: 'save', scene: { title: 'Ambush at Dry Gulch', enemies: [{ profile: 'npc:Human - Weak Combatant', count: 20 }, {}], checks: [{ skill: 'Nope', diff: 'Hard' }], locks: [{ what: 'strongbox', difficulty: 9, loot: { kind: 'money', amount: '12' } }] } }, W);
+  assert.equal(s.enemies.length, 1); assert.equal(s.enemies[0].count, 8);
+  assert.equal(s.checks[0].skill, 'Intuition'); assert.equal(s.checks[0].diff, 'Medium');
+  assert.equal(s.locks[0].difficulty, 5); assert.equal(s.locks[0].loot.amount, 12);
+  sceneAction(st, { action: 'current', id: s.id }, W);
+  sceneAction(st, { action: 'used', id: s.id, key: 'fight' }, W);
+  assert.ok(st.scenes[0].used.fight);
+  sceneAction(st, { action: 'done', id: s.id }, W);
+  assert.equal(st.current, '');
+  const c = sceneAction(st, { action: 'copy', id: s.id }, W);
+  assert.deepEqual(c.used, {}); assert.equal(c.done, false);
+});

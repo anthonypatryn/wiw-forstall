@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="/css/style.css?v=53">
   <link rel="stylesheet" href="/css/rollcall.css?v=12">
   <link rel="stylesheet" href="/css/desk.css?v=13">
-  <link rel="stylesheet" href="/css/run.css?v=19">
+  <link rel="stylesheet" href="/css/run.css?v=20">
 </head>
 <body>
   <header class="masthead">
@@ -36,9 +36,13 @@
 
     <div id="desk" hidden>
       <nav class="toc-bar" id="run-toc" aria-label="Jump to">
-        <a href="#grp-now">Right Now</a><a href="#grp-rolls">Rolls</a><a href="#grp-table">At the Table</a><a href="#grp-rewards">Rewards &amp; Handouts</a><a href="#grp-notes">Notes &amp; Log</a><a href="#grp-tools">Tools</a>
+        <a href="#grp-scene">Scene</a><a href="#grp-now">Right Now</a><a href="#grp-rolls">Rolls</a><a href="#grp-table">At the Table</a><a href="#grp-rewards">Rewards &amp; Handouts</a><a href="#grp-notes">Notes &amp; Log</a><a href="#grp-tools">Tools</a>
         <button type="button" class="btn small toc-end" id="end-session"><span data-gl="scroll"></span> End Session</button>
       </nav>
+      <section class="band" id="grp-scene">
+        <h2 class="band-h">Tonight’s Scene</h2>
+        <section class="card corner"><div id="scene-run"></div></section>
+      </section>
       <section class="band" id="grp-now">
         <h2 class="band-h">Right Now</h2>
         <div class="stack-grid">
@@ -174,6 +178,6 @@
     </div>
   </main>
 
-  <script type="module" src="/js/run.js?v=27"></script>
+  <script type="module" src="/js/run.js?v=28"></script>
 </body>
 </html>

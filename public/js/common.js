@@ -218,6 +218,7 @@ const NAV_PLAYER = [
 ];
 const NAV_WARDEN = [
   { href: '/run', label: 'Run the Game', icon: 'star', phone: true },
+  { href: '/prep', label: 'Prep' },
   { href: '/posse', label: 'Posse', phone: true },
   { label: 'Fight', items: [['/battle', 'Battle Map'], ['/combat', 'Combat Control']] },
   { href: '/warden', label: 'Forstall Scanner' },

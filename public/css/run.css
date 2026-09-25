@@ -100,3 +100,19 @@
 .es-np-edit .es-field input + textarea { margin-top: 4px; }
 .es-preview { margin-top: var(--sp-3); border-radius: var(--r-sm); font-size: 13px; }
 .es-preview .newspaper { padding: 14px 16px; font-size: 13px; }
+/* Tonight's Scene */
+.sr-pick { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: var(--sp-3); }
+.sr-pick select { flex: 1 1 220px; padding: 8px 10px; border: 1.5px solid var(--ink); border-radius: var(--r-sm); background: var(--surface); font: var(--fs-md) var(--body); }
+.sr-title { margin: 0 0 8px; font: 400 var(--fs-2xl)/1.1 var(--western); }
+.sr-read { margin: 0 0 12px; padding: 14px 16px; background: var(--surface-2); border-left: 4px solid var(--brass); font: italic var(--fs-lg)/1.5 var(--body); }
+.sr-read small { display: block; font: normal var(--fs-xs) var(--display); letter-spacing: var(--track-wide); color: var(--rust); margin-bottom: 4px; }
+.sr-notes { margin: 0 0 12px; padding: 8px 10px; border: 1px dashed var(--secret-line); background: var(--secret-tint); font-size: var(--fs-sm); }
+.sr-beats { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px; }
+.sr-beat { display: flex; gap: 10px; align-items: flex-start; text-align: left; padding: 10px 12px; border: 1.5px solid var(--ink); border-radius: var(--radius); background: var(--surface); box-shadow: var(--shadow-stamp); cursor: pointer; font: inherit; color: var(--ink); }
+.sr-beat:hover { border-color: var(--accent); }
+.sr-beat b { display: block; font: var(--fs-md) var(--display); letter-spacing: var(--track); }
+.sr-beat b .gl { width: 1em; height: 1em; vertical-align: -2px; }
+.sr-beat small { display: block; font-size: var(--fs-sm); color: var(--ink-soft); }
+.sr-beat.used { opacity: .62; box-shadow: none; background: var(--wash); }
+.sr-tick { flex: none; width: 22px; height: 22px; display: grid; place-items: center; border: 1.5px solid var(--ink); border-radius: var(--r-sm); color: var(--success); font-weight: 700; background: var(--surface); }
+.sr-end { margin-top: var(--sp-3); }

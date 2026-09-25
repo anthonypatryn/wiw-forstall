@@ -1,0 +1,27 @@
+/* Scene Prep (Warden) */
+.prep-grid { display: grid; grid-template-columns: 300px minmax(0, 1fr); gap: 14px; align-items: start; }
+.prep-grid > .card { margin: 0; }
+.prep-list { position: sticky; top: 70px; }
+#scene-list { display: grid; gap: 6px; }
+.prep-item { display: grid; gap: 2px; text-align: left; padding: 10px 12px; border: 1.5px solid var(--line); border-radius: var(--radius); background: var(--surface); cursor: pointer; font: inherit; color: var(--ink); }
+.prep-item b { font: var(--fs-md) var(--display); letter-spacing: var(--track); }
+.prep-item small { font-size: var(--fs-xs); color: var(--ink-soft); }
+.prep-item.on { border-color: var(--ink); box-shadow: var(--shadow-stamp); }
+.prep-item.done { opacity: .6; }
+.prep-empty { text-align: center; padding: 30px 10px; }
+.prep-empty > .gl { width: 42px; height: 42px; color: var(--brass); }
+.prep-edit .field-step input, .prep-edit .field-step textarea, .prep-edit .field-step select { width: 100%; }
+.prep-edit input:not([type=checkbox]), .prep-edit textarea, .prep-edit select { padding: 8px 10px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--surface); font: var(--fs-md) var(--body); }
+.prep-h { margin: var(--sp-5) 0 var(--sp-2); padding-top: var(--sp-3); border-top: 1px dotted var(--line); font: var(--fs-lg) var(--display); letter-spacing: var(--track); }
+.prep-h .gl { width: 1em; height: 1em; vertical-align: -2px; color: var(--rust); }
+.prep-h small { font: var(--fs-sm) var(--body); letter-spacing: 0; color: var(--ink-soft); margin-left: 6px; }
+.prep-rows { display: grid; gap: 8px; margin-bottom: 8px; }
+.prep-row { display: flex; gap: 8px; align-items: center; padding: 8px; border: 1px solid var(--line-soft); border-radius: var(--r-sm); background: var(--wash); }
+.prep-row.wrap { flex-wrap: wrap; }
+.prep-row > select, .prep-row > input:not([type=number]) { flex: 1 1 160px; min-width: 0; }
+.prep-row > textarea { flex: 1 1 100%; }
+.prep-num { display: flex; align-items: center; gap: 6px; font: var(--fs-xs) var(--display); letter-spacing: var(--track); white-space: nowrap; }
+.prep-num input { width: 64px; }
+.prep-kind { display: flex; gap: 4px; }
+.prep-save { position: sticky; bottom: 0; margin-top: var(--sp-5); padding: 10px 0; background: linear-gradient(transparent, var(--paper) 30%); }
+@media (max-width: 900px) { .prep-grid { grid-template-columns: minmax(0, 1fr); } .prep-list { position: static; } .prep-row { flex-wrap: wrap; } .prep-row > select, .prep-row > input:not([type=number]) { flex-basis: 100%; } .prep-edit select { max-width: 100%; } }
