@@ -776,3 +776,40 @@ test('Trading: money and things change hands whole (a gun keeps its upgrades, a 
   const o4 = T({ op: 'offer', pc: a.id, to: b.id, give: { money: 1 } });
   assert.equal(T({ op: 'cancel', id: o4.id, pc: a.id }).status, 'cancelled');
 });
+
+test('Posse stash: money and things go in and come out whole (a gun keeps its upgrades), partial stacks, Warden loot, all or nothing', async () => {
+  const { stashAction } = await import('../lib/trade.js');
+  const { sellables } = await import('../lib/shop.js');
+  const combat = freshCombat();
+  const a = publicAction(combat, { action: 'addPc', name: 'Lila', trade: 'Gunslinger' }, { warden: false });
+  const b = publicAction(combat, { action: 'addPc', name: 'Doc', trade: 'Trapper' }, { warden: false });
+  a.wallet = '20.00'; b.wallet = '0';
+  const S = (x, o) => stashAction(combat, { action: 'stash', ...x }, o);
+  const gunKey = sellables(a, { custom: [] }).find((x) => x.key.startsWith('weapon:')).key, gi = Number(gunKey.split(':')[1]);
+  a.weapons[gi].upgrades[0] = 'Scope';
+  const gunModel = a.weapons[gi].model;
+  a.horse.breed = 'Morgan'; a.horse.name = 'Biscuit';
+  assert.throws(() => S({ op: 'put', pc: a.id, money: 50 }), /only have/);
+  S({ op: 'put', pc: a.id, money: 8, things: [{ key: gunKey }, { key: 'horse' }] });
+  assert.equal(a.wallet, '12.00'); assert.equal(a.weapons[gi].model, ''); assert.equal(a.horse.breed, '');
+  assert.equal(combat.stash.money, 8); assert.equal(combat.stash.items.length, 2);
+  const gun = combat.stash.items.find((x) => x.where === 'Weapons');
+  S({ op: 'take', pc: b.id, money: 3, id: gun.id });
+  assert.equal(b.wallet, '3.00'); assert.equal(combat.stash.money, 5);
+  assert.ok(b.weapons.some((w) => w.model === gunModel && w.upgrades[0] === 'Scope'), 'the gun keeps its Scope');
+  // Doc already rides a horse: taking Biscuit fails and nothing changes
+  b.horse.breed = 'Mustang';
+  const horse = combat.stash.items.find((x) => x.where === 'Horse');
+  assert.throws(() => S({ op: 'take', pc: b.id, id: horse.id, money: 5 }), /already has a horse/);
+  assert.equal(b.wallet, '3.00'); assert.equal(combat.stash.money, 5); assert.equal(b.horse.breed, 'Mustang');
+  // Warden loot: a stack, split between two takers
+  assert.throws(() => S({ op: 'loot', money: 1 }), /PIN/);
+  S({ op: 'loot', money: 10, itemId: 'bandages', qty: 3 }, { warden: true, findItem: (x) => ({ id: x, name: 'Bandages', cat: 'Gear', sub: 'First Aid' }) });
+  const band = combat.stash.items.find((x) => x.name === 'Bandages');
+  S({ op: 'take', pc: a.id, id: band.id, qty: 2 });
+  assert.equal(band.qty, 1); assert.equal(a.items.find((i) => i.name === 'Bandages').qty, 2);
+  S({ op: 'take', pc: b.id, id: band.id });
+  assert.ok(!combat.stash.items.some((x) => x.name === 'Bandages'));
+  assert.equal(combat.stash.money, 15);
+  assert.ok(combat.log.some((l) => /Lila put \$8\.00/.test(l.text)) && combat.log.some((l) => /Doc took \$3\.00/.test(l.text)));
+});

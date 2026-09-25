@@ -959,3 +959,6 @@ input[type=range]::-moz-range-thumb { width: 16px; height: 16px; border-radius: 
 @media (max-width: 480px) { .trade-sum { grid-template-columns: 1fr; } }
 .modal.trade-modal input:not([type=checkbox]):not([type=radio]) { padding: 7px 9px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--surface); font: var(--fs-sm) var(--body); letter-spacing: 0; text-align: left; }
 .modal.trade-modal .lp-num input { width: 80px; flex: 0 0 80px !important; }
+.trade-side .item-row { width: 100%; display: flex; align-items: center; gap: 8px; }
+.trade-side .item-row .item-who { flex: 1; min-width: 0; }
+.trade-side .item-row .trade-money { width: auto; }

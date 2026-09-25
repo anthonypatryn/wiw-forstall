@@ -68,6 +68,8 @@ export function mountTableLog() {
   askWhoIAm();
   // any [data-trade] button (e.g. on a sheet's Inventory) opens a trade with that character
   document.addEventListener('click', (e) => { const b = e.target.closest('[data-trade]'); if (b) openTrade(b.dataset.trade || null); });
+  // any [data-stash] button opens the posse stash
+  document.addEventListener('click', (e) => { if (e.target.closest('[data-stash]')) import('./stash.js').then((m) => m.openStash()); });
 
   let seenTop = null, unread = 0, latest = [];
   const badge = btn.querySelector('.log-badge');
