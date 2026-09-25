@@ -655,17 +655,16 @@ $('#upload').addEventListener('change', async (e) => {
 });
 
 // ---------- Forstalls (pp. 81–87): Range fields, Sweep, memory slots, Burst, Edison's Rule 1 ----------
-let kzList = [], selFs = null, fieldsKey = '';
+let kzPosse = [], kzAll = [], selFs = null, fieldsKey = '';
 const fsOf = (key) => data?.forstalls?.find((f) => f.key === key) || null;
 const inField = (f, t) => !!f.pos && (f.rangeIn >= 999 || dist(f.pos, t) <= f.rangeIn);
 const clashKeys = () => new Set((data?.edison || []).flat());
 // What a slot can be programmed with: decoded monsters for the posse, every monster for the Warden.
 async function loadKz() {
-  try {
-    kzList = warden ? ((await api('GET', null, '?view=warden', '/api/scan')).monsters || []).map((m) => ({ name: m.name, kz: m.kz }))
-      : ((await api('GET', null, '?view=player', '/api/scan')).notebook || []).filter((e) => e.solved).map((e) => ({ name: e.name, kz: e.kz }));
-    kzList.sort((a, b) => a.name.localeCompare(b.name));
-  } catch { kzList = []; }
+  // a character's Forstall: only what the posse has fully decoded. The Warden's own Forstalls: any monster.
+  const byName = (a, b) => a.name.localeCompare(b.name);
+  try { kzPosse = ((await api('GET', null, '?view=player', '/api/scan')).notebook || []).filter((e) => e.solved).map((e) => ({ name: e.name, kz: e.kz })).sort(byName); } catch { kzPosse = []; }
+  try { kzAll = warden ? ((await api('GET', null, '?view=warden', '/api/scan')).monsters || []).map((m) => ({ name: m.name, kz: m.kz })).sort(byName) : []; } catch { kzAll = []; }
 }
 function renderFields() {
   const svg = $('#fields');
@@ -697,11 +696,11 @@ function fsMarkers() {
       <span class="lab" style="font-size:${labFont}px">${esc(f.name)}${f.sweep ? ` · Sweep ${f.sweep.hits}` : ''}</span></div>`;
   }).join('');
 }
-function slotOptions(cur) {
-  const opts = kzList.map((o) => `${o.name} · ${o.kz}`);
+function slotOptions(cur, list) {
+  const opts = list.map((o) => `${o.name} · ${o.kz}`);
   if (cur && !opts.includes(cur)) opts.unshift(cur);
   return `<option value="">— empty —</option>${opts.map((v) => `<option value="${esc(v)}"${v === cur ? ' selected' : ''}>${esc(v)}</option>`).join('')}`
-    + (kzList.length ? '' : `<option value="" disabled>${warden ? 'No monsters found' : 'Nothing decoded yet — use the Forstall Scanner'}</option>`);
+    + (list.length ? '' : '<option value="" disabled>Nothing decoded yet — use the Forstall Scanner</option>');
 }
 function forstallCard(f) {
   const may = warden || (f.owner && myId() === f.owner);
@@ -714,7 +713,7 @@ function forstallCard(f) {
     ${clashWith.length ? `<p class="fs-warn">${gl('flash')} Edison’s Rule 1: its waves cross ${esc(clashWith.join(' and '))}’s.</p>` : ''}
     ${may ? `<div class="fs-btns"><button type="button" class="btn small" data-fs-sweep="${esc(f.key)}"${f.owner && !f.charges ? ' disabled' : ''}>${gl('forstall')} ${f.sweep ? 'Readjust' : 'Sweep'} · ${cost}</button>
         ${f.sweep ? `<button type="button" class="btn small secondary" data-fs-off="${esc(f.key)}">Switch off</button>` : ''}</div>
-      <div class="fs-slots"><span>MEMORY SLOTS</span>${[0, 1, 2, 3].map((i) => `<select data-fs-slot="${esc(f.key)}" data-i="${i}" aria-label="Memory slot ${i + 1}">${slotOptions(f.slots[i] || '')}</select>`).join('')}</div>
+      <div class="fs-slots"><span>MEMORY SLOTS</span>${[0, 1, 2, 3].map((i) => `<select data-fs-slot="${esc(f.key)}" data-i="${i}" aria-label="Memory slot ${i + 1}">${slotOptions(f.slots[i] || '', f.owner ? kzPosse : kzAll)}</select>`).join('')}</div>
       ${f.fuse ? (f.burst?.length ? `<div class="fs-burst"><select data-fs-bt="${esc(f.key)}" aria-label="Burst target">${f.burst.map((b) => `<option value="${esc(b.ref)}">${esc(b.name)}</option>`).join('')}</select>
           <button type="button" class="btn small danger" data-fs-burst="${esc(f.key)}">${gl('flash')} Burst${f.owner ? ' · 1 crystal' : ''}</button></div>`
         : '<p class="muted fs-note">Burst: no programmed monster in Range.</p>')

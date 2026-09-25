@@ -1,7 +1,7 @@
 import { load, save, storeKind } from '../lib/store.js';
 import { pinOk, send, readBody, sinceParam } from '../lib/http.js';
 import { freshCombat, publicAction, playerCombatView, wardenCombatView, logView, META, autoAchievements, isUndoable, pushUndo, undoLabel, undoCombat, applyMapRange, sweepHit } from '../lib/combat.js';
-import { fields } from '../lib/forstall.js';
+import { fields, slotMonster } from '../lib/forstall.js';
 
 const KEY = 'combat';
 
@@ -36,6 +36,20 @@ export default async function handler(req, res) {
       state.v = (state.v || 0) + 1;
       await save(state, KEY);
       return send(res, 200, { result: r, state: view() });
+    }
+    // a character's Forstall memory slots only take frequencies the posse has fully decoded on the Scanner (p. 83)
+    if (body.action === 'sheet') {
+      const kz = Object.entries(body.fields && typeof body.fields === 'object' ? body.fields : { [body.path]: body.value })
+        .filter(([p, v]) => /^forstall\.kz\.\d$/.test(p) && String(v || '').trim());
+      if (kz.length) {
+        const scan = (await load()) || { notebook: {}, custom: [] };
+        const pc = state.posse.find((p) => p.id === body.id);
+        for (const [p, v] of kz) {
+          if (pc && pc.forstall?.kz?.[Number(p.split('.').pop())] === v) continue; // unchanged
+          const m = slotMonster(v, scan.custom || []);
+          if (!m || !scan.notebook?.[m]?.solved) throw new Error('Only frequencies the posse has fully decoded on the Forstall Scanner can go in a memory slot.');
+        }
+      }
     }
     // the battle map matters in a fight (range, Forstalls) and for any Forstall action
     const battle = state.combat?.active || body.action === 'forstall' || body.action === 'start' ? await load('battle') : null;
