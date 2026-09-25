@@ -501,8 +501,9 @@ async function onClick(e) {
       return;
     }
     if (d.dg) { drinkGrit = Math.max(0, Math.min(3, view.table.me?.grit || 0, drinkGrit + Number(d.dg))); render(); return; }
-    if (d.dk === 'pour') { await act({ action: 'drinkPour' }); play('card'); return; }
+    if (d.dk === 'pour') { await act({ action: 'drinkPour' }); play('chips'); return; }
     if (d.dk === 'drink') {
+      play('drink');
       const r = await act({ action: 'drink', grit: drinkGrit });
       drinkGrit = 0;
       const mine = lastRolls.filter((x) => x.key === `pc:${me()}`);
@@ -527,7 +528,7 @@ async function onClick(e) {
       return;
     }
     if (d.bjd) { const t = view.table; bjAmt = Math.max(t.stakes.ante, Math.min(t.stakes.bet * 5, Math.round((bjAmt + Number(d.bjd) * t.stakes.ante) * 100) / 100)); render(); return; }
-    if (d.bj === 'bet') { await act({ action: 'bjBet', amount: bjAmt }); play('card'); return; }
+    if (d.bj === 'bet') { await act({ action: 'bjBet', amount: bjAmt }); play('chips'); return; }
     if (d.bj === 'unbet') { await act({ action: 'bjBet', amount: 0 }); return; }
     if (d.bj === 'deal') { await act({ action: 'bjDeal' }); play('card'); setTimeout(() => play('card'), 180); return; }
     if (d.bjm) {
@@ -554,7 +555,7 @@ async function onClick(e) {
     if (d.frRank) {
       const t = view.table, r = Number(d.frRank), cur = t.faro?.bets?.[`pc:${me()}`]?.[r];
       const bet = await betDialog(t, r, cur);
-      if (bet) { await act({ action: 'faroBet', rank: r, ...bet }); play('card'); }
+      if (bet) { await act({ action: 'faroBet', rank: r, ...bet }); play('chips'); }
       return;
     }
     if (d.fr === 'turn') { const r = await act({ action: 'faroTurn' }); play('card'); setTimeout(() => play('card'), 180); if (r?.split) toast('A split — the bank takes half.'); return; }
@@ -567,9 +568,9 @@ async function onClick(e) {
       else { play('fail'); toast('The dealer’s hands are too quick to read.', true); }
       return;
     }
-    if (d.mv) { await act({ action: 'move', move: d.mv }); play('card'); }
+    if (d.mv) { await act({ action: 'move', move: d.mv }); play(d.mv === 'fold' || d.mv === 'check' ? 'card' : 'chips'); }
     else if (d.sl === 'join') { await act({ action: 'join' }); toast('You’re at the table.'); }
-    else if (d.sl === 'deal') { sel = new Set(); await act({ action: 'deal' }); play('card'); }
+    else if (d.sl === 'deal') { sel = new Set(); await act({ action: 'deal' }); play(view.table.game === 'liars' ? 'dice' : view.table.game === 'drinking' ? 'chips' : 'shuffle'); }
     else if (d.sl === 'draw') { await act({ action: 'draw', discard: [...sel] }); sel = new Set(); play('card'); }
     else if (d.sl === 'leave') { if (await ask('Cash out and leave the table?', { ok: 'Leave the table', danger: false })) { await act({ action: 'leave' }); closeTable(); } }
     else if (d.sl === 'close') { if (await ask('Close the table? An unfinished hand gets called off and bets go back.', { ok: 'Close it' })) { await act({ action: 'close' }); } }

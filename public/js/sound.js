@@ -1,9 +1,39 @@
-// Sound effects. Synthesized in the browser (WebAudio) — no files needed.
-// To use a real recording instead, drop it in public/sfx/<name>.mp3 and list the name in public/sfx/manifest.json
-// (e.g. ["dice","gun"]); listed files are played instead of the synthesized version.
+// Sound effects. Real recordings (public/sfx/*.mp3, free Pixabay sounds) play as clips — a sound with several clips picks
+// one at random so it never sounds like a loop. Everything else is synthesized in the browser (WebAudio), and so is a
+// recorded sound until its file has loaded. To swap in another recording, drop it in public/sfx and point CLIPS at it.
+// (Older route, still works: public/sfx/<name>.mp3 listed in public/sfx/manifest.json replaces that sound whole.)
 // Muted/volume are per device: localStorage wiw.muted / wiw.volume.
 
-const NAMES = ['dice', 'card', 'gun', 'bow', 'swing', 'explosion', 'forstall', 'zap', 'lockClick', 'lockSnap', 'lockOpen', 'success', 'fail', 'chime'];
+const NAMES = ['dice', 'card', 'shuffle', 'chips', 'drink', 'gun', 'shotgun', 'bow', 'swing', 'explosion', 'forstall', 'zap', 'lockClick', 'lockSnap', 'lockOpen', 'success', 'fail', 'chime'];
+// name → clips of [file, start s, length s]
+const CLIPS = {
+  dice: [['dice', 0, 1.2]],
+  shuffle: [['shuffle', 0.2, 1.05], ['shuffle', 2.2, 1.9], ['shuffle', 5.25, 1.3], ['shuffle', 7.6, 2.5]],
+  card: [['deal', 1.1, 0.32], ['deal', 1.85, 0.32], ['deal', 3.0, 0.32], ['deal', 4.3, 0.32], ['deal', 5.3, 0.32], ['deal', 6.25, 0.32], ['deal', 7.1, 0.32], ['deal', 8.25, 0.32], ['deal', 9.25, 0.32], ['deal', 10.3, 0.32], ['deal', 11.25, 0.32], ['deal', 12.25, 0.32]],
+  chips: [['chips', 0.05, 0.7], ['chips2', 0.05, 0.7]],
+  drink: [['drink', 1.2, 4.8]],
+  gun: [['pistol', 0, 0.89], ['pistol2', 0, 1.6], ['rifle', 0, 1.6]],
+  shotgun: [['shotgun', 0.25, 2.6], ['shotgun2', 0, 2.8]],
+};
+const buffers = {}; // file → AudioBuffer (or a Promise while loading)
+function loadClips() {
+  for (const f of new Set(Object.values(CLIPS).flat().map((c) => c[0]))) {
+    if (buffers[f]) continue;
+    buffers[f] = fetch(`/sfx/${f}.mp3`).then((r) => r.arrayBuffer()).then((b) => ctx.decodeAudioData(b)).then((buf) => { buffers[f] = buf; }).catch(() => { delete buffers[f]; });
+  }
+}
+function playClip(name) {
+  const list = CLIPS[name];
+  if (!list || !ctx || ctx.state !== 'running') return false;
+  const [f, start, len] = list[Math.floor(Math.random() * list.length)];
+  const buf = buffers[f];
+  if (!(buf instanceof AudioBuffer)) return false;
+  const src = ctx.createBufferSource(), g = ctx.createGain(), t = ctx.currentTime + 0.01;
+  src.buffer = buf; src.connect(g); g.connect(master);
+  g.gain.setValueAtTime(1, t); g.gain.setValueAtTime(1, t + Math.max(0, len - 0.08)); g.gain.linearRampToValueAtTime(0.0001, t + len); // no click at the cut
+  src.start(t, start, len);
+  return true;
+}
 let ctx = null, master = null, files = null;
 const store = { get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} } };
 export const isMuted = () => store.get('wiw.muted', false);
@@ -17,6 +47,7 @@ function audio() {
     if (!AC) return null;
     ctx = new AC();
     master = ctx.createGain(); master.gain.value = volume(); master.connect(ctx.destination);
+    loadClips();
   }
   if (ctx.state === 'suspended') ctx.resume().catch(() => {});
   return ctx;
@@ -81,7 +112,10 @@ export function play(name, arg) {
   if (files?.has(name)) { const a = new Audio(`/sfx/${name}.mp3`); a.volume = volume(); a.play().catch(() => {}); return; }
   const c = audio();
   if (!c || c.state !== 'running') return;
-  try { SYNTH[name](c.currentTime + 0.01, arg); } catch { /* never let a sound break the page */ }
+  if (playClip(name)) return;
+  try { (SYNTH[name] || SYNTH[FALLBACK[name]])?.(c.currentTime + 0.01, arg); } catch { /* never let a sound break the page */ }
 }
+// recorded sounds with no synth of their own use a close one until the file loads
+const FALLBACK = { shuffle: 'card', chips: 'lockClick', shotgun: 'gun', drink: 'swing' };
 // which attack sound fits a weapon
-export const weaponSound = (w) => (/bow/i.test(`${w?.type} ${w?.model}`) ? 'bow' : /melee|knife|axe|sword|club|fist|hatchet|machete/i.test(`${w?.type} ${w?.model}`) ? 'swing' : 'gun');
+export const weaponSound = (w) => (/shotgun|scattergun/i.test(`${w?.type} ${w?.model}`) ? 'shotgun' : /bow/i.test(`${w?.type} ${w?.model}`) ? 'bow' : /melee|knife|axe|sword|club|fist|hatchet|machete/i.test(`${w?.type} ${w?.model}`) ? 'swing' : 'gun');
