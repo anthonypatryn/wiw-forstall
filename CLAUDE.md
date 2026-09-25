@@ -73,7 +73,7 @@
   - **Every page** (`mountTableLog`): Table Log + Roll dice buttons share `.fab-row` (bottom-right; stacked on phones); `mountDice` rolls any B/G pool as anyone; first visit asks "Who are you playing?" (`askWhoIAm`, sets `wiw.me`, `wiw.meAsked`), skipped in Warden mode.
   - `/howto` = How to Play Online (static guide for players, in the nav). Update it when player-facing flows change.
 
-- The old Session page is merged into Run the Game: `/session` redirects to `/run` (vercel.json + a tiny session.html). Session notes, open rolls, homebrew, backup and the recent log live in `public/js/desk.js` (+ css/desk.css), mounted by run.js via `mountDesk`. Keep Warden pages in Run the Game's style (`run-grid`, `run-row`, `need`, `run-links`). The page is grouped into bands (`.run-group`: Right Now, Rolls, At the Table, Notes & Log, Tools — Jump To + Backup | Homebrew) with a sticky contents bar `#run-toc` (top = nav + Warden strip height, set by `tocTop()` in run.js).
+- The old Session page is merged into Run the Game: `/session` redirects to `/run` (vercel.json + a tiny session.html). Session notes, open rolls, homebrew, backup and the recent log live in `public/js/desk.js` (+ css/desk.css), mounted by run.js via `mountDesk`. Keep Warden pages in Run the Game's style (`run-grid`, `run-row`, `need`, `run-links`). The page is grouped into bands (`.run-group`: Right Now, Rolls, At the Table, Rewards — award / Jackpot / Town Rest, moved from the Posse page —, Notes & Log, Tools — Jump To + Backup | Homebrew) with a sticky contents bar `#run-toc` (top = nav + Warden strip height, set by `tocTop()` in run.js).
 - Session notes: `api/session.js` + `lib/session.js` (Redis key `session`), every request needs the PIN; shown on Run the Game.
 
 ## Conventions

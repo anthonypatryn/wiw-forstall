@@ -68,3 +68,10 @@
 .run-group { margin-bottom: 18px; scroll-margin-top: calc(var(--run-toc-top, 0px) + 62px); }
 .run-group-h { margin: 0 0 8px; font: 15px var(--display); letter-spacing: .16em; color: var(--rust); display: flex; align-items: center; gap: 10px; }
 .run-group-h::after { content: ''; flex: 1; border-top: 1.5px solid rgba(164,64,31,.35); }
+
+/* Rewards */
+.aw-nums { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 10px; }
+.aw-nums label { display: flex; flex-direction: column; gap: 4px; font: 13px var(--display); letter-spacing: .1em; color: var(--ink-soft); min-width: 0; }
+.aw-nums label .gl { width: 1em; height: 1em; vertical-align: -2px; color: var(--rust); }
+.aw-nums input { width: 100%; min-width: 0; padding: 8px 10px; border: 1px solid rgba(0,0,0,.3); border-radius: 4px; background: #fffdf7; font: 20px var(--display); letter-spacing: .04em; color: var(--ink); box-sizing: border-box; }
+#award .btn, #jackpot .btn { margin-top: 4px; }

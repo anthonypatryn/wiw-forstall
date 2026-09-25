@@ -322,28 +322,11 @@ body.on-sheet .masthead { display: none; }
 .pc-tile .me-star { position: absolute; top: 8px; right: 8px; z-index: 1; }
 .pc-tile .pc-open { padding-right: 96px; }
 .pc-tile.mine { border-width: 2.5px; border-color: var(--rust); }
-/* Warden awards */
-#award-card { border-color: var(--rust); }
-.aw-who { display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 6px 0 12px; }
-.aw-who .aw-all { font-weight: 700; }
-.aw-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px 14px; margin-bottom: 12px; }
-.aw-grid label { display: flex; flex-direction: column; gap: 3px; font: 13px var(--display); letter-spacing: .12em; color: var(--ink-soft); }
-.aw-grid label.wide { grid-column: span 3; }
-.aw-grid input, .aw-jp-row input, .aw-jp-row select { padding: 7px 9px; border: 1px solid var(--ink-faint); border-radius: 3px; background: #fffdf7; font: 16px var(--body); color: var(--ink); }
-.aw-jackpot { margin-top: 16px; padding-top: 12px; border-top: 1px dotted rgba(34,31,31,.4); }
-.aw-jackpot b { font: 18px var(--display); letter-spacing: .1em; font-weight: 400; color: var(--rust); }
-.aw-jp-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
-.aw-jp-row input { flex: 1; min-width: 180px; }
-@media (max-width: 560px) { .aw-grid { grid-template-columns: 1fr 1fr; } .aw-grid label.wide { grid-column: 1 / -1; } }
 
 /* rest row in the Health box */
 .rest-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-top: 10px; padding-top: 8px; border-top: 1px dotted rgba(34,31,31,.35); }
 .rest-row .rl { font: 12px var(--display); letter-spacing: .12em; color: var(--rust); flex-basis: 100%; }
 .rest-row select { flex: 1; min-width: 0; padding: 4px 6px; border: 1px solid var(--ink-faint); border-radius: 3px; background: #fffdf7; font-size: 14px; }
-/* phone: award form inputs must shrink with their columns */
-.aw-grid label { min-width: 0; }
-.aw-grid input { width: 100%; min-width: 0; box-sizing: border-box; }
-@media (max-width: 560px) { .aw-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
 /* phone: sheet header + compact sticky bar */
 @media (max-width: 560px) {
   .sheet-head { grid-template-columns: minmax(0, 1fr) 92px; }

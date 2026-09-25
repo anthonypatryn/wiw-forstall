@@ -102,8 +102,62 @@ function renderPosse() {
 }
 function render() {
   if (!combat) return;
-  renderFight(); renderEnemies(); renderPosse(); caller.draw(); renderChecks(); renderRecent();
+  renderFight(); renderEnemies(); renderPosse(); caller.draw(); renderChecks(); renderRecent(); renderRewards();
 }
+
+// ---------- Rewards: award the posse, Jackpot, Town Rest (moved here from the Posse page) ----------
+const aw = { who: null, jp: '' }; // who: null = everyone
+function renderRewards() {
+  const box = $('#award');
+  if (box.contains(document.activeElement) && document.activeElement.tagName === 'INPUT') return;
+  const alive = combat.posse.filter((p) => !p.dead);
+  const keep = (id) => box.querySelector(`#${id}`)?.value || '';
+  const vals = { p: keep('aw-prestige'), d: keep('aw-dollars'), s: keep('aw-scrap'), i: keep('aw-item'), r: keep('aw-reason') };
+  box.innerHTML = `<div class="rc-step"><span>WHO</span><button type="button" class="rc-chip${aw.who ? '' : ' on'}" data-aw-all>Everyone</button>
+      ${alive.map((p) => `<button type="button" class="rc-chip${aw.who?.has(p.id) ? ' on' : ''}" data-aw="${esc(p.id)}">${esc(p.name)}</button>`).join('') || '<span class="muted">No characters yet.</span>'}</div>
+    <div class="aw-nums">
+      <label><span>${gl('star')} PRESTIGE</span><input id="aw-prestige" type="number" min="0" max="100" inputmode="numeric" placeholder="0" value="${esc(vals.p)}"></label>
+      <label><span>$ DOLLARS</span><input id="aw-dollars" type="number" min="0" inputmode="numeric" placeholder="0" value="${esc(vals.d)}"></label>
+      <label><span>${gl('wrench')} SCRAP</span><input id="aw-scrap" type="number" min="0" inputmode="numeric" placeholder="0" value="${esc(vals.s)}"></label>
+    </div>
+    <div class="rc-step rc-note"><span>LOOT</span><input id="aw-item" maxlength="120" placeholder="e.g. Pristine Chupacabra pelt (goes into Other items)" value="${esc(vals.i)}"></div>
+    <div class="rc-step rc-note"><span>WHAT FOR</span><input id="aw-reason" maxlength="120" placeholder="e.g. Cleared the Copper Canyon mine" value="${esc(vals.r)}"></div>
+    <button type="button" class="btn" data-aw-go>${gl('trophy')} Award ${aw.who ? `${aw.who.size} character${aw.who.size === 1 ? '' : 's'}` : 'everyone'}</button>`;
+  const jb = $('#jackpot');
+  if (jb.contains(document.activeElement) && document.activeElement.tagName === 'INPUT') return;
+  const why = jb.querySelector('#jp-why')?.value || '';
+  jb.innerHTML = `<div class="rc-step"><span>THE POSSE VOTES FOR</span>${alive.map((p) => `<button type="button" class="rc-chip${aw.jp === p.id ? ' on' : ''}" data-jp="${esc(p.id)}">${esc(p.name)}</button>`).join('') || '<span class="muted">No characters yet.</span>'}</div>
+    <div class="rc-step rc-note"><span>WHAT DID THEY DO?</span><input id="jp-why" maxlength="120" placeholder="e.g. roped the bear off the cliff" value="${esc(why)}"></div>
+    <button type="button" class="btn" data-jp-go${aw.jp ? '' : ' disabled'}>${gl('star')} Jackpot! +1 Prestige</button>`;
+}
+document.addEventListener('click', async (e) => {
+  const b = e.target.closest('#award button, #jackpot button');
+  if (!b) return;
+  const alive = combat.posse.filter((p) => !p.dead);
+  if (b.dataset.awAll !== undefined) { aw.who = null; renderRewards(); return; }
+  if (b.dataset.aw) {
+    aw.who ||= new Set();
+    if (aw.who.has(b.dataset.aw)) aw.who.delete(b.dataset.aw); else aw.who.add(b.dataset.aw);
+    if (!aw.who.size) aw.who = null;
+    renderRewards(); return;
+  }
+  if (b.dataset.jp) { aw.jp = aw.jp === b.dataset.jp ? '' : b.dataset.jp; renderRewards(); return; }
+  if (b.dataset.awGo !== undefined) {
+    const ids = aw.who ? [...aw.who] : alive.map((p) => p.id);
+    const r = await act({ action: 'award', ids, prestige: $('#aw-prestige').value, dollars: $('#aw-dollars').value, scrap: $('#aw-scrap').value, item: $('#aw-item').value, reason: $('#aw-reason').value });
+    if (r) { toast(`Awarded ${r.what} to ${r.count} character${r.count > 1 ? 's' : ''}.`); ['#aw-prestige', '#aw-dollars', '#aw-scrap', '#aw-item', '#aw-reason'].forEach((id) => { $(id).value = ''; }); renderRewards(); }
+    return;
+  }
+  if (b.dataset.jpGo !== undefined) {
+    const r = await act({ action: 'jackpot', id: aw.jp, reason: $('#jp-why').value });
+    if (r) { toast(`Jackpot for ${r.name}!`); aw.jp = ''; $('#jp-why').value = ''; renderRewards(); }
+  }
+});
+$('#town-all').addEventListener('click', async () => {
+  if (!await ask('Town Rest for the whole posse?')) return;
+  const r = await act({ action: 'townRestAll' });
+  if (r) toast(`${r.count} character${r.count === 1 ? '' : 's'} rested up in town.`);
+});
 
 // ---------- contents bar: sticks under the nav + Warden strip, highlights the band you're in ----------
 function tocTop() {

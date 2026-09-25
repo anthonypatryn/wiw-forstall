@@ -78,40 +78,7 @@ function setMe(id) {
   render();
 }
 
-// ---------- Warden: awards + Jackpot ----------
 let warden = false;
-function renderAward() {
-  const card = $('#award-card');
-  card.hidden = !warden;
-  if (!warden || card.contains(document.activeElement)) return;
-  const alive = data.posse.filter((p) => !p.dead);
-  const was = new Set([...card.querySelectorAll('[data-aw]')].filter((c) => !c.checked).map((c) => c.value));
-  $('#aw-who').innerHTML = alive.length ? `<label class="check aw-all"><input type="checkbox" id="aw-all" checked> Everyone</label>${alive.map((p) =>
-    `<label class="check"><input type="checkbox" data-aw value="${p.id}"${was.has(p.id) ? '' : ' checked'}> ${esc(p.name)}</label>`).join('')}` : '<span class="muted">No characters yet.</span>';
-  if ($('#aw-all')) $('#aw-all').checked = !was.size;
-  const jp = $('#jp-who').value;
-  $('#jp-who').innerHTML = `<option value="">— who? —</option>${alive.map((p) => `<option value="${p.id}">${esc(p.name)}</option>`).join('')}`;
-  $('#jp-who').value = alive.some((p) => p.id === jp) ? jp : '';
-}
-$('#aw-who').addEventListener('change', (e) => {
-  if (e.target.id === 'aw-all') $('#aw-who').querySelectorAll('[data-aw]').forEach((c) => { c.checked = e.target.checked; });
-  else $('#aw-all').checked = [...$('#aw-who').querySelectorAll('[data-aw]')].every((c) => c.checked);
-});
-$('#aw-go').addEventListener('click', async () => {
-  const ids = [...$('#aw-who').querySelectorAll('[data-aw]:checked')].map((c) => c.value);
-  const body = { action: 'award', ids, prestige: $('#aw-prestige').value, dollars: $('#aw-dollars').value, scrap: $('#aw-scrap').value, item: $('#aw-item').value, reason: $('#aw-reason').value };
-  const r = await act(body);
-  if (r) { toast(`Awarded ${r.what} to ${r.count} character${r.count > 1 ? 's' : ''}.`); ['#aw-prestige', '#aw-dollars', '#aw-scrap', '#aw-item', '#aw-reason'].forEach((id) => { $(id).value = ''; }); }
-});
-$('#town-all').addEventListener('click', async () => {
-  if (!await ask('Town Rest for the whole posse?')) return;
-  const r = await act({ action: 'townRestAll' });
-  if (r) toast(`${r.count} character${r.count === 1 ? '' : 's'} rested up in town.`);
-});
-$('#jp-go').addEventListener('click', async () => {
-  const r = await act({ action: 'jackpot', id: $('#jp-who').value, reason: $('#jp-why').value });
-  if (r) { toast(`Jackpot for ${r.name}!`); $('#jp-why').value = ''; }
-});
 function setWardenUI() {
   $('#warden-btn').innerHTML = `${gl('star')} ${warden ? 'Warden mode · lock' : 'Warden'}`;
   if (data) render();
@@ -180,7 +147,7 @@ function renderList() {
 
   roster.querySelectorAll('[data-del]').forEach((b) => b.addEventListener('click', () => deletePc(b.dataset.del)));
   roster.querySelectorAll('[data-me]').forEach((b) => b.addEventListener('click', () => setMe(b.dataset.me === myId() ? null : b.dataset.me)));
-  renderAward();
+  
 
   const pick = $('#trade-pick');
   if (!pick.dataset.ready) {

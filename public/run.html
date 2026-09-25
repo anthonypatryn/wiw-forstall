@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="/css/style.css?v=30">
   <link rel="stylesheet" href="/css/rollcall.css?v=1">
   <link rel="stylesheet" href="/css/desk.css?v=1">
-  <link rel="stylesheet" href="/css/run.css?v=3">
+  <link rel="stylesheet" href="/css/run.css?v=4">
 </head>
 <body>
   <header class="masthead">
@@ -36,7 +36,7 @@
 
     <div id="desk" hidden>
       <nav class="run-toc" id="run-toc" aria-label="Jump to">
-        <a href="#grp-now">Right Now</a><a href="#grp-rolls">Rolls</a><a href="#grp-table">At the Table</a><a href="#grp-notes">Notes &amp; Log</a><a href="#grp-tools">Tools</a>
+        <a href="#grp-now">Right Now</a><a href="#grp-rolls">Rolls</a><a href="#grp-table">At the Table</a><a href="#grp-rewards">Rewards</a><a href="#grp-notes">Notes &amp; Log</a><a href="#grp-tools">Tools</a>
       </nav>
       <section class="run-group" id="grp-now">
         <h2 class="run-group-h">Right Now</h2>
@@ -86,6 +86,27 @@
           <div class="head-row"><h2 class="section-title">Enemies</h2><a class="btn small secondary" href="/combat"><span data-gl="claws"></span> Add or loot</a></div>
           <div id="enemies"></div>
         </section>
+          </div>
+        </div>
+      </section>
+      <section class="run-group" id="grp-rewards">
+        <h2 class="run-group-h">Rewards</h2>
+        <div class="run-grid">
+          <div class="run-col">
+            <section class="card corner">
+              <div class="head-row"><h2 class="section-title">Award the Posse</h2><span class="muted">after a fight or expedition</span></div>
+              <div id="award"></div>
+            </section>
+          </div>
+          <div class="run-col">
+            <section class="card corner">
+              <div class="head-row"><h2 class="section-title">Jackpot</h2><span class="muted">play of the game, p. 54</span></div>
+              <div id="jackpot"></div>
+            </section>
+            <section class="card corner">
+              <div class="head-row"><h2 class="section-title">Town Rest</h2><button class="btn small" id="town-all" type="button"><span data-gl="fire"></span> Everyone rests</button></div>
+              <p class="muted sess-note">The posse beds down in town (p. 54): full Health, Statuses cleared, Supplies reset, Forstalls recharged, 2/day abilities back.</p>
+            </section>
           </div>
         </div>
       </section>
@@ -139,6 +160,6 @@
     </div>
   </main>
 
-  <script type="module" src="/js/run.js?v=7"></script>
+  <script type="module" src="/js/run.js?v=8"></script>
 </body>
 </html>
