@@ -1,0 +1,85 @@
+/* The saloon card table (loaded on demand). Felt and chips are art, so they keep their own colors. */
+.saloon-back { z-index: 225; align-items: start; overflow-y: auto; background: radial-gradient(ellipse at center, rgba(40,26,14,.98), rgba(10,8,6,.99)); }
+.sl-table { width: min(860px, 100%); margin: 8px auto 30px; color: var(--on-dark); display: grid; gap: 10px; }
+.sl-top { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; }
+.sl-top small { display: block; font: var(--fs-xs) var(--display); letter-spacing: var(--track-wide); color: var(--brass); }
+.sl-top b { font: var(--fs-xl)/1.1 var(--western); color: var(--on-dark-bright); }
+.sl-stakes { margin-left: auto; font: var(--fs-sm) var(--display); letter-spacing: var(--track); color: var(--on-dark-dim); }
+.sl-x { width: 36px; height: 36px; border-radius: 50%; border: 1.5px solid var(--on-dark-dim); background: transparent; color: var(--on-dark); font-size: 22px; line-height: 1; cursor: pointer; }
+
+.sl-felt {
+  position: relative; display: grid; gap: 14px; padding: 20px 18px 22px; border-radius: 120px / 60px;
+  border: 14px solid var(--felt-rail); box-shadow: inset 0 0 50px rgba(0,0,0,.55), 0 10px 30px rgba(0,0,0,.6);
+  background: radial-gradient(ellipse at center, #2f6b45 0%, var(--felt) 70%, #143521 100%);
+}
+.sl-seats { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+.sl-seat { min-width: 150px; padding: 8px 10px; border-radius: var(--radius); background: rgba(0,0,0,.28); border: 1.5px solid transparent; text-align: center; }
+.sl-seat.turn { border-color: var(--brass); box-shadow: 0 0 14px rgba(201,164,92,.55); }
+.sl-seat.folded { opacity: .45; }
+.sl-seat.won { border-color: #9fe0a8; box-shadow: 0 0 16px rgba(159,224,168,.5); }
+.sl-who b { display: block; font: var(--fs-md) var(--display); letter-spacing: var(--track); color: var(--on-dark-bright); }
+.sl-who small { font-size: var(--fs-xs); color: var(--felt-ink); }
+.sl-cards { display: flex; justify-content: center; gap: 0; margin: 6px 0 2px; }
+.sl-cards .lk-card { width: 34px; height: 48px; border-radius: 4px; margin-left: -10px; box-shadow: 0 2px 5px rgba(0,0,0,.5); }
+.sl-cards .lk-card:first-child { margin-left: 0; }
+.sl-cards .lk-card.lk-back { border-width: 2px; }
+.sl-cards .lk-card .pc-mid, .sl-cards .lk-card .pc-br { display: none; }
+.sl-cards .lk-card .pc-tl { font-size: 12px; top: 3px; left: 4px; }
+.sl-cards .lk-card.peeked { outline: 2px solid var(--brass); }
+.sl-out { font: italic var(--fs-sm) var(--body); color: var(--felt-ink); margin: 6px 0; }
+.sl-state { min-height: 1.2em; font: var(--fs-xs) var(--display); letter-spacing: var(--track); color: var(--felt-ink); }
+.sl-state i { font: italic var(--fs-sm) var(--body); letter-spacing: 0; color: #f0c46a; }
+
+.sl-pot { text-align: center; }
+.sl-pot b { display: block; font: var(--fs-xl) var(--display); letter-spacing: var(--track); color: #f0c46a; text-shadow: 0 2px 3px rgba(0,0,0,.6); }
+.chips { display: inline-flex; flex-wrap: wrap; justify-content: center; max-width: 180px; gap: 2px; margin-bottom: 4px; }
+.chips i { width: 18px; height: 18px; border-radius: 50%; background: radial-gradient(circle, #f4ead6 0 28%, #a4401f 30% 62%, #f4ead6 64% 70%, #a4401f 72%); box-shadow: 0 2px 2px rgba(0,0,0,.5); }
+.chips i:nth-child(3n) { background: radial-gradient(circle, #f4ead6 0 28%, #1f3f7a 30% 62%, #f4ead6 64% 70%, #1f3f7a 72%); }
+.chips i:nth-child(4n) { background: radial-gradient(circle, #f4ead6 0 28%, #222 30% 62%, #f4ead6 64% 70%, #222 72%); }
+.sl-result { margin: 6px auto 0; max-width: 34em; font: var(--fs-md) var(--body); color: var(--on-dark-bright); }
+
+.sl-mine { display: grid; justify-items: center; gap: 4px; }
+.sl-hand { display: flex; justify-content: center; }
+.sl-card { padding: 0; border: 0; background: none; margin-left: -18px; transition: transform .15s ease; cursor: default; }
+.sl-card:first-child { margin-left: 0; }
+.sl-hand .sl-card:nth-child(1) { transform: rotate(-8deg) translateY(6px); }
+.sl-hand .sl-card:nth-child(2) { transform: rotate(-4deg) translateY(2px); }
+.sl-hand .sl-card:nth-child(4) { transform: rotate(4deg) translateY(2px); }
+.sl-hand .sl-card:nth-child(5) { transform: rotate(8deg) translateY(6px); }
+.sl-hand.picking .sl-card { cursor: pointer; }
+.sl-hand .sl-card.out { transform: translateY(-22px) !important; }
+.sl-hand .sl-card.out .lk-card { opacity: .6; box-shadow: 0 0 0 3px var(--on-dark-warn), 0 4px 10px rgba(0,0,0,.5); }
+.sl-rank { font: var(--fs-md) var(--display); letter-spacing: var(--track); color: #f0c46a; }
+
+.sl-controls { display: grid; justify-items: center; gap: 8px; text-align: center; }
+.sl-controls .btn.secondary { color: var(--on-dark); border-color: var(--on-dark-dim); background: transparent; }
+.sl-controls .btn.skill { border-style: dashed; }
+.sl-moves { justify-content: center; flex-wrap: wrap; }
+.sl-tip { margin: 0; color: var(--on-dark); }
+.sl-tell { font-size: var(--fs-sm); color: var(--on-dark); }
+.sl-tell .gl { width: 1em; height: 1em; vertical-align: -2px; }
+.sl-tell .linkish { color: #f0c46a; }
+.sl-log { list-style: none; margin: 0; padding: 8px 12px; border-radius: var(--r-sm); background: rgba(255,255,255,.06); font-size: var(--fs-sm); color: var(--on-dark-dim); }
+
+/* "Back to the table" */
+.sl-chip { position: fixed; left: 16px; bottom: 16px; z-index: 70; padding: 10px 14px 8px; border-radius: var(--r-pill); border: 2px solid var(--felt-rail); background: var(--felt); color: var(--felt-ink); font: var(--fs-sm) var(--display); letter-spacing: var(--track); box-shadow: var(--shadow-pop); cursor: pointer; }
+.sl-chip .gl { width: 1em; height: 1em; vertical-align: -2px; }
+.sl-chip.turn { color: #fff; border-color: var(--brass); animation: sl-pulse 1.4s ease-in-out infinite; }
+@keyframes sl-pulse { 50% { box-shadow: 0 0 0 6px rgba(201,164,92,.35), var(--shadow-pop); } }
+
+/* the Warden's Saloon card */
+.sl-npc-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-bottom: 6px; }
+.sl-npc-row input:not([type=number]) { flex: 1 1 140px; min-width: 0; }
+.sl-npc-row select { flex: 0 1 auto; }
+.sl-desk-sum { margin: 0 0 8px; }
+.sl-desk-seats { display: grid; gap: 4px; margin-bottom: 10px; }
+
+@media (max-width: 600px) {
+  .sl-felt { border-radius: 40px; border-width: 10px; padding: 14px 8px 16px; }
+  .sl-seat { min-width: 0; flex: 1 1 42%; }
+  .sl-hand .lk-card { width: 62px; height: 88px; }
+  .sl-hand .lk-card .pc-mid { font-size: 30px; }
+  .sl-hand .lk-card .pc-tl, .sl-hand .lk-card .pc-br { font-size: 14px; }
+  .sl-card { margin-left: -12px; }
+  .sl-stakes { margin-left: 0; width: 100%; }
+}

@@ -116,3 +116,4 @@
 .sr-beat.used { opacity: .62; box-shadow: none; background: var(--wash); }
 .sr-tick { flex: none; width: 22px; height: 22px; display: grid; place-items: center; border: 1.5px solid var(--ink); border-radius: var(--r-sm); color: var(--success); font-weight: 700; background: var(--surface); }
 .sr-end { margin-top: var(--sp-3); }
+.saloon-card { margin-top: 14px; }

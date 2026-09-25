@@ -10,6 +10,7 @@ import { mountLockSend } from './lockpick.js';
 import { mountDesk, renderChecks, renderRecent } from './desk.js';
 import { openEndSession } from './endsession.js';
 import { mountSceneRun } from './scene-run.js';
+import { mountSaloonDesk, saloonStyles } from './saloon.js';
 
 mountTableLog();
 mountNav('/run');
@@ -184,11 +185,12 @@ window.addEventListener('scroll', () => {
 }, { passive: true });
 
 // ---------- boot ----------
-let sceneRun = null;
+let sceneRun = null, saloonDesk = null;
 function open() {
   $('#gate').hidden = true; $('#desk').hidden = false;
   tocTop(); setTimeout(tocTop, 800);
   mountDesk({ getCombat: () => combat, combatAct: (body) => act(body) });
+  if (!saloonDesk) { saloonStyles(); saloonDesk = mountSaloonDesk($('#saloon'), () => combat); }
   if (!sceneRun) sceneRun = mountSceneRun($('#scene-run'), () => combat, () => { poller?.now?.(); refreshNeeds(); });
   poller?.stop();
   poller = startPolling('warden', (d) => { combat = d; render(); refreshNeeds(); }, (ok) => { $('#conn').textContent = ok ? '● live' : 'reconnecting…'; }, '/api/combat');
