@@ -77,11 +77,11 @@
 
 .f-actions { display: flex; gap: 6px; flex-wrap: wrap; }
 .f-actions .btn { font-size: 14px; padding: 6px 9px 4px; box-shadow: none; }
-.bleed { background: #3a1210; color: #f4d9d2; border-radius: 3px; padding: 8px 10px; font-size: 14px; }
+.bleed { background: #3a1210; color: var(--danger-tint); border-radius: 3px; padding: 8px 10px; font-size: 14px; }
 .bleed b { font: 16px var(--display); letter-spacing: .1em; color: #ff8c73; }
 .bleed .skills { display: flex; gap: 4px; flex-wrap: wrap; margin: 6px 0; }
-.bleed .skills button { font: 13px var(--display); letter-spacing: .08em; padding: 4px 7px 2px; border-radius: 2px; border: 1px solid #f4d9d2; background: transparent; color: #f4d9d2; }
-.bleed .skills button.done { background: #f4d9d2; color: #3a1210; text-decoration: line-through; }
+.bleed .skills button { font: 13px var(--display); letter-spacing: .08em; padding: 4px 7px 2px; border-radius: 2px; border: 1px solid var(--danger-tint); background: transparent; color: var(--danger-tint); }
+.bleed .skills button.done { background: var(--danger-tint); color: #3a1210; text-decoration: line-through; }
 .ace-ready { background: linear-gradient(90deg, #f0d48a, #c9a45c); border-radius: 3px; padding: 8px 10px; font-size: 14px; }
 .ace-ready b { font: 16px var(--display); letter-spacing: .08em; }
 
@@ -145,7 +145,7 @@ details.more p { font-size: 14px; margin: 6px 0; }
 .duel-result { display: grid; gap: 6px; margin: 8px 0; }
 .duel-result .dr { padding: 8px 10px; border-radius: 4px; border: 1.5px solid var(--ink); background: var(--surface); }
 .duel-result .dr.minor { border-color: #b7791f; }
-.duel-result .dr.severe, .duel-result .dr.dead { border-color: var(--danger); background: #fbe9e4; }
+.duel-result .dr.severe, .duel-result .dr.dead { border-color: var(--danger); background: var(--danger-tint); }
 .duel-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 
 .add-npc select#add-npc { flex: 2; min-width: 0; }

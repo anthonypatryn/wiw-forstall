@@ -251,6 +251,9 @@ export function mountNav(active) {
     <div class="needs-list" hidden></div>
     <div class="nav-sheet" hidden><nav aria-label="All pages">${all.map(([h, l]) => (h && h.startsWith('<b>') ? `<div class="nav-sheet-h">${h}</div>` : link(h, esc(l)))).join('')}${link('/howto', 'How to Play')}${on ? '<div class="nav-sheet-h">Warden</div><a href="/run#grp-tools">Backup &amp; homebrew</a><button type="button" data-player>Switch to player view</button>' : ''}</nav></div>`;
   wireNav(el, on);
+  // other sticky bars (sheet toolbar, contents bars) sit just under the nav
+  const navH = () => document.documentElement.style.setProperty('--nav-h', `${el.offsetHeight}px`);
+  navH(); if (!window.__navH) { window.__navH = true; window.addEventListener('resize', navH); }
   // static pages mark icons as <span data-gl="name"> — draw them
   document.querySelectorAll('[data-gl]').forEach((s) => { s.outerHTML = gl(s.dataset.gl); });
 }
