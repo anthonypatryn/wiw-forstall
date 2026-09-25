@@ -1,5 +1,5 @@
 // The shared Table Log: every roll from any page (combat, sheets, Forstall scans) in one place.
-import { esc, api, startPolling, staticDice, timeAgo, injectDefs, savedPin, toast } from './common.js';
+import { esc, api, startPolling, staticDice, timeAgo, injectDefs, savedPin, toast, store, rollPopup, animateRoll } from './common.js';
 
 export function logHTML(log) {
   if (!log.length) return '<p class="empty-note">Rolls and big moments show up here for everyone.</p>';
@@ -53,6 +53,7 @@ export function mountTableLog() {
   document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !panel.hidden) setOpen(false); });
 
   startPolling('log', (d) => {
+    renderHud(d.hud);
     latest = d.log;
     const topId = latest[0]?.id ?? null;
     if (seenTop !== null && topId !== seenTop) {
@@ -63,4 +64,92 @@ export function mountTableLog() {
     seenTop = topId;
     if (!panel.hidden) renderLogInto(panel.querySelector('.log'), latest);
   }, null, '/api/combat');
+}
+
+// ---------- HUD on every page: turn order strip, start-of-combat rolls, the Warden's Skill checks ----------
+const me = () => store.get('wiw.me', null);
+let hudEls = null;
+function hudMount() {
+  if (hudEls) return hudEls;
+  const strip = document.createElement('div');
+  strip.className = 'hud-strip'; strip.hidden = true;
+  const pop = document.createElement('div');
+  pop.className = 'hud-pop-back'; pop.hidden = true;
+  const ck = document.createElement('div');
+  ck.className = 'hud-check'; ck.hidden = true;
+  document.body.append(strip, pop, ck);
+  hudEls = { strip, pop, ck };
+  return hudEls;
+}
+const seen = (k) => { try { return sessionStorage.getItem(k); } catch { return null; } };
+const setSeen = (k, v) => { try { sessionStorage.setItem(k, v); } catch {} };
+let lastHud = null;
+export function renderHud(h) {
+  if (!h) return;
+  lastHud = h;
+  const { strip, pop, ck } = hudMount();
+  // 1) turn order strip (collapsible; remembered per device)
+  if (!h.active || !h.order.length) strip.hidden = true;
+  else {
+    strip.hidden = false;
+    const closed = store.get('wiw.hudClosed', false);
+    const i = h.order.findIndex((o) => o.key === h.current), cur = h.order[i];
+    const rest = [...h.order.slice(i + 1), ...h.order.slice(0, Math.max(0, i))];
+    strip.classList.toggle('closed', closed);
+    strip.innerHTML = closed
+      ? `<button type="button" class="hud-toggle" data-hud-open title="Show turn order">⚔ ${esc(cur?.name || '—')}’s turn</button>`
+      : `<span class="hud-r">R${h.round || 1}</span><b class="hud-now${cur && cur.key === me() ? ' mine' : ''}">⚔ ${esc(cur?.name || '—')}</b>${rest.length ? '<i>›</i>' : ''}${rest.map((o) => `<span class="hud-next${o.key === me() ? ' mine' : ''}">${esc(o.name)}</span>`).join('<i>›</i>')}
+        <button type="button" class="hud-toggle" data-hud-close title="Hide" aria-label="Hide turn order">–</button>`;
+    strip.querySelector('[data-hud-open]')?.addEventListener('click', () => { store.set('wiw.hudClosed', false); renderHud(lastHud); });
+    strip.querySelector('[data-hud-close]')?.addEventListener('click', () => { store.set('wiw.hudClosed', true); renderHud(lastHud); });
+  }
+  // 2) the turn-order rolls when combat starts (once per device, only while it's fresh)
+  if (h.start && seen('wiw.seenStart') !== String(h.start.at)) {
+    setSeen('wiw.seenStart', String(h.start.at));
+    if (Date.now() - h.start.at < 5 * 60 * 1000) {
+      pop.hidden = false;
+      pop.innerHTML = `<div class="hud-pop" role="dialog" aria-label="Turn order"><button type="button" class="hud-x" aria-label="Close">×</button>
+        <small>COMBAT BEGINS — ROUND 1</small><h2>Turn order</h2><p class="muted">Everyone rolled Finesse; most Hits goes first (p. 40).</p>
+        <ol>${h.start.rolls.map((r, k) => `<li class="${r.surprise ? 'surprise' : ''}"><span class="n">${k + 1}</span><div><b>${esc(r.name)}</b>${r.by ? `<small>rolled by ${esc(r.by)}</small>` : ''}${r.surprise ? '<small class="sup">SURPRISE — goes first</small>' : ''}</div>
+          <div class="tray hud-tray" data-k="${k}"></div><span class="h">${r.hits ?? '—'}<small>hit${r.hits === 1 ? '' : 's'}</small></span></li>`).join('')}</ol></div>`;
+      h.start.rolls.forEach((r, k) => { const t = pop.querySelector(`[data-k="${k}"]`); if (t && r.dice?.length) animateRoll(t, r.dice); });
+      const close = () => { pop.hidden = true; };
+      pop.querySelector('.hud-x').addEventListener('click', close);
+      pop.addEventListener('click', (e) => { if (e.target === pop) close(); });
+      setTimeout(close, 25000);
+    }
+  }
+  // 3) a Skill check / Challenge for this device's character — on any page
+  const mine = me();
+  const onMySheet = location.pathname.startsWith('/posse') && location.hash.slice(1).split('/')[0] === mine;
+  const open = mine && !onMySheet ? (h.checks || []).find((c) => c.who.some((w) => w.id === mine && !w.rolled) && seen(`wiw.ck.${c.id}.${c.round}`) !== 'later') : null;
+  if (!open) { ck.hidden = true; ck.dataset.id = ''; return; }
+  if (ck.dataset.id === `${open.id}.${open.round}` && !ck.hidden) return;
+  ck.dataset.id = `${open.id}.${open.round}`;
+  const who = open.who.find((w) => w.id === mine);
+  const others = open.who.filter((w) => w.id !== mine).map((w) => w.name).concat(open.vs ? [open.vs] : []);
+  ck.hidden = false;
+  try { navigator.vibrate?.(150); } catch {}
+  ck.innerHTML = `<div><small>${open.kind === 'challenge' ? `CHALLENGE${open.round > 1 ? ` · ROUND ${open.round} (TIE)` : ''} — MOST HITS WINS` : 'THE WARDEN ASKS YOU TO ROLL'}</small>
+    <b>${esc(who.name)}: ${esc(open.skill)}</b> ${open.kind === 'challenge' ? `vs ${esc(others.join(' & '))}` : `· ${esc(open.diff)} — ${open.target} Hit${open.target === 1 ? '' : 's'}`}${open.note ? ` · <i>${esc(open.note)}</i>` : ''}</div>
+    <div class="hud-ck-btns"><button type="button" class="btn" data-ck-go>🎲 Roll ${esc(open.skill)}</button><button type="button" class="btn small secondary" data-ck-later>Later</button></div>`;
+  ck.querySelector('[data-ck-later]').addEventListener('click', () => { setSeen(`wiw.ck.${open.id}.${open.round}`, 'later'); ck.hidden = true; });
+  ck.querySelector('[data-ck-go]').addEventListener('click', async (e) => {
+    e.target.disabled = true;
+    try {
+      const res = await api('POST', { action: 'pc', id: mine, op: 'checkRoll', check: open.id }, '', '/api/combat');
+      const r = res.result;
+      ck.hidden = true;
+      if (r?.dice) {
+        await rollPopup(r, `${who.name} · ${r.label}`);
+        if (r.outcome) toast(r.outcome.ok ? `✅ Success — ${r.outcome.total}/${r.target} Hits!` : `❌ Short — ${r.outcome.total}/${r.target} Hits.`, !r.outcome.ok);
+        else toast(`${r.hits} Hit${r.hits === 1 ? '' : 's'} — see the Table Log for who won.`);
+      }
+    } catch (err) { toast(err.message, true); e.target.disabled = false; }
+  });
+}
+// the Combat page has its own log card, so it mounts only the HUD
+export function mountHud() {
+  injectDefs();
+  startPolling('log', (d) => renderHud(d.hud), null, '/api/combat');
 }

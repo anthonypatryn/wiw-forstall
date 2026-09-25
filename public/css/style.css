@@ -473,3 +473,39 @@ button { cursor: pointer; }
 .who-scan select { max-width: 100%; padding: 8px 10px; border: 1.5px solid var(--ink); border-radius: var(--radius); background: #fffdf7; font: 16px var(--body); letter-spacing: 0; color: var(--ink); }
 
 .log-drawer-head .log-clear { margin-left: auto; margin-right: 6px; padding: 3px 9px 1px; border: 1px solid currentColor; border-radius: 3px; background: transparent; color: inherit; font: 12px var(--display); letter-spacing: .1em; cursor: pointer; }
+
+/* ---------- HUD: turn order strip, start-of-combat rolls, Skill check pop-up (every page) ---------- */
+.hud-strip { position: fixed; left: 12px; bottom: 14px; z-index: 55; display: flex; align-items: center; gap: 6px; max-width: calc(100vw - 200px); overflow-x: auto;
+  padding: 7px 10px; border-radius: 22px; background: var(--ink); color: var(--paper); box-shadow: 0 6px 18px rgba(0,0,0,.35); font: 14px var(--display); letter-spacing: .06em; white-space: nowrap; scrollbar-width: none; }
+.hud-strip.closed { padding: 0; background: none; box-shadow: none; }
+.hud-strip .hud-r { font-size: 12px; opacity: .7; }
+.hud-strip .hud-now { color: #f0c46a; font-weight: 400; font-size: 16px; }
+.hud-strip .hud-next { opacity: .8; }
+.hud-strip .mine { text-decoration: underline; text-underline-offset: 3px; }
+.hud-strip i { opacity: .5; font-style: normal; }
+.hud-toggle { border: 0; border-radius: 16px; background: rgba(255,255,255,.15); color: inherit; font: inherit; padding: 3px 9px; cursor: pointer; }
+.hud-strip.closed .hud-toggle { background: var(--ink); color: #f0c46a; padding: 8px 14px; border-radius: 22px; box-shadow: 0 6px 18px rgba(0,0,0,.35); }
+.hud-pop-back { position: fixed; inset: 0; z-index: 70; display: grid; place-items: center; background: rgba(0,0,0,.45); padding: 16px; }
+.hud-pop { position: relative; width: min(560px, 100%); max-height: 88vh; overflow-y: auto; background: var(--paper); border: 2px solid var(--ink); border-radius: 10px; padding: 16px 18px; box-shadow: 0 16px 40px rgba(0,0,0,.5); }
+.hud-pop small { font: 12px var(--display); letter-spacing: .14em; color: var(--rust); }
+.hud-pop h2 { margin: 2px 0 4px; font: 30px var(--display); letter-spacing: .06em; font-weight: 400; }
+.hud-pop ol { list-style: none; margin: 10px 0 0; padding: 0; }
+.hud-pop li { display: grid; grid-template-columns: 30px 1fr auto auto; align-items: center; gap: 8px; padding: 7px 0; border-top: 1px dotted rgba(34,31,31,.3); }
+.hud-pop li .n { width: 28px; height: 28px; border-radius: 50%; background: var(--ink); color: var(--paper); display: grid; place-items: center; font: 15px var(--display); }
+.hud-pop li b { font: 18px var(--display); letter-spacing: .05em; font-weight: 400; display: block; }
+.hud-pop li small { display: block; font: italic 12px var(--body); letter-spacing: 0; color: var(--ink-soft); }
+.hud-pop li .sup { color: #3d6b3a; font-style: normal; font-family: var(--display); letter-spacing: .1em; }
+.hud-pop li .h { font: 24px var(--display); color: var(--rust); text-align: right; line-height: 1; }
+.hud-pop li .h small { font-size: 11px; font-style: normal; font-family: var(--display); letter-spacing: .1em; }
+.hud-pop .hud-tray { min-height: 0; padding: 0; background: none; border: 0; display: flex; gap: 2px; flex-wrap: wrap; justify-content: flex-end; }
+.hud-pop .hud-tray .die { width: 34px; }
+.hud-pop .hud-tray .rr { display: none; }
+.hud-x { position: absolute; top: 8px; right: 10px; width: 32px; height: 32px; border: 1px solid var(--ink); border-radius: 50%; background: transparent; font-size: 20px; cursor: pointer; }
+.hud-check { position: fixed; left: 50%; top: 84px; transform: translateX(-50%); z-index: 65; width: min(560px, calc(100vw - 24px)); display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px;
+  padding: 12px 14px; border: 2px solid var(--rust); border-radius: 8px; background: var(--paper); box-shadow: 0 12px 30px rgba(0,0,0,.4); font-size: 15px; animation: hudIn .25s ease; }
+.hud-check small { display: block; font: 11px var(--display); letter-spacing: .12em; color: var(--rust); }
+.hud-check b { font: 19px var(--display); letter-spacing: .05em; font-weight: 400; }
+.hud-ck-btns { display: flex; gap: 8px; align-items: center; }
+@keyframes hudIn { from { transform: translate(-50%, -12px); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .hud-check { animation: none; } }
+@media (max-width: 560px) { .hud-strip { max-width: calc(100vw - 160px); bottom: 12px; } .hud-pop li { grid-template-columns: 26px 1fr auto; } .hud-pop .hud-tray { grid-column: 2 / -1; justify-content: flex-start; } }

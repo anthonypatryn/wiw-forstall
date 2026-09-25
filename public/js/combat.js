@@ -3,7 +3,8 @@ import {
   mountNav, tryWarden, forgetWarden, savedPin, poolHTML, readPool, rollPopup, bleedPanel,
 } from './common.js';
 import { NPC } from './npc-data.js';
-import { renderLogInto } from './tablelog.js';
+import { renderLogInto, mountHud } from './tablelog.js';
+mountHud();
 
 const EP = '/api/combat';
 injectDefs();
