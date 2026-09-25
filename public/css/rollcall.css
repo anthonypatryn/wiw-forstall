@@ -1,0 +1,18 @@
+/* Call for a roll: tap who → how hard → Skill */
+.rc-step { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 10px; }
+.rc-step > span { font: 13px var(--display); letter-spacing: .12em; opacity: .7; width: 100%; }
+.rc-chip { display: inline-flex; flex-direction: column; align-items: center; padding: 6px 12px 4px; border: 1.5px solid rgba(0,0,0,.25); border-radius: 18px; background: #fffdf7; cursor: pointer; font: 16px/1.1 var(--display); letter-spacing: .04em; color: var(--ink); }
+.rc-chip small { font: 11px var(--body); letter-spacing: 0; opacity: .7; }
+.rc-chip.on { background: var(--ink); color: #fff; border-color: var(--ink); }
+.rc-chip.on small { opacity: .85; }
+.rc-step select, .rc-note input { flex: 1 1 220px; min-width: 0; padding: 7px 9px; border: 1px solid rgba(0,0,0,.3); border-radius: 4px; background: #fffdf7; font: 15px var(--body); }
+.rc-skills { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 4px; }
+@media (max-width: 560px) { .rc-skills { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+.rc-skill { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 6px 8px; border: 2px solid var(--rust); border-radius: var(--radius); background: rgba(164,64,31,.08); color: var(--ink); cursor: pointer; }
+.rc-skill:hover { background: var(--rust); color: #fff; }
+.rc-skill:disabled { opacity: .5; }
+.rc-skill .gl { width: 22px; height: 22px; color: var(--rust); }
+.rc-skill:hover .gl { color: #fff; }
+.rc-skill b { font: 20px/1 var(--display); letter-spacing: .06em; font-weight: 400; }
+.rc-skill small { font-size: 11px; opacity: .75; text-align: center; }
+.rc-tip { font-size: 13px; margin: 8px 0 0; }

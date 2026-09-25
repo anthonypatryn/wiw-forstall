@@ -2,11 +2,13 @@
 import { $, esc, api, startPolling, toast, mountNav, tryWarden, savedPin, wardenModal, ask, tell, pickFighters } from './common.js';
 import { gl } from './glyphs.js';
 import { mountTableLog } from './tablelog.js';
+import { mountRollCaller } from './rollcall.js';
 
 mountTableLog();
 mountNav('/run');
 
 let combat = null, poller = null, needsTimer = null;
+const caller = mountRollCaller($('#rollcall'), () => combat, () => { poller?.now?.(); refreshNeeds(); });
 
 async function act(body, msg) {
   try {
@@ -99,7 +101,7 @@ function renderPosse() {
 }
 function render() {
   if (!combat) return;
-  renderFight(); renderEnemies(); renderPosse();
+  renderFight(); renderEnemies(); renderPosse(); caller.draw();
 }
 
 // ---------- boot ----------

@@ -10,6 +10,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Rye&family=Special+Elite&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css?v=29">
+  <link rel="stylesheet" href="/css/rollcall.css?v=1">
   <link rel="stylesheet" href="/css/run.css?v=2">
 </head>
 <body>
@@ -37,6 +38,10 @@
         <section class="card corner">
           <div class="head-row"><h2 class="section-title">Needs You</h2><span class="muted" id="conn"></span></div>
           <div id="needs"></div>
+        </section>
+        <section class="card corner">
+          <div class="head-row"><h2 class="section-title">Call for a Roll</h2><a class="btn small secondary" href="/session"><span data-gl="die"></span> Open rolls</a></div>
+          <div id="rollcall"></div>
         </section>
         <section class="card corner">
           <div class="head-row"><h2 class="section-title">The Fight</h2><a class="btn small secondary" href="/battle"><span data-gl="pin"></span> Battle Map</a></div>
@@ -67,6 +72,6 @@
     </div>
   </main>
 
-  <script type="module" src="/js/run.js?v=3"></script>
+  <script type="module" src="/js/run.js?v=4"></script>
 </body>
 </html>
