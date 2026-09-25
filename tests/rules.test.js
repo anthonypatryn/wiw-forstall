@@ -867,3 +867,14 @@ test('Drinking contest: Nerve vs a rising number, Grit adds dice, a miss is Drun
   assert.equal(saloonView(st, { pc: 'a' }).table.drink.firstOut, 'pc:a');
 });
 function cents(n) { return Math.round(n * 100) / 100; }
+
+test('Start combat with a surprise: the side that springs it takes the first turn (p. 40)', () => {
+  const s = freshCombat();
+  const a = publicAction(s, { action: 'addPc', name: 'Lila', trade: 'Gunslinger' }, { warden: false });
+  publicAction(s, { action: 'addEnemy', profile: 'Prairie Wolf', count: 1 }, { warden: true });
+  publicAction(s, { action: 'start', posse: [a.id], enemies: s.enemies.map((e) => e.id), surprise: 'enemies' }, { warden: true });
+  assert.equal(s.combat.slots[0], 'enemies');
+  publicAction(s, { action: 'end' }, { warden: true });
+  publicAction(s, { action: 'start', posse: [a.id], enemies: s.enemies.map((e) => e.id), surprise: 'posse' }, { warden: true });
+  assert.equal(s.combat.slots[0], a.id);
+});

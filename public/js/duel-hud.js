@@ -14,7 +14,6 @@ const post = (body) => api('POST', body, '', '/api/combat');
 let busy = false, box = null, sig = '', shownAt = null, seenRounds = 0;
 
 export function duelHud(h) {
-  if (location.pathname === '/combat') return; // Combat Control has its own Duel card
   const warden = !!savedPin();
   if (!busy) {
     if (warden) {

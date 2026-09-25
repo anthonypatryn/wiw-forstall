@@ -406,7 +406,7 @@ function renderBook() {
       const name = nameOf();
       try {
         await api('POST', { action: 'addEnemy', profile: `npc:${generic || name}`, name: generic ? name : undefined }, '', '/api/combat');
-        toast(`${name} joins the fight — see Combat Control.`);
+        toast(`${name} joins the fight — they’re on the Battle Map.`);
       } catch (err) { toast(err.message, true); }
     });
   });

@@ -583,6 +583,7 @@ function renderWarden() {
   if (document.activeElement?.id !== 'g-ppi') $('#g-ppi').value = data.grid.ppi;
   if (document.activeElement?.id !== 'g-op') $('#g-op').value = data.grid.opacity;
   $('#g-show').checked = data.grid.show;
+  $('#show-hp').checked = !!combat?.settings?.showEnemyHealth;
   renderFsWarden();
 }
 
@@ -649,6 +650,8 @@ document.querySelectorAll('[data-n]').forEach((b) => b.addEventListener('click',
   const [x, y] = b.dataset.n.split(',').map(Number);
   act({ action: 'grid', dx: data.grid.dx + x, dy: data.grid.dy + y });
 }));
+$('#show-hp').addEventListener('change', (e) => combatAct({ action: 'setting', key: 'showEnemyHealth', value: e.target.checked }));
+$('#clear-enemies').addEventListener('click', async () => { if (await ask('Remove every enemy from the fight?', { ok: 'Remove them all' })) { await combatAct({ action: 'clearEnemies' }); poller?.now?.(); } });
 $('#sync').addEventListener('click', () => act({ action: 'syncCombat', hidden: $('#sync-hidden').checked }, 'Tokens added.'));
 $('#npc-add').addEventListener('submit', async (e) => {
   e.preventDefault();

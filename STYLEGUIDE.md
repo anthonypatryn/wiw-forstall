@@ -94,10 +94,10 @@ Small helpers: `.btn-row` (a row of buttons), `.fine` (12px note), `.small-text`
 ## Navigation
 - One site nav (`mountNav` in `common.js`), grouped by how often a page is used.
   - **Player:** Posse · Battle Map · Forstall Scanner · World ▾ (Map, NPCs) · Store · ? (How to Play)
-  - **Warden:** ★ Run the Game · Posse · Fight ▾ (Battle Map, Combat Control) · Forstall Scanner · World ▾ · Store · ?
+  - **Warden:** ★ Run the Game · Posse · Fight ▾ (Battle Map) · Forstall Scanner · World ▾ · Store · ?
 - Dropdowns open on **tap** (never hover-only); the group label is highlighted when you're on one of its pages.
 - Phones show the most-used links plus **Menu** (a full-screen grouped list).
-- Warden mode lives in the nav: red underline + star, a **Needs you (n)** badge and a **Warden ▾** menu (switch to player view, Combat Control, backup).
+- Warden mode lives in the nav: red underline + star, a **Needs you (n)** badge and a **Warden ▾** menu (switch to player view, Run the Game, Battle Map, backup).
 - **Adding a page:** decide who uses it and how often. Frequent → top level. Reference/lore → World. Fighting → Fight (Warden) or the Battle Map. Warden-only tools → Warden ▾ or Run the Game.
 
 ## Building something new — checklist

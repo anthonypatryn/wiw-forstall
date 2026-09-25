@@ -6,6 +6,11 @@
       "source": "/session",
       "destination": "/run",
       "permanent": false
+    },
+    {
+      "source": "/combat",
+      "destination": "/battle",
+      "permanent": false
     }
   ],
   "functions": {

@@ -11,6 +11,7 @@ import { mountDesk, renderChecks, renderRecent } from './desk.js';
 import { openEndSession } from './endsession.js';
 import { mountSceneRun } from './scene-run.js';
 import { mountSaloonDesk, saloonStyles } from './saloon.js';
+import { mountDuelStart } from './duel-start.js';
 
 mountTableLog();
 mountNav('/run');
@@ -58,7 +59,7 @@ function renderFight() {
   const box = $('#fight');
   if (!c.active) {
     const n = combat.enemies.filter((e) => !e.defeated).length, pcs = combat.posse.filter((p) => !p.dead).length;
-    box.innerHTML = `<p class="muted">No fight running · ${pcs} in the posse · ${n} enem${n === 1 ? 'y' : 'ies'} ready${n ? '' : ' (add them in Combat Control)'}.</p>
+    box.innerHTML = `<p class="muted">No fight running · ${pcs} in the posse · ${n} enem${n === 1 ? 'y' : 'ies'} ready${n ? '' : ' (add them on the Battle Mapat Control)'}.</p>
       <button type="button" class="btn" data-start${pcs + n ? '' : ' disabled'}>${gl('revolver')} Start combat</button>`;
     box.querySelector('[data-start]')?.addEventListener('click', async () => { const who = await pickFighters(combat); if (who) act({ action: 'start', ...who }, 'Combat begins.'); });
     return;
@@ -74,7 +75,7 @@ function renderFight() {
   const bench = [...combat.posse.filter((p) => !p.dead && party && !party.includes(p.id)).map((p) => [p.id, p.name]),
     ...combat.enemies.filter((e) => !e.defeated && e.out).map((e) => [e.id, `${e.name} (enemy)`])];
   box.insertAdjacentHTML('beforeend', `<div class="run-join">${bench.length ? `<select data-join-who aria-label="Who joins">${bench.map(([id, n]) => `<option value="${esc(id)}">${esc(n)}</option>`).join('')}</select><button type="button" class="btn small" data-join>+ Join the fight</button>` : '<span class="muted">Everyone’s in.</span>'}
-    <a class="btn small secondary" href="/combat">+ New enemy</a><a class="btn small secondary" href="/posse">+ New character</a></div>`);
+    <a class="btn small secondary" href="/battle">+ New enemy</a><a class="btn small secondary" href="/posse">+ New character</a></div>`);
   box.querySelector('[data-join]')?.addEventListener('click', () => { const id = box.querySelector('[data-join-who]').value; act({ action: 'join', id }, 'They’re in — turn order updated.'); });
   box.querySelector('[data-next]').addEventListener('click', () => act({ action: 'next' }));
   box.querySelector('[data-end]').addEventListener('click', async () => { if (await ask('End combat? Grit refills and Dodge/Aim clear. Health and Statuses stay as they are.')) act({ action: 'end' }, 'Combat is over.'); });
@@ -87,8 +88,8 @@ function renderEnemies() {
       <div class="item-nums">${hpBar(e.health, e.maxHealth)}<span class="hp-num">${e.health}/${e.maxHealth}</span>
         <button type="button" class="pm-btn" data-e="${esc(e.id)}" data-d="-1" aria-label="${esc(e.name)} loses 1 Health">−</button><button type="button" class="pm-btn" data-e="${esc(e.id)}" data-d="1" aria-label="${esc(e.name)} gains 1 Health">+</button>
         <span class="stat" title="Grit">${e.grit ?? '—'} Grit</span></div></div>`).join('')
-    + (gone ? `<p class="muted run-gone">${gone} down or fled — loot them in <a href="/combat">Combat Control</a>.</p>` : '')
-    : `<p class="muted">No enemies standing.${gone ? ` ${gone} down or fled — <a href="/combat">loot them</a>.` : ' Add some in <a href="/combat">Combat Control</a>.'}</p>`;
+    + (gone ? `<p class="muted run-gone">${gone} down or fled — loot them on the <a href="/battle">Battle Map</a> (tap the token).</p>` : '')
+    : `<p class="muted">No enemies standing.${gone ? ` ${gone} down or fled — <a href="/battle">loot them</a>.` : ' Add some on the <a href="/battle">Bambat Control</a>.'}</p>`;
   $('#enemies').querySelectorAll('[data-leave]').forEach((b) => b.addEventListener('click', () => act({ action: 'leave', id: b.dataset.leave })));
   $('#enemies').querySelectorAll('[data-e]').forEach((b) => b.addEventListener('click', () => act({ action: 'enemy', id: b.dataset.e, op: 'health', delta: Number(b.dataset.d) })));
 }
@@ -190,7 +191,7 @@ function open() {
   $('#gate').hidden = true; $('#desk').hidden = false;
   tocTop(); setTimeout(tocTop, 800);
   mountDesk({ getCombat: () => combat, combatAct: (body) => act(body) });
-  if (!saloonDesk) { saloonStyles(); saloonDesk = mountSaloonDesk($('#saloon'), () => combat); }
+  if (!saloonDesk) { saloonStyles(); saloonDesk = mountSaloonDesk($('#saloon'), () => combat); mountDuelStart($('#duel-start'), () => combat); }
   if (!sceneRun) sceneRun = mountSceneRun($('#scene-run'), () => combat, () => { poller?.now?.(); refreshNeeds(); });
   poller?.stop();
   poller = startPolling('warden', (d) => { combat = d; render(); refreshNeeds(); }, (ok) => { $('#conn').textContent = ok ? '● live' : 'reconnecting…'; }, '/api/combat');

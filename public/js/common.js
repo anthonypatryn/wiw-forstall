@@ -220,7 +220,7 @@ const NAV_WARDEN = [
   { href: '/run', label: 'Run the Game', icon: 'star', phone: true },
   { href: '/prep', label: 'Prep' },
   { href: '/posse', label: 'Posse', phone: true },
-  { label: 'Fight', items: [['/battle', 'Battle Map'], ['/combat', 'Combat Control']] },
+  { label: 'Fight', items: [['/battle', 'Battle Map']] },
   { href: '/warden', label: 'Forstall Scanner' },
   WORLD,
   { href: '/store', label: 'Store' },
@@ -250,7 +250,7 @@ export function mountNav(active) {
         ${link('/howto', '?', ' class="nav-help" title="How to Play" aria-label="How to Play"')}
         ${on ? `<button type="button" class="nav-needs" aria-expanded="false" title="What's waiting on you"><span class="nn">Needs you</span> <b>·</b></button>
           <div class="nav-group nav-warden"><button type="button" class="nav-drop" aria-expanded="false">${gl('star')} Warden <i>▾</i></button>
-            <div class="nav-menu right" hidden><a href="/run">Run the Game</a><a href="/combat">Combat Control</a><a href="/run#grp-tools">Backup &amp; homebrew</a><button type="button" data-player>Switch to player view</button></div></div>`
+            <div class="nav-menu right" hidden><a href="/run">Run the Game</a><a href="/battle">Battle Map</a><a href="/run#grp-tools">Backup &amp; homebrew</a><button type="button" data-player>Switch to player view</button></div></div>`
           : `<button type="button" class="nav-unlock" title="Warden PIN">${gl('star')} <span>Warden</span></button>`}
         <button type="button" class="nav-menu-btn" aria-expanded="false">Menu</button>
       </div>
@@ -425,7 +425,9 @@ export function pickFighters(combat) {
       <div class="fight-step"><div class="fight-h">THE POSSE <button type="button" data-all="pc">all</button><button type="button" data-none="pc">none</button></div>
         <div class="fight-chips">${posse.map((p) => chip(p, 'pc', p.trade)).join('') || '<span class="muted">No characters.</span>'}</div></div>
       <div class="fight-step"><div class="fight-h">ENEMIES <button type="button" data-all="en">all</button><button type="button" data-none="en">none</button></div>
-        <div class="fight-chips">${foes.map((e) => chip(e, 'en', e.size)).join('') || '<span class="muted">No enemies yet — add them in Combat Control.</span>'}</div></div>
+        <div class="fight-chips">${foes.map((e) => chip(e, 'en', e.size)).join('') || '<span class="muted">No enemies yet — add them from the Battle Map’s Add enemies.</span>'}</div></div>
+      <div class="fight-step"><div class="fight-h">SURPRISE? <small class="muted">p. 40 — whoever springs it takes the first turn</small></div>
+        <div class="fight-chips">${[['', 'Nobody'], ['posse', 'The posse'], ['enemies', 'The enemies']].map(([k, l]) => `<button type="button" class="chip-btn${k ? '' : ' on'}" data-surprise="${k}">${l}</button>`).join('')}</div></div>
       <div class="ask-btns"><button type="button" class="btn secondary" data-no>Cancel</button><button type="button" class="btn" data-go>Start combat</button></div></div>`;
     document.body.append(back);
     const close = (v) => { back.remove(); resolve(v); };
@@ -433,12 +435,14 @@ export function pickFighters(combat) {
     back.addEventListener('click', (e) => { if (e.target === back) close(null); });
     back.querySelector('[data-no]').addEventListener('click', () => close(null));
     back.querySelectorAll('.fight-chip').forEach((c) => c.addEventListener('click', () => set(c, !c.classList.contains('on'))));
+    let surprise = '';
+    back.querySelectorAll('[data-surprise]').forEach((b) => b.addEventListener('click', () => { surprise = b.dataset.surprise; back.querySelectorAll('[data-surprise]').forEach((x) => x.classList.toggle('on', x === b)); }));
     back.querySelectorAll('[data-all], [data-none]').forEach((b) => b.addEventListener('click', () => {
       back.querySelectorAll(`.fight-chip[data-${b.dataset.all || b.dataset.none}]`).forEach((c) => set(c, !!b.dataset.all));
     }));
     back.querySelector('[data-go]').addEventListener('click', () => {
       const ids = (k) => [...back.querySelectorAll(`.fight-chip.on[data-${k}]`)].map((c) => c.dataset[k]);
-      const r = { posse: ids('pc'), enemies: ids('en') };
+      const r = { posse: ids('pc'), enemies: ids('en'), surprise };
       if (!r.posse.length && !r.enemies.length) { toast('Pick at least one fighter.', true); return; }
       close(r);
     });

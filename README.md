@@ -9,7 +9,7 @@ Live: https://wiw-forstall.vercel.app
 | `/` | Forstall Scanner: dice pool, animated bullet dice, Forstall lights, and a posse notebook. |
 | `/warden` | Warden's Station (needs the PIN): pick the target from 59 Guidebook monsters, live feed, digits, house rules, homebrew monsters. |
 | `/run` | **Run the Game** (Warden only, the Warden's home — `/` sends a Warden here): Needs you list with inline store Approve/Deny, the fight (whose turn, order, Next turn, Start/End), enemies and posse with Health ± and Grit, and Rewards (award Prestige/$/Scrap/loot, Jackpot, Town Rest), session notes + recap, open rolls, homebrew, backup, recent Table Log, and links to every Warden tool. |
-| `/combat` | Combat Control (Warden only): enemies from monsters and book NPCs, turn order, High Noon Duel, loot. Players fight from the Battle Map. |
+| `/combat` | Retired — redirects to the Battle Map, where the Warden now runs fights (fighter cards, Add enemies, Spoils). |
 | `/posse` | Two-page character sheets styled like the PDFs. Includes the new-character checklist (pp. 6–8), store pickers for weapons, gear, Forstall, horse and mech, spur boxes linked to Talents, and a pop-up dice tray on every roll. |
 | `/names` | The shared NPC ledger (all players see is the ledger). Warden only: the NPC deck (p. 204), write-your-own NPCs, Factions (book plus custom, secret or known), and Book NPCs (pp. 120–133, 191). The page is built from accordions. |
 | `/map` | The Uncivilized West: town write-ups, Warden notes and pins, tokens. |
