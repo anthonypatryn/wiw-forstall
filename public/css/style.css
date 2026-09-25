@@ -918,3 +918,31 @@ input[type=range]::-moz-range-thumb { width: 16px; height: 16px; border-radius: 
 .lock-picks .gl { width: 14px; height: 14px; }
 @media (max-width: 480px) { .lock-stage { grid-template-columns: 1fr; justify-items: center; } .padlock { width: 120px; } .lk-card { width: 80px; height: 112px; } }
 .lp-recent { margin-top: 12px; }
+
+/* ---------- High-Noon Duel pop-up (any page) + the Warden's challenge card ---------- */
+.duel-back { z-index: 210; background: radial-gradient(ellipse at center, rgba(60,34,14,.9), rgba(10,8,6,.95)); }
+.duel-scene { width: min(560px, 100%); max-height: 94vh; overflow-y: auto; padding: 18px; color: var(--on-dark); background: linear-gradient(180deg, #2b2019, #171210); border: 2px solid #6e4f14; border-radius: var(--radius); box-shadow: var(--shadow-pop), inset 0 0 60px rgba(0,0,0,.6); }
+.duel-head small { display: block; font: var(--fs-xs) var(--display); letter-spacing: var(--track-wide); color: var(--brass); }
+.duel-head b { font: var(--fs-2xl)/1.1 var(--western); color: var(--on-dark-bright); }
+.duel-head i { font: var(--fs-lg) var(--display); font-style: normal; color: var(--sunset); margin: 0 4px; }
+.duel-sub { margin: 6px 0 10px; font-size: var(--fs-sm); color: var(--on-dark-dim); }
+.duel-scene .duel-table { width: 100%; border-collapse: collapse; table-layout: fixed; margin-bottom: 10px; }
+.duel-scene .duel-table th, .duel-scene .duel-table td { padding: 6px; border-bottom: 1px dashed rgba(184,137,43,.35); text-align: left; vertical-align: middle; }
+.duel-scene .duel-table thead th { font: var(--fs-lg) var(--display); letter-spacing: .06em; font-weight: 400; color: var(--on-dark-bright); }
+.duel-scene .duel-table thead th small { display: block; font: var(--fs-xs) var(--display); letter-spacing: .1em; color: var(--brass); }
+.duel-scene .duel-table tbody th { width: 76px; font: var(--fs-sm) var(--display); letter-spacing: .1em; font-weight: 400; color: var(--on-dark-dim); }
+.duel-scene .duel-table tr.now th { color: #f0c46a; }
+.duel-scene .duel-tray { min-height: 0; padding: 0; background: none; border: 0; display: flex; flex-wrap: wrap; gap: 2px; }
+.duel-scene .duel-tray .die { width: 34px; }
+.duel-scene .duel-tray .rr { display: none; }
+.duel-scene .dh { font-size: var(--fs-sm); }
+.duel-scene .plus { color: #9fe0a8; font-size: var(--fs-sm); }
+.duel-scene .muted { color: var(--on-dark-dim); }
+.duel-scene .duel-result { display: grid; gap: 6px; margin-bottom: 10px; }
+.duel-scene .dr { padding: 8px 10px; border-radius: var(--r-sm); background: rgba(255,255,255,.06); }
+.duel-scene .dr.severe, .duel-scene .dr.dead { background: rgba(179,38,30,.3); }
+.duel-actions { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center; }
+.duel-actions .btn.secondary { color: var(--on-dark); border-color: var(--on-dark-dim); }
+.duel-ask { width: min(520px, 100%); }
+.duel-ask .field-step { margin: 12px 0; }
+@media (max-width: 480px) { .duel-scene .duel-table tbody th { width: 58px; font-size: var(--fs-xs); } .duel-scene .duel-tray .die { width: 26px; } }

@@ -219,6 +219,20 @@ $('#faction-new').addEventListener('submit', async (e) => {
   if (r) { toast(`${r.name} created.`); openFac.add(r.id); f.reset(); f.known.checked = true; renderFactions(); }
 });
 
+// call an NPC out: the Warden gets the challenge and accepts or says no (High-Noon Duel, p. 58)
+async function challenge(n) {
+  if (!n) return;
+  const pc = store.get('wiw.me', null);
+  if (!pc) return toast('Pick who you’re playing first — the “This is me” star on your sheet.', true);
+  if (!await ask(`Challenge ${n.name} to a Duel?
+
+A High-Noon Duel is do-or-die (p. 58): gear set aside, both roll every Skill, then DRAW! 1–2 Hits against you is a minor injury, 3–4 a severe one and Bleeding Out, 5 or more and you're dead. The Warden decides whether ${n.name} accepts.`, { ok: 'Throw down the challenge', danger: false })) return;
+  const reason = await askText(`What's it over? (optional — the Warden sees this)`, '', { ok: 'Send the challenge' });
+  if (reason === null) return;
+  try { await api('POST', { action: 'duelRequest', pc, npcId: n.id, npcName: n.name, reason }, '', '/api/combat'); toast(`Challenge sent. The Warden will answer for ${n.name}.`); }
+  catch (e) { toast(e.message, true); }
+}
+
 function renderLedger() {
   const box = $('#ledger');
   // Don't wipe out a note someone is typing; re-render when they leave the field.
@@ -235,6 +249,7 @@ function renderLedger() {
       ${warden ? `<label class="f secret-note">WARDEN NOTES — SECRET<textarea data-f="wardenNote" maxlength="3000" placeholder="Secrets, motives, stats…">${esc(n.wardenNotes || '')}</textarea></label>
         <div class="npc-tools"><label class="check"><input type="checkbox" data-known${n.known ? ' checked' : ''}> Posse has met them</label>
           <button class="btn small secondary danger" data-remove type="button">Remove</button></div>` : ''}
+      ${!warden && n.known ? `<div class="npc-tools"><button class="btn small secondary" data-duel type="button">${gl('revolver')} Challenge to a Duel</button></div>` : ''}
     </article>`).join('') : `<p class="empty-note">${q ? 'Nobody matches.' : (warden ? 'Nobody yet — deal a stranger and add them.' : 'Nobody yet — folks show up here as the posse meets them.')}</p>`;
   box.querySelectorAll('.npc').forEach((card) => {
     const id = card.dataset.id;
@@ -247,6 +262,7 @@ function renderLedger() {
     });
     card.querySelector('[data-faction]')?.addEventListener('change', (e) => npcAct({ action: 'setFaction', id, faction: e.target.value }, e.target));
     card.querySelector('[data-known]')?.addEventListener('change', (e) => npcAct({ action: 'known', id, value: e.target.checked }));
+    card.querySelector('[data-duel]')?.addEventListener('click', () => challenge(npcs.find((x) => x.id === id)));
     card.querySelector('[data-remove]')?.addEventListener('click', async () => { if (await ask('Remove this NPC from the ledger?')) npcAct({ action: 'remove', id }); });
   });
 }

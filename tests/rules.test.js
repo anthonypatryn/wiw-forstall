@@ -316,3 +316,21 @@ test('End Session: a late-started session reaches back over the night, then ends
   assert.ok(sessionAction(st, { action: 'add', created: now + 86400e3 }).created <= Date.now());
   assert.ok(sessionAction(st, { action: 'end', id: s.id }).ended);
 });
+
+test('Duel requests: a player calls out a ledger NPC; the Warden accepts (starts the p. 58 Duel) or says no', () => {
+  const st = freshCombat();
+  const pc = publicAction(st, { action: 'addPc', name: 'Lila', trade: 'Gunslinger' }, { warden: false });
+  const r = publicAction(st, { action: 'duelRequest', pc: pc.id, npcId: 'n1', npcName: 'Black Bart', reason: 'He cheated at cards' }, { warden: false });
+  assert.throws(() => publicAction(st, { action: 'duelRequest', pc: pc.id, npcName: 'Someone' }, { warden: false }), /already/);
+  assert.throws(() => publicAction(st, { action: 'duelAnswer', id: r.id, accept: true }, { warden: false }), /PIN/);
+  assert.throws(() => publicAction(st, { action: 'duelStart', a: `pc:${pc.id}`, b: 'np:npc:Human - Weak Combatant|X' }, { warden: false }), /PIN/);
+  publicAction(st, { action: 'duelAnswer', id: r.id, accept: true, tough: 'Strong' }, { warden: true });
+  assert.equal(st.duel.a, `pc:${pc.id}`);
+  assert.equal(st.duel.b, 'np:npc:Human - Strong Combatant|Black Bart');
+  assert.deepEqual(st.duel.names, ['Lila', 'Black Bart']);
+  assert.throws(() => publicAction(st, { action: 'duelAnswer', id: r.id, accept: false }, { warden: true }), /already/);
+  // a second challenge, turned down with a note
+  const r2 = publicAction(st, { action: 'duelRequest', pc: pc.id, npcName: 'Doc' }, { warden: false });
+  const ans = publicAction(st, { action: 'duelAnswer', id: r2.id, accept: false, note: 'Not in church.' }, { warden: true });
+  assert.equal(ans.status, 'denied'); assert.equal(ans.note, 'Not in church.');
+});

@@ -1,6 +1,7 @@
 // The shared Table Log: every roll from any page (combat, sheets, Forstall scans) in one place.
 import { esc, api, startPolling, staticDice, timeAgo, injectDefs, savedPin, toast, store, rollPopup, animateRoll , ask, askText, play } from './common.js';
 import { gl } from './glyphs.js';
+import { duelHud } from './duel-hud.js';
 
 export function logHTML(log) {
   if (!log.length) return '<p class="empty-note">Rolls and big moments show up here for everyone.</p>';
@@ -109,6 +110,7 @@ let lastHud = null;
 export function renderHud(h) {
   if (!h) return;
   lastHud = h;
+  duelHud(h);
   const { strip, pop, ck } = hudMount();
   // 1) turn order strip (collapsible; remembered per device)
   if (!h.active || !h.order.length) strip.hidden = true;
