@@ -509,6 +509,7 @@ button { cursor: pointer; }
 .hud-check small { display: block; font: 11px var(--display); letter-spacing: .12em; color: var(--rust); }
 .hud-check b { font: 19px var(--display); letter-spacing: .05em; font-weight: 400; }
 .hud-ck-btns { display: flex; gap: 8px; align-items: center; }
+.hud-ck-sub { display: block; font-size: 13px; opacity: .8; margin-top: 3px; }
 @keyframes hudIn { from { transform: translate(-50%, -12px); opacity: 0; } }
 @media (prefers-reduced-motion: reduce) { .hud-check { animation: none; } }
 @media (max-width: 560px) { .hud-strip { max-width: calc(100vw - 160px); bottom: 12px; } .hud-pop li { grid-template-columns: 26px 1fr auto; } .hud-pop .hud-tray { grid-column: 2 / -1; justify-content: flex-start; } }

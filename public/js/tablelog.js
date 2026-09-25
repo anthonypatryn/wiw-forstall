@@ -136,7 +136,30 @@ export function renderHud(h) {
   const mine = me();
   const onMySheet = location.pathname.startsWith('/posse') && location.hash.slice(1).split('/')[0] === mine;
   const open = mine && !onMySheet ? (h.checks || []).find((c) => c.who.some((w) => w.id === mine && !w.rolled) && seen(`wiw.ck.${c.id}.${c.round}`) !== 'later') : null;
-  if (!open) { ck.hidden = true; ck.dataset.id = ''; return; }
+  if (!open) {
+    // not called? You can Help (p. 13): roll half your dice and the best helper's Hits are added
+    const assist = mine && !onMySheet ? (h.checks || []).find((c) => c.kind !== 'challenge' && !c.who.some((w) => w.id === mine) && !(c.helped || []).includes(mine) && seen(`wiw.help.${c.id}`) !== 'no') : null;
+    if (!assist) { ck.hidden = true; ck.dataset.id = ''; return; }
+    if (ck.dataset.id === `help.${assist.id}` && !ck.hidden) return;
+    ck.dataset.id = `help.${assist.id}`;
+    ck.hidden = false;
+    const names = assist.who.map((w) => w.name);
+    ck.innerHTML = `<div><small>WANT TO HELP?</small>
+      <b>${esc(names.length > 2 ? `${names.slice(0, -1).join(', ')} & ${names.at(-1)}` : names.join(' & '))} ${names.length > 1 ? 'are' : 'is'} rolling ${esc(assist.skill)}</b> · ${esc(assist.diff)} — ${assist.target} Hit${assist.target === 1 ? '' : 's'}${assist.note ? ` · <i>${esc(assist.note)}</i>` : ''}
+      <span class="hud-ck-sub">Roll half your ${esc(assist.skill)} dice — the best helper’s Hits are added to theirs.</span></div>
+      <div class="hud-ck-btns"><button type="button" class="btn" data-help-go>Help</button><button type="button" class="btn small secondary" data-help-no>Not this time</button></div>`;
+    ck.querySelector('[data-help-no]').addEventListener('click', () => { setSeen(`wiw.help.${assist.id}`, 'no'); ck.hidden = true; });
+    ck.querySelector('[data-help-go]').addEventListener('click', async (e) => {
+      e.target.disabled = true;
+      try {
+        const res = await api('POST', { action: 'pc', id: mine, op: 'checkRoll', check: assist.id }, '', '/api/combat');
+        ck.hidden = true; setSeen(`wiw.help.${assist.id}`, 'no');
+        const r = res.result;
+        if (r?.dice) { await rollPopup(r, `Helping · ${r.label || assist.skill}`); toast(`You helped with ${r.hits} Hit${r.hits === 1 ? '' : 's'}.`); }
+      } catch (err) { toast(err.message, true); e.target.disabled = false; }
+    });
+    return;
+  }
   if (ck.dataset.id === `${open.id}.${open.round}` && !ck.hidden) return;
   ck.dataset.id = `${open.id}.${open.round}`;
   const who = open.who.find((w) => w.id === mine);

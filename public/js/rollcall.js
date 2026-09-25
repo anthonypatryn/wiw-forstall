@@ -32,7 +32,7 @@ export function mountRollCaller(el, getCombat, after) {
           <optgroup label="Book NPCs">${(c?.npcCatalog || []).map((n) => { const v = `np:${n.key}|${n.faction ? n.name : ''}`; return `<option value="${esc(v)}"${sel.npc === v ? ' selected' : ''}>${esc(n.name.replace('Human - ', 'Human: '))}</option>`; }).join('')}</optgroup></select></div>` : ''}
       <div class="rc-step rc-note"><span>FOR</span><input data-rc-note maxlength="80" placeholder="what’s it for? (optional) e.g. climb the cliff" value="${esc(sel.note)}"></div>
       <div class="rc-skills">${SKILLS.map(([s, d]) => `<button type="button" class="rc-skill" data-rc-skill="${s}">${gl('die')}<b>${s}</b><small>${d}</small></button>`).join('')}</div>
-      <p class="muted rc-tip">Tap a Skill to send it — it pops up on ${chosen().length === 1 ? `${esc(chosen()[0].name)}’s` : 'their'} phones. Anyone not called can Help with half their dice.</p>`;
+      <p class="muted rc-tip">Tap a Skill to send it — it pops up on ${chosen().length === 1 ? `${esc(chosen()[0].name)}’s` : 'their'} phones. Anyone not called gets a pop-up to Help with half their dice — pick one person when the others should help.</p>`;
   }
   el.addEventListener('click', async (e) => {
     const b = e.target.closest('button');
