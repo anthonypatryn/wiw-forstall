@@ -128,6 +128,8 @@ Steppers (`.pmb`, `.pm-btn`, `.sev button`, inventory `.qty button`, fighter-car
 
 Sizes: 30px for most steppers, 26px for small ones. Remove buttons (`.rm-btn`) use the danger red and fill red on hover. Don't restyle these per page; the shared block is prefixed with `body` so it wins over older page CSS.
 
+Close (×) buttons on a dark header (saloon `.sl-x`, the Battle Map's fighter card `.fc-x`, Map setup `.setup-x`) share one look: a 34–36px circle, 2px light border, thickened ×, and a light fill on hover. Remove buttons in lists are `.rm-btn` with ×, never ✕, and the small actions next to them are `.btn.small.secondary`.
+
 ## Class names: check style.css before reusing a short name
 style.css is loaded on every page, so a page's class can pick up a site-wide rule with the same name. Two bugs came from this:
 - `.ping`: the Table Log button's new-entry bump.

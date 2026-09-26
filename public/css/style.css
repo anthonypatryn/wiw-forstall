@@ -1066,6 +1066,14 @@ body .rm-btn.rm-btn.rm-btn:hover:not(:disabled) { background: var(--danger); bor
 /* on the dark saloon felt and status chips: same thickness, light ink */
 body .sl-x { border-width: 2px; font-weight: 700; -webkit-text-stroke: 1.1px currentColor; }
 body .sl-x:hover { background: var(--on-dark); color: var(--ink); }
+/* close (×) on a dark header — the saloon's .sl-x look, shared by the Battle Map's fighter card and Map setup */
+body :is(.fc-x, .setup-x) {
+  flex: none; margin-left: auto; width: 34px; height: 34px; display: inline-grid; place-items: center; padding: 0 0 1px;
+  border: 2px solid rgba(232,220,196,.6); border-radius: 50%; background: transparent; color: var(--on-dark);
+  font: 700 20px/1 var(--body); -webkit-text-stroke: 1.1px currentColor; cursor: pointer; transition: background .15s, color .15s;
+}
+body :is(.fc-x, .setup-x):hover { background: var(--on-dark); color: var(--ink); border-color: var(--on-dark); }
+body .rm-btn { min-width: 28px; min-height: 28px; } /* posse.css sizes it on the sheet; other pages need it too */
 body .st button { font-weight: 700; -webkit-text-stroke: .8px currentColor; font-size: var(--fs-md); }
 body.warden-mode :is(.pmb, .pm-btn, .sev button, .inv-item .qty button, .pm > button, .rp-x) { box-shadow: 2px 2px 0 rgba(0,0,0,.35); }
 

@@ -306,7 +306,7 @@ function renderPanel() {
   list.innerHTML = data.tokens.length ? data.tokens.map((t) => `<div class="tok-row${t.id === selected ? ' sel' : ''}" data-pick="${t.id}">
       <span class="chip" style="background:${color(t)}">${esc(initials(t.name))}</span>
       <span class="n">${esc(t.name)}<small>${t.kind === 'pc' ? `The ${esc(t.trade || '')}` : t.kind === 'enemy' ? 'Enemy' : 'NPC'}${t.down ? ' · down' : ''}${t.gone ? ' · removed from Combat' : ''}</small></span>
-      ${warden ? `<button type="button" data-hide="${t.id}">${t.hidden ? 'Reveal' : 'Hide'}</button><button aria-label="Remove this token" type="button" data-rm="${t.id}">✕</button>` : ''}</div>`).join('')
+      ${warden ? `<button type="button" class="btn small secondary" data-hide="${t.id}">${t.hidden ? 'Reveal' : 'Hide'}</button><button aria-label="Remove this token" title="Remove this token" type="button" class="rm-btn" data-rm="${t.id}">×</button>` : ''}</div>`).join('')
     : `<p class="muted">${warden ? 'Tokens appear when a fight starts or you add enemies. NPCs: the gear on the map.' : 'The Warden hasn’t set the board yet.'}</p>`;
   $('#board-count').textContent = data.tokens.length ? `${data.tokens.length} token${data.tokens.length === 1 ? '' : 's'}` : '';
   requestAnimationFrame(positionCard);
@@ -1264,7 +1264,7 @@ function renderFsWarden() {
       <button type="button" class="btn small danger" data-edison="${esc(a.key)}|${esc(b.key)}">Apply Rule 1</button></div>`).join('')}
     ${[...mine, ...carried].map((f) => `<div class="tok-row fs-row${selFs === f.key ? ' sel' : ''}" data-fs-pick="${esc(f.key)}"><span class="chip fs-chip${f.sweep ? ' on' : ''}">${gl('forstall')}</span>
       <span class="n">${esc(f.name)}<small>${f.owner ? `carried by ${esc(f.ownerName)}` : esc(f.range)}${f.sweep ? ` · Sweep ${f.sweep.hits}` : ''}</small></span>
-      ${f.owner ? '' : `<button type="button" data-fs-fuse="${esc(f.key)}" title="Crystal Burst Fuse: lets it Burst">${f.fuse ? 'Fuse on' : 'No fuse'}</button><button type="button" data-fs-hide="${esc(f.key)}">${f.hidden ? 'Reveal' : 'Hide'}</button><button aria-label="Remove this Forstall" type="button" data-fs-rm="${esc(f.key)}">✕</button>`}</div>`).join('')
+      ${f.owner ? '' : `<button type="button" class="btn small secondary" data-fs-fuse="${esc(f.key)}" title="Crystal Burst Fuse: lets it Burst">${f.fuse ? 'Fuse on' : 'No fuse'}</button><button type="button" class="btn small secondary" data-fs-hide="${esc(f.key)}">${f.hidden ? 'Reveal' : 'Hide'}</button><button aria-label="Remove this Forstall" title="Remove this Forstall" type="button" class="rm-btn" data-fs-rm="${esc(f.key)}">×</button>`}</div>`).join('')
     || '<p class="muted">No Forstalls on the board. A character’s own Forstall appears on their token.</p>'}`;
   list.querySelectorAll('[data-edison]').forEach((b) => b.addEventListener('click', async () => {
     if (!await ask('Apply Edison’s Rule 1? Everyone within Short Range of either Forstall is Electrocuted [6], and both batteries melt.', { ok: 'Apply', danger: true })) return;
