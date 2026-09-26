@@ -969,3 +969,15 @@ test('a melee weapon at Short Range is a throw, and the Table Log says so', asyn
   publicAction(state, { action: 'pc', id: pc.id, op: 'attack', weapon: 0, range: 'arms', target }, { warden: true });
   assert.doesNotMatch(state.log.find((l) => l.type === 'roll' && l.label.includes('→')).label, /thrown/, 'a swing up close is not a throw');
 });
+
+test('only the Warden can bring a fallen character back', () => {
+  const state = freshCombat();
+  const pc = publicAction(state, { action: 'addPc', trade: 'Hunter', name: 'Ada' }, { warden: true });
+  pc.dead = true; pc.health = 0;
+  assert.throws(() => publicAction(state, { action: 'pc', id: pc.id, op: 'revive' }, { warden: false }), /Only the Warden/);
+  assert.equal(pc.dead, true);
+  publicAction(state, { action: 'pc', id: pc.id, op: 'revive' }, { warden: true });
+  assert.equal(pc.dead, false); assert.equal(pc.health, 1);
+  assert.match(state.log[0].text, /back among the living/);
+  assert.throws(() => publicAction(state, { action: 'pc', id: pc.id, op: 'revive' }, { warden: true }), /hasn’t fallen/);
+});

@@ -220,6 +220,10 @@
 ## Quick moves (Battle Map turn bar)
 - `quickHTML` / `wireQuick` in battle.js: above the Actions grid, one button per nearest target (`QUICK_MAX` 3). A character's turn: "Shoot/Hit <enemy>" with the weapon that has the most dice at that range (Grit cost shown; disabled without the Grit) → the same `pc attack` call as the Attack drawer (no aim / special ammo — use the drawer for those). An enemy's turn (Warden): "<attack> → <character>" with the first attack that fits the range → `enemyAttack` (asks before forcing an out-of-range roll). Out-of-reach targets are listed as such. `render()` redraws the turn bar too, so quick moves appear once token positions load.
 
+## Reviving the fallen
+- pc op `revive` is **Warden-only** (`pcOp(state, a, warden)`). It throws if the character isn't dead, sets health to at least 1, and logs "… is back among the living."
+- Entry points: fallen characters stay listed at the bottom of Run the Game's posse list (`.item-row.fallen`, Revive button with a confirm); a Revive button on the sheet's FALLEN note (Warden only); and the fighter card's Revive on the Battle Map.
+
 ## Stale Forstall memory slots
 - posse.js `fillKz`: a slot holding a frequency the Scanner notebook no longer has as solved (e.g. after a notebook reset) shows it as a disabled "(not decoded — clear it)" option in red (`select.kz-stale`). Picking anything else removes it from the list, so it can't be re-picked; the server already refuses unsolved values. Existing slot values are never auto-cleared (live data). The Sweep +1 in lib/forstall.js `knownOf` still counts whatever is in the slot.
 

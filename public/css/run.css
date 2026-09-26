@@ -119,3 +119,7 @@
 /* who has the site open (Run the Game posse rows) */
 .here-dot { flex: none; width: 10px; height: 10px; border-radius: 50%; background: var(--line); margin-right: 2px; }
 .here-dot.on { background: var(--success); box-shadow: 0 0 0 3px rgba(61,107,58,.2); }
+
+/* a fallen posse member: dimmed, with Revive */
+.item-row.fallen .item-who { opacity: .65; }
+.item-row.fallen .pill .gl { width: 1em; height: 1em; }

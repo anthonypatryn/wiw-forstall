@@ -104,8 +104,8 @@ async function refreshHere() {
 setInterval(refreshHere, 15000); setTimeout(refreshHere, 1500);
 function renderPosse() {
   const party = combat.combat?.active ? combat.combat.party : null;
-  const list = combat.posse.filter((p) => !p.dead);
-  $('#posse').innerHTML = list.length ? list.map((p) => {
+  const list = combat.posse.filter((p) => !p.dead), fallen = combat.posse.filter((p) => p.dead);
+  $('#posse').innerHTML = (list.length ? list.map((p) => {
     const sweep = combat.sweeps?.[`pc:${p.id}`];
     const sitting = party && !party.includes(p.id);
     return `<div class="item-row${combat.combat?.current === p.id ? ' now' : ''}${p.bleeding ? ' bleed' : ''}${sitting ? ' sitting' : ''}">
@@ -115,7 +115,14 @@ function renderPosse() {
       <div class="item-nums">${hpBar(p.health, p.maxHealth)}<span class="hp-num">${p.health}/${p.maxHealth}</span>
         <button type="button" class="pm-btn" data-p="${esc(p.id)}" data-d="-1" aria-label="${esc(p.name)} loses 1 Health">−</button><button type="button" class="pm-btn" data-p="${esc(p.id)}" data-d="1" aria-label="${esc(p.name)} gains 1 Health">+</button>
         ${combat.combat?.active ? `<span class="stat" title="Grit">${p.grit ?? 0} Grit</span>` : `<span class="stat" title="Wallet">$${esc(String(p.wallet || 0))}</span>`}</div></div>`;
-  }).join('') : '<p class="muted">No characters yet.</p>';
+  }).join('') : '<p class="muted">No characters yet.</p>')
+    // the fallen stay listed so the Warden can bring one back if the story allows it
+    + fallen.map((p) => `<div class="item-row fallen"><div class="item-who"><img class="row-face" src="${esc(faceUrl(p))}" alt=""><a href="/posse#${esc(p.id)}"><b>${esc(p.name)}</b></a><small>${esc(p.trade)}${p.player ? ` · ${esc(p.player)}` : ''}</small><span class="pill">${gl('skull')} FALLEN</span></div>
+      <div class="item-nums"><button type="button" class="btn small secondary" data-revive="${esc(p.id)}">${gl('heart')} Revive</button></div></div>`).join('');
+  $('#posse').querySelectorAll('[data-revive]').forEach((b) => b.addEventListener('click', async () => {
+    const p = combat.posse.find((x) => x.id === b.dataset.revive);
+    if (p && await ask(`Bring ${p.name} back with ${Math.max(p.health, 1)} Health?`)) act({ action: 'pc', id: p.id, op: 'revive' }, `${p.name} is back.`);
+  }));
   $('#posse').querySelectorAll('[data-pleave]').forEach((b) => b.addEventListener('click', () => act({ action: 'leave', id: b.dataset.pleave })));
   $('#posse').querySelectorAll('[data-pjoin]').forEach((b) => b.addEventListener('click', () => act({ action: 'join', id: b.dataset.pjoin }, 'They’re in — turn order updated.')));
   $('#posse').querySelectorAll('[data-p]').forEach((b) => b.addEventListener('click', () => act({ action: 'pc', id: b.dataset.p, op: 'health', delta: Number(b.dataset.d) })));
