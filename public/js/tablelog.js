@@ -67,6 +67,8 @@ export function mountTableLog() {
     m.watchWhispers();
   }).catch(() => {});
   askWhoIAm();
+  // "Previously on…" once per written-up session (players only; waits for other pop-ups)
+  if (!savedPin()) setTimeout(() => import('./previously.js').then((m) => m.showPreviously()).catch(() => {}), 2500);
   // any [data-trade] button (e.g. on a sheet's Inventory) opens a trade with that character
   document.addEventListener('click', (e) => { const b = e.target.closest('[data-trade]'); if (b) openTrade(b.dataset.trade || null); });
   // any [data-stash] button opens the posse stash
