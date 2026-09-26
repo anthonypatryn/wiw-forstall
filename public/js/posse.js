@@ -865,10 +865,15 @@ function fillKz(view, p) {
     if (el === document.activeElement) return;
     const u = Number(el.dataset.path.split('.').pop()), mine = cur[u];
     const opts = kzOptions.map((o) => ({ v: `${o.name} · ${o.kz}`, d: digits(o.kz) }));
-    if (mine && !opts.some((o) => o.v === mine)) opts.unshift({ v: mine, d: digits(mine) });
+    // a slot still holding something the posse's Scanner notebook no longer has: show it, flagged, but it can't be picked again
+    if (mine && !opts.some((o) => o.v === mine)) opts.unshift({ v: mine, d: digits(mine), stale: true });
     const taken = new Set(cur.filter((v, i) => i !== u && v).map(digits));
-    el.innerHTML = `<option value="">— empty —</option>${opts.map((o) => `<option value="${esc(o.v)}"${o.v !== mine && o.d && taken.has(o.d) ? ' disabled' : ''}>${esc(o.v)}</option>`).join('')}`
+    el.innerHTML = `<option value="">— empty —</option>${opts.map((o) => `<option value="${esc(o.v)}"${o.stale ? ' data-stale disabled' : o.d && taken.has(o.d) ? ' disabled' : ''}>${esc(o.v)}${o.stale ? ' (not decoded — clear it)' : ''}</option>`).join('')}`
       + (kzOptions.length ? '' : '<option value="" disabled>Nothing decoded yet — use the Forstall Scanner</option>');
+    el.value = mine;
+    el.classList.toggle('kz-stale', opts.some((o) => o.stale));
+    // once they move off a stale value it's gone for good (the redraw above skips a focused select)
+    if (!el.dataset.kzWired) { el.dataset.kzWired = '1'; el.addEventListener('change', () => { el.querySelectorAll('option[data-stale]').forEach((o) => o.remove()); el.classList.remove('kz-stale'); }); }
   });
 }
 
