@@ -94,7 +94,7 @@ $('#zoom-out').addEventListener('click', () => pz.zoom(1 / 1.35));
 $('#zoom-fit').addEventListener('click', () => pz.fit());
 
 // ---------- pings: press and hold (or right-click) the map → a marker everyone sees for a few seconds ----------
-const PING_HOLD_MS = 550, PING_SHOW_MS = 8000;
+const PING_HOLD_MS = 550, PING_SHOW_MS = 4000;
 const seenPings = new Set();
 let pingTimer = null, pingRedraw = null;
 function renderPings() {
