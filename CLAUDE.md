@@ -221,7 +221,17 @@
 - `quickHTML` / `wireQuick` in battle.js: above the Actions grid, one button per nearest target (`QUICK_MAX` 3). A character's turn: "Shoot/Hit <enemy>" with the weapon that has the most dice at that range (Grit cost shown; disabled without the Grit) → the same `pc attack` call as the Attack drawer (no aim / special ammo — use the drawer for those). An enemy's turn (Warden): "<attack> → <character>" with the first attack that fits the range → `enemyAttack` (asks before forcing an out-of-range roll). Out-of-reach targets are listed as such. `render()` redraws the turn bar too, so quick moves appear once token positions load.
 
 ## Playtest fixes (2026-09-26)
-- **Scanner Grit:** in a fight, `lib/routes/scan.js` `scanRange` refuses a Scan unless the scanner has `SCAN_GRIT` (3, p. 83) and isn't Unconscious. The Grit comes off their sheet when the roll happens. Out of combat nothing is counted.
+- **Scanning in a fight** (pp. 83–84), in `lib/routes/scan.js`:
+  - `combatScan {pc, key?, monster}` requires:
+    - an active fight, on the scanner's own turn
+    - a Forstall they may operate (`operates`: their own; placed ones in Chunk B)
+    - the monster on the board, within the Forstall's Range, and not EMP-jammed
+    - one Scanner per round (`combat.scanRound`, exposed in the combat views)
+    - `scanCost` Grit: 3, or 5 with the Scanner's "Warden's aid" house rule (`settings.easyMode`, p. 84 tip)
+  - The scan sets the Scanner's `active` to that monster and rolls the sheet's Intuition (Poisoned −2, Talent spurs) via `doRoll`. It logs the roll, and clears this turn's undo entries, because learned digits can't be undone.
+  - It also sets `state.pending {pc, name}`: one guess per Scan. `combatGuess {pc, digits}` consumes it via `doGuess` and logs the lights.
+  - During a fight, players' Scanner-page `roll`/`guess` are refused; `player.js` `fightCheck` shows the `#fight-banner`.
+  - UI: the battle.js Forstall card gets `scanHTML(f)`, a list of monster kinds with a reason when disabled, or `guessHTML` (known digits, positions under Warden's aid, past guesses as `.dia` lights, six inputs) while a guess is pending. It's wired in `wireScan`. The turn tile reads "Scan 3 · Sweep N".
 - **Closing a table:** when the table turns `closed`, players' open saloon scenes close (`watchSaloon` → `closeTable` + a toast with their net). Bets were already refunded server-side.
 - **Start combat with no enemies:** opens Add enemies first. `openAddEnemies(combat, done, {intro})` now returns a Promise of how many were added; then it re-fetches combat and opens `pickFighters`.
 - **Lock Pick:** a How to play link in the scene header (`showHowTo`, an `.ask-back` dialog over the scene). `retry` no longer asks for a second Finesse roll: it deals a fresh deck and restores `rolledPeeks` (the first roll's Hits).

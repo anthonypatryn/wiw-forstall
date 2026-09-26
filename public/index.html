@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Rye&family=Special+Elite&family=Reenie+Beanie&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=79">
+  <link rel="stylesheet" href="/css/style.css?v=80">
 </head>
 <body>
   <header class="masthead">
@@ -58,9 +58,9 @@
           </div>
           <div class="roll-row">
             <button class="btn" id="roll-btn" type="button" disabled><span data-gl="target"></span> Scan the Monster</button>
-            <small class="muted scan-cost">In a fight, Scanning costs 3 Grit (p. 83).</small>
-            <span class="note">Spend 3 Grit. Each Hit earns one digit — an Ace counts as two.</span>
+            <span class="note">Each Hit earns one digit — an Ace counts as two.</span>
           </div>
+          <p class="fight-banner" id="fight-banner" hidden><span data-gl="revolver"></span> <b>A fight is on.</b> Scan from the <a href="/battle">Battle Map</a> on your turn: open the Forstall tile. It costs 3 Grit and earns one guess.</p>
           <div class="tray" id="tray"><span class="empty">Your bullet dice land here.</span></div>
           <div class="tally" id="tally"></div>
           <div class="tip" id="known-box"></div>
@@ -98,6 +98,6 @@
     <div class="footer"><span class="conn" id="conn">Connected</span> · A fan-made table tool for the <em>Wild Imaginary West</em> RPG by Rune Foundry &amp; Boylei Hobby Time.</div>
   </main>
 
-  <script type="module" src="/js/player.js?v=73"></script>
+  <script type="module" src="/js/player.js?v=74"></script>
 </body>
 </html>

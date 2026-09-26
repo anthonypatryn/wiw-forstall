@@ -297,3 +297,13 @@ const poller = startPolling('player', (d) => {
   $('#conn').textContent = ok ? 'Connected' : 'Reconnecting…';
 });
 renderBoard();
+
+// mid-fight, Scans happen on the Battle Map (Grit, turn and Range are checked there): say so and hold the roll button
+async function fightCheck() {
+  let on = false;
+  try { on = !!(await api('GET', null, '?view=player', '/api/combat'))?.combat?.active; } catch { return; }
+  const b = document.getElementById('fight-banner');
+  if (b) b.hidden = !on;
+  document.body.classList.toggle('scan-in-fight', on);
+}
+fightCheck(); setInterval(fightCheck, 10000);

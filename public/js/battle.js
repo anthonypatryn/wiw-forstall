@@ -365,7 +365,7 @@ function renderTurnBar() {
     ...(gear.length ? [['item', 'satchel', 'Use Item', 'item’s Grit']] : []),
     ...(sts.length ? [['relieve', 'bandage', 'Relieve', '1 per die']] : []),
     ['improvise', 'lasso', 'Improvise', '1+'],
-    ...(isPc && a.forstall?.model ? [['forstall', 'forstall', 'Forstall', `${parseInt(a.forstall.grit, 10) || 4} Grit`]] : []),
+    ...(isPc && a.forstall?.model ? [['forstall', 'forstall', 'Forstall', `Scan ${scanCost()} · Sweep ${parseInt(a.forstall.grit, 10) || 4}`]] : []),
     ...(isPc ? [['prepare', 'watch', 'Prepare', 'held', a.prepared]] : []),
     ...(isPc ? [['fool', 'heart', 'Fool’s Grit', '+1 for 1 HP', a.foolUsed]] : []),
   ];
@@ -796,10 +796,96 @@ let kzPosse = [], kzAll = [], selFs = null, fieldsKey = '';
 const fsOf = (key) => data?.forstalls?.find((f) => f.key === key) || null;
 const clashKeys = () => new Set((data?.edison || []).flat());
 // What a slot can be programmed with: decoded monsters for the posse, every monster for the Warden.
+// ---------- Scanning in a fight (p. 83): pick a monster on the board, pay the Grit, roll Intuition, then one guess ----------
+let scanNb = [], scanPending = null, scanEasy = false;
+const scanCost = () => (scanEasy ? 5 : 3); // 5 with the Scanner's "Warden's aid" house rule (p. 84 tip)
+const poolTxt = (p) => `${p.black ? `${p.black}B` : ''}${p.gold ? `${p.gold}G` : ''}` || '0';
+function intuitionOf(pc) {
+  const m = String(pc?.skills?.intuition || '1B').toUpperCase().match(/(\d+)B|(\d+)G/g) || [];
+  let b = 0, g = 0; m.forEach((x) => { if (x.endsWith('B')) b += parseInt(x, 10); else g += parseInt(x, 10); });
+  let n = b + g; if (pc?.statuses?.Poisoned) n = Math.max(0, n - 2);
+  const gold = Math.min(g, n); return { black: n - gold, gold };
+}
+// the Forstall's operator this turn: the character whose turn it is, if they may work it
+function scanOperator(f) {
+  const cur = combat?.combat?.active ? combat.combat.current : null;
+  const pc = cur && combat.posse.find((p) => p.id === cur);
+  if (!pc || !(warden || myId() === pc.id)) return null;
+  return (f.owner ? f.owner === pc.id : (f.operable || []).includes(pc.id)) ? pc : null;
+}
+function scanHTML(f) {
+  const pc = scanOperator(f);
+  if (!pc) return '';
+  const cost = scanCost(), pool = intuitionOf(pc);
+  const head = `<div class="fs-scan-h">${gl('target')} SCAN <small>${cost} Grit · Intuition ${poolTxt(pool)}${scanEasy ? ' · Warden’s aid: positions shown' : ''}</small></div>`;
+  if (scanPending && scanPending.pc === pc.id) return `<div class="fs-scan">${head}${guessHTML(scanPending.name)}</div>`;
+  const sr = combat.scanRound, taken = sr && sr.round === combat.combat.round && sr.by !== pc.id ? sr.name : null;
+  const kinds = {};
+  for (const e of combat.enemies.filter((x) => !x.defeated && x.profile)) {
+    const t = data.tokens.find((x) => x.kind === 'enemy' && x.ref === e.id && !x.hidden);
+    if (!t || !f.pos) continue;
+    const d = dist(f.pos, t);
+    kinds[e.profile] = Math.min(kinds[e.profile] ?? 999, d);
+  }
+  const rows = Object.entries(kinds).sort((a, b) => a[1] - b[1]).map(([name, d]) => {
+    const decoded = kzPosse.some((k) => k.name === name);
+    const why = decoded ? 'already decoded' : f.rangeIn < 999 && d > f.rangeIn ? `${d}″ away, out of Range (${f.rangeIn}″)` : f.jammed ? 'scrambled by a Natural EMP' : taken ? `${taken} Scanned this round` : (pc.grit ?? 0) < cost ? `needs ${cost} Grit (${pc.name} has ${pc.grit ?? 0})` : '';
+    return `<button type="button" class="btn small fs-scan-btn" data-fs-scan="${esc(f.key)}" data-mon="${esc(name)}"${why ? ' disabled' : ''}>Scan the ${esc(name)}<small>${why || `${d}″ away · ${cost} Grit`}</small></button>`;
+  });
+  return `<div class="fs-scan">${head}${rows.length ? `<div class="fs-scan-list">${rows.join('')}</div>` : '<p class="muted fs-note">No monsters on the board to Scan.</p>'}</div>`;
+}
+function guessHTML(name) {
+  const e = scanNb.find((x) => x.name === name) || { known: [], guesses: [], positional: [] };
+  const last = e.rolls?.[0];
+  const dias = (digits, result) => `<div class="fs-dias">${digits.map((d, i) => `<span class="dia ${result?.[i] || ''}"><span>${d ?? '·'}</span></span>`).join('')}</div>`;
+  return `<div class="fs-guess">
+    <p class="fs-note">${last ? `Picked up: <b>${last.newDigits?.length ? last.newDigits.join(', ') : 'nothing new'}</b> · ` : ''}Digits known: <b>${e.known?.length ? e.known.join(' ') : 'none yet'}</b>${scanEasy ? '' : ' (in number order, not their spots)'}</p>
+    ${scanEasy && e.positional?.some((x) => x != null) ? `<small class="muted">WHERE THEY GO</small>${dias(e.positional, e.positional.map((x) => (x != null ? 'green' : '')))}` : ''}
+    ${e.guesses?.length ? `<small class="muted">EARLIER GUESSES</small>${e.guesses.slice(-3).map((g) => dias(g.digits, g.result)).join('')}` : ''}
+    <small class="muted">YOUR GUESS — ONE PER SCAN</small>
+    <div class="fs-dig-row">${[0, 1, 2, 3, 4, 5].map((i) => `<input class="fs-dig" data-dig="${i}" inputmode="numeric" maxlength="1" aria-label="Digit ${i + 1}" value="${e.positional?.[i] ?? ''}">`).join('')}</div>
+    <button type="button" class="btn small" data-fs-guess>${gl('target')} Guess the ${esc(name)}’s frequency</button>
+  </div>`;
+}
+async function scanAct(body) {
+  try { const res = await api('POST', body, '', '/api/scan'); return res.result; }
+  catch (e) { toast(e.message, true); return null; }
+}
+function wireScan(box) {
+  box.querySelectorAll('[data-fs-scan]').forEach((b) => b.addEventListener('click', async () => {
+    const f = fsOf(b.dataset.fsScan), pc = f && scanOperator(f);
+    if (!pc) return;
+    b.disabled = true;
+    play('forstall');
+    const r = await scanAct({ action: 'combatScan', pc: pc.id, key: f.key, monster: b.dataset.mon });
+    if (!r) { b.disabled = false; return; }
+    await rollPopup(r, `${pc.name} · ${r.label} · ${r.pool}`);
+    toast(r.newDigits?.length ? `Picked up ${r.newDigits.length} digit${r.newDigits.length === 1 ? '' : 's'}: ${r.newDigits.join(', ')}. Now make your guess.` : 'No new digits this time. You still get your guess.');
+    await loadKz(); combatPoller?.now?.(); poller?.now?.(); renderTurnBar(); renderPanel();
+  }));
+  const digs = [...box.querySelectorAll('.fs-dig')];
+  digs.forEach((el, i) => el.addEventListener('input', () => { el.value = el.value.replace(/\D/g, '').slice(-1); if (el.value && digs[i + 1]) digs[i + 1].focus(); }));
+  box.querySelector('[data-fs-guess]')?.addEventListener('click', async (ev) => {
+    const digits = digs.map((el) => el.value);
+    if (digits.some((d) => d === '')) { toast('Fill in all six digits.', true); return; }
+    const pc = scanPending && combat.posse.find((p) => p.id === scanPending.pc);
+    ev.currentTarget.disabled = true;
+    const r = await scanAct({ action: 'combatGuess', pc: pc?.id, digits: digits.map(Number) });
+    if (!r) { ev.currentTarget.disabled = false; return; }
+    const n = (k) => r.result.filter((x) => x === k).length;
+    if (r.solved) { play('success'); toast(`Decoded! The ${r.name}’s frequency can go in a memory slot now.`); }
+    else toast(`${n('green')} green, ${n('yellow')} yellow, ${n('red')} red.`);
+    await loadKz(); renderTurnBar(); renderPanel();
+  });
+}
 async function loadKz() {
   // a character's Forstall: only what the posse has fully decoded. The Warden's own Forstalls: any monster.
   const byName = (a, b) => a.name.localeCompare(b.name);
-  try { kzPosse = ((await api('GET', null, '?view=player', '/api/scan')).notebook || []).filter((e) => e.solved).map((e) => ({ name: e.name, kz: e.kz })).sort(byName); } catch { kzPosse = []; }
+  try {
+    const sv = await api('GET', null, '?view=player', '/api/scan');
+    scanNb = sv.notebook || []; scanPending = sv.pending || null; scanEasy = !!sv.settings?.easyMode;
+    kzPosse = scanNb.filter((e) => e.solved).map((e) => ({ name: e.name, kz: e.kz })).sort(byName);
+  } catch { kzPosse = []; }
   try { kzAll = warden ? ((await api('GET', null, '?view=warden', '/api/scan')).monsters || []).map((m) => ({ name: m.name, kz: m.kz })).sort(byName) : []; } catch { kzAll = []; }
 }
 function renderFields() {
@@ -849,6 +935,7 @@ function forstallCard(f) {
     ${f.jammed ? `<p class="fs-warn">${gl('flash')} Scrambled by a Natural EMP — no Scan or Burst until the monster’s next turn.</p>` : ''}
     ${f.pulse ? `<p class="fs-state">${gl('heart')} <b>Heartbeat Sensor:</b> ${f.pulse.count ? `${f.pulse.count} monster${f.pulse.count === 1 ? '' : 's'} within ${f.rangeIn + 6}″ — the nearest is ${f.pulse.nearest}″ away.` : `quiet — nothing within ${f.rangeIn + 6}″.`}</p>` : ''}
     ${clashWith.length ? `<p class="fs-warn">${gl('flash')} Edison’s Rule 1: its waves cross ${esc(clashWith.join(' and '))}’s.</p>` : ''}
+    ${fight ? scanHTML(f) : ''}
     ${may ? `<div class="fs-btns"><button type="button" class="btn small" data-fs-sweep="${esc(f.key)}"${f.owner && !f.charges ? ' disabled' : ''}>${gl('forstall')} ${f.sweep ? 'Readjust' : 'Sweep'} · ${cost}</button>
         ${f.sweep ? `<button type="button" class="btn small secondary" data-fs-off="${esc(f.key)}">Switch off</button>` : ''}</div>
       ${f.efficiency != null ? `<label class="check fs-eff"><input type="checkbox" data-fs-eff="${esc(f.key)}"${f.efficiency < 1 ? ' disabled' : ''}> Forstall Efficiency — turn one Hit into an Ace (${f.efficiency}/2 left today)</label>` : ''}
@@ -871,6 +958,7 @@ async function fsAct(body) {
   }
 }
 function wireFs(box) {
+  wireScan(box);
   box.querySelectorAll('[data-fs-sweep]').forEach((b) => b.addEventListener('click', async () => {
     const eff = box.querySelector(`[data-fs-eff="${CSS.escape(b.dataset.fsSweep)}"]`)?.checked;
     play('forstall');

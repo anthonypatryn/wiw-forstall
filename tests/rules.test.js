@@ -1026,3 +1026,9 @@ test('saloon powers work on players too: peek under a player’s cup, stare a pl
   const eye = sharpest([{ kind: 'npc', name: 'Doc' }, { kind: 'pc', name: 'Bo' }], { poolOf: (s) => (s.name === 'Bo' ? { black: 4, gold: 0 } : { black: 2, gold: 0 }) });
   assert.equal(eye.name, 'Bo');
 });
+
+test('a Scan in a fight costs 3 Grit, or 5 with the Warden’s aid (positions shown)', async () => {
+  const { scanCost } = await import('../lib/routes/scan.js');
+  assert.equal(scanCost({ settings: { easyMode: false } }), 3);
+  assert.equal(scanCost({ settings: { easyMode: true } }), 5);
+});
