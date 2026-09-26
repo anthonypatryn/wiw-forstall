@@ -1076,3 +1076,8 @@ body.warden-mode :is(.pmb, .pm-btn, .sev button, .inv-item .qty button, .pm > bu
 .needs-row > .btn { flex: none; }
 .notice.ck-finished { border-color: var(--brass); box-shadow: 0 0 0 2px var(--brass) inset; }
 .ck-help-note { font-size: var(--fs-xs); margin-top: 4px; }
+
+/* Lock Pick: How to play */
+.lock-how { color: var(--brass); font-size: var(--fs-sm); margin-left: auto; }
+.lock-how-modal { max-width: 560px; }
+.lock-how-steps { margin: 8px 0 10px 20px; padding: 0; display: grid; gap: 8px; font: var(--fs-md)/1.5 var(--body); }

@@ -37,6 +37,25 @@ function lockSVG(need, wins) {
   </svg>`;
 }
 
+// ---------- How to play (over the lock scene) ----------
+function showHowTo() {
+  const back = document.createElement('div');
+  back.className = 'modal-back ask-back';
+  back.innerHTML = `<div class="modal ask lock-how-modal" role="dialog" aria-modal="true" aria-label="How to pick a lock">
+    <div class="ho-kicker">${gl('wrench')} HOW TO PICK A LOCK</div>
+    <ol class="lock-how-steps">
+      <li><b>Roll Finesse.</b> Every Hit is one <b>peek</b>: a look at whether the next card is red or black.</li>
+      <li><b>A card is turned up.</b> Call the next one <b>Higher</b> or <b>Lower</b>. Get it right and a pin sets.</li>
+      <li><b>A tie breaks the pick</b>, and so does a wrong call. An Ace drawn next always counts as high. If the first card is an Ace, you choose whether it’s high or low.</li>
+      <li><b>Set every pin in a row</b> (the dots at the top) and the lock opens. Whatever’s inside is yours, unless it’s trapped.</li>
+      <li><b>Snapped it?</b> If the Warden allows retries, <b>Try again</b> (pay the cost at the table). You get a fresh deck and the same number of peeks; no new roll.</li>
+    </ol>
+    <p class="muted">Peeks are optional. Use one any time before you call.</p>
+    <div class="ask-btns"><button type="button" class="btn" data-x>Got it</button></div></div>`;
+  document.body.append(back);
+  back.addEventListener('click', (e) => { if (e.target === back || e.target.closest('[data-x]')) back.remove(); });
+}
+
 // ---------- the player's scene ----------
 let scene = null, cur = null, busy = false;
 async function act(action, extra = {}) {
@@ -52,6 +71,7 @@ function render(anim = '') {
   scene.className = `modal-back lock-back${a.status === 'picked' ? ' opened' : ''}${a.status === 'failed' ? ' snapped' : ''}${anim ? ` ${anim}` : ''}`;
   scene.innerHTML = `<div class="lock-scene" role="dialog" aria-modal="true" aria-label="Pick the lock">
     <div class="lock-head"><small>PICK THE LOCK · ${DIFF[a.need - 1].toUpperCase()}</small><b>${esc(a.what)}</b>
+      <button type="button" class="linkish lock-how" data-lp="how">How to play</button>
       ${a.picks != null ? `<span class="lock-picks">${gl('wrench')} ${a.picks} lockpick${a.picks === 1 ? '' : 's'}</span>` : ''}<span class="lock-prog">${Array.from({ length: a.need }, (_, i) => `<i class="${i < a.wins ? 'on' : ''}"></i>`).join('')}<em>${a.wins}/${a.need} pins</em></span></div>
     <div class="lock-stage">${lockSVG(a.need, a.wins)}
       <div class="lock-cards">${a.status === 'finesse' ? '' : `
@@ -88,9 +108,10 @@ async function onClick(e) {
       if (!r.ok) { play('lockSnap'); setTimeout(() => play('fail'), 250); render('fresh'); }
       else if (r.status === 'picked') { play('lockClick'); setTimeout(() => { play('lockOpen'); play(cur.sprung ? 'fail' : 'success'); if (cur.sprung) setTimeout(() => play('explosion'), 250); }, 200); render('fresh'); }
       else { play('lockClick'); render('fresh'); }
+    } else if (k === 'how') { busy = false; showHowTo(); return;
     } else if (k === 'retry') {
       if (!await ask(`Try again?\n\nThe Warden set the cost: ${cur.retryCost || 'nothing'}. Pay it at the table.`, { ok: 'Pay and try again', danger: false })) { busy = false; return; }
-      await act('retry'); render();
+      await act('retry'); play('card'); render(); toast(`Fresh deck. You still have ${cur.peeks} peek${cur.peeks === 1 ? '' : 's'} from your Finesse roll.`);
     } else if (k === 'walk') {
       if (!await ask('Walk away from the lock? It stays locked.', { ok: 'Walk away' })) { busy = false; return; }
       await leave();

@@ -224,6 +224,7 @@
 - **Scanner Grit:** in a fight, `lib/routes/scan.js` `scanRange` refuses a Scan unless the scanner has `SCAN_GRIT` (3, p. 83) and isn't Unconscious. The Grit comes off their sheet when the roll happens. Out of combat nothing is counted.
 - **Closing a table:** when the table turns `closed`, players' open saloon scenes close (`watchSaloon` → `closeTable` + a toast with their net). Bets were already refunded server-side.
 - **Start combat with no enemies:** opens Add enemies first. `openAddEnemies(combat, done, {intro})` now returns a Promise of how many were added; then it re-fetches combat and opens `pickFighters`.
+- **Lock Pick:** a How to play link in the scene header (`showHowTo`, an `.ask-back` dialog over the scene). `retry` no longer asks for a second Finesse roll: it deals a fresh deck and restores `rolledPeeks` (the first roll's Hits).
 - **Finished roll calls:** they never auto-close, because Helping stays possible.
   - On Run the Game (`desk.js` `renderChecks`), once everyone named has rolled (or a Challenge has a winner), the card gets `.ck-finished` and a "Close it" button; while waiting, the button is "Call off".
   - `wardenNeeds` lists it urgent with the results ("Tess made it (3/3). Close it?") plus `closeCheck`. The Needs you list shows it as a `.needs-row` with a Close it button (`checkClose`).

@@ -278,9 +278,12 @@ test('lock picking (High/Low): ties lose, Ace rules, win N in a row, peeks, retr
   // failing, then retrying costs a try; with none left it can't
   t = start(1, D([9], [9]), 1);
   t.go({ action: 'guess', dir: 'lower' });
+  t.st.list[0].peeks = 0; // spent the peek on the first try
   t.go({ action: 'retry' });
-  assert.equal(t.st.list[0].status, 'finesse');
-  t.go({ action: 'finesse' }); t.go({ action: 'guess', dir: 'lower' });
+  assert.equal(t.st.list[0].status, 'playing', 'no second Finesse roll');
+  assert.equal(t.st.list[0].peeks, 1, 'the same peeks as the first roll');
+  assert.throws(() => t.go({ action: 'finesse' }), /Already rolled/);
+  t.go({ action: 'guess', dir: 'lower' });
   assert.throws(() => t.go({ action: 'retry' }), /No more tries/);
   // someone else can't touch your lock
   assert.throws(() => lockAction(t.st, { action: 'peek', id: t.id, pc: 'b' }, { warden: false, names }), /someone else/);
