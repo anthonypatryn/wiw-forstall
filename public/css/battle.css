@@ -6,9 +6,12 @@
 .stage img { display: block; pointer-events: none; }
 .stage svg { position: absolute; left: 0; top: 0; pointer-events: none; overflow: visible; }
 .grid path { fill: none; stroke: #1b1410; stroke-width: 2; }
-.ranges .arm { fill: rgba(200,55,45,.42); }
-.ranges .short { fill: rgba(224,176,42,.30); }
-.ranges .long { fill: rgba(47,109,115,.22); }
+.ranges .arm { fill: rgba(214,52,40,.55); stroke: #ff6a5c; stroke-width: 2.5; }
+.ranges .short { fill: rgba(240,190,40,.42); stroke: #ffd35a; stroke-width: 2; }
+.ranges .long { fill: rgba(64,170,178,.30); stroke: #8fe3e3; stroke-width: 1.5; }
+.ranges { filter: drop-shadow(0 0 3px rgba(0,0,0,.6)); animation: rangesIn .25s ease-out; }
+@keyframes rangesIn { from { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .ranges { animation: none; } }
 .tokens { position: absolute; left: 0; top: 0; }
 
 .btoken {
@@ -87,7 +90,7 @@
 
 /* token art, stand-ins, Health */
 .btoken.art { color: transparent; }
-.btoken.stand-in.enemy { background-image: radial-gradient(circle at 50% 35%, rgba(255,255,255,.18), transparent 60%) !important; }
+/* stand-ins get their silhouette from battle.js (SIL); the ring below still shows size */
 .btoken.stand-in.enemy::before { /* size ring: bigger monsters get a heavier ring */
   content: ''; position: absolute; inset: 8%; border-radius: 50%; border: 2px dashed rgba(244,234,214,.45);
 }

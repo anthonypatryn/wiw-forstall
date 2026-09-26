@@ -4,6 +4,16 @@ const F = 'fill="currentColor"';
 const G = {
   // a single-action revolver
   revolver: `<path ${F} d="M2 8.2h13.6l.9-1.7h3.9v3.4h-2.5l-1 2H11.3l-1.4 5H5.6l1.4-5H2z"/><path ${S} d="M11.4 11.9c.3 1.6 1.6 2.7 3.1 2.2"/><path ${F} d="M3.6 7.2h1.8v1H3.6z"/>`,
+  // a six-shooter in profile: barrel, cylinder, hammer, grip and trigger guard
+  gun: `<path ${F} d="M4.6 5.6h7v1.1H22v2.6H11.6v2.4H9.2l-1.5 8a1 1 0 0 1-1 .8H4.3a.8.8 0 0 1-.8-1l1.6-8.3z"/><path ${F} d="M3.2 5.8l1.9-2 1.1 1.5-1.4 1.4z"/><path ${S} d="M9.4 11.2c-.1 2.3 1.4 3.2 3.2 2.5v-2.4"/><path ${F} d="M20.3 4.8h1.4v1.1h-1.4z"/><circle fill="none" stroke="#fff" stroke-width=".9" cx="8.2" cy="8.3" r="1.3"/>`,
+  // a round-topped shield (Dodge)
+  shield: `<path ${S} d="M12 3l7.5 2.6v5.6c0 4.6-3.2 8.2-7.5 9.8-4.3-1.6-7.5-5.2-7.5-9.8V5.6z"/><path ${S} d="M12 6.8v11.4M7.6 10.4h8.8"/>`,
+  // a canvas backpack with a flap and side pockets (Use Item)
+  backpack: `<path ${S} d="M7 9a5 5 0 0 1 10 0v10.2a1.8 1.8 0 0 1-1.8 1.8H8.8A1.8 1.8 0 0 1 7 19.2z"/><path ${S} d="M10 5.2V4a2 2 0 0 1 4 0v1.2"/><path ${S} d="M7 11.5c3.2 1.4 6.8 1.4 10 0"/><path ${S} d="M9.5 15h5v3.5h-5z"/><path ${S} d="M7 13H5.4v5.5H7M17 13h1.6v5.5H17"/>`,
+  // an hourglass (Prepare: wait for the moment)
+  hourglass: `<path ${S} d="M6 3h12M6 21h12"/><path ${S} d="M7.5 3c0 4.6 4.5 6 4.5 9s-4.5 4.4-4.5 9M16.5 3c0 4.6-4.5 6-4.5 9s4.5 4.4 4.5 9"/><path ${F} d="M9.1 18.8c.9-1.8 2.9-2.4 2.9-4 0 1.6 2 2.2 2.9 4z"/>`,
+  // a light bulb — Edison's own idea (Improvise)
+  bulb: `<path ${S} d="M12 3a6 6 0 0 0-3.6 10.8c.6.5.9 1.2.9 2V17h5.4v-1.2c0-.8.3-1.5.9-2A6 6 0 0 0 12 3z"/><path ${S} d="M9.4 19.3h5.2M10.2 21.5h3.6"/><path ${S} d="M10.4 11.2l1.6 1.6 1.6-1.6"/>`,
   // a cowboy boot with a spur
   boot: `<path ${F} d="M8 2.5h6.4l-.4 8.3 5.3 3c1.3.7 2 1.7 2 2.9v1.5H7.3l-.7-2.4-1.8.2V14l2.2-.8z"/><circle ${S} cx="3.4" cy="16.4" r="1.7"/><path ${S} d="M5 16.4h1.4"/><path ${S} d="M7 21h14"/>`,
   // a quick swerve out of the way

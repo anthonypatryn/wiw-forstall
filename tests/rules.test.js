@@ -1054,3 +1054,16 @@ test('a Forstall the Warden placed: anyone within Arm’s Reach works it on thei
   tokens[1].col = 7; state.combat.current = b.id; b.grit = 6;
   assert.throws(() => publicAction(state, { action: 'forstall', op: 'off', key: 'town1', pc: b.id }, { warden: false, ctx: ctx() }), /Tess is working/);
 });
+
+test('Battle Map: a player moves only their own token; the Warden moves anything', async () => {
+  const { freshBattle, battleAction } = await import('../lib/battle.js');
+  const s = freshBattle();
+  s.tokens = [{ id: 'ta', kind: 'pc', ref: 'a', name: 'Lila', col: 1, row: 1 }, { id: 'tb', kind: 'pc', ref: 'b', name: 'Bo', col: 2, row: 1 }, { id: 'te', kind: 'enemy', ref: 'e', name: 'Wolf', col: 3, row: 1 }];
+  battleAction(s, { action: 'move', id: 'ta', col: 4, row: 4, pc: 'a' }, { warden: false, combat: null });
+  assert.equal(s.tokens[0].col, 4);
+  assert.throws(() => battleAction(s, { action: 'move', id: 'tb', col: 5, row: 5, pc: 'a' }, { warden: false, combat: null }), /not your character/);
+  assert.throws(() => battleAction(s, { action: 'move', id: 'tb', col: 5, row: 5 }, { warden: false, combat: null }), /This is me/);
+  assert.throws(() => battleAction(s, { action: 'move', id: 'te', col: 5, row: 5, pc: 'a' }, { warden: false, combat: null }), /Only the Warden/);
+  battleAction(s, { action: 'move', id: 'tb', col: 6, row: 6 }, { warden: true, combat: null });
+  assert.equal(s.tokens[1].col, 6);
+});

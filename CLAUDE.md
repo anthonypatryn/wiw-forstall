@@ -235,6 +235,12 @@
   - While it's open, `targeting()` / `targetable()` light valid targets on the map (`.btoken.target.band-*`, `.picked`, others `.dimmed`), and clicking a token picks it instead of selecting it (`wireToken`). `#map-banner` says so.
   - `#range-legend` shows only while a token is selected.
 
+- **Battle Map follow-ups:**
+  - Players move only their own token: the client `canMove` checks `t.ref === myId()`, and the move body carries `pc`. lib/battle.js `move` refuses anything else, with a hint to tap "This is me".
+  - Range hexes are brighter and outlined in their band color.
+  - Action icons: gun (Attack), shield (Dodge), backpack (Use Item), hourglass (Prepare), bulb (Improvise), all in glyphs.js.
+  - Tokens always show a picture: art (trade art for the posse unless they uploaded a photo, book art for monsters and NPCs), otherwise a white silhouette (`SIL.beast` for monster enemies, flagged `beast` in `battleView`; `SIL.person` for everyone else) on their color, with initials.
+
 ## Playtest fixes (2026-09-26)
 - **Scanning in a fight** (pp. 83–84), in `lib/routes/scan.js`:
   - `combatScan {pc, key?, monster}` requires:

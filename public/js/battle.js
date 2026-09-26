@@ -17,6 +17,11 @@ const TRADE_COLOR = {
   Doctor: '#2f6d73', Gunslinger: '#a4401f', Hunter: '#4d6b2f', Marshal: '#8a6a2a',
   Mechanic: '#3d5a7a', Prospector: '#b3702a', Trapper: '#6b3f5e',
 };
+// stand-in silhouettes when there's no picture: a beast for monsters, a person for everyone else
+const SIL = {
+  beast: `url('data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><path fill="rgba(255,255,255,.32)" d="M10 50c2-10 6-17 13-21l-4-11 9 7c3-1 6-1 9 0l9-7-4 11c7 4 11 11 13 21-6-3-12-4-17-3l-5 7-5-7c-5-1-11 0-18 3z"/></svg>')}')`,
+  person: `url('data:image/svg+xml,${encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><path fill="rgba(255,255,255,.32)" d="M18 20h28l-3 3H21zM24 20c0-6 3-10 8-10s8 4 8 10zM32 24a8 8 0 1 1 0 16 8 8 0 0 1 0-16zM14 60c1-10 8-17 18-17s17 7 18 17z"/></svg>')}')`,
+};
 const color = (t) => (t.kind === 'enemy' ? '#5a1a12' : t.kind === 'npc' ? '#5e5750' : TRADE_COLOR[t.trade] || '#555');
 const initials = (n) => String(n).split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase();
 
@@ -68,7 +73,7 @@ function attackHTML(sel) {
       <div class="opts">${armed.map(([x, i]) => { const pool = isPool(x[key]) ? String(x[key]).toUpperCase() : ''; return `<button type="button" class="opt${i === s.w ? ' on' : ''}" data-as-w="${i}"${pool ? '' : ' disabled'}><b>${esc(x.model || x.manufacturer)}</b><small>${pool ? `${gritOf(x)} Grit${thrown(x, key)}` : 'can’t reach'}</small><span class="dice">${pool || '—'}</span></button>`; }).join('')}</div>
       ${loaded.length ? `<label class="field-inline">Ammo <select data-as="ammo" aria-label="Ammo"><option value="">regular</option>${loaded.map(([a, k]) => `<option value="${k}"${String(k) === String(s.ammo) ? ' selected' : ''}>${esc(a.name)} (${a.rds})</option>`).join('')}</select></label>` : ''}
       <label class="check"><input type="checkbox" data-as="aim"${s.aim ? ' checked' : ''}${pc.aimed ? ' disabled' : ''}> Aim: reroll one die (+1 Grit)${pc.aimed ? ' · used this turn' : ''}</label>
-      <button type="button" class="btn go" data-map-attack${isPool(w[key]) ? '' : ' disabled'}>${gl('revolver')} Roll ${isPool(w[key]) ? String(w[key]).toUpperCase() : ''} · ${cost} Grit</button>`;
+      <button type="button" class="btn go" data-map-attack${isPool(w[key]) ? '' : ' disabled'}>${gl('gun')} Roll ${isPool(w[key]) ? String(w[key]).toUpperCase() : ''} · ${cost} Grit</button>`;
     return html;
   }
   if (sel.kind === 'enemy' && warden) {
@@ -207,7 +212,7 @@ function renderRanges() {
   svg.innerHTML = Object.entries(paths).map(([k, d]) => `<path class="${k}" d="${d}"/>`).join('');
 }
 
-const canMove = (t) => warden || t.kind === 'pc';
+const canMove = (t) => warden || (t.kind === 'pc' && !!t.ref && t.ref === myId()); // players: only their own token
 function renderTokens() {
   const layer = $('#tokens');
   const size = data.grid.ppi * 0.84, font = data.grid.ppi * 0.3, labFont = data.grid.ppi * 0.2;
@@ -220,7 +225,7 @@ function renderTokens() {
     const hasHp = t.maxHealth != null;
     const pct = hasHp ? Math.max(0, Math.min(100, (t.health / Math.max(1, t.maxHealth)) * 100)) : 0;
     const art = t.photo || (t.img ? `/img/tokens/${t.img}.webp` : '');
-    const bg = art ? `background:${color(t)} url('${esc(art)}') center / cover` : `background:${color(t)}`;
+    const bg = art ? `background:url('${esc(art)}') center / cover, ${SIL[t.beast ? 'beast' : 'person']} center 70% / 80% no-repeat, ${color(t)}` : `background:${SIL[t.beast ? 'beast' : 'person']} center 70% / 82% no-repeat, ${color(t)}`;
     const nStatus = Object.keys(t.statuses || {}).length;
     return `<div class="btoken ${t.kind}${tg}${art ? ' art' : ' stand-in'}${canMove(t) ? ' movable' : ''}${t.id === selected ? ' sel' : ''}${t.ref && t.ref === data.current ? ' turn' : ''}${t.hidden ? ' hidden-tok' : ''}${t.down ? ' down' : ''}${t.frenzied ? ' frenzied' : ''}"
       data-id="${t.id}" data-size="${esc(t.size || '')}" style="left:${c.x}px;top:${c.y}px;width:${size}px;height:${size}px;${bg};font-size:${font}px;border-width:${data.grid.ppi * 0.05}px"
@@ -442,15 +447,15 @@ function renderFightTurn(bar, fb, c) {
   const sts = isPc ? Object.entries(a.statuses || {}).filter(([, v]) => v) : [];
   const abil = isPc && meta ? abilityOptions(a, meta) : [];
   const ACTIONS = [
-    ['attack', 'revolver', 'Attack', 'weapon’s Grit'],
+    ['attack', 'gun', 'Attack', 'weapon’s Grit'],
     ['move', 'boot', 'Move', 'drag token'],
-    ['dodge', 'dodge', 'Dodge', '1 per die'],
+    ['dodge', 'shield', 'Dodge', '1 per die'],
     ...(abil.length ? [['ability', 'star', 'Ability', 'varies']] : []),
-    ...(gear.length ? [['item', 'satchel', 'Use Item', 'item’s Grit']] : []),
+    ...(gear.length ? [['item', 'backpack', 'Use Item', 'item’s Grit']] : []),
     ...(sts.length ? [['relieve', 'bandage', 'Relieve', '1 per die']] : []),
-    ['improvise', 'lasso', 'Improvise', '1+'],
+    ['improvise', 'bulb', 'Improvise', '1+'],
     ...(isPc && workable(a.id).length ? [['forstall', 'forstall', 'Forstall', `Scan ${scanCost()} · Sweep ${workable(a.id)[0].grit}`]] : []),
-    ...(isPc ? [['prepare', 'watch', 'Prepare', 'held', a.prepared]] : []),
+    ...(isPc ? [['prepare', 'hourglass', 'Prepare', 'held', a.prepared]] : []),
     ...(isPc ? [['fool', 'heart', 'Fool’s Grit', '+1 for 1 HP', a.foolUsed]] : []),
   ];
   if (!ACTIONS.some(([k]) => k === tp.open)) tp.open = '';
@@ -475,7 +480,7 @@ function renderFightTurn(bar, fb, c) {
     }
     case 'dodge':
       drawer = `<p class="tp-hint">Spend Grit, roll that many Black dice. The Hits soak the next attack on ${esc(a.name)} — gone at their next turn.</p>
-        <div class="tp-form"><input aria-label="Dodge dice" type="number" min="1" max="12" data-tp="dodge" value="${tp.dodge}"> Grit <button type="button" class="btn small" data-tp-dodge>${gl('dodge')} Dodge</button></div>`;
+        <div class="tp-form"><input aria-label="Dodge dice" type="number" min="1" max="12" data-tp="dodge" value="${tp.dodge}"> Grit <button type="button" class="btn small" data-tp-dodge>${gl('shield')} Dodge</button></div>`;
       break;
     case 'ability':
       if (!abil.some((o) => o.name === tp.ab.name)) tp.ab.name = abil.find((o) => !o.out)?.name || abil[0].name;
@@ -528,7 +533,7 @@ function renderFightTurn(bar, fb, c) {
             <option value="custom"${pp.trig === 'custom' ? ' selected' : ''}>something else…</option></select></label>
           ${pp.trig === 'custom' ? `<label class="wide">DESCRIBE IT<input data-pp="text" maxlength="80" placeholder="e.g. the wagon door opens" value="${esc(pp.text || '')}"></label>` : ''}
         </div>
-        <button type="button" class="btn small" data-tp-prep>${gl('watch')} Prepare · ${cost} Grit</button>`;
+        <button type="button" class="btn small" data-tp-prep>${gl('hourglass')} Prepare · ${cost} Grit</button>`;
       break;
     }
   }
@@ -886,7 +891,7 @@ function wireToken(el) {
     t.col = drag.hex.col; t.row = drag.hex.row; // move locally right away
     selected = t.id;
     render();
-    const ok = await act({ action: 'move', id: t.id, ...drag.hex, rough: tp.rough });
+    const ok = await act({ action: 'move', id: t.id, ...drag.hex, rough: tp.rough, pc: myId() });
     if (ok === null) { t.col = was.col; t.row = was.row; render(); } // not allowed: snap back
     else if (ok?.cost) { toast(`${t.name} moved — ${ok.cost} Grit.`); combatPoller?.now?.(); }
   };
