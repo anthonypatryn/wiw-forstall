@@ -220,6 +220,21 @@
 ## Quick moves (Battle Map turn bar)
 - `quickHTML` / `wireQuick` in battle.js: above the Actions grid, one button per nearest target (`QUICK_MAX` 3). A character's turn: "Shoot/Hit <enemy>" with the weapon that has the most dice at that range (Grit cost shown; disabled without the Grit) → the same `pc attack` call as the Attack drawer (no aim / special ammo — use the drawer for those). An enemy's turn (Warden): "<attack> → <character>" with the first attack that fits the range → `enemyAttack` (asks before forcing an out-of-range roll). Out-of-reach targets are listed as such. `render()` redraws the turn bar too, so quick moves appear once token positions load.
 
+## Battle Map layout v2 (2026-09-26, from the approved mockup)
+- **Sidebar** (`#panel`):
+  - `#fight-bar`, pinned (`fightBarHTML`/`wireFightBar`): Round, turn order, whose turn plus Grit, Next turn (Warden) or End my turn (their player), + Enemies, and a **⋯** menu (`fbState.menu`). The menu holds the enemy-Health sharing toggle, Undo last, Restart turn, Remove every enemy and End combat. With no fight, it offers Start combat (`startFight`) and Add enemies.
+  - Below it, folding `.acc` sections, remembered in `wiw.bmAcc`: the turn (`#turn-bar`: an "Open X's card" button, holds, turn log, quick moves) and On the board (token list with a count).
+  - The **›** tab on the map's right edge (`#side-toggle`) collapses the sidebar (`.side-closed`, remembered in `wiw.bmSide`).
+  - The ranges legend, "Add posse & enemies from Combat" and "start hidden" were removed.
+- **Map setup** lives behind the gear button on the map (`#setup-btn`, Warden only), in a `#setup` pop-up with tabs: Map (presets, upload, inches, cave rule), Grid, Forstalls, NPC tokens. The element ids are the same as before, so the old wiring still applies.
+- **Fighter card** (`#fcard`, inside the viewport): opens beside the selected token (`positionCard`, re-placed on pan/zoom via panZoom `onChange`; dragging the header sets `cardPos` until the selection changes). The header is built by `cardHead`/`wireCardHead`; the body is `#sel-box`, still rendered by `renderPanel`.
+  - When the selected token is the current actor and you may act (`turnUI`, built in `renderFightTurn`), the card shows the action tiles. Clicking one opens that action as a **focus view**: header "‹ Back · ATTACK", body = the drawer. Esc backs out of the action, then closes the card.
+  - A new turn auto-opens the actor's card for whoever runs them (`lastTurn`).
+  - Distances fold into a `<details>`.
+- **Attack view** (`attackHTML`): numbered steps with buttons (`.opt`): target (with band dot, distance, "nothing reaches"), weapon at that range (dice, Grit, thrown), ammo, Aim, then one `.btn.go` Roll button. For the Warden's enemy: attack, target, cover chips, Roll.
+  - While it's open, `targeting()` / `targetable()` light valid targets on the map (`.btoken.target.band-*`, `.picked`, others `.dimmed`), and clicking a token picks it instead of selecting it (`wireToken`). `#map-banner` says so.
+  - `#range-legend` shows only while a token is selected.
+
 ## Playtest fixes (2026-09-26)
 - **Scanning in a fight** (pp. 83–84), in `lib/routes/scan.js`:
   - `combatScan {pc, key?, monster}` requires:

@@ -12,7 +12,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Rye&family=Special+Elite&family=Reenie+Beanie&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css?v=80">
   <link rel="stylesheet" href="/css/fighter.css?v=5">
-  <link rel="stylesheet" href="/css/battle.css?v=36">
+  <link rel="stylesheet" href="/css/battle.css?v=37">
 </head>
 <body>
   <header class="masthead">
@@ -46,12 +46,15 @@
       </div>
       <button type="button" class="side-toggle" id="side-toggle" aria-label="Hide the sidebar" title="Hide the sidebar">›</button>
       <div class="drag-readout" id="readout" hidden></div>
+      <div class="map-banner" id="map-banner" hidden></div>
+      <div class="range-legend" id="range-legend" hidden></div>
+      <!-- the fighter card: opens beside whichever token is selected; drag it by its header -->
+      <div class="fcard" id="fcard" role="dialog" aria-label="Fighter card" hidden><div class="fcard-h" id="fcard-h"></div><div class="fcard-b" id="sel-box"></div></div>
     </div>
 
     <aside class="panel" id="panel">
       <section id="fight-bar"></section>
       <section class="acc" id="acc-turn" data-acc="turn" hidden><button type="button" class="acc-h" aria-expanded="true"><span data-acc-title>THE TURN</span><i class="chev" aria-hidden="true">▶</i></button><div class="acc-b" id="turn-bar"></div></section>
-      <section class="acc" data-acc="sel"><button type="button" class="acc-h" aria-expanded="true"><span>SELECTED</span><i class="chev" aria-hidden="true">▶</i></button><div class="acc-b" id="sel-box"></div></section>
       <section class="acc" data-acc="board"><button type="button" class="acc-h" aria-expanded="false"><span>ON THE BOARD</span><small id="board-count"></small><i class="chev" aria-hidden="true">▶</i></button><div class="acc-b"><div id="token-list"></div></div></section>
     </aside>
   </main>
@@ -99,6 +102,6 @@
     </div>
   </div>
 
-  <script type="module" src="/js/battle.js?v=96"></script>
+  <script type="module" src="/js/battle.js?v=98"></script>
 </body>
 </html>

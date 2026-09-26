@@ -37,6 +37,9 @@ async function combatAct(body) {
   try { const res = await api('POST', body, '', '/api/combat'); combat = res.state || combat; return res.result ?? true; }
   catch (e) { toast(e.message, true); return null; }
 }
+const bdot = (b) => `<span class="bdot ${b}" aria-hidden="true"></span>`;
+const effPool = (a) => (String(a.effect || '').toUpperCase().match(/\d+[BG](?:\d+[BG])?/) || [''])[0];
+// the Attack view in the fighter card: pick the target (here or by clicking it on the map), then the weapon, then Roll
 function attackHTML(sel) {
   if (!combat?.combat?.active) return '';
   const s = atkSel[sel.id] ||= {};
@@ -45,52 +48,56 @@ function attackHTML(sel) {
     if (!pc || pc.dead) return '';
     const foes = data.tokens.filter((t) => t.kind === 'enemy' && !t.down && combat.enemies.some((e) => e.id === t.ref && !e.defeated))
       .map((t) => ({ t, d: dist(sel, t) })).sort((a, b) => a.d - b.d);
-    if (!foes.length) return `<h3 class="d-h">${gl('revolver')} ATTACK</h3><p class="muted">No enemies standing on the board.</p>`;
-    if (!foes.some((f) => f.t.id === s.t)) s.t = foes[0].t.id;
-    const tgt = foes.find((f) => f.t.id === s.t), bandKey = WEAPON_KEY[band(tgt.d)];
-    const weapons = pc.weapons.map((w, i) => [w, i]).filter(([w]) => (w.model || w.manufacturer) && isPool(w[bandKey]));
-    if (!weapons.some(([, i]) => i === s.w)) s.w = weapons[0]?.[1];
+    if (!foes.length) return '<p class="muted">No enemies standing on the board.</p>';
+    const armed = pc.weapons.map((w, i) => [w, i]).filter(([w]) => w.model || w.manufacturer);
+    const reach = (d) => armed.some(([w]) => isPool(w[WEAPON_KEY[band(d)]]));
+    if (s.t && !foes.some((f) => f.t.id === s.t && reach(f.d))) s.t = null;
+    const tgt = s.t ? foes.find((f) => f.t.id === s.t) : null;
+    let html = `${tgt ? '' : '<div class="focus-banner">Click a lit-up enemy on the map, or pick one here.</div>'}
+      <p class="pick-h">1 · TARGET</p>
+      <div class="opts">${foes.map(({ t, d }) => { const b = band(d), ok = reach(d); return `<button type="button" class="opt${t.id === s.t ? ' on' : ''}" data-as-t="${t.id}"${ok ? '' : ' disabled'}><b>${bdot(b)}${esc(t.name)}</b><small>${d}″ · ${BAND_LABEL[b]}${ok ? '' : ' · nothing reaches'}</small></button>`; }).join('')}</div>`;
+    if (!tgt) return html;
+    const key = WEAPON_KEY[band(tgt.d)];
+    if (!armed.some(([w, i]) => i === s.w && isPool(w[key]))) s.w = armed.find(([w]) => isPool(w[key]))?.[1];
     const w = pc.weapons[s.w] || {};
     const loaded = (w.ammo || []).map((a, k) => [a, k]).filter(([a]) => a.name && Number(a.rds) > 0);
     if (!loaded.some(([, k]) => String(k) === String(s.ammo))) s.ammo = '';
-    const cost = (parseInt(String(w.grit || '').split('|')[0], 10) || 0) + (s.aim ? 1 : 0);
-    const mine = combat.combat.current === pc.id;
-    return `<h3 class="d-h">${gl('revolver')} ATTACK FROM HERE ${mine ? '<span class="tag turn">THEIR TURN</span>' : ''} <small>${pc.grit} Grit</small></h3>
-      <div class="atk-form">
-        <select data-as="t" aria-label="Target">${foes.map(({ t, d }) => `<option value="${t.id}"${t.id === s.t ? ' selected' : ''}>→ ${esc(t.name)} · ${d}″ ${BAND_LABEL[band(d)]}</option>`).join('')}</select>
-        ${weapons.length ? `<select data-as="w" aria-label="Weapon">${weapons.map(([x, i]) => `<option value="${i}"${i === s.w ? ' selected' : ''}>${esc(x.model || x.manufacturer)} · ${esc(String(x[bandKey]).toUpperCase())}${thrown(x, bandKey)}</option>`).join('')}</select>
-        <select data-as="ammo" aria-label="Ammo"><option value="">regular ammo</option>${loaded.map(([a, k]) => `<option value="${k}"${String(k) === String(s.ammo) ? ' selected' : ''}>${esc(a.name)} (${a.rds})</option>`).join('')}</select>
-        <label class="check"><input type="checkbox" data-as="aim"${s.aim ? ' checked' : ''}${pc.aimed ? ' disabled' : ''}> Aim +1</label>
-        <button type="button" class="btn small" data-map-attack>${gl('revolver')} Attack · ${cost} Grit</button>`
-        : `<p class="muted">No weapon reaches ${BAND_LABEL[band(tgt.d)]} (${tgt.d}″). Move closer.</p>`}
-      </div>`;
+    const gritOf = (x) => parseInt(String(x.grit || '').split('|')[0], 10) || 0;
+    const cost = gritOf(w) + (s.aim ? 1 : 0);
+    html += `<p class="pick-h">2 · WEAPON AT ${BAND_LABEL[band(tgt.d)].toUpperCase()} (${tgt.d}″)</p>
+      <div class="opts">${armed.map(([x, i]) => { const pool = isPool(x[key]) ? String(x[key]).toUpperCase() : ''; return `<button type="button" class="opt${i === s.w ? ' on' : ''}" data-as-w="${i}"${pool ? '' : ' disabled'}><b>${esc(x.model || x.manufacturer)}</b><small>${pool ? `${gritOf(x)} Grit${thrown(x, key)}` : 'can’t reach'}</small><span class="dice">${pool || '—'}</span></button>`; }).join('')}</div>
+      ${loaded.length ? `<label class="field-inline">Ammo <select data-as="ammo" aria-label="Ammo"><option value="">regular</option>${loaded.map(([a, k]) => `<option value="${k}"${String(k) === String(s.ammo) ? ' selected' : ''}>${esc(a.name)} (${a.rds})</option>`).join('')}</select></label>` : ''}
+      <label class="check"><input type="checkbox" data-as="aim"${s.aim ? ' checked' : ''}${pc.aimed ? ' disabled' : ''}> Aim: reroll one die (+1 Grit)${pc.aimed ? ' · used this turn' : ''}</label>
+      <button type="button" class="btn go" data-map-attack${isPool(w[key]) ? '' : ' disabled'}>${gl('revolver')} Roll ${isPool(w[key]) ? String(w[key]).toUpperCase() : ''} · ${cost} Grit</button>`;
+    return html;
   }
   if (sel.kind === 'enemy' && warden) {
     const e = combat.enemies.find((x) => x.id === sel.ref);
     const prof = e?.profile ? combat.profiles?.[e.profile] : null;
-    if (!e || e.defeated || !prof?.attacks?.length) return '';
+    if (!e || e.defeated || !prof?.attacks?.length) return '<p class="muted">No attacks on its profile. Use Improvise, or roll from the Roll dice button.</p>';
     const posse = data.tokens.filter((t) => t.kind === 'pc' && combat.posse.some((p) => p.id === t.ref && !p.dead))
       .map((t) => ({ t, d: dist(sel, t) })).sort((a, b) => a.d - b.d);
-    if (!posse.length) return '';
-    if (!posse.some((f) => f.t.id === s.t)) s.t = posse[0].t.id;
-    const tgt = posse.find((f) => f.t.id === s.t), b = band(tgt.d);
-    const fits = prof.attacks.map((a, i) => [a, i]).filter(([a]) => (ATK_BAND[a.range] || 'arm') === b || (b === 'arm' && a.range === 'Short'));
-    if (!prof.attacks.some((_, i) => i === s.a)) s.a = (fits[0] || [null, 0])[1];
-    return `<h3 class="d-h">${gl('claws')} ATTACK THE POSSE <small>${e.grit ?? '?'} Grit</small></h3>
-      <div class="atk-form">
-        <select data-as="t" aria-label="Target">${posse.map(({ t, d }) => `<option value="${t.id}"${t.id === s.t ? ' selected' : ''}>→ ${esc(t.name)} · ${d}″ ${BAND_LABEL[band(d)]}</option>`).join('')}</select>
-        <select data-as="a" aria-label="Attack">${prof.attacks.map((a, i) => { const ok = fits.some(([, k]) => k === i);
-          return `<option value="${i}"${i === s.a ? ' selected' : ''}>${ok ? '' : '(out of range) '}${esc(a.name)} · ${a.range}${a.grit ? ` · ${a.grit} Grit` : ''}</option>`; }).join('')}</select>
-        <select data-as="cover" aria-label="Cover"><option value="0">no cover</option><option value="1"${s.cover == 1 ? ' selected' : ''}>light cover</option><option value="2"${s.cover == 2 ? ' selected' : ''}>heavy cover</option></select>
-        <button type="button" class="btn small" data-map-eattack>${gl('claws')} Roll it</button>
-      </div>`;
+    if (!posse.length) return '<p class="muted">Nobody from the posse is on the board.</p>';
+    if (!prof.attacks.some((_, i) => i === s.a)) s.a = 0;
+    if (s.t && !posse.some((f) => f.t.id === s.t)) s.t = null;
+    const atk = prof.attacks[s.a], tgt = s.t ? posse.find((f) => f.t.id === s.t) : null;
+    const fits = (a, d) => (ATK_BAND[a.range] || 'arm') === band(d) || (band(d) === 'arm' && a.range === 'Short');
+    return `<p class="pick-h">1 · ATTACK</p>
+      <div class="opts">${prof.attacks.map((a, i) => `<button type="button" class="opt${i === s.a ? ' on' : ''}" data-as-a="${i}"><b>${esc(a.name)}</b><small>${esc(a.range)}${a.grit ? ` · ${a.grit} Grit` : ''}${a.aoe ? ' · area' : ''}</small><span class="dice">${effPool(a) || ''}</span></button>`).join('')}</div>
+      ${tgt ? '' : '<div class="focus-banner">Click who it attacks on the map, or pick them here.</div>'}
+      <p class="pick-h">2 · TARGET</p>
+      <div class="opts">${posse.map(({ t, d }) => `<button type="button" class="opt${t.id === s.t ? ' on' : ''}" data-as-t="${t.id}"><b>${bdot(band(d))}${esc(t.name)}</b><small>${d}″ · ${BAND_LABEL[band(d)]}${fits(atk, d) ? '' : ` · out of ${esc(atk.range)} range`}</small></button>`).join('')}</div>
+      <p class="pick-h">3 · THEIR COVER</p>
+      <div class="chip-row">${[['0', 'None'], ['1', 'Light (+1B)'], ['2', 'Heavy (+2B)']].map(([v, l]) => `<button type="button" class="chip-btn${String(s.cover || 0) === v ? ' on' : ''}" data-as-cover="${v}">${l}</button>`).join('')}</div>
+      <button type="button" class="btn go" data-map-eattack${tgt ? '' : ' disabled'}>${gl('claws')} Roll ${esc(atk.name)}${atk.grit ? ` · ${atk.grit} Grit` : ''}</button>`;
   }
   return '';
 }
 const vp = $('#viewport'), stage = $('#stage');
 const pz = panZoom(vp, stage, {
-  maxScale: 2.5, ignore: '.btoken, .fstoken, .map-ctrls',
-  onTap: (target) => { if (!target.closest('.btoken, .fstoken')) select(null); },
+  maxScale: 2.5, ignore: '.btoken, .fstoken, .map-ctrls, .fcard, .side-toggle, .map-banner, .range-legend',
+  onTap: (target) => { if (!target.closest('.btoken, .fstoken, .fcard')) select(null); },
+  onChange: () => positionCard(),
 });
 $('#zoom-in').addEventListener('click', () => pz.zoom(1.35));
 $('#zoom-out').addEventListener('click', () => pz.zoom(1 / 1.35));
@@ -185,6 +192,9 @@ function renderStage() {
 function renderRanges() {
   const svg = $('#ranges');
   const t = selected && data.tokens.find((x) => x.id === selected);
+  const lg = $('#range-legend');
+  lg.hidden = !t;
+  if (t) lg.innerHTML = `<span>${bdot('arm')}ARM’S REACH ≤1″</span><span>${bdot('short')}SHORT ≤6″</span><span>${bdot('long')}LONG ≤18″</span><small>from ${esc(t.name)}</small>`;
   if (!t) { svg.innerHTML = ''; return; }
   const paths = { arm: '', short: '', long: '' };
   for (let row = Math.max(0, t.row - 19); row <= Math.min(data.size.rows - 1, t.row + 19); row++) {
@@ -202,15 +212,17 @@ function renderTokens() {
   const layer = $('#tokens');
   const size = data.grid.ppi * 0.84, font = data.grid.ppi * 0.3, labFont = data.grid.ppi * 0.2;
   const sel = selected && data.tokens.find((x) => x.id === selected);
+  const att = targeting(), picked = att && atkSel[att.id]?.t;
   layer.innerHTML = data.tokens.map((t) => {
     const c = center(t.col, t.row);
     const d = sel && sel.id !== t.id ? dist(sel, t) : null;
+    const tg = att && t.id !== att.id ? (targetable(att, t) ? ` target band-${band(dist(att, t))}${picked === t.id ? ' picked' : ''}` : ' dimmed') : '';
     const hasHp = t.maxHealth != null;
     const pct = hasHp ? Math.max(0, Math.min(100, (t.health / Math.max(1, t.maxHealth)) * 100)) : 0;
     const art = t.photo || (t.img ? `/img/tokens/${t.img}.webp` : '');
     const bg = art ? `background:${color(t)} url('${esc(art)}') center / cover` : `background:${color(t)}`;
     const nStatus = Object.keys(t.statuses || {}).length;
-    return `<div class="btoken ${t.kind}${art ? ' art' : ' stand-in'}${canMove(t) ? ' movable' : ''}${t.id === selected ? ' sel' : ''}${t.ref && t.ref === data.current ? ' turn' : ''}${t.hidden ? ' hidden-tok' : ''}${t.down ? ' down' : ''}${t.frenzied ? ' frenzied' : ''}"
+    return `<div class="btoken ${t.kind}${tg}${art ? ' art' : ' stand-in'}${canMove(t) ? ' movable' : ''}${t.id === selected ? ' sel' : ''}${t.ref && t.ref === data.current ? ' turn' : ''}${t.hidden ? ' hidden-tok' : ''}${t.down ? ' down' : ''}${t.frenzied ? ' frenzied' : ''}"
       data-id="${t.id}" data-size="${esc(t.size || '')}" style="left:${c.x}px;top:${c.y}px;width:${size}px;height:${size}px;${bg};font-size:${font}px;border-width:${data.grid.ppi * 0.05}px"
       title="${esc(t.name)}">${art ? '' : esc(initials(t.name))}
       ${t.holding ? `<span class="hold-dot" style="font-size:${labFont * 1.4}px" title="Prepared: ${esc(t.holding)}">${gl('watch')}</span>` : ''}
@@ -226,16 +238,27 @@ function renderTokens() {
 }
 
 function renderPanel() {
+  if (!data) return;
   const sel = selected && data.tokens.find((x) => x.id === selected);
-  const box = $('#sel-box');
-  if (box.contains(document.activeElement) && /^(SELECT|INPUT)$/.test(document.activeElement.tagName)) return; // don't redraw under the Warden's typing
+  const box = $('#sel-box'), card = $('#fcard'), head = $('#fcard-h');
+  if (card.contains(document.activeElement) && /^(SELECT|INPUT|TEXTAREA)$/.test(document.activeElement.tagName)) return; // don't redraw under someone's typing
   const selF = !sel && selFs ? fsOf(selFs) : null;
+  const actor = sel && turnUI?.can && turnUI.tok?.id === sel.id ? turnUI : null; // this fighter's turn, and you run them
+  const focus = actor && tp.open ? actor.ACTIONS.find(([k]) => k === tp.open) : null;
+  card.hidden = !sel && !selF;
+  mapBanner();
   if (selF) {
-    box.innerHTML = `<div class="sel-card"><div class="kind">FORSTALL${selF.hidden ? ' · HIDDEN FROM POSSE' : ''}</div>${forstallCard(selF)}</div>`;
+    head.innerHTML = cardHead(`<span class="av fs">${gl('forstall')}</span>`, selF.name, `FORSTALL${selF.hidden ? ' · HIDDEN FROM POSSE' : ''}`);
+    box.innerHTML = forstallCard(selF);
     wireFs(box);
   } else if (!sel) {
-    box.innerHTML = `<div class="sel-card"><div class="kind">RANGE METER</div><h2>Tap a token</h2>
-      <p>You’ll see its Arm’s Reach, Short and Long Range, and how far away everyone else is.</p></div>`;
+    box.innerHTML = ''; head.innerHTML = '';
+  } else if (focus) {
+    // one action at a time: its own view, with a way back
+    head.innerHTML = `<button type="button" class="fc-back" data-tp-back>‹ Back</button><div class="fc-t"><b>${esc(focus[2].toUpperCase())}</b><small>${esc(sel.name.toUpperCase())} · ${actor.cur.a.grit ?? 0} GRIT</small></div><button type="button" class="fc-x" data-fc-close aria-label="Close">×</button>`;
+    box.innerHTML = `<div class="tp-drawer focus">${tp.open === 'attack' ? attackHTML(actor.tok) : actor.drawer || ''}</div>`;
+    wireTurnBar(box, actor.cur, actor.tok);
+    head.querySelector('[data-tp-back]').addEventListener('click', () => { tp.open = ''; renderTurnBar(); });
   } else {
     const others = data.tokens.filter((t) => t.id !== sel.id).map((t) => ({ t, d: dist(sel, t) })).sort((a, b) => a.d - b.d);
     const st = Object.entries(sel.statuses || {});
@@ -252,17 +275,21 @@ function renderPanel() {
       ${sel.sweepPreview ? `<div class="d-note fs-prev">${gl('forstall')} ${esc(sel.sweepPreview)}</div>` : ''}
       ${sel.emp != null ? `<button type="button" class="btn small danger" data-emp="${esc(sel.ref)}"${sel.emp < 1 ? ' disabled' : ''}>${gl('flash')} Natural EMP (${sel.emp}/2 left today)</button>` : ''}
       ${warden && sel.kind === 'enemy' && sel.ref ? `<label class="check"><input type="checkbox" data-submerged="${esc(sel.ref)}"${sel.submerged ? ' checked' : ''}> Submerged — Forstalls can’t reach it</label>` : ''}
-      ${(() => { const f = sel.kind === 'pc' && (data.forstalls || []).find((x) => x.owner === sel.ref); return f ? forstallCard(f) : ''; })()}
-      ${!fcHTML && sel.attacks?.length ? `<details class="d-atk"><summary>Attacks</summary>${sel.attacks.map((a) => `<p>${esc(a)}</p>`).join('')}</details>` : ''}
-      ${combat?.combat?.active && sel.ref && sel.ref === combat.combat.current ? '<p class="tp-hint">Attacks and actions are in the turn panel above.</p>' : ''}`;
+      ${!actor ? (() => { const f = sel.kind === 'pc' && (data.forstalls || []).find((x) => x.owner === sel.ref); return f ? forstallCard(f) : ''; })() : ''}
+      ${!fcHTML && sel.attacks?.length ? `<details class="d-atk"><summary>Attacks</summary>${sel.attacks.map((a) => `<p>${esc(a)}</p>`).join('')}</details>` : ''}`;
     const kindLabel = sel.kind === 'pc' ? `POSSE${sel.trade ? ` · THE ${esc(sel.trade.toUpperCase())}` : ''}` : sel.kind === 'enemy' ? 'ENEMY' : 'NPC';
-    box.innerHTML = `<div class="sel-card">${sel.photo || sel.img ? `<img class="sel-art" src="${esc(sel.photo || `/img/tokens/${sel.img}.webp`)}" alt="">` : ''}<div class="kind">${kindLabel}${sel.hidden ? ' · HIDDEN FROM POSSE' : ''}</div>${fcHTML ? '' : `<h2>${esc(sel.name)}</h2>`}${fcHTML}${detail}
-      <h3 class="d-h">DISTANCES</h3>
+    const art = sel.photo || sel.img ? `<span class="av" style="background:${color(sel)} url('${esc(sel.photo || `/img/tokens/${sel.img}.webp`)}') center / cover"></span>` : `<span class="av" style="background:${color(sel)}">${esc(initials(sel.name))}</span>`;
+    head.innerHTML = cardHead(art, sel.name, `${kindLabel}${sel.hidden ? ' · HIDDEN' : ''}`, actor ? '<span class="tag turn">THEIR TURN</span>' : '');
+    box.innerHTML = `<div class="sel-card">
+      ${actor ? `${actor.actionsHTML}` : ''}
+      ${fcHTML}${detail}
+      <details class="d-dist"><summary>Distances</summary>
       ${others.length ? others.map(({ t, d }) => `<div class="tok-row" data-pick="${t.id}"><span class="chip" style="background:${color(t)}">${esc(initials(t.name))}</span>
-        <span class="n">${esc(t.name)}</span><span class="d ${band(d)}">${d}″ · ${BAND_LABEL[band(d)]}</span></div>`).join('') : '<p class="muted">Nobody else on the board.</p>'}</div>`;
+        <span class="n">${esc(t.name)}</span><span class="d ${band(d)}">${d}″ · ${BAND_LABEL[band(d)]}</span></div>`).join('') : '<p class="muted">Nobody else on the board.</p>'}</details></div>`;
+    if (actor) wireTurnBar(box, actor.cur, actor.tok); else wireFs(box);
   }
-  if (sel) wireFs(box);
-  if (sel && warden) wireFighters(box, { data: combat, meta, act: async (body) => { const r = await combatAct(body); renderPanel(); renderTurnBar(); poller?.now?.(); return r; } });
+  wireCardHead(head);
+  if (sel && !focus && warden) wireFighters(box, { data: combat, meta, act: async (body) => { const r = await combatAct(body); renderPanel(); renderTurnBar(); poller?.now?.(); return r; } });
   box.querySelector('[data-emp]')?.addEventListener('click', async (e) => {
     if (!await ask('Natural EMP?\n\nEvery Forstall within Long Range (18″) stops Sweeping, and they can’t Scan or Burst until this monster’s next turn.', { ok: 'Let it rip', danger: true })) return;
     play('zap');
@@ -277,7 +304,8 @@ function renderPanel() {
       ${warden ? `<button type="button" data-hide="${t.id}">${t.hidden ? 'Reveal' : 'Hide'}</button><button aria-label="Remove this token" type="button" data-rm="${t.id}">✕</button>` : ''}</div>`).join('')
     : `<p class="muted">${warden ? 'Tokens appear when a fight starts or you add enemies. NPCs: the gear on the map.' : 'The Warden hasn’t set the board yet.'}</p>`;
   $('#board-count').textContent = data.tokens.length ? `${data.tokens.length} token${data.tokens.length === 1 ? '' : 's'}` : '';
-  document.querySelectorAll('#panel [data-pick]').forEach((el) => el.addEventListener('click', (e) => {
+  requestAnimationFrame(positionCard);
+  document.querySelectorAll('#panel [data-pick], #fcard [data-pick]').forEach((el) => el.addEventListener('click', (e) => {
     if (e.target.closest('button')) return;
     select(el.dataset.pick);
     const t = data.tokens.find((x) => x.id === el.dataset.pick);
@@ -289,6 +317,52 @@ function renderPanel() {
   }));
   list.querySelectorAll('[data-rm]').forEach((b) => b.addEventListener('click', () => act({ action: 'removeToken', id: b.dataset.rm })));
 }
+
+// ---------- the fighter card: header, where it sits, dragging it ----------
+function cardHead(av, name, kind, extra = '') {
+  return `${av}<div class="fc-t"><b>${esc(name)}</b><small>${kind} ${extra}</small></div><button type="button" class="fc-x" data-fc-close aria-label="Close">×</button>`;
+}
+function wireCardHead(head) {
+  head.querySelector('[data-fc-close]')?.addEventListener('click', () => { tp.open = ''; select(null); renderTurnBar(); });
+}
+// beside its token (flipping sides to stay on screen) until someone drags it somewhere else
+function positionCard() {
+  const card = $('#fcard');
+  if (!data || card.hidden) return;
+  const vr = vp.getBoundingClientRect(), w = card.offsetWidth, h = card.offsetHeight;
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(v, hi));
+  if (cardPos) { card.style.left = `${clamp(cardPos.x, 6, vr.width - w - 6)}px`; card.style.top = `${clamp(cardPos.y, 6, vr.height - 40)}px`; return; }
+  const t = selected && data.tokens.find((x) => x.id === selected), f = !t && selFs && fsOf(selFs);
+  const pos = t ? center(t.col, t.row) : f?.pos ? center(f.pos.col, f.pos.row) : null;
+  if (!pos) return;
+  const v = pz.view, sx = v.x + pos.x * v.s, sy = v.y + pos.y * v.s, off = data.grid.ppi * 0.55 * v.s + 16;
+  let x = sx + off;
+  if (x + w > vr.width - 34) x = sx - off - w;
+  card.style.left = `${clamp(x, 8, vr.width - w - 34)}px`;
+  card.style.top = `${clamp(sy - 90, 8, Math.max(8, vr.height - h - 8))}px`;
+}
+(() => {
+  const card = $('#fcard'), head = $('#fcard-h');
+  card.addEventListener('wheel', (e) => e.stopPropagation()); // scroll the card, not the map
+  head.addEventListener('pointerdown', (e) => {
+    if (e.target.closest('button')) return;
+    e.preventDefault();
+    const sx = e.clientX, sy = e.clientY, ox = card.offsetLeft, oy = card.offsetTop;
+    const mv = (ev) => { cardPos = { x: ox + ev.clientX - sx, y: oy + ev.clientY - sy }; positionCard(); };
+    const up = () => { removeEventListener('pointermove', mv); removeEventListener('pointerup', up); };
+    addEventListener('pointermove', mv); addEventListener('pointerup', up);
+  });
+})();
+function mapBanner() {
+  const att = targeting(), b = $('#map-banner');
+  b.hidden = !att;
+  if (att) b.innerHTML = att.kind === 'pc' ? `${gl('target')} CLICK A TARGET ON THE MAP <em>lit by range: red Arm’s Reach · yellow Short · teal Long</em>` : `${gl('claws')} CLICK WHO ${esc(att.name.toUpperCase())} ATTACKS`;
+}
+addEventListener('resize', () => positionCard());
+addEventListener('keydown', (e) => {
+  if (e.key !== 'Escape' || !$('#setup').hidden || document.querySelector('.ask-back')) return;
+  if (tp.open) { tp.open = ''; renderTurnBar(); } else if (selected || selFs) select(null);
+});
 
 function moveReadout(t, d) {
   const c = combat?.combat;
@@ -329,6 +403,7 @@ function renderTurnBar() {
   const c = combat?.combat;
   if (!c?.active) {
     $('#acc-turn').hidden = true;
+    if (turnUI) { turnUI = null; tp.open = ''; renderPanel(); }
     const n = (combat?.enemies || []).filter((e) => !e.defeated).length, pcs = (combat?.posse || []).filter((p) => !p.dead).length;
     fb.innerHTML = warden ? `<div class="fightbar idle"><div class="fb-top"><b>NO FIGHT RUNNING</b><small>${pcs} in the posse · ${n} enem${n === 1 ? 'y' : 'ies'} ready</small></div>
       <div class="fb-btns two"><button type="button" class="btn fb-next" data-startfight${pcs ? '' : ' disabled'}>${gl('revolver')} Start combat</button><button type="button" class="btn small fb-ghost" data-addenemies>${gl('claws')} Add enemies</button></div></div>`
@@ -357,7 +432,7 @@ function renderFightTurn(bar, fb, c) {
   const nm = (k) => combat.posse.find((p) => p.id === k)?.name || combat.enemies.find((e) => e.id === k)?.name || '—';
   const order = c.turnList || [], i = order.indexOf(c.current), next = order.length > 1 ? order[(i + 1) % order.length] : null;
   const u = combat.undo || {};
-  if (!cur) { fb.innerHTML = fightBarHTML(null); bar.innerHTML = '<p class="muted">Between turns.</p>'; wireFightBar(fb); return; }
+  if (!cur) { turnUI = null; fb.innerHTML = fightBarHTML(null); bar.innerHTML = '<p class="muted">Between turns.</p>'; wireFightBar(fb); renderPanel(); return; }
   const a = cur.a, isPc = cur.kind === 'pc';
   const can = warden || (isPc && myId() === a.id);
   const log = a.turnLog || [];
@@ -382,7 +457,7 @@ function renderFightTurn(bar, fb, c) {
   let drawer = '';
   if (can) switch (tp.open) {
     case 'attack':
-      drawer = tok ? attackHTML(tok).replace(/<h3 class="d-h">[\s\S]*?<\/h3>/, '') : '<p class="muted">Put their token on the board first.</p>';
+      drawer = tok ? attackHTML(tok) : '<p class="muted">Put their token on the board first.</p>';
       break;
     case 'move':
       drawer = `<p class="tp-hint">Drag <b>${esc(a.name)}</b>’s token on the map — the Grit cost shows while you drag, and it’s spent when you drop.</p>
@@ -459,20 +534,28 @@ function renderFightTurn(bar, fb, c) {
   }
   fb.innerHTML = fightBarHTML(cur);
   wireFightBar(fb);
+  // a new turn: open that fighter's card for whoever runs them
+  if (c.current !== lastTurn && data) { // (wait for the map, so there's a token to open)
+    lastTurn = c.current; tp.open = '';
+    if (tok && can) { selected = tok.id; selFs = null; cardPos = null; renderRanges(); }
+  }
+  turnUI = { cur, tok, can, ACTIONS, drawer,
+    actionsHTML: `<div class="tp-actions">${ACTIONS.map(([k, ic, label, cost, off]) => `<button type="button" class="tp-act${tp.open === k ? ' on' : ''}" data-open="${k}"${off ? ' disabled' : ''}><span class="ic">${gl(ic)}</span>${label}<small>${off ? 'used' : cost}</small></button>`).join('')}</div>` };
   $('#acc-turn [data-acc-title]').textContent = `${a.name.toUpperCase()}’S TURN`;
   bar.innerHTML = `<div class="turn-panel${can && !warden ? ' mine' : ''}">
+    ${can && tok ? `<button type="button" class="btn small tp-opencard" data-opencard>${gl('target')} ${selected === tok.id ? 'Their card is open on the map' : `Open ${esc(a.name)}’s card on the map`}</button>` : ''}
     ${holdsHTML()}
     <div class="tp-log">${log.length ? log.map((l) => `<span class="tp-chip">${esc(l.text)}${l.grit > 0 ? ` <i>−${l.grit}</i>` : l.grit < 0 ? ` <i class="plus">+${-l.grit}</i>` : ''}</span>`).join('') : '<span class="muted">Nothing done yet this turn.</span>'}
       ${a.dodge ? `<span class="tp-chip good">${gl('dodge')} ${a.dodge} Dodge ready</span>` : ''}</div>
-    ${can ? `
-      ${quickHTML(cur, tok)}
-      <div class="tp-actions">${ACTIONS.map(([k, ic, label, cost, off]) => `<button type="button" class="tp-act${tp.open === k ? ' on' : ''}" data-open="${k}"${off ? ' disabled' : ''}><span class="ic">${gl(ic)}</span>${label}<small>${off ? 'used' : cost}</small></button>`).join('')}</div>
-      ${drawer ? `<div class="tp-drawer">${drawer}</div>` : ''}`
-    : `<p class="muted tp-empty">${isPc ? `Waiting on ${esc(a.name)}’s player (or the Warden).` : 'The enemies are acting.'}</p>`}
+    ${can ? quickHTML(cur, tok) : `<p class="muted tp-empty">${isPc ? `Waiting on ${esc(a.name)}’s player (or the Warden).` : 'The enemies are acting.'}</p>`}
   </div>`;
-  wireTurnBar(bar, cur, tok);
+  wireHolds(bar);
   if (can) wireQuick(bar, cur, tok);
+  bar.querySelector('[data-opencard]')?.addEventListener('click', () => { cardPos = null; select(tok.id); const p = center(tok.col, tok.row); pz.centerOn(p.x, p.y, Math.max(pz.view.s, 0.45)); });
+  renderTokens();
+  renderPanel();
 }
+let turnUI = null, lastTurn = null, cardPos = null;
 
 // ---------- the fight bar: pinned at the top of the sidebar ----------
 const fbState = { menu: false };
@@ -622,6 +705,7 @@ function wireTurnBar(bar, cur, tok) {
   if (!cur) return;
   const a = cur.a, isPc = cur.kind === 'pc';
   const base = isPc ? { action: 'pc', id: a.id } : { action: 'enemy', id: a.id };
+  bar.querySelector('[data-tp-back]')?.addEventListener('click', () => { tp.open = ''; renderTurnBar(); });
   bar.querySelectorAll('[data-open]').forEach((b) => b.addEventListener('click', async () => {
     const k = b.dataset.open;
     if (k === 'fool') { if (await ask('Fool’s Grit: +1 Grit for 1 Health?')) tpAct({ ...base, op: 'fool' }, '+1 Grit, −1 Health.'); return; }
@@ -687,11 +771,16 @@ function wireTurnBar(bar, cur, tok) {
 function wireAttack(box, sel) {
   if (!sel) return;
   const s = atkSel[sel.id] ||= {};
+  const pick = (k, v) => { s[k] = v; renderTokens(); renderPanel(); };
+  box.querySelectorAll('[data-as-t]').forEach((b) => b.addEventListener('click', () => pick('t', b.dataset.asT)));
+  box.querySelectorAll('[data-as-w]').forEach((b) => b.addEventListener('click', () => pick('w', Number(b.dataset.asW))));
+  box.querySelectorAll('[data-as-a]').forEach((b) => b.addEventListener('click', () => pick('a', Number(b.dataset.asA))));
+  box.querySelectorAll('[data-as-cover]').forEach((b) => b.addEventListener('click', () => pick('cover', Number(b.dataset.asCover))));
   box.querySelectorAll('[data-as]').forEach((el) => el.addEventListener('change', () => {
     const k = el.dataset.as;
     s[k] = k === 'aim' ? el.checked : (k === 'w' || k === 'a' || k === 'cover') ? Number(el.value) : el.value;
     el.blur();
-    renderTurnBar();
+    renderPanel();
   }));
   box.querySelector('[data-map-attack]')?.addEventListener('click', async () => {
     const tgt = data.tokens.find((t) => t.id === s.t);
@@ -743,13 +832,29 @@ function render() {
   renderWarden();
   if (combat) renderTurnBar(); // quick moves and ranges need the token positions
 }
-function select(id) { selected = id; selFs = null; renderRanges(); renderTokens(); renderPanel(); if (warden && data) renderFsWarden(); }
+function select(id) { if (id !== selected) { cardPos = null; if (!turnUI?.tok || id !== turnUI.tok.id) tp.open = ''; } selected = id; selFs = null; renderRanges(); renderTokens(); renderPanel(); if (warden && data) renderFsWarden(); if (combat?.combat?.active) renderTurnBar(); }
 
 // ---------- dragging tokens ----------
+// the attacker whose Attack view is open (their token), while it's their turn and you may act for them
+function targeting() {
+  const cur = turnUI?.cur;
+  if (tp.open !== 'attack' || !cur || !turnUI.can || !turnUI.tok || selected !== turnUI.tok.id) return null;
+  return turnUI.tok;
+}
+function targetable(att, t) {
+  if (att.kind === 'pc') {
+    if (t.kind !== 'enemy' || t.down || !combat.enemies.some((e) => e.id === t.ref && !e.defeated)) return false;
+    const pc = combat.posse.find((p) => p.id === att.ref), k = WEAPON_KEY[band(dist(att, t))];
+    return !!pc?.weapons.some((w) => (w.model || w.manufacturer) && isPool(w[k]));
+  }
+  return att.kind === 'enemy' && warden && t.kind === 'pc' && combat.posse.some((p) => p.id === t.ref && !p.dead);
+}
 function wireToken(el) {
   const t = data.tokens.find((x) => x.id === el.dataset.id);
   el.addEventListener('pointerdown', (e) => {
     e.stopPropagation();
+    const att = targeting();
+    if (att && t.id !== att.id && targetable(att, t)) { (atkSel[att.id] ||= {}).t = t.id; play('lockClick'); renderTokens(); renderPanel(); return; }
     if (!canMove(t)) { select(t.id); return; }
     try { el.setPointerCapture(e.pointerId); } catch {}
     const start = center(t.col, t.row);
@@ -1098,7 +1203,7 @@ function renderFsWarden() {
     act({ action: 'removeForstall', id: b.dataset.fsRm });
   }));
 }
-function selectFs(key) { selFs = key; selected = null; renderRanges(); renderTokens(); renderPanel(); if (warden) renderFsWarden(); }
+function selectFs(key) { cardPos = null; selFs = key; selected = null; renderRanges(); renderTokens(); renderPanel(); if (warden) renderFsWarden(); }
 // dragging a Warden Forstall around the board
 function wireFsMarker(el) {
   const key = el.dataset.fs;
