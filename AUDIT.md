@@ -7,6 +7,54 @@ Within each section, items are ranked by impact: **H** high, **M** medium, **L**
 
 ---
 
+## Status after the fix pass (2026-09-26, commits 5aa0085 → 6bf3061)
+
+**Fixed:**
+- **Top 10 #1, lost updates:** every API request is now a transaction. Writes commit atomically only if nothing they read changed in the meantime; otherwise the request re-runs. Tested: 20 simultaneous rolls all land. Falls back to plain writes if Redis scripting is ever unavailable.
+- **Top 10 #2, polling:** one `/api/pulse` request per tab, with per-document change counters; pages fetch only what changed.
+- **Top 10 #3, combat document:** undo snapshots skip the sheet parts a fight never changes, and undo merges instead of replacing, which also fixes mid-fight purchases being undone. The archive is capped at 1,000 entries. About 515 KB → 250 KB in the test.
+- **Top 10 #4, PIN guessing:** 30 wrong PINs in 15 minutes and that connection is treated as a player.
+- **Backup:** it was missing 9 of the 16 documents; it now includes all of them.
+- **§1 dead code:** removed `mountHud`, `getPin`, `resetTour`, `tierFor`, `gearNotes`, `programmable` and `inField`, plus 4 unused imports. Internal-only helpers are no longer exported.
+- **§2 dead CSS:** `combat.css` deleted; its one live rule, `.cards`, moved to posse.css. Also removed the dead rules in posse, battle, style, fighter, run and desk, and the unused variables. `--sp-6` is kept to complete the spacing scale.
+- **§3 duplication:**
+  - Server: `lib/util.js` and `lib/saloon-common.js`, and one `hexDist`.
+  - Client: `me`, `dollars`, `isPool`, `paras`, `tabFlag` and `loadImg` are shared.
+  - `clean` is now one trimming version plus `cleanKeepSpaces` for autosaved notes.
+- **§4 magic numbers:** poll timings, dice averages in the drinking contest, and the crooked-box chance are named.
+- **§5 design consistency:**
+  - Every z-index is a named `--z-*` token; the tour moved above the lightbox.
+  - Five `--shade-*` tokens replace the black-alpha variants.
+  - `--gold` is a token, and literal copies of `--surface-2` and `--line` were replaced with the tokens.
+  - 560/860 px breakpoints merged into 600/900.
+  - `!important` went from 26 to 10; the rest are justified and listed in STYLEGUIDE.md.
+- **§8 bugs and risks:**
+  - The dropdown's 400 ms timer only runs while a list is open.
+  - The flagged `.then()` chains turned out to be handled already; the scan was a false positive.
+- **§9 security:** request bodies are capped (413).
+- **§10 accessibility:**
+  - `aria-label` added to about 30 controls and 8 icon buttons.
+  - `--ink-faint` now meets 4.5:1 (5.2:1 on paper, 4.9:1 on the Warden's cards).
+  - Focus moves into the saloon, lock and duel scenes.
+  - Heading levels fixed on the Battle Map and Map pages.
+- **§11 performance:**
+  - Battle maps and the world map converted to WebP (25–35% smaller).
+  - The Warden header is a 173 KB crop instead of the 985 KB map.
+  - `deal.mp3` trimmed from 502 to 254 KB.
+  - Lists lazy-load their images.
+- **§12 SEO and basics:** favicon on How to Play, descriptions on every page, `noindex` everywhere plus a `robots.txt`.
+- **Found along the way:** a wording slip on Run the Game left over from the Combat Control retirement.
+
+**Deliberately left (reason):**
+- **§3, a shared `openDialog` helper and one stepper component:** the dialogs share only their outer shell, and merging four steppers risks visual changes across the games for little gain.
+- **§4, splitting `pcOp` / `wardenCombat` / `combat.js`, `posse.js` and `saloon.js`:** a large refactor of working rules code. Better done piece by piece alongside future features, with tests added first.
+- **§5, snapping one-off font sizes and off-scale spacing (6/10/14 px), and the content-tuned breakpoints (700/760/980/1000/1020/1100):** visible layout changes that would each need a design review.
+- **§9, per-player authentication:** a design choice for a friendly table. Adding it means sign-ins for every player.
+- **§10, moving Battle Map tokens by keyboard:** a feature in its own right.
+- **§11, self-hosting the Google Fonts:** fine as is; revisit if the site is used offline.
+
+---
+
 ## Top 10 overall (do these first)
 
 | # | Impact | Finding | Where |
