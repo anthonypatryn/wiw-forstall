@@ -916,3 +916,15 @@ test('Undo puts the fight back but leaves sheet edits made meanwhile (story, inv
   assert.equal(s.posse[0].history, 'Born in Dodge.');
   assert.ok(!JSON.stringify(s.undoStack).includes('pocket watch'));
 });
+
+test('Map pings: anyone can ping a hex; it shows for a few seconds with their name', async () => {
+  const { freshBattle, battleAction, battleView } = await import('../lib/battle.js');
+  const s = freshBattle();
+  const combat = { posse: [{ id: 'a', name: 'Lila' }] };
+  const p = battleAction(s, { action: 'ping', col: 3, row: 4, pc: 'a' }, { warden: false, combat });
+  assert.equal(p.name, 'Lila'); assert.equal(p.col, 3);
+  assert.equal(battleView(s, { warden: false, combat }).pings.length, 1);
+  assert.equal(battleAction(s, { action: 'ping', col: 1, row: 1 }, { warden: true, combat }).name, 'The Warden');
+  s.pings[0].at -= 60000;
+  assert.equal(battleView(s, { warden: false, combat }).pings.length, 1, 'the old one has expired');
+});

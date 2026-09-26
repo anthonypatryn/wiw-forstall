@@ -12,7 +12,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Rye&family=Special+Elite&family=Reenie+Beanie&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css?v=71">
   <link rel="stylesheet" href="/css/fighter.css?v=5">
-  <link rel="stylesheet" href="/css/battle.css?v=31">
+  <link rel="stylesheet" href="/css/battle.css?v=32">
 </head>
 <body>
   <header class="masthead">
@@ -21,7 +21,7 @@
       <div class="brand-title">
         <div class="kicker">STAND YOUR GROUND</div>
         <h1>Battle Map</h1>
-        <div class="sub">One hex = 1 inch · tap a token to see who’s in range (Guidebook p. 85)</div>
+        <div class="sub">One hex = 1 inch · tap a token to see who’s in range (Guidebook p. 85) · press and hold the map to ping a spot</div>
       </div>
       <button class="btn small warden-link" id="warden-btn" type="button"><span data-gl="star"></span> Warden</button>
     </div>
@@ -36,6 +36,7 @@
         <svg class="fields" id="fields" aria-hidden="true"></svg>
         <svg class="ranges" id="ranges" aria-hidden="true"></svg>
         <div class="tokens" id="tokens"></div>
+        <div class="pings" id="pings" aria-live="polite"></div>
       </div>
       <div class="map-ctrls">
         <button type="button" id="zoom-in" aria-label="Zoom in">+</button>
@@ -93,6 +94,6 @@
     </aside>
   </main>
 
-  <script type="module" src="/js/battle.js?v=77"></script>
+  <script type="module" src="/js/battle.js?v=79"></script>
 </body>
 </html>

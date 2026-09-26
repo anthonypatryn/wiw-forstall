@@ -93,6 +93,40 @@ $('#zoom-in').addEventListener('click', () => pz.zoom(1.35));
 $('#zoom-out').addEventListener('click', () => pz.zoom(1 / 1.35));
 $('#zoom-fit').addEventListener('click', () => pz.fit());
 
+// ---------- pings: press and hold (or right-click) the map → a marker everyone sees for a few seconds ----------
+const PING_HOLD_MS = 550, PING_SHOW_MS = 8000;
+const seenPings = new Set();
+let pingTimer = null, pingRedraw = null;
+function renderPings() {
+  const layer = $('#pings');
+  if (!layer || !data) return;
+  const live = (data.pings || []).filter((p) => Date.now() - p.at < PING_SHOW_MS);
+  // big enough to see at any zoom: at least ~110 px across and 15 px text on screen
+  const z = pz.view.s || 1, size = Math.max(data.grid.ppi * 1.6, 110 / z), font = Math.max(data.grid.ppi * 0.28, 15 / z);
+  layer.innerHTML = live.map((p) => { const c = center(p.col, p.row); return `<div class="ping" style="left:${c.x}px;top:${c.y}px;width:${size}px;height:${size}px;border-width:${4 / z}px"><span class="ping-name" style="font-size:${font}px;padding:${2 / z}px ${8 / z}px">${esc(p.name)}</span></div>`; }).join('');
+  if (live.some((p) => !seenPings.has(p.id))) play('lockClick');
+  live.forEach((p) => seenPings.add(p.id));
+  clearTimeout(pingRedraw);
+  if (live.length) pingRedraw = setTimeout(renderPings, Math.max(200, Math.min(...live.map((p) => p.at + PING_SHOW_MS - Date.now())) + 50)); // drop it when it expires
+}
+async function sendPing(clientX, clientY) {
+  if (!data) return;
+  const pt = pz.toStage(clientX, clientY), hex = toHex(pt.x, pt.y);
+  let me = null; try { me = JSON.parse(localStorage.getItem('wiw.me') || 'null'); } catch {}
+  const r = await act({ action: 'ping', col: hex.col, row: hex.row, pc: me });
+  if (r) { data.pings = [...(data.pings || []).filter((p) => p.id !== r.id), r]; renderPings(); }
+}
+vp.addEventListener('pointerdown', (e) => {
+  if (e.button !== 0 || e.target.closest('.btoken, .fstoken, .map-ctrls')) return;
+  const x0 = e.clientX, y0 = e.clientY;
+  clearTimeout(pingTimer);
+  pingTimer = setTimeout(() => sendPing(x0, y0), PING_HOLD_MS);
+  const cancel = (ev) => { if (ev.type !== 'pointermove' || Math.hypot(ev.clientX - x0, ev.clientY - y0) > 8) { clearTimeout(pingTimer); off(); } };
+  const off = () => ['pointermove', 'pointerup', 'pointercancel'].forEach((t) => vp.removeEventListener(t, cancel));
+  ['pointermove', 'pointerup', 'pointercancel'].forEach((t) => vp.addEventListener(t, cancel));
+});
+vp.addEventListener('contextmenu', (e) => { if (e.target.closest('.btoken, .fstoken, .map-ctrls')) return; e.preventDefault(); sendPing(e.clientX, e.clientY); });
+
 // ---------- hex math: pointy-top, odd rows shifted right ----------
 const R = () => data.grid.ppi / Math.sqrt(3);
 function center(col, row) {
@@ -592,6 +626,7 @@ function render() {
   renderFields();
   renderRanges();
   renderTokens();
+  renderPings();
   renderPanel();
   renderWarden();
 }

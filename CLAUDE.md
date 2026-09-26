@@ -209,3 +209,6 @@
 
 ## Who's here
 - A player's tab adds `?here=<pc>` to its `/api/pulse` request at most every 20 s (`HERE_MS` in common.js; not in Warden mode) → `markHere` (Redis `wiw-forstall:here:<pc>`, expires after 60 s). Run the Game asks `/api/pulse?who=<ids>` every 15 s (`refreshHere` in run.js) and shows a green `.here-dot` on each connected player's row.
+
+## Map pings
+- Press and hold (550 ms, no drag) or right-click an empty spot on the Battle Map → battle action `ping {col, row, pc}` (anyone; lib/battle.js, before the Warden check) → `state.pings` (last 6, shown for `PING_MS` 8 s; `battleView` returns the live ones). battle.js `renderPings` draws a pulsing gold ring with the pinger's name, sized in screen pixels so it's visible at any zoom, plays a click for new ones, and redraws itself when one expires.
