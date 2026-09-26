@@ -443,6 +443,7 @@ function renderTurnBar() {
     <div class="tp-log">${log.length ? log.map((l) => `<span class="tp-chip">${esc(l.text)}${l.grit > 0 ? ` <i>−${l.grit}</i>` : l.grit < 0 ? ` <i class="plus">+${-l.grit}</i>` : ''}</span>`).join('') : '<span class="muted">Nothing done yet this turn.</span>'}
       ${a.dodge ? `<span class="tp-chip good">${gl('dodge')} ${a.dodge} Dodge ready</span>` : ''}</div>
     ${can ? `
+      ${quickHTML(cur, tok)}
       <div class="tp-actions">${ACTIONS.map(([k, ic, label, cost, off]) => `<button type="button" class="tp-act${tp.open === k ? ' on' : ''}" data-open="${k}"${off ? ' disabled' : ''}><span class="ic">${gl(ic)}</span>${label}<small>${off ? 'used' : cost}</small></button>`).join('')}</div>
       ${drawer ? `<div class="tp-drawer">${drawer}</div>` : ''}
       <div class="tp-end">
@@ -453,6 +454,66 @@ function renderTurnBar() {
     : `<p class="muted tp-empty">${isPc ? `Waiting on ${esc(a.name)}’s player (or the Warden).` : 'The enemies are acting.'}</p>`}
   </div>`;
   wireTurnBar(bar, cur, tok);
+  if (can) wireQuick(bar, cur, tok);
+}
+// ---------- quick moves: one tap for the usual thing (the full Attack menu is still there for aim, ammo…) ----------
+const QUICK_MAX = 3; // nearest targets shown
+const diceIn = (pool) => (String(pool || '').match(/\d+/g) || []).reduce((n, d) => n + Number(d), 0);
+function quickHTML(cur, tok) {
+  if (!tok || !combat?.combat?.active) return '';
+  const a = cur.a, out = [];
+  if (cur.kind === 'pc') {
+    const foes = data.tokens.filter((t) => t.kind === 'enemy' && !t.down && !t.hidden && combat.enemies.some((e) => e.id === t.ref && !e.defeated))
+      .map((t) => ({ t, d: dist(tok, t) })).sort((x, y) => x.d - y.d).slice(0, QUICK_MAX);
+    for (const { t, d } of foes) {
+      const key = WEAPON_KEY[band(d)];
+      // the weapon with the most dice at this range
+      const best = a.weapons.map((w, i) => [w, i]).filter(([w]) => (w.model || w.manufacturer) && isPool(w[key])).sort(([x], [y]) => diceIn(y[key]) - diceIn(x[key]))[0];
+      if (!best) { out.push(`<span class="tp-quick-none">${esc(t.name)} is out of reach (${d}″)</span>`); continue; }
+      const [w, i] = best, cost = parseInt(String(w.grit || '').split('|')[0], 10) || 0;
+      const melee = /melee/i.test(w.type || '') || key === 'arms';
+      out.push(`<button type="button" class="tp-quick" data-quick="pc" data-w="${i}" data-range="${key}" data-target="${esc(t.ref)}"${(a.grit ?? 0) < cost ? ' disabled title="Not enough Grit"' : ''}>
+        ${gl(melee ? 'claws' : 'revolver')} ${melee ? 'Hit' : 'Shoot'} <b>${esc(t.name)}</b><small>${esc(w.model || w.manufacturer)} · ${esc(String(w[key]).toUpperCase())} · ${d}″ · ${cost} Grit</small></button>`);
+    }
+  } else if (warden) {
+    const e = combat.enemies.find((x) => x.id === a.id), prof = e?.profile ? combat.profiles?.[e.profile] : null;
+    if (!prof?.attacks?.length) return '';
+    const posse = data.tokens.filter((t) => t.kind === 'pc' && combat.posse.some((p) => p.id === t.ref && !p.dead))
+      .map((t) => ({ t, d: dist(tok, t) })).sort((x, y) => x.d - y.d).slice(0, QUICK_MAX);
+    for (const { t, d } of posse) {
+      const b = band(d);
+      const fit = prof.attacks.map((x, i) => [x, i]).find(([x]) => (ATK_BAND[x.range] || 'arm') === b || (b === 'arm' && x.range === 'Short'));
+      if (!fit) { out.push(`<span class="tp-quick-none">${esc(t.name)} is out of reach (${d}″)</span>`); continue; }
+      out.push(`<button type="button" class="tp-quick" data-quick="en" data-a="${fit[1]}" data-target="${esc(t.ref)}"${(a.grit ?? 0) < (fit[0].grit || 0) ? ' disabled title="Not enough Grit"' : ''}>
+        ${gl('claws')} ${esc(fit[0].name)} → <b>${esc(t.name)}</b><small>${d}″ · ${fit[0].grit ?? '?'} Grit</small></button>`);
+    }
+  }
+  return out.length ? `<div class="tp-quicks"><small>QUICK MOVES</small>${out.join('')}</div>` : '';
+}
+function wireQuick(bar, cur, tok) {
+  bar.querySelectorAll('[data-quick]').forEach((b) => b.addEventListener('click', async () => {
+    b.disabled = true;
+    const d = b.dataset;
+    if (d.quick === 'pc') {
+      const r = await combatAct({ action: 'pc', id: cur.a.id, op: 'attack', weapon: Number(d.w), range: d.range, target: d.target });
+      if (r?.dice) {
+        play(weaponSound(cur.a.weapons[Number(d.w)]));
+        await rollPopup(r, `${cur.a.name} → ${r.target} · ${r.pool}`);
+        toast(`${r.dmg ? `${r.dmg} damage to ${r.target}` : `${r.target} shrugs it off`} (${r.hits} Hits − ${r.def} Defense)${r.down ? ' — it’s down!' : ''}`, !r.dmg);
+      }
+    } else {
+      let r;
+      try { const res = await api('POST', { action: 'enemyAttack', enemy: cur.a.id, attack: Number(d.a), pc: d.target, cover: 0 }, '', '/api/combat'); combat = res.state || combat; r = res.result; }
+      catch (err) {
+        if (!/^OUT_OF_RANGE: /.test(err.message)) { toast(err.message, true); b.disabled = false; return; }
+        if (!await ask(`${err.message.slice(14)}\n\nRoll it anyway?`)) { b.disabled = false; return; }
+        r = await combatAct({ action: 'enemyAttack', enemy: cur.a.id, attack: Number(d.a), pc: d.target, cover: 0, force: true });
+      }
+      if (r?.atk?.dice) { play(/range|shoot|spit|throw/i.test(r.atk.label) ? 'gun' : 'swing'); rollPopup(r.atk, `${r.atk.label} · ${r.atk.pool}`); }
+      if (r) toast(`${r.dmg ? `${r.dmg} damage` : 'No damage'}${r.notes?.length ? ` · ${r.notes.join(', ')}` : ''}`);
+    }
+    renderTurnBar(); poller?.now?.();
+  }));
 }
 // ---------- prepared (held) Actions: who's holding what, and Fire now ----------
 function holdsHTML() {
@@ -629,6 +690,7 @@ function render() {
   renderPings();
   renderPanel();
   renderWarden();
+  if (combat) renderTurnBar(); // quick moves and ranges need the token positions
 }
 function select(id) { selected = id; selFs = null; renderRanges(); renderTokens(); renderPanel(); if (warden && data) renderFsWarden(); }
 

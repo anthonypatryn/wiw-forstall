@@ -215,3 +215,6 @@
 
 ## "Previously on…"
 - `GET /api/session?view=recap` is the session route's one public read: the latest session's player **recap** (id, title, date, ended, recap — never the Warden's notes). `public/js/previously.js` `showPreviously()` (started 2.5 s after load by `mountTableLog`, players only, needs "This is me"): once per session id per device (`wiw.prevSeen`), a pop-up with the recap, the posse's open quests and each one's next step (from the Journal's player view), "Open the Journal" / "Let's ride". Waits while another pop-up or game scene is up. The recap comes from End Session's Write-up step (or the Session Notes recap box).
+
+## Quick moves (Battle Map turn bar)
+- `quickHTML` / `wireQuick` in battle.js: above the Actions grid, one button per nearest target (`QUICK_MAX` 3). A character's turn: "Shoot/Hit <enemy>" with the weapon that has the most dice at that range (Grit cost shown; disabled without the Grit) → the same `pc attack` call as the Attack drawer (no aim / special ammo — use the drawer for those). An enemy's turn (Warden): "<attack> → <character>" with the first attack that fits the range → `enemyAttack` (asks before forcing an out-of-range roll). Out-of-reach targets are listed as such. `render()` redraws the turn bar too, so quick moves appear once token positions load.

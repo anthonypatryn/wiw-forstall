@@ -269,3 +269,15 @@ body.warden-mode .battle-wrap { grid-template-columns: minmax(0, 1fr) 440px; }
 .ping-name { position: absolute; left: 50%; top: 100%; transform: translate(-50%, 6px); white-space: nowrap; padding: 2px 8px; border-radius: var(--r-pill); background: var(--ink); color: var(--gold); font-family: var(--display); letter-spacing: .06em; }
 @keyframes pingPulse { from { transform: translate(-50%, -50%) scale(.4); opacity: 1; } to { transform: translate(-50%, -50%) scale(1.1); opacity: .35; } }
 @media (prefers-reduced-motion: reduce) { .ping { animation: none; } }
+
+/* quick moves on the turn bar */
+.tp-quicks { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 4px 0 8px; }
+.tp-quicks > small { width: 100%; font: var(--fs-xs) var(--display); letter-spacing: .12em; color: var(--ink-soft); }
+.tp-quick { display: inline-flex; flex-direction: column; align-items: flex-start; gap: 1px; padding: 7px 12px 6px; border: 1.5px solid var(--ink); border-radius: var(--radius); background: var(--surface); color: var(--ink); font: var(--fs-sm) var(--body); cursor: pointer; text-align: left; }
+.tp-quick b { font-weight: 700; }
+.tp-quick small { font-size: var(--fs-xs); color: var(--ink-soft); }
+.tp-quick .gl { width: 1em; height: 1em; }
+.tp-quick:hover:not(:disabled) { background: var(--accent); border-color: var(--accent-dark); color: #fff; }
+.tp-quick:hover:not(:disabled) small { color: rgba(255,255,255,.85); }
+.tp-quick:disabled { opacity: .5; cursor: not-allowed; }
+.tp-quick-none { font-size: var(--fs-xs); color: var(--ink-soft); font-style: italic; }
