@@ -3,6 +3,7 @@ import { esc, api, startPolling, staticDice, timeAgo, injectDefs, savedPin, toas
 import { gl } from './glyphs.js';
 import { duelHud } from './duel-hud.js';
 import { tradeHud, openTrade } from './trade.js';
+import { attention } from './attention.js';
 
 function logHTML(log) {
   if (!log.length) return '<p class="empty-note">Rolls and big moments show up here for everyone.</p>';
@@ -124,6 +125,12 @@ export function renderHud(h) {
   lastHud = h;
   duelHud(h);
   tradeHud(h);
+  // the tab title / icon / buzz for this device's player: their combat turn, or a roll the Warden asked them for
+  if (!savedPin() && me()) {
+    const mine = me(), cur = h.active && h.current === mine ? h.order.find((o) => o.key === mine) : null;
+    attention('turn', cur ? `Your turn, ${cur.name}!` : null);
+    attention('roll', (h.checks || []).some((ck) => ck.who.some((w) => w.id === mine && !w.rolled)) ? 'The Warden wants a roll' : null);
+  }
   const { strip, pop, ck } = hudMount();
   // 1) turn order strip (collapsible; remembered per device)
   if (!h.active || !h.order.length) strip.hidden = true;
@@ -304,8 +311,7 @@ function myTurnInner(h) {
   if (seen('wiw.turnHid') === k) { turnEl.hidden = true; return; }
   if (turnEl.dataset.k === k && !turnEl.hidden) return;
   turnEl.dataset.k = k; turnEl.hidden = false;
-  play('chime');
-  try { navigator.vibrate?.([120, 60, 120]); } catch {}
+  play('chime'); // (attention.js buzzes the phone and marks the tab)
   turnEl.innerHTML = `<div>${gl('revolver')} <b>${esc(cur.name)}, it’s your turn!</b></div>
     <div class="hud-ck-btns"><a class="btn small" href="/battle">Go to Battle Map ›</a><button type="button" class="btn small secondary" data-end>End my turn</button></div><button type="button" class="hud-myturn-x" data-hide aria-label="Hide until my next turn" title="Hide until my next turn">×</button>`;
   turnEl.querySelector('[data-hide]').addEventListener('click', () => { setSeen('wiw.turnHid', k); turnEl.hidden = true; setTurnH(); });

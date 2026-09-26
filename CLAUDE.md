@@ -203,3 +203,6 @@
 ## Shared helpers (use these, don't copy them)
 - Server: `lib/util.js` — `clean` (trims), `cleanKeepSpaces` (for text that autosaves while typed: notes), `id`, `int`, `cents`, `money`. `lib/saloon-common.js` — `seatOf`, `pcOf`, `say`, `walletOf`, `add` for the saloon games. Hex distance: `hexDist` in lib/forstall.js (re-exported by lib/battle.js).
 - Client (`public/js/common.js`): `me()`, `dollars()`, `tabFlag`/`setTabFlag`, `isPool`, `paras` (blank line = new paragraph, line break = `<br>`, escaped). `loadImg` lives in portrait.js. `controls.js` keeps its own `esc` on purpose (common.js imports it; importing back would be circular).
+
+## Your-turn alert (tab title, icon, buzz)
+- `public/js/attention.js` `attention(key, label|null)`: while any reason is set, the tab icon gets a red dot, the title reads "▶ …" (flashing every second while the tab is in the background), and phones buzz once when a reason first appears. Raised by `renderHud` in tablelog.js for this device's player (`turn`: their combat turn; `roll`: an open Skill check they haven't rolled) and by `watchSaloon` (`saloon`: their move at the card table). Not in Warden mode. No native notifications.

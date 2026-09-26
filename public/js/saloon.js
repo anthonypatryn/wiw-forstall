@@ -2,6 +2,7 @@
 import { esc, api, toast, startPolling, savedPin, store, rollPopup, ask, onChange, me, dollars as $$ } from './common.js';
 import { gl } from './glyphs.js';
 import { play } from './sound.js';
+import { attention } from './attention.js';
 
 const EP = '/api/saloon';
 const TOUGH = [['npc:Human - Weak Combatant', 'Green', 'weak Skills'], ['npc:Human - Moderate Combatant', 'Seasoned', 'fair Skills'], ['npc:Human - Strong Combatant', 'Sharp', 'strong Skills']];
@@ -640,7 +641,7 @@ export function watchSaloon() {
     const before = view;
     view = d;
     const t = d.table;
-    if (!t || t.status === 'closed') { if (scene) render(); showChip(); return; }
+    if (!t || t.status === 'closed') { attention('saloon', null); if (scene) render(); showChip(); return; }
     const key = `pc:${me()}`, seated = t.seats.some((s) => s.key === key);
     const invited = !t.invite?.length || t.invite.includes(me());
     if (!seated && invited && store.get('wiw.saloonAsked', '') !== t.id && !scene && !busy) {
@@ -652,6 +653,7 @@ export function watchSaloon() {
       }
       return;
     }
+    attention('saloon', seated && turnOf(t) === key ? 'Your move at the card table' : null);
     const myTurn = turnOf(t) === key && turnOf(before?.table) !== key;
     if (seated && myTurn && !scene) { play('chime'); openTable(false); }
     if (scene) render();
