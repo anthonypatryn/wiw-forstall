@@ -106,7 +106,7 @@ function renderPings() {
   const live = (data.pings || []).filter((p) => Date.now() - p.at < PING_SHOW_MS);
   // big enough to see at any zoom: at least ~110 px across and 15 px text on screen
   const z = pz.view.s || 1, size = Math.max(data.grid.ppi * 1.6, 110 / z), font = Math.max(data.grid.ppi * 0.28, 15 / z);
-  layer.innerHTML = live.map((p) => { const c = center(p.col, p.row); return `<div class="ping" style="left:${c.x}px;top:${c.y}px;width:${size}px;height:${size}px;border-width:${4 / z}px"><span class="ping-name" style="font-size:${font}px;padding:${2 / z}px ${8 / z}px">${esc(p.name)}</span></div>`; }).join('');
+  layer.innerHTML = live.map((p) => { const c = center(p.col, p.row); return `<div class="map-ping" style="left:${c.x}px;top:${c.y}px;width:${size}px;height:${size}px;border-width:${4 / z}px"><span class="map-ping-name" style="font-size:${font}px;padding:${2 / z}px ${8 / z}px">${esc(p.name)}</span></div>`; }).join('');
   if (live.some((p) => !seenPings.has(p.id))) play('lockClick');
   live.forEach((p) => seenPings.add(p.id));
   clearTimeout(pingRedraw);
