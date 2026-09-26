@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { scoreGuess } from '../lib/game.js';
 import { kindFromSheet, slotMonster, sweepTolerance, sweepLoss, bestSweep, edisonConflicts, fields, hexDist, KINDS } from '../lib/forstall.js';
 import { newSheet, equipItem, unequipItem, isPlaced, attachUpgrade, setSheetField, forstallFields } from '../lib/sheets.js';
-import { moveCost, freshCombat, publicAction, sweepHit } from '../lib/combat.js';
+import { moveCost, freshCombat, publicAction, sweepHit, pushUndo, undoCombat } from '../lib/combat.js';
 import { CATALOG } from '../lib/catalog.js';
 
 const item = (id) => { const it = CATALOG.find((x) => x.id === id); assert.ok(it, `catalog has ${id}`); return it; };
@@ -899,4 +899,20 @@ test('Saves are all-or-nothing: a request that read stale data is refused (and r
   await transaction(async () => { const d = await load(KEY); d.n += 1; await save(d, KEY); await save({ x: 1 }, KEY + '-b'); });
   assert.equal((await load(KEY)).n, 12); assert.equal((await load(KEY + '-b')).x, 1);
   for (const k of [KEY, KEY + '-b']) fs.rmSync(new URL(`../.data/${k}.json`, import.meta.url), { force: true });
+});
+
+test('Undo puts the fight back but leaves sheet edits made meanwhile (story, inventory) alone', () => {
+  const s = freshCombat();
+  const a = publicAction(s, { action: 'addPc', name: 'Lila', trade: 'Gunslinger' }, { warden: false });
+  publicAction(s, { action: 'addEnemy', profile: 'Prairie Wolf', count: 1 }, { warden: true });
+  publicAction(s, { action: 'start', posse: [a.id], enemies: s.enemies.map((e) => e.id) }, { warden: true });
+  const hp = a.health;
+  pushUndo(s, 'hit');
+  const pc = s.posse[0];
+  pc.health = hp - 4; pc.inventory = 'a silver pocket watch'; pc.history = 'Born in Dodge.';
+  undoCombat(s, { warden: true, mode: 'last' });
+  assert.equal(s.posse[0].health, hp, 'the damage is undone');
+  assert.equal(s.posse[0].inventory, 'a silver pocket watch', 'the inventory edit survives');
+  assert.equal(s.posse[0].history, 'Born in Dodge.');
+  assert.ok(!JSON.stringify(s.undoStack).includes('pocket watch'));
 });
