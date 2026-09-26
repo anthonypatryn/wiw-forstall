@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="/css/style.css?v=80">
   <link rel="stylesheet" href="/css/rollcall.css?v=13">
   <link rel="stylesheet" href="/css/desk.css?v=16">
-  <link rel="stylesheet" href="/css/run.css?v=26">
+  <link rel="stylesheet" href="/css/run.css?v=27">
 </head>
 <body>
   <header class="masthead">
@@ -35,72 +35,78 @@
       <button class="btn" id="unlock" type="button"><span data-gl="star"></span> Enter the Warden PIN</button>
     </section>
 
-    <div id="desk" hidden>
-      <nav class="toc-bar" id="run-toc" aria-label="Jump to">
-        <a href="#grp-scene">Scene</a><a href="#grp-now">Right Now</a><a href="#grp-rolls">Rolls</a><a href="#grp-table">At the Table</a><a href="#grp-rewards">Rewards &amp; Handouts</a><a href="#grp-notes">Notes &amp; Log</a><a href="#grp-tools">Tools</a>
-        <button type="button" class="btn small toc-end" id="end-session"><span data-gl="scroll"></span> End Session</button>
+    <div id="desk" class="run-desk" hidden>
+      <nav class="run-nav" id="run-nav" aria-label="Run the Game">
+        <div class="rn-views">
+          <a href="#grp-now" data-view="grp-now"><span data-gl="flash"></span><span>Now</span><b class="rn-badge" id="rn-now" hidden></b></a>
+          <a href="#grp-scene" data-view="grp-scene"><span data-gl="scroll"></span><span>Tonight’s Scene</span></a>
+          <a href="#grp-start" data-view="grp-start"><span data-gl="die"></span><span>Start Something</span></a>
+          <a href="#grp-rewards" data-view="grp-rewards"><span data-gl="trophy"></span><span>Rewards &amp; Handouts</span></a>
+          <a href="#grp-notes" data-view="grp-notes"><span data-gl="pin"></span><span>Notes &amp; Log</span></a>
+          <a href="#grp-tools" data-view="grp-tools"><span data-gl="wrench"></span><span>Tools</span></a>
+          <a href="#all" data-view="all" class="rn-all"><span>Everything on one page</span></a>
+        </div>
+        <div class="rn-h">QUICK</div>
+        <div class="rn-quick">
+          <button type="button" data-jump="rollcall">Call for a roll</button>
+          <button type="button" data-jump="lock">Lock pick</button>
+          <button type="button" data-jump="duel">Duel</button>
+          <button type="button" data-jump="saloon">Saloon</button>
+          <button type="button" data-jump="award">Award</button>
+          <button type="button" data-jump="handout">Hand out</button>
+          <button type="button" data-jump="whisper">Whisper</button>
+          <button type="button" data-jump="notes">Session notes</button>
+        </div>
+        <button type="button" class="btn small rn-end" id="end-session"><span data-gl="scroll"></span> End Session</button>
       </nav>
-      <section class="band" id="grp-scene">
-        <h2 class="band-h">Tonight’s Scene</h2>
-        <section class="card corner"><div id="scene-run"></div></section>
-      </section>
+      <div class="run-main" id="run-main">
       <section class="band" id="grp-now">
-        <h2 class="band-h">Right Now</h2>
+        <h2 class="band-h">Right Now: what to watch</h2>
         <div class="stack-grid">
           <div class="stack-col">
-            <section class="card corner">
+            <section class="card corner" id="card-needs">
           <div class="head-row"><h2 class="section-title">Needs You</h2><span class="muted" id="conn"></span></div>
           <div id="needs"></div>
+        </section><section class="card corner" id="card-checks">
+          <h2 class="section-title">Open Rolls</h2>
+          <div id="check-list"></div>
+        </section><section class="card corner" id="card-posse">
+          <div class="head-row"><h2 class="section-title">The Posse</h2><a class="btn small secondary" href="/posse"><span data-gl="scroll"></span> Sheets</a></div>
+          <div id="posse"></div>
         </section>
           </div>
           <div class="stack-col">
-            <section class="card corner">
+            <section class="card corner" id="card-fight">
           <div class="head-row"><h2 class="section-title">The Fight</h2><a class="btn small secondary" href="/battle"><span data-gl="pin"></span> Battle Map</a></div>
           <div id="fight"></div>
+        </section><section class="card corner" id="card-enemies">
+          <div class="head-row"><h2 class="section-title">Enemies</h2><a class="btn small secondary" href="/battle"><span data-gl="claws"></span> Add or loot</a></div>
+          <div id="enemies"></div>
         </section>
           </div>
         </div>
       </section>
-      <section class="band" id="grp-rolls">
-        <h2 class="band-h">Rolls</h2>
+      <section class="band" id="grp-scene">
+        <h2 class="band-h">Tonight’s Scene</h2>
+        <section class="card corner" id="card-scene"><div id="scene-run"></div></section>
+      </section>
+      <section class="band" id="grp-start">
+        <h2 class="band-h">Start Something</h2>
         <div class="stack-grid">
           <div class="stack-col">
-            <section class="card corner">
+            <section class="card corner" id="card-rollcall">
           <div class="head-row"><h2 class="section-title">Call for a Roll</h2><span class="muted">Task difficulty, p. 12</span></div>
           <div id="rollcall"></div>
-        </section>
-            <section class="card corner">
-          <h2 class="section-title">Open Rolls</h2>
-          <div id="check-list"></div>
-        </section>
-          </div>
-          <div class="stack-col">
-            <section class="card corner">
+        </section><section class="card corner" id="card-lock">
               <div class="head-row"><h2 class="section-title">Lock Pick</h2><span class="muted">High/Low · Finesse peeks</span></div>
               <div id="lockpick"></div>
             </section>
           </div>
-        </div>
-      </section>
-      <section class="band" id="grp-table">
-        <h2 class="band-h">At the Table</h2>
-        <div class="stack-grid">
           <div class="stack-col">
-            <section class="card corner">
-          <div class="head-row"><h2 class="section-title">The Posse</h2><a class="btn small secondary" href="/posse"><span data-gl="scroll"></span> Sheets</a></div>
-          <div id="posse"></div>
-        </section>
-            <section class="card corner">
-          <div class="head-row"><h2 class="section-title">Enemies</h2><a class="btn small secondary" href="/battle"><span data-gl="claws"></span> Add or loot</a></div>
-          <div id="enemies"></div>
-        </section>
-            <section class="card corner">
+            <section class="card corner" id="card-duel">
           <div class="head-row"><h2 class="section-title">High Noon Duel</h2><span class="muted">Guidebook p. 58</span></div>
           <div id="duel-start"></div>
-        </section>
-          </div>
-          <div class="stack-col">
-            <section class="card corner">
+        </section><section class="card corner" id="card-saloon">
           <div class="head-row"><h2 class="section-title">The Saloon</h2><span class="muted">cards and dice for real money</span></div>
           <div id="saloon"></div>
         </section>
@@ -111,29 +117,25 @@
         <h2 class="band-h">Rewards &amp; Handouts</h2>
         <div class="stack-grid">
           <div class="stack-col">
-            <section class="card corner">
+            <section class="card corner" id="card-award">
               <div class="head-row"><h2 class="section-title">Award the Posse</h2><span class="muted">after a fight or expedition</span></div>
               <div id="award"></div>
-            </section>
-            <section class="card corner">
+            </section><section class="card corner" id="card-jackpot">
               <div class="head-row"><h2 class="section-title">Jackpot</h2><span class="muted">play of the game, p. 54</span></div>
               <div id="jackpot"></div>
-            </section>
-            <section class="card corner">
+            </section><section class="card corner" id="card-town">
               <div class="head-row"><h2 class="section-title">Town Rest</h2><button class="btn small" id="town-all" type="button"><span data-gl="fire"></span> Everyone rests</button></div>
               <p class="muted sess-note">The posse beds down in town (p. 54): full Health, Statuses cleared, Supplies reset, Forstalls recharged, 2/day abilities back.</p>
             </section>
           </div>
           <div class="stack-col">
-            <section class="card corner">
+            <section class="card corner" id="card-handout">
               <div class="head-row"><h2 class="section-title">Hand Out</h2><span class="muted">items &amp; secret notes</span></div>
               <div id="handout"></div>
-            </section>
-            <section class="card corner">
+            </section><section class="card corner" id="card-whisper">
               <div class="head-row"><h2 class="section-title">Whisper</h2><span class="muted">a secret to one or more players</span></div>
               <div id="wwhisper"></div>
-            </section>
-            <section class="card corner">
+            </section><section class="card corner" id="card-stash">
               <div class="head-row"><h2 class="section-title">Posse Stash</h2><button class="btn small" type="button" data-stash><span data-gl="satchel"></span> Open</button></div>
               <p class="muted sess-note">The posse’s shared money and gear. Drop loot in for them to split up.</p>
             </section>
@@ -144,14 +146,14 @@
         <h2 class="band-h">Notes &amp; Log</h2>
         <div class="stack-grid">
           <div class="stack-col">
-            <section class="card corner">
+            <section class="card corner" id="card-notes">
           <div class="head-row"><h2 class="section-title">Session Notes</h2><button class="btn small" id="new-session" type="button"><span data-gl="scroll"></span> New session</button></div>
           <div class="sess-tabs" id="sess-tabs"></div>
           <div id="editor"></div>
         </section>
           </div>
           <div class="stack-col">
-            <section class="card corner">
+            <section class="card corner" id="card-log">
           <div class="head-row"><h2 class="section-title">Recent at the Table</h2><button class="btn small secondary danger" id="clear-log" type="button">Clear log</button></div>
           <div class="log glance-log" id="glance-log"></div>
         </section>
@@ -162,7 +164,7 @@
         <h2 class="band-h">Tools</h2>
         <div class="stack-grid">
           <div class="stack-col">
-            <section class="card corner">
+            <section class="card corner" id="card-jump">
           <h2 class="section-title">Jump To</h2>
           <div class="link-grid">
             <a href="/battle"><span data-gl="revolver"></span><b>Battle Map</b><small>run the fight · add enemies · loot</small></a>
@@ -172,14 +174,13 @@
             <a href="/posse"><span data-gl="scroll"></span><b>Posse Sheets</b><small>every character</small></a>
             <a href="/backpack"><span data-gl="satchel"></span><b>Backpack</b><small>handouts &amp; notes</small></a>
           </div>
-        </section>
-            <section class="card corner">
+        </section><section class="card corner" id="card-backup">
           <div class="head-row"><h2 class="section-title">Backup</h2><button class="btn small" id="backup" type="button"><span data-gl="satchel"></span> Download</button></div>
           <p class="muted sess-note">Saves everything — sheets, NPCs, factions, maps, store, notes and the Table Log — to one file on this device. Do it after each session. <span id="backup-note"></span></p>
         </section>
           </div>
           <div class="stack-col">
-            <section class="card corner">
+            <section class="card corner" id="card-homebrew">
           <div class="head-row"><h2 class="section-title">Your Homebrew</h2><button class="btn small secondary" id="hb-refresh" type="button"><span data-gl="die"></span> Refresh</button></div>
           <p class="muted sess-note">Everything you’ve made up, in one place. Deleting can’t be undone.</p>
           <div id="homebrew"></div>
@@ -187,9 +188,11 @@
           </div>
         </div>
       </section>
+      </div>
+
     </div>
   </main>
 
-  <script type="module" src="/js/run.js?v=59"></script>
+  <script type="module" src="/js/run.js?v=60"></script>
 </body>
 </html>

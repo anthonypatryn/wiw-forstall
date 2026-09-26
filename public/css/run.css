@@ -123,3 +123,39 @@
 /* a fallen posse member: dimmed, with Revive */
 .item-row.fallen .item-who { opacity: .65; }
 .item-row.fallen .pill .gl { width: 1em; height: 1em; }
+
+/* ---------- Run the Game v2: a side nav of views (Now · Scene · Start · Rewards · Notes · Tools) ---------- */
+.run-desk:not([hidden]) { display: grid; grid-template-columns: 220px minmax(0, 1fr); gap: 20px; align-items: start; }
+.run-nav { position: sticky; top: calc(var(--toc-top, 0px) + 12px); display: grid; gap: 6px; padding: 10px; background: var(--surface); border: 1.5px solid var(--line); border-radius: var(--radius); box-shadow: 3px 3px 0 var(--shade-2, rgba(0,0,0,.12)); max-height: calc(100vh - var(--toc-top, 0px) - 24px); overflow-y: auto; }
+body.warden-mode .run-nav { background: var(--w-slate); border-color: rgba(95,179,179,.45); }
+.rn-views { display: grid; gap: 2px; }
+.rn-views a { display: flex; align-items: center; gap: 10px; padding: 9px 10px 7px; border-radius: var(--r-sm); color: var(--ink); text-decoration: none; font: var(--fs-md) var(--display); letter-spacing: .1em; border-left: 3px solid transparent; }
+body.warden-mode .rn-views a { color: var(--on-dark); }
+.rn-views a .gl { width: 1.15em; height: 1.15em; flex: none; opacity: .85; }
+.rn-views a:hover { background: var(--accent-tint); }
+body.warden-mode .rn-views a:hover { background: rgba(95,179,179,.12); }
+.rn-views a[aria-current="page"] { background: var(--accent); color: #fff; border-left-color: var(--gold); }
+body.warden-mode .rn-views a[aria-current="page"] { background: var(--w-teal); color: var(--w-slate); border-left-color: var(--w-teal-pale); }
+.rn-views a.rn-all { font: italic var(--fs-sm) var(--body); letter-spacing: 0; opacity: .8; margin-top: 4px; }
+.rn-badge { margin-left: auto; min-width: 22px; padding: 2px 6px 0; border-radius: var(--r-pill); background: var(--danger); color: #fff; font: var(--fs-xs) var(--display); text-align: center; letter-spacing: .04em; }
+.rn-h { margin: 8px 4px 0; font: var(--fs-xs) var(--display); letter-spacing: .2em; color: var(--ink-soft); }
+body.warden-mode .rn-h { color: var(--w-teal-pale); }
+.rn-quick { display: flex; flex-wrap: wrap; gap: 5px; }
+.rn-quick button { padding: 5px 9px 3px; border: 1.5px solid var(--line); border-radius: var(--r-pill); background: var(--surface-2); color: var(--ink); font: var(--fs-sm) var(--display); letter-spacing: .06em; cursor: pointer; }
+body.warden-mode .rn-quick button { background: transparent; color: var(--on-dark); border-color: rgba(169,220,217,.45); }
+.rn-quick button:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
+.rn-end { margin-top: 8px; width: 100%; justify-content: center; }
+.run-main { min-width: 0; }
+.run-main > .band { scroll-margin-top: calc(var(--toc-top, 0px) + 12px); }
+.run-main .card { scroll-margin-top: calc(var(--toc-top, 0px) + 12px); }
+.card.flash { animation: cardFlash 1.2s ease-out; }
+@keyframes cardFlash { 0%, 30% { box-shadow: 0 0 0 4px var(--gold); } 100% { box-shadow: 0 0 0 0 transparent; } }
+@media (prefers-reduced-motion: reduce) { .card.flash { animation: none; outline: 3px solid var(--gold); } }
+@media (max-width: 900px) {
+  .run-desk:not([hidden]) { grid-template-columns: 1fr; }
+  .run-nav { position: sticky; z-index: var(--z-contents-bar, 30); max-height: none; display: flex; flex-wrap: nowrap; overflow-x: auto; padding: 6px; gap: 6px; }
+  .rn-views { display: flex; gap: 4px; }
+  .rn-views a { white-space: nowrap; padding: 6px 10px 4px; }
+  .rn-views a .gl, .rn-h, .rn-quick, .rn-views a.rn-all { display: none; }
+  .rn-end { margin: 0; width: auto; flex: none; }
+}

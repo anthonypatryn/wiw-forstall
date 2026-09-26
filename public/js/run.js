@@ -36,10 +36,13 @@ async function act(body, msg) {
 async function refreshNeeds() {
   try {
     const n = await api('GET', null, '?view=needs', '/api/combat');
+    const badge = $('#rn-now'); badge.hidden = !n.count; badge.textContent = n.count;
     $('#needs').innerHTML = n.items.length ? n.items.map((x, i) => `<div class="notice${x.urgent ? ' urgent' : ''}">
         <a href="${esc(x.href)}">${esc(x.text)}</a>
+        ${x.closeCheck ? `<span class="notice-btns"><button type="button" class="btn small" data-ck-close-n="${esc(x.closeCheck)}">Close it</button></span>` : ''}
         ${x.store ? `<span class="notice-btns"><button type="button" class="btn small" data-yes="${esc(x.store)}">Approve</button><button type="button" class="btn small secondary" data-no="${esc(x.store)}">Deny</button></span>` : ''}
       </div>`).join('') : '<p class="muted">All quiet — nothing is waiting on you.</p>';
+    $('#needs').querySelectorAll('[data-ck-close-n]').forEach((b) => b.addEventListener('click', async () => { b.disabled = true; await act({ action: 'checkClose', id: b.dataset.ckCloseN }); refreshNeeds(); }));
     $('#needs').querySelectorAll('[data-yes], [data-no]').forEach((b) => b.addEventListener('click', async () => {
       try {
         const res = await api('POST', { action: 'decide', id: b.dataset.yes || b.dataset.no, approve: !!b.dataset.yes }, '', '/api/shop');
@@ -187,19 +190,33 @@ $('#town-all').addEventListener('click', async () => {
   if (r) toast(`${r.count} character${r.count === 1 ? '' : 's'} rested up in town.`);
 });
 
-// ---------- contents bar: sticks under the nav + Warden strip, highlights the band you're in ----------
+// ---------- side nav: one view at a time (remembered on this device and in the address), or everything ----------
 function tocTop() {
   const h = [...document.querySelectorAll('.sitenav, .hud-myturn')].reduce((n, el) => n + (el.offsetHeight || 0), 0);
   document.documentElement.style.setProperty('--toc-top', `${h}px`);
 }
 window.addEventListener('resize', tocTop);
-const bands = () => [...document.querySelectorAll('.band')];
-window.addEventListener('scroll', () => {
-  const line = (parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--toc-top')) || 0) + 80;
-  let cur = bands()[0]?.id;
-  bands().forEach((g) => { if (g.getBoundingClientRect().top <= line) cur = g.id; });
-  document.querySelectorAll('#run-toc a').forEach((a) => a.classList.toggle('on', a.getAttribute('href') === `#${cur}`));
-}, { passive: true });
+const VIEWS = ['grp-now', 'grp-scene', 'grp-start', 'grp-rewards', 'grp-notes', 'grp-tools', 'all'];
+function showView(v, { scroll = true } = {}) {
+  if (!VIEWS.includes(v)) v = 'grp-now';
+  document.querySelectorAll('#run-main > .band').forEach((b) => { b.hidden = v !== 'all' && b.id !== v; });
+  document.querySelectorAll('#run-nav [data-view]').forEach((a) => { if (a.dataset.view === v) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
+  try { localStorage.setItem('wiw.runView', v); } catch {}
+  if (location.hash !== `#${v}`) history.replaceState(null, '', `#${v}`);
+  if (scroll) window.scrollTo({ top: 0 });
+}
+document.querySelectorAll('#run-nav [data-view]').forEach((a) => a.addEventListener('click', (e) => { e.preventDefault(); showView(a.dataset.view); }));
+window.addEventListener('hashchange', () => showView(location.hash.slice(1)));
+// quick links: open the view that holds that card, bring it into sight and flash it
+document.querySelectorAll('#run-nav [data-jump]').forEach((b) => b.addEventListener('click', () => {
+  const card = document.getElementById(`card-${b.dataset.jump}`);
+  if (!card) return;
+  showView(card.closest('.band').id, { scroll: false });
+  card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  card.classList.remove('flash'); void card.offsetWidth; card.classList.add('flash');
+  setTimeout(() => card.querySelector('input:not([type=hidden]), select, textarea, button')?.focus({ preventScroll: true }), 450);
+}));
+showView(location.hash.slice(1) || (() => { try { return localStorage.getItem('wiw.runView'); } catch { return null; } })() || 'grp-now', { scroll: false });
 
 // ---------- boot ----------
 let sceneRun = null, saloonDesk = null;

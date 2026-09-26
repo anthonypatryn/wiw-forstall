@@ -220,6 +220,19 @@
 ## Quick moves (Battle Map turn bar)
 - `quickHTML` / `wireQuick` in battle.js: above the Actions grid, one button per nearest target (`QUICK_MAX` 3). A character's turn: "Shoot/Hit <enemy>" with the weapon that has the most dice at that range (Grit cost shown; disabled without the Grit) → the same `pc attack` call as the Attack drawer (no aim / special ammo — use the drawer for those). An enemy's turn (Warden): "<attack> → <character>" with the first attack that fits the range → `enemyAttack` (asks before forcing an out-of-range roll). Out-of-reach targets are listed as such. `render()` redraws the turn bar too, so quick moves appear once token positions load.
 
+## Run the Game v2 (side nav of views)
+- `public/run.html` `#desk.run-desk` is a grid: a sticky `.run-nav` on the left, and `#run-main` holding the bands. The cards are grouped by job:
+  - **Now** `#grp-now`: what you watch (Needs You, Open Rolls, The Posse, The Fight, Enemies).
+  - **Tonight's Scene** `#grp-scene`
+  - **Start Something** `#grp-start`: Call for a Roll, Lock Pick, High Noon Duel, The Saloon.
+  - **Rewards & Handouts** `#grp-rewards`
+  - **Notes & Log** `#grp-notes`
+  - **Tools** `#grp-tools`
+- Every card has an id `card-<name>`. run.js `showView(v)` shows one band (or `all`) and keeps it in the hash and `wiw.runView`, so coming back from the Battle Map lands on the same view.
+- The QUICK buttons (`data-jump`) open the card's view, scroll to it and flash it.
+- The Now badge `#rn-now` is the urgent Needs-you count. Needs-you links point at `/run#grp-now`, and a finished roll has a Close it button in the page's own Needs You list too.
+- End Session sits at the foot of the nav. Under 900px the nav becomes a sideways strip of views.
+
 ## Battle Map layout v2 (2026-09-26, from the approved mockup)
 - **Sidebar** (`#panel`):
   - `#fight-bar`, pinned (`fightBarHTML`/`wireFightBar`): Round, turn order, whose turn plus Grit, Next turn (Warden) or End my turn (their player), + Enemies, and a **⋯** menu (`fbState.menu`). The menu holds the enemy-Health sharing toggle, Undo last, Restart turn, Remove every enemy and End combat. With no fight, it offers Start combat (`startFight`) and Add enemies.
