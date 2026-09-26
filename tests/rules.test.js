@@ -952,3 +952,20 @@ test('Battle Map tokens: new ones land mid-map; Add enemies never brings back re
   battleAction(s, { action: 'syncCombat' }, { warden: true, combat });
   assert.ok(s.tokens.some((t) => t.ref === 'b'));
 });
+
+test('a melee weapon at Short Range is a throw, and the Table Log says so', async () => {
+  const { weaponFields } = await import('../lib/sheets.js');
+  const { CATALOG } = await import('../lib/catalog.js');
+  const state = freshCombat();
+  const pc = publicAction(state, { action: 'addPc', trade: 'Hunter', name: 'Lila' }, { warden: true });
+  publicAction(state, { action: 'addEnemy', profile: 'Chupacabra' }, { warden: true });
+  pc.weapons[0] = { ...pc.weapons[0], ...weaponFields(CATALOG.find((x) => x.id === 'melee-handcraft-club')) };
+  pc.grit = 6;
+  const target = state.enemies[0].id;
+  publicAction(state, { action: 'pc', id: pc.id, op: 'attack', weapon: 0, range: 'short', target }, { warden: true });
+  const shot = state.log.find((l) => l.type === 'roll' && l.label.includes('→'));
+  assert.match(shot.label, /Short Range \(thrown\)/);
+  pc.grit = 6;
+  publicAction(state, { action: 'pc', id: pc.id, op: 'attack', weapon: 0, range: 'arms', target }, { warden: true });
+  assert.doesNotMatch(state.log.find((l) => l.type === 'roll' && l.label.includes('→')).label, /thrown/, 'a swing up close is not a throw');
+});

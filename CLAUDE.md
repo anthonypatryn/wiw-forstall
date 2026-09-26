@@ -220,6 +220,9 @@
 ## Quick moves (Battle Map turn bar)
 - `quickHTML` / `wireQuick` in battle.js: above the Actions grid, one button per nearest target (`QUICK_MAX` 3). A character's turn: "Shoot/Hit <enemy>" with the weapon that has the most dice at that range (Grit cost shown; disabled without the Grit) → the same `pc attack` call as the Attack drawer (no aim / special ammo — use the drawer for those). An enemy's turn (Warden): "<attack> → <character>" with the first attack that fits the range → `enemyAttack` (asks before forcing an out-of-range roll). Out-of-reach targets are listed as such. `render()` redraws the turn bar too, so quick moves appear once token positions load.
 
+## Thrown melee
+- Melee weapons can be thrown at Short Range (p. 64); their Short Range pool is the throw. battle.js `isMelee`/`thrown(w, key)` add "· thrown" to the Attack drawer weapon options, the Prepare range picker, and quick moves ("Throw at <enemy>"). The Table Log label reads `Short Range (thrown)` (lib/combat.js pc `attack`).
+
 ## Rules lookup
 - `public/js/rules.js`: `RULES` is a glossary of `{term, aliases, page, text, skill?}`: dice, Skills and difficulty, combat Actions, ranges, Statuses, health and rest, and Forstalls. Each entry is a short plain-words summary with its Guidebook page, written in our own words; check it against the book when you edit one. `findRules(q)` ranks exact name, then prefix, then name/alias, then full text. `openRules(q)` shows a `.ask-back` dialog with a search box and result cards.
 - Opening it: any element with `data-rule="Term"` (`data-rule=""` opens empty). A capture-phase click handler in common.js (`openRule`) lazy-imports rules.js, which avoids a circular import. The nav "?" is now a `button.nav-help[data-rule]`; the phone Menu sheet has "Look up a rule" (and How to Play stays as a link). Sheet Status rows have a "more" `.rule-link`.

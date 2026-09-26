@@ -29,6 +29,9 @@ let data = null, warden = false, poller = null, selected = null, dragging = null
 let combat = null, combatPoller = null;
 const atkSel = {}; // per selected token: remembered picks
 const WEAPON_KEY = { arm: 'arms', short: 'short', long: 'long', distant: 'distant' };
+// melee weapons can be thrown at Short Range (p. 64) — say so wherever that's the attack
+const isMelee = (w) => /melee/i.test(w?.type || '') || /^melee-/.test(w?.itemId || '');
+const thrown = (w, key) => (key === 'short' && isMelee(w) ? ' · thrown' : '');
 const ATK_BAND = { Melee: 'arm', Short: 'short', Long: 'long', Distant: 'distant' };
 async function combatAct(body) {
   try { const res = await api('POST', body, '', '/api/combat'); combat = res.state || combat; return res.result ?? true; }
@@ -55,7 +58,7 @@ function attackHTML(sel) {
     return `<h3 class="d-h">${gl('revolver')} ATTACK FROM HERE ${mine ? '<span class="tag turn">THEIR TURN</span>' : ''} <small>${pc.grit} Grit</small></h3>
       <div class="atk-form">
         <select data-as="t" aria-label="Target">${foes.map(({ t, d }) => `<option value="${t.id}"${t.id === s.t ? ' selected' : ''}>→ ${esc(t.name)} · ${d}″ ${BAND_LABEL[band(d)]}</option>`).join('')}</select>
-        ${weapons.length ? `<select data-as="w" aria-label="Weapon">${weapons.map(([x, i]) => `<option value="${i}"${i === s.w ? ' selected' : ''}>${esc(x.model || x.manufacturer)} · ${esc(String(x[bandKey]).toUpperCase())}</option>`).join('')}</select>
+        ${weapons.length ? `<select data-as="w" aria-label="Weapon">${weapons.map(([x, i]) => `<option value="${i}"${i === s.w ? ' selected' : ''}>${esc(x.model || x.manufacturer)} · ${esc(String(x[bandKey]).toUpperCase())}${thrown(x, bandKey)}</option>`).join('')}</select>
         <select data-as="ammo" aria-label="Ammo"><option value="">regular ammo</option>${loaded.map(([a, k]) => `<option value="${k}"${String(k) === String(s.ammo) ? ' selected' : ''}>${esc(a.name)} (${a.rds})</option>`).join('')}</select>
         <label class="check"><input type="checkbox" data-as="aim"${s.aim ? ' checked' : ''}${pc.aimed ? ' disabled' : ''}> Aim +1</label>
         <button type="button" class="btn small" data-map-attack>${gl('revolver')} Attack · ${cost} Grit</button>`
@@ -414,7 +417,7 @@ function renderTurnBar() {
         <div class="pp-grid">
           <label>HOLD<select data-pp="kind"><option value="attack"${pp.kind === 'attack' ? ' selected' : ''}>an attack</option><option value="dodge"${pp.kind === 'dodge' ? ' selected' : ''}>a Dodge</option>${gear.length ? `<option value="item"${pp.kind === 'item' ? ' selected' : ''}>an item</option>` : ''}${abil.length ? `<option value="ability"${pp.kind === 'ability' ? ' selected' : ''}>an ability</option>` : ''}<option value="improvise"${pp.kind === 'improvise' ? ' selected' : ''}>an Improvise</option></select></label>
           ${pp.kind === 'attack' ? `<label>WEAPON<select data-pp="weapon">${weapons.map(([x, k]) => `<option value="${k}"${k === pp.weapon ? ' selected' : ''}>${esc(x.model || x.manufacturer)}</option>`).join('')}</select></label>
-            <label>AT<select data-pp="range">${ranges.map(([k, l]) => `<option value="${k}"${k === pp.range ? ' selected' : ''}>${l} · ${esc(String(w[k]).toUpperCase())}</option>`).join('')}</select></label>
+            <label>AT<select data-pp="range">${ranges.map(([k, l]) => `<option value="${k}"${k === pp.range ? ' selected' : ''}>${l} · ${esc(String(w[k]).toUpperCase())}${thrown(w, k)}</option>`).join('')}</select></label>
             <label>AMMO<select data-pp="ammo"><option value="">regular</option>${loaded.map(([am, k]) => `<option value="${k}"${String(k) === String(pp.ammo) ? ' selected' : ''}>${esc(am.name)} (${am.rds})</option>`).join('')}</select></label>
             <label class="check"><input type="checkbox" data-pp="aim"${pp.aim ? ' checked' : ''}> Aim +1</label>` : ''}
           ${pp.kind === 'dodge' || pp.kind === 'improvise' ? `<label>GRIT<input type="number" min="1" max="12" data-pp="grit" value="${pp.grit}"></label>` : ''}
@@ -471,9 +474,9 @@ function quickHTML(cur, tok) {
       const best = a.weapons.map((w, i) => [w, i]).filter(([w]) => (w.model || w.manufacturer) && isPool(w[key])).sort(([x], [y]) => diceIn(y[key]) - diceIn(x[key]))[0];
       if (!best) { out.push(`<span class="tp-quick-none">${esc(t.name)} is out of reach (${d}″)</span>`); continue; }
       const [w, i] = best, cost = parseInt(String(w.grit || '').split('|')[0], 10) || 0;
-      const melee = /melee/i.test(w.type || '') || key === 'arms';
+      const melee = isMelee(w) || key === 'arms', toss = thrown(w, key);
       out.push(`<button type="button" class="tp-quick" data-quick="pc" data-w="${i}" data-range="${key}" data-target="${esc(t.ref)}"${(a.grit ?? 0) < cost ? ' disabled title="Not enough Grit"' : ''}>
-        ${gl(melee ? 'claws' : 'revolver')} ${melee ? 'Hit' : 'Shoot'} <b>${esc(t.name)}</b><small>${esc(w.model || w.manufacturer)} · ${esc(String(w[key]).toUpperCase())} · ${d}″ · ${cost} Grit</small></button>`);
+        ${gl(toss ? 'target' : melee ? 'claws' : 'revolver')} ${toss ? 'Throw at' : melee ? 'Hit' : 'Shoot'} <b>${esc(t.name)}</b><small>${esc(w.model || w.manufacturer)} · ${esc(String(w[key]).toUpperCase())}${toss} · ${d}″ · ${cost} Grit</small></button>`);
     }
   } else if (warden) {
     const e = combat.enemies.find((x) => x.id === a.id), prof = e?.profile ? combat.profiles?.[e.profile] : null;
