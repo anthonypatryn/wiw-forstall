@@ -93,6 +93,15 @@ function renderEnemies() {
   $('#enemies').querySelectorAll('[data-leave]').forEach((b) => b.addEventListener('click', () => act({ action: 'leave', id: b.dataset.leave })));
   $('#enemies').querySelectorAll('[data-e]').forEach((b) => b.addEventListener('click', () => act({ action: 'enemy', id: b.dataset.e, op: 'health', delta: Number(b.dataset.d) })));
 }
+// who has the site open: green dots on the posse rows (asked every 15 s)
+let here = new Set();
+async function refreshHere() {
+  const ids = (combat?.posse || []).filter((p) => !p.dead).map((p) => p.id);
+  if (!ids.length) return;
+  try { here = new Set((await api('GET', null, `?who=${ids.map(encodeURIComponent).join(',')}`, '/api/pulse')).here || []); } catch { return; }
+  document.querySelectorAll('[data-here]').forEach((d) => { const on = here.has(d.dataset.here); d.classList.toggle('on', on); d.title = on ? 'Has the site open' : 'Not connected'; });
+}
+setInterval(refreshHere, 15000); setTimeout(refreshHere, 1500);
 function renderPosse() {
   const party = combat.combat?.active ? combat.combat.party : null;
   const list = combat.posse.filter((p) => !p.dead);
@@ -100,7 +109,7 @@ function renderPosse() {
     const sweep = combat.sweeps?.[`pc:${p.id}`];
     const sitting = party && !party.includes(p.id);
     return `<div class="item-row${combat.combat?.current === p.id ? ' now' : ''}${p.bleeding ? ' bleed' : ''}${sitting ? ' sitting' : ''}">
-      <div class="item-who"><img class="row-face" src="${esc(faceUrl(p))}" alt=""><a href="/posse#${esc(p.id)}"><b>${esc(p.name)}</b></a><small>${esc(p.trade)}${p.player ? ` · ${esc(p.player)}` : ''}${sitting ? ' · not in this fight' : ''}</small>${combat.combat?.active ? (sitting ? `<button type="button" class="run-out in" data-pjoin="${esc(p.id)}">join</button>` : `<button type="button" class="run-out" data-pleave="${esc(p.id)}" title="Take ${esc(p.name)} out of this fight">out</button>`) : ''}
+      <div class="item-who"><span class="here-dot${here.has(p.id) ? ' on' : ''}" data-here="${esc(p.id)}" title="${here.has(p.id) ? 'Has the site open' : 'Not connected'}"></span><img class="row-face" src="${esc(faceUrl(p))}" alt=""><a href="/posse#${esc(p.id)}"><b>${esc(p.name)}</b></a><small>${esc(p.trade)}${p.player ? ` · ${esc(p.player)}` : ''}${sitting ? ' · not in this fight' : ''}</small>${combat.combat?.active ? (sitting ? `<button type="button" class="run-out in" data-pjoin="${esc(p.id)}">join</button>` : `<button type="button" class="run-out" data-pleave="${esc(p.id)}" title="Take ${esc(p.name)} out of this fight">out</button>`) : ''}
         ${p.bleeding ? '<span class="pill hot">BLEEDING OUT</span>' : ''}${statusTags(p.statuses)}
         ${p.forstall?.model ? `<span class="pill fs">${gl('forstall')} ${esc(p.forstall.model.replace(/ Forstall$/, ''))} · ${p.forstall.charges ?? 0} ch${sweep ? ` · Sweep ${sweep.hits}` : ''}</span>` : ''}</div>
       <div class="item-nums">${hpBar(p.health, p.maxHealth)}<span class="hp-num">${p.health}/${p.maxHealth}</span>

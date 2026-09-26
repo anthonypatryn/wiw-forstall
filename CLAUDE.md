@@ -206,3 +206,6 @@
 
 ## Your-turn alert (tab title, icon, buzz)
 - `public/js/attention.js` `attention(key, label|null)`: while any reason is set, the tab icon gets a red dot, the title reads "▶ …" (flashing every second while the tab is in the background), and phones buzz once when a reason first appears. Raised by `renderHud` in tablelog.js for this device's player (`turn`: their combat turn; `roll`: an open Skill check they haven't rolled) and by `watchSaloon` (`saloon`: their move at the card table). Not in Warden mode. No native notifications.
+
+## Who's here
+- A player's tab adds `?here=<pc>` to its `/api/pulse` request at most every 20 s (`HERE_MS` in common.js; not in Warden mode) → `markHere` (Redis `wiw-forstall:here:<pc>`, expires after 60 s). Run the Game asks `/api/pulse?who=<ids>` every 15 s (`refreshHere` in run.js) and shows a green `.here-dot` on each connected player's row.

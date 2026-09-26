@@ -32,13 +32,16 @@ const DEPS = {
   '/api/wanted': ['wanted', 'combat', 'journal', 'map', 'npcs'], '/api/whispers': ['whispers', 'combat'],
 };
 const PULSE_MS = 2500, PULSE_HIDDEN_MS = 15000, PULSE_RETRY_MS = 5000;
-const pulse = { subs: new Set(), timer: null, running: false };
+const pulse = { subs: new Set(), timer: null, running: false, hereAt: 0 };
+const HERE_MS = 20000;
 async function pulseTick() {
   clearTimeout(pulse.timer);
   if (!pulse.subs.size) { pulse.running = false; return; }
   let wait = document.hidden ? PULSE_HIDDEN_MS : PULSE_MS;
   try {
-    const { v } = await api('GET', null, '', '/api/pulse');
+    const who = !savedPin() && me() && Date.now() - pulse.hereAt > HERE_MS ? me() : '';
+    const { v } = await api('GET', null, who ? `?here=${encodeURIComponent(who)}` : '', '/api/pulse');
+    if (who) pulse.hereAt = Date.now();
     for (const sub of [...pulse.subs]) {
       const sig = sub.deps.map((k) => v[k] ?? 0).join('.');
       if (sig !== sub.sig) { const first = sub.sig === null; sub.sig = sig; if (!first || sub.fireFirst) sub.run(); }
