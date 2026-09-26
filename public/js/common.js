@@ -279,7 +279,7 @@ const NAV_WARDEN = [
   { href: '/run', label: 'Run the Game', icon: 'star', phone: true },
   { href: '/prep', label: 'Prep' },
   { href: '/posse', label: 'Posse', phone: true },
-  { label: 'Fight', items: [['/battle', 'Battle Map']] },
+  { href: '/battle', label: 'Battle Map' },
   { href: '/warden', label: 'Forstall Scanner' },
   WORLD,
   { href: '/store', label: 'Store' },

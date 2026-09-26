@@ -456,7 +456,7 @@ a.btn { text-decoration: none; }
 body.nav-open .fab-row, body.nav-open .hud-strip { display: none; }
 /* the old masthead Warden button: kept for each page's own unlock flow, the nav shows the control */
 .btn.warden-link { display: none; }
-@media (max-width: 1020px) {
+@media (max-width: 1160px) { /* the Warden nav is wider: tuck the extras into Menu before they run under the right-hand buttons */
   .sitenav.warden .nav-extra, .sitenav.warden .nav-main .nav-group { display: none; }
   .sitenav.warden .nav-menu-btn { display: flex; }
 }
