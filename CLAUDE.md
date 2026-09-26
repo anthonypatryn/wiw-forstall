@@ -226,6 +226,12 @@
 - **Start combat with no enemies:** opens Add enemies first. `openAddEnemies(combat, done, {intro})` now returns a Promise of how many were added; then it re-fetches combat and opens `pickFighters`.
 - **Lock Pick:** a How to play link in the scene header (`showHowTo`, an `.ask-back` dialog over the scene). `retry` no longer asks for a second Finesse roll: it deals a fresh deck and restores `rolledPeeks` (the first roll's Hits).
 - **Sheet pictures:** the Forstall box has a `ride-art` image like the Horse and Mech boxes (`data-art="forstall"`). The picture comes from the catalog item's `img`, by `itemId`, or by name when the model or class was typed in ("Mule" finds "Mule Mech").
+- **Saloon powers on anyone:** Skill moves can target posse members as well as NPCs; a character rolls their own sheet (`ctx.poolOf`, Poisoned counted). "Sharpest eye" is `sharpest(seats, ctx)` in lib/saloon-common.js, and it includes players.
+  - Poker: Read a tell works on anyone in the hand. A Bluff that beats a player sets `h.warned[key]`, and that player's view shows `warnedBy` ("… looks mighty confident"); they can't be forced to fold.
+  - Liar's Dice: Peek works on anyone. Stare works on whoever plays next; a stared player's `liarsCall` throws until they bid (`staredMe` in the view hides Liar!).
+  - Drinking: Needle works on anyone upright; the Spittoon's watcher can be a player.
+  - `decorate` adds sheet pools to player seats, so the matchups are real.
+  - UI: `powerBtn` / `powerPick` in saloon.js. `.btn.skill` has a brass edge and the matchup underneath; a `.sl-power` box holds the heading and one button per target (saloon.css).
 - **Finished roll calls:** they never auto-close, because Helping stays possible.
   - On Run the Game (`desk.js` `renderChecks`), once everyone named has rolled (or a Challenge has a winner), the card gets `.ck-finished` and a "Close it" button; while waiting, the button is "Call off".
   - `wardenNeeds` lists it urgent with the results ("Tess made it (3/3). Close it?") plus `closeCheck`. The Needs you list shows it as a `.needs-row` with a Close it button (`checkClose`).

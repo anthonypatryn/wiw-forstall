@@ -997,3 +997,32 @@ test('Needs you: a finished roll says how it went and offers Close', async () =>
   assert.equal(item.closeCheck, ck.id);
   assert.match(item.text, /Tess (made it|missed) \(\d+\/1\)\. Close it\?/);
 });
+
+test('saloon powers work on players too: peek under a player’s cup, stare a player into raising, sharpest eye counts the posse', async () => {
+  const { freshSaloon, saloonAction, saloonView } = await import('../lib/saloon.js');
+  const { sharpest } = await import('../lib/saloon-common.js');
+  const seq = [2, 2, 3, 4, 5, 6, 6, 6, 1, 2]; let i = 0;
+  const posse = [{ id: 'a', name: 'Lila', wallet: '20.00', skills: {} }, { id: 'b', name: 'Bo', wallet: '20.00', skills: {} }];
+  const st = freshSaloon();
+  const ctx = { posse, rand: () => 0.99, d6: () => seq[i++ % seq.length], npcSkills: () => ({}), roll: (seat) => ({ hits: seat.name === 'Lila' ? 3 : 0 }), log: () => {} };
+  saloonAction(st, { action: 'open', game: 'liars', npcs: [{ name: 'Doc', style: 'tight' }] }, { ...ctx, warden: true });
+  saloonAction(st, { action: 'join', pc: 'a' }, ctx);
+  saloonAction(st, { action: 'join', pc: 'b' }, ctx);
+  saloonAction(st, { action: 'deal' }, { ...ctx, warden: true });
+  const L = st.table.liars;
+  const p = saloonAction(st, { action: 'liarsPeek', pc: 'a', target: 'pc:b' }, ctx);
+  assert.ok(p.won && p.seat === 'Bo');
+  assert.throws(() => saloonAction(st, { action: 'liarsPeek', pc: 'b', target: 'pc:b' }, ctx), /someone still holding dice/);
+  // Lila stares Bo down: on his turn he can't call, only raise
+  L.order = ['pc:a', 'pc:b', 'npc:0']; L.turn = 'pc:a'; L.bid = null;
+  assert.deepEqual(saloonAction(st, { action: 'liarsStare', pc: 'a' }, ctx), { won: true, seat: 'Bo' });
+  saloonAction(st, { action: 'liarsBid', pc: 'a', qty: 2, face: 3 }, ctx);
+  assert.equal(L.turn, 'pc:b');
+  assert.equal(saloonView(st, { pc: 'b' }).table.liars.staredMe, true);
+  assert.throws(() => saloonAction(st, { action: 'liarsCall', pc: 'b' }, ctx), /stared you down/);
+  saloonAction(st, { action: 'liarsBid', pc: 'b', qty: 3, face: 3 }, ctx);
+  assert.equal(L.stared, null, 'raising spends the stare');
+  // the sharpest eye can be a player
+  const eye = sharpest([{ kind: 'npc', name: 'Doc' }, { kind: 'pc', name: 'Bo' }], { poolOf: (s) => (s.name === 'Bo' ? { black: 4, gold: 0 } : { black: 2, gold: 0 }) });
+  assert.equal(eye.name, 'Bo');
+});

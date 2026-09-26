@@ -10,7 +10,7 @@ const STYLE = { tight: 'Plays it close', loose: 'Calls anything', bluffer: 'Love
 const PHASE = { bet1: 'First betting round', draw: 'The draw', bet2: 'Second betting round (double stakes)', over: 'Hand over' };
 export function saloonStyles() {
   if (document.getElementById('saloon-css')) return;
-  document.head.insertAdjacentHTML('beforeend', '<link id="saloon-css" rel="stylesheet" href="/css/saloon.css?v=9">');
+  document.head.insertAdjacentHTML('beforeend', '<link id="saloon-css" rel="stylesheet" href="/css/saloon.css?v=10">');
 }
 // "A♠" → a playing card (same look as the lock-picking cards)
 const RANKV = { A: 'A', K: 'K', Q: 'Q', J: 'J' };
@@ -26,15 +26,19 @@ const myPool = (t, k) => (t.me ? t.me.skills?.[k] || 'no dice' : '—');
 const npcPool = (s, k) => s?.skills?.[k] || '?';
 // "your 3B vs Doc 1B 2G" for a move button
 function matchup(t, mine, theirs, seat) { return `your ${myPool(t, mine)} vs ${seat ? esc(seat.name) : 'them'} ${npcPool(seat, theirs)}`; }
+// a Skill move ("power"): one button, or a heading with a button per target (anyone at the table — posse or NPC)
+const powerBtn = (attrs, icon, name, sub) => `<button type="button" class="btn small skill" ${attrs}>${gl(icon)} ${name}<small>${sub}</small></button>`;
+const powerPick = (icon, name, sub, seats, attr, mine, theirs, t) => `<div class="sl-power"><div class="sl-power-h">${gl(icon)} ${name}<small>${sub}</small></div>
+  <div class="sl-power-targets">${seats.map((s) => `<button type="button" class="btn small skill" ${attr}="${esc(s.key)}">${esc(s.name)}<small>${matchup(t, mine, theirs, s)}</small></button>`).join('')}</div></div>`;
 const MOVES = {
   poker: [
-    { key: 'tell', name: 'Read a tell', mine: 'intuition', theirs: 'charm', who: 'the NPC you pick', when: 'Any time during a hand you’re still in. Once a hand.', win: 'You see one of that NPC’s cards (it’s outlined in gold).', lose: 'Nothing, but you’ve used it for this hand.' },
-    { key: 'bluff', name: 'Bluff', mine: 'charm', theirs: 'intuition', who: 'every NPC still in the hand', when: 'On your turn to bet, before you bet. Once a hand.', win: 'Each NPC you beat plays scared for the rest of the hand: folds to bets and stops betting. An NPC holding two pair or better isn’t fooled.', lose: 'Nothing. They just don’t buy it.' },
-    { key: 'palm', name: 'Palm a card', mine: 'finesse', theirs: 'intuition', who: 'the sharpest-eyed NPC at the table', when: 'On your draw, with exactly one card picked. Once a hand.', win: 'That card is swapped for the better of two cards off the deck.', lose: 'You’re caught cheating. Your hand is thrown in (you lose what you bet) and the whole table hears about it.' },
+    { key: 'tell', name: 'Read a tell', mine: 'intuition', theirs: 'charm', who: 'whoever you pick (posse or NPC)', when: 'Any time during a hand you’re still in. Once a hand.', win: 'You see one of their cards (it’s outlined in gold).', lose: 'Nothing, but you’ve used it for this hand.' },
+    { key: 'bluff', name: 'Bluff', mine: 'charm', theirs: 'intuition', who: 'everyone still in the hand', when: 'On your turn to bet, before you bet. Once a hand.', win: 'Each NPC you beat plays scared for the rest of the hand: folds to bets and stops betting (two pair or better isn’t fooled). Each player you beat is told you look mighty confident; what they do about it is up to them.', lose: 'Nothing. They just don’t buy it.' },
+    { key: 'palm', name: 'Palm a card', mine: 'finesse', theirs: 'intuition', who: 'the sharpest eye at the table (posse or NPC)', when: 'On your draw, with exactly one card picked. Once a hand.', win: 'That card is swapped for the better of two cards off the deck.', lose: 'You’re caught cheating. Your hand is thrown in (you lose what you bet) and the whole table hears about it.' },
   ],
   drinking: [
-    { key: 'spittoon', name: 'Spittoon trick', mine: 'finesse', theirs: 'intuition', who: 'the sharpest-eyed NPC still upright', when: 'While your glass is full. Once a contest.', win: 'Your shot goes in the spittoon: you pass the round without rolling.', lose: 'You’re caught. You drink a double this round: two rolls, and both have to make it.' },
-    { key: 'needle', name: 'Needle them', mine: 'charm', theirs: 'nerve', who: 'the NPC you pick', when: 'Before they drink (between rounds, or before they’ve had this one). Once a contest.', win: 'You get under their skin: they roll 2 fewer dice on their next shot.', lose: 'They shrug it off.' },
+    { key: 'spittoon', name: 'Spittoon trick', mine: 'finesse', theirs: 'intuition', who: 'the sharpest eye still upright (posse or NPC)', when: 'While your glass is full. Once a contest.', win: 'Your shot goes in the spittoon: you pass the round without rolling.', lose: 'You’re caught. You drink a double this round: two rolls, and both have to make it.' },
+    { key: 'needle', name: 'Needle them', mine: 'charm', theirs: 'nerve', who: 'whoever you pick (posse or NPC)', when: 'Before they drink (between rounds, or before they’ve had this one). Once a contest.', win: 'You get under their skin: they roll 2 fewer dice on their next shot.', lose: 'They shrug it off.' },
   ],
   blackjack: [
     { key: 'count', name: 'Count the cards', mine: 'intuition', theirs: 'finesse', who: 'the dealer', when: 'Any time in a round. Once a round.', win: 'You know whether the next card out of the shoe is high (a ten-card or an Ace), low (Two to Six) or middling. Good to know before you hit.', lose: 'You lose track. Nothing else.' },
@@ -44,8 +48,8 @@ const MOVES = {
     { key: 'watch', name: 'Watch the dealer', mine: 'intuition', theirs: 'finesse', who: 'the dealer', when: 'Any time during a deal. Once a deal.', win: 'If the dealing box is crooked, you catch it: everyone hears, and the game goes straight from there. If it’s honest, you know it’s honest.', lose: 'You can’t tell either way.' },
   ],
   liars: [
-    { key: 'peek', name: 'Peek under a cup', mine: 'intuition', theirs: 'finesse', who: 'the NPC you pick', when: 'Any time you still have dice. Once a round.', win: 'You see one of that NPC’s dice for the rest of the round.', lose: 'Nothing.' },
-    { key: 'stare', name: 'Stare them down', mine: 'charm', theirs: 'intuition', who: 'the NPC who plays after you', when: 'On your turn, before you bid. Once a round.', win: 'They can’t call you a liar on their next turn. They have to raise, however wild your bid is.', lose: 'Nothing. They play as normal.' },
+    { key: 'peek', name: 'Peek under a cup', mine: 'intuition', theirs: 'finesse', who: 'whoever you pick (posse or NPC)', when: 'Any time you still have dice. Once a round.', win: 'You see one of their dice for the rest of the round.', lose: 'Nothing.' },
+    { key: 'stare', name: 'Stare them down', mine: 'charm', theirs: 'intuition', who: 'whoever plays after you (posse or NPC)', when: 'On your turn, before you bid. Once a round.', win: 'They can’t call you a liar on their next turn. They have to raise, however wild your bid is.', lose: 'Nothing. They play as normal.' },
   ],
 };
 const RULES = {
@@ -91,7 +95,7 @@ const RULES = {
     <li>Out of dice, out of the game. The last one holding dice takes the pot.</li></ol>`,
 };
 function keyHTML(t) {
-  const npcs = t.seats.filter((s) => s.kind === 'npc');
+  const npcs = t.seats.filter((s) => s.key !== `pc:${me()}` && s.skills); // everyone else at the table
   const moves = MOVES[t.game] || [];
   const on = (m) => (t.hooks?.[m.key] ?? true);
   return `<h3>Skill moves — the key</h3>
@@ -144,18 +148,19 @@ function controls(t) {
     else moves.push('<button type="button" class="btn" data-mv="check">Check</button>');
     if (h.raises < 3) moves.push(`<button type="button" class="btn" data-mv="${h.owe > 0 || h.high > 0 ? 'raise' : 'bet'}">${h.owe > 0 || h.high > 0 ? 'Raise' : 'Bet'} ${$$(h.betSize)}</button>`);
     moves.push('<button type="button" class="btn secondary" data-mv="fold">Fold</button>');
-    if (t.hooks.bluff && !used.has('bluff')) moves.push(`<button type="button" class="btn small secondary skill" data-sl="bluff">${gl('hat')} Bluff<small>Charm ${myPool(t, 'charm')} vs each NPC’s Intuition</small></button>`);
+    if (t.hooks.bluff && !used.has('bluff')) moves.push(powerBtn('data-sl="bluff"', 'hat', 'Bluff', `Charm ${myPool(t, 'charm')} vs everyone’s Intuition`));
   }
   if (myTurn && h.phase === 'draw') {
     moves.push(`<button type="button" class="btn" data-sl="draw">${sel.size ? `Swap ${sel.size} card${sel.size > 1 ? 's' : ''}` : 'Stand pat'}</button>`);
-    if (t.hooks.palm && !used.has('palm') && sel.size === 1) moves.push(`<button type="button" class="btn small secondary skill" data-sl="palm">${gl('flash')} Palm it instead<small>Finesse ${myPool(t, 'finesse')} vs the sharpest eye’s Intuition</small></button>`);
+    if (t.hooks.palm && !used.has('palm') && sel.size === 1) moves.push(powerBtn('data-sl="palm"', 'flash', 'Palm it instead', `Finesse ${myPool(t, 'finesse')} vs the sharpest eye at the table`));
   }
   if (t.hooks.tell && !used.has('tell')) {
-    const npcs = t.seats.filter((s) => s.kind === 'npc' && h.order.includes(s.key) && !h.folded[s.key]);
-    if (npcs.length) moves.push(`<span class="sl-tell">${gl('target')} Read a tell (Intuition vs Charm): ${npcs.map((s) => `<button type="button" class="linkish" data-tell="${esc(s.key)}">${esc(s.name)} <small>(${matchup(t, 'intuition', 'charm', s)})</small></button>`).join(' ')}</span>`);
+    const marks = t.seats.filter((s) => s.key !== key && h.order.includes(s.key) && !h.folded[s.key]);
+    if (marks.length) moves.push(powerPick('target', 'Read a tell', 'Intuition vs Charm · see one of their cards', marks, 'data-tell', 'intuition', 'charm', t));
   }
-  const tip = !myTurn ? `<p class="muted">Waiting on ${esc(t.seats.find((s) => s.key === h.turn)?.name || '…')}…</p>`
-    : h.phase === 'draw' ? `<p class="sl-tip">Tap up to ${h.drawLimit} card${h.drawLimit > 1 ? 's' : ''} to throw away${h.drawLimit === 4 ? ' (4 only if you keep your Ace)' : ''}, then draw.</p>` : '';
+  const warned = h.warnedBy ? `<p class="bj-note">${gl('hat')} ${esc(h.warnedBy)} looks mighty confident about this hand…</p>` : '';
+  const tip = warned + (!myTurn ? `<p class="muted">Waiting on ${esc(t.seats.find((s) => s.key === h.turn)?.name || '…')}…</p>`
+    : h.phase === 'draw' ? `<p class="sl-tip">Tap up to ${h.drawLimit} card${h.drawLimit > 1 ? 's' : ''} to throw away${h.drawLimit === 4 ? ' (4 only if you keep your Ace)' : ''}, then draw.</p>` : '');
   return `${tip}<div class="btn-row sl-moves">${moves.join('')}</div>`;
 }
 function render() {
@@ -230,15 +235,15 @@ function renderLiars(t) {
     btns.push(`<div class="ld-picker"><div class="fr-amt"><button type="button" class="pm-btn" data-lq="-1" aria-label="Fewer dice">−</button><b>${lb.qty}</b><button type="button" class="pm-btn" data-lq="1" aria-label="More dice">+</button></div>
       <div class="ld-faces">${[2, 3, 4, 5, 6].map((f) => `<button type="button" class="ld-face${lb.face === f ? ' on' : ''}" data-lf="${f}">${die(f, 'sm')}</button>`).join('')}</div></div>`);
     btns.push(`<button type="button" class="btn" data-ld="bid"${ok ? '' : ' disabled'}>Bid ${esc(bidText({ qty: lb.qty, face: lb.face }))}</button>`);
-    if (L.bid) btns.push('<button type="button" class="btn danger" data-ld="call">Liar!</button>');
+    if (L.bid) btns.push(L.staredMe ? `<span class="bj-note">${esc(t.seats.find((s) => s.key === L.bid.by)?.name || 'They')} stared you down: you have to raise this turn.</span>` : '<button type="button" class="btn danger" data-ld="call">Liar!</button>');
     const used = new Set(L.used || []);
     const nextNpc = (() => { const i = L.order.indexOf(key); for (let n = 1; n <= L.order.length; n++) { const k = L.order[(i + n) % L.order.length]; if (L.counts[k] > 0) return t.seats.find((x) => x.key === k); } return null; })();
-    if (t.hooks.stare && !used.has('stare') && nextNpc?.kind === 'npc') btns.push(`<button type="button" class="btn small secondary skill" data-ld="stare">${gl('hat')} Stare down ${esc(nextNpc.name)}<small>Charm: ${matchup(t, 'charm', 'intuition', nextNpc)}</small></button>`);
+    if (t.hooks.stare && !used.has('stare') && nextNpc && nextNpc.key !== key) btns.push(powerBtn('data-ld="stare"', 'hat', `Stare down ${esc(nextNpc.name)}`, `Charm: ${matchup(t, 'charm', 'intuition', nextNpc)}`));
   } else {
     btns.push(`<span class="muted">Waiting on ${esc(t.seats.find((s) => s.key === L.turn)?.name || '…')}…</span>`);
     if (!inGame) btns.push('<button type="button" class="btn secondary" data-sl="leave">You’re out of dice — leave the table</button>');
   }
-  const peekable = inGame && t.hooks.peek && !(L.used || []).includes('peek') ? t.seats.filter((s) => s.kind === 'npc' && L.counts[s.key] > 0) : [];
+  const peekable = inGame && t.hooks.peek && !(L.used || []).includes('peek') ? t.seats.filter((s) => s.key !== key && L.counts[s.key] > 0) : [];
   const title = L ? (L.over ? `Game ${L.game} is over` : `Game ${L.game} — round ${L.round} · ${L.total} dice on the table`) : t.status === 'closed' ? 'The game has broken up' : 'Waiting for the first roll';
   scene.innerHTML = `<div class="sl-table" role="dialog" aria-modal="true" aria-label="Liar’s Dice at ${esc(t.where)}">
     <div class="sl-top"><div><small>LIAR’S DICE · ${esc(t.where.toUpperCase())}</small><b>${title}</b></div>
@@ -249,7 +254,7 @@ function renderLiars(t) {
       ${reveal}
       ${L?.mine?.length && inGame ? `<div class="sl-mine"><small class="ld-lbl">UNDER YOUR CUP</small><div class="ld-mine">${L.mine.map((n) => die(n)).join('')}</div></div>` : ''}
     </div>
-    ${peekable.length ? `<p class="sl-tell">${gl('target')} Peek under a cup (Intuition vs Finesse): ${peekable.map((s) => `<button type="button" class="linkish" data-lpeek="${esc(s.key)}">${esc(s.name)} <small>(${matchup(t, 'intuition', 'finesse', s)})</small></button>`).join(' ')}</p>` : ''}
+    ${peekable.length ? powerPick('target', 'Peek under a cup', 'Intuition vs Finesse · see one of their dice', peekable, 'data-lpeek', 'intuition', 'finesse', t) : ''}
     <div class="sl-controls"><div class="btn-row sl-moves">${btns.join('')}</div></div>
     ${L?.log?.length ? `<ol class="sl-log">${L.log.slice(-6).map((l) => `<li>${esc(l)}</li>`).join('')}</ol>` : ''}
   </div>`;
@@ -273,8 +278,8 @@ function renderDrinking(t) {
       <div class="sl-state">${state}${hp != null && D?.order?.includes(k) ? ` · Health ${hp}` : ''}${lastRound && last.hits.length ? ` · ${last.hits.join(' + ')} Hit${last.hits.length > 1 || last.hits[0] !== 1 ? 's' : ''}` : ''}${D?.needled?.includes(k) ? ' <i>needled</i>' : ''}</div></div>`;
   };
   const used = new Set(D?.used || []);
-  const npcsUp = D ? D.order.map((k) => t.seats.find((s) => s.key === k)).filter((s) => s?.kind === 'npc' && !D.out[s.key] && !(D.phase === 'pouring' && D.drank[s.key])) : [];
-  const needleHTML = up && t.hooks.needle && !used.has('needle') && npcsUp.length ? `<p class="sl-tell">${gl('hat')} Needle them (Charm vs Nerve): ${npcsUp.map((s) => `<button type="button" class="linkish" data-dneedle="${esc(s.key)}">${esc(s.name)} <small>(${matchup(t, 'charm', 'nerve', s)})</small></button>`).join(' ')}</p>` : '';
+  const npcsUp = D ? D.order.map((k) => t.seats.find((s) => s.key === k)).filter((s) => s && s.key !== key && !D.out[s.key] && !(D.phase === 'pouring' && D.drank[s.key])) : [];
+  const needleHTML = up && t.hooks.needle && !used.has('needle') && npcsUp.length ? powerPick('hat', 'Needle them', 'Charm vs Nerve · they roll 2 fewer dice next shot', npcsUp, 'data-dneedle', 'charm', 'nerve', t) : '';
   const btns = [];
   if (asWarden) {
     if (!D || D.over) btns.push(`<button type="button" class="btn" data-sl="deal">${gl('die')} ${D ? 'Another contest' : 'Start the contest'}</button>`);
@@ -291,7 +296,7 @@ function renderDrinking(t) {
     const drunk = drunkOf(key);
     btns.push(`<div class="dk-grit"><span>Steady yourself with Grit</span><button type="button" class="pm-btn" data-dg="-1" aria-label="Less Grit">−</button><b>${drinkGrit}</b><button type="button" class="pm-btn" data-dg="1" aria-label="More Grit"${drinkGrit >= most ? ' disabled' : ''}>+</button><small class="muted">you have ${t.me?.grit || 0}; it stays spent till you rest</small></div>`);
     btns.push(`<button type="button" class="btn" data-dk="drink">${gl('drop')} Drink${D.myDouble ? ' the double' : ''}<small>Nerve ${myPool(t, 'nerve')}${drunk ? ` −${drunk} Drunk` : ''}${drinkGrit ? ` +${drinkGrit}B Grit` : ''} · need ${D.round} Hit${D.round > 1 ? 's' : ''}</small></button>`);
-    if (t.hooks.spittoon && !used.has('spittoon') && !D.myDouble) btns.push(`<button type="button" class="btn small secondary skill" data-dk="spit">${gl('flash')} Spittoon trick<small>Finesse ${myPool(t, 'finesse')} vs the sharpest eye’s Intuition</small></button>`);
+    if (t.hooks.spittoon && !used.has('spittoon') && !D.myDouble) btns.push(powerBtn('data-dk="spit"', 'flash', 'Spittoon trick', `Finesse ${myPool(t, 'finesse')} vs the sharpest eye still upright`));
   } else if (D.phase === 'ready' && up) {
     btns.push(`<button type="button" class="btn" data-dk="pour">${gl('die')} Pour ${D.round ? 'the next round' : 'the first round'}</button>`);
   } else {
@@ -344,11 +349,11 @@ function renderBj(t) {
   } else if (myTurn) {
     btns.push('<button type="button" class="btn" data-bjm="hit">Hit</button><button type="button" class="btn" data-bjm="stand">Stand</button>');
     if (B.canDouble) btns.push(`<button type="button" class="btn secondary" data-bjm="double">Double down (+${$$(myHand.bet)})</button>`);
-    if (t.hooks.shiner && !used.has('shiner')) btns.push(`<button type="button" class="btn small secondary skill" data-bj="shiner">${gl('flash')} Use a shiner<small>Finesse: ${matchup(t, 'finesse', 'intuition', dealer)}</small></button>`);
+    if (t.hooks.shiner && !used.has('shiner')) btns.push(`<button type="button" class="btn small skill" data-bj="shiner">${gl('flash')} Use a shiner<small>Finesse: ${matchup(t, 'finesse', 'intuition', dealer)}</small></button>`);
   } else {
     btns.push(`<span class="muted">${myHand && !myHand.done ? 'Your turn is coming.' : myHand ? 'You’re done this round. Waiting on the others…' : 'You’re sitting this round out.'} ${B.turn ? `Now: ${esc(t.seats.find((s) => s.key === B.turn)?.name || '…')}` : ''}</span>`);
   }
-  if (seated && B && B.phase !== 'done' && t.hooks.count && !used.has('count')) btns.push(`<button type="button" class="btn small secondary skill" data-bj="count">${gl('target')} Count the cards<small>Intuition: ${matchup(t, 'intuition', 'finesse', dealer)}</small></button>`);
+  if (seated && B && B.phase !== 'done' && t.hooks.count && !used.has('count')) btns.push(`<button type="button" class="btn small skill" data-bj="count">${gl('target')} Count the cards<small>Intuition: ${matchup(t, 'intuition', 'finesse', dealer)}</small></button>`);
   const title = !B ? (t.status === 'closed' ? 'The table is closed' : 'Waiting for the first round') : B.phase === 'bets' ? `Round ${B.round} — place your bets` : B.phase === 'play' ? `Round ${B.round} — cards are out` : `Round ${B.round} is done`;
   const dealerCards = B?.dealer?.length ? B.dealer.map((c, i) => card(c, i === 1 && B.holeSeen ? 'peeked' : '')).join('') : card(null) + card(null);
   scene.innerHTML = `<div class="sl-table" role="dialog" aria-modal="true" aria-label="Blackjack at ${esc(t.where)}">
@@ -391,7 +396,7 @@ function renderFaro(t) {
     else {
       btns.push(`<button type="button" class="btn" data-fr="turn">${gl('die')} Deal the turn</button>`);
       if (f.canCall) btns.push('<button type="button" class="btn secondary" data-fr="call">Call the turn (4 to 1)</button>');
-      if (!f.watched) btns.push(`<button type="button" class="btn small secondary skill" data-fr="watch">${gl('target')} Watch the dealer<small>Intuition: ${matchup(t, 'intuition', 'finesse', dealer)}</small></button>`);
+      if (!f.watched) btns.push(`<button type="button" class="btn small skill" data-fr="watch">${gl('target')} Watch the dealer<small>Intuition: ${matchup(t, 'intuition', 'finesse', dealer)}</small></button>`);
     }
     btns.push('<button type="button" class="btn secondary" data-sl="leave">Cash out &amp; leave</button>');
   }
