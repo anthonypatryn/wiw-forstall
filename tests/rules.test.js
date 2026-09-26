@@ -981,3 +981,16 @@ test('only the Warden can bring a fallen character back', () => {
   assert.match(state.log[0].text, /back among the living/);
   assert.throws(() => publicAction(state, { action: 'pc', id: pc.id, op: 'revive' }, { warden: true }), /hasn’t fallen/);
 });
+
+test('Needs you: a finished roll says how it went and offers Close', async () => {
+  const { wardenNeeds } = await import('../lib/combat.js');
+  const state = freshCombat();
+  const pc = publicAction(state, { action: 'addPc', trade: 'Hunter', name: 'Tess' }, { warden: true });
+  const ck = publicAction(state, { action: 'checkStart', who: [pc.id], skill: 'Nerve', diff: 'Very Easy' }, { warden: true });
+  let item = wardenNeeds(state, { shop: null, edison: [] }).items.find((x) => /Nerve/.test(x.text));
+  assert.ok(!item.closeCheck && /waiting on Tess/.test(item.text));
+  publicAction(state, { action: 'pc', id: pc.id, op: 'checkRoll', check: ck.id }, { warden: false });
+  item = wardenNeeds(state, { shop: null, edison: [] }).items.find((x) => /Nerve/.test(x.text));
+  assert.equal(item.closeCheck, ck.id);
+  assert.match(item.text, /Tess (made it|missed) \(\d+\/1\)\. Close it\?/);
+});

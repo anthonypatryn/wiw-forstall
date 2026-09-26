@@ -9,7 +9,9 @@ const SIZES = ['Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Titan'];
 const randName = () => `${NPC[Math.random() < 0.5 ? 'first1' : 'first2'][Math.floor(Math.random() * 52)]} ${NPC.last[Math.floor(Math.random() * 52)]}`;
 
 // combat: the Warden combat view (catalog, npcCatalog, enemies, settings); done(): called after anything is added
-export async function openAddEnemies(combat, done = () => {}) {
+// resolves with how many enemies were added once the dialog closes (opts.intro: a line above the tabs)
+export async function openAddEnemies(combat, done = () => {}, opts = {}) {
+  let finish; const closed = new Promise((r) => { finish = r; });
   let ledger = [];
   try { ledger = (await api('GET', null, '?view=warden', '/api/npcs')).npcs || []; } catch {}
   const humans = combat.npcCatalog.filter((n) => !n.faction);
@@ -35,7 +37,7 @@ export async function openAddEnemies(combat, done = () => {}) {
       <div class="field-step"><span>DEFENSE</span>${poolHTML('data-ce="def"', 'Defense')}</div>
       <div class="field-step"><span>FINESSE (turn order)</span>${poolHTML('data-ce="fin"', 'Finesse')}</div>`;
     back.innerHTML = `<div class="modal ask trade-modal" role="dialog" aria-modal="true" aria-label="Add enemies">
-      <div class="ho-kicker">${gl('claws')} THE OPPOSITION</div><h2>Add enemies</h2>
+      <div class="ho-kicker">${gl('claws')} THE OPPOSITION</div><h2>Add enemies</h2>${opts.intro ? `<p class="muted">${esc(opts.intro)}</p>` : ''}
       <div class="field-step">${tab('monster', 'Monster', 'from the Guidebook')}${tab('person', 'Person', 'outlaws, faction folk, the ledger')}${tab('custom', 'Custom', 'make one up')}</div>
       ${body}
       <label class="check"><input type="checkbox" data-hidden${st.hidden ? ' checked' : ''}> Keep them hidden from the posse (an ambush) — reveal them from the token list</label>
@@ -58,10 +60,10 @@ export async function openAddEnemies(combat, done = () => {}) {
     if (e.target.dataset.hidden !== undefined) st.hidden = e.target.checked;
   });
   back.addEventListener('click', async (e) => {
-    if (e.target === back) { back.remove(); return; }
+    if (e.target === back) { back.remove(); finish(st.added.length); return; }
     const b = e.target.closest('button'); if (!b) return;
     const d = b.dataset;
-    if (d.close !== undefined) { back.remove(); return; }
+    if (d.close !== undefined) { back.remove(); finish(st.added.length); return; }
     if (d.tab) { st.tab = d.tab; if (d.tab === 'person' && !st.name) st.name = randName(); if (d.tab === 'monster') st.name = ''; draw(); return; }
     if (d.count) { st.count = Number(d.count); draw(); return; }
     if (d.as) { st.as = d.as; draw(); return; }
@@ -87,4 +89,5 @@ export async function openAddEnemies(combat, done = () => {}) {
       draw();
     } catch (err) { toast(err.message, true); b.disabled = false; }
   });
+  return closed;
 }

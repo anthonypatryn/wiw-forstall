@@ -1068,3 +1068,11 @@ body .sl-x { border-width: 2px; font-weight: 700; -webkit-text-stroke: 1.1px cur
 body .sl-x:hover { background: var(--on-dark); color: var(--ink); }
 body .st button { font-weight: 700; -webkit-text-stroke: .8px currentColor; font-size: var(--fs-md); }
 body.warden-mode :is(.pmb, .pm-btn, .sev button, .inv-item .qty button, .pm > button, .rp-x) { box-shadow: 2px 2px 0 rgba(0,0,0,.35); }
+
+/* Needs you: a finished roll with its Close button; Run the Game's finished roll card */
+.needs-row { display: flex; align-items: center; gap: 8px; padding: 7px 8px; margin: 3px 0; border-radius: var(--r-sm); background: var(--wash); }
+.needs-row.urgent { background: var(--accent-tint); border-left: 4px solid var(--accent); }
+.needs-row > a { flex: 1; min-width: 0; color: var(--ink); text-decoration: none; }
+.needs-row > .btn { flex: none; }
+.notice.ck-finished { border-color: var(--brass); box-shadow: 0 0 0 2px var(--brass) inset; }
+.ck-help-note { font-size: var(--fs-xs); margin-top: 4px; }

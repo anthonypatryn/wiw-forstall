@@ -330,9 +330,17 @@ function renderTurnBar() {
     const n = (combat?.enemies || []).filter((e) => !e.defeated).length, pcs = (combat?.posse || []).filter((p) => !p.dead).length;
     bar.innerHTML = warden ? `<div class="turn-bar"><div><small>NO COMBAT RUNNING</small><span class="muted">${pcs} in the posse · ${n} enem${n === 1 ? 'y' : 'ies'} ready</span></div>
       <button type="button" class="btn secondary" data-addenemies>${gl('claws')} Add enemies</button>
-      <button type="button" class="btn" data-startfight${pcs + n ? '' : ' disabled'}>${gl('revolver')} Start combat</button></div>` : '';
+      <button type="button" class="btn" data-startfight${pcs ? '' : ' disabled'}>${gl('revolver')} Start combat</button></div>` : '';
     bar.querySelector('[data-addenemies]')?.addEventListener('click', () => openAddEnemies(combat, () => poller?.now?.()));
-    bar.querySelector('[data-startfight]')?.addEventListener('click', async () => { const who = await pickFighters(combat); if (who && await tpAct({ action: 'start', ...who }, 'Combat begins — tokens placed.')) poller?.now?.(); });
+    bar.querySelector('[data-startfight]')?.addEventListener('click', async () => {
+      // nothing to fight yet: bring in the enemies first, then pick who's in
+      if (!n) {
+        const added = await openAddEnemies(combat, () => poller?.now?.(), { intro: 'Nobody to fight yet. Add the enemies, then press Done to pick who’s in.' });
+        if (!added) return;
+        try { combat = await api('GET', null, '?view=warden', '/api/combat'); } catch {} // the picker needs the new enemies
+        poller?.now?.();
+      }
+      const who = await pickFighters(combat); if (who && await tpAct({ action: 'start', ...who }, 'Combat begins — tokens placed.')) poller?.now?.(); });
     return;
   }
   bar.hidden = false;

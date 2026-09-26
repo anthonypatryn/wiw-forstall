@@ -220,6 +220,14 @@
 ## Quick moves (Battle Map turn bar)
 - `quickHTML` / `wireQuick` in battle.js: above the Actions grid, one button per nearest target (`QUICK_MAX` 3). A character's turn: "Shoot/Hit <enemy>" with the weapon that has the most dice at that range (Grit cost shown; disabled without the Grit) → the same `pc attack` call as the Attack drawer (no aim / special ammo — use the drawer for those). An enemy's turn (Warden): "<attack> → <character>" with the first attack that fits the range → `enemyAttack` (asks before forcing an out-of-range roll). Out-of-reach targets are listed as such. `render()` redraws the turn bar too, so quick moves appear once token positions load.
 
+## Playtest fixes (2026-09-26)
+- **Scanner Grit:** in a fight, `lib/routes/scan.js` `scanRange` refuses a Scan unless the scanner has `SCAN_GRIT` (3, p. 83) and isn't Unconscious. The Grit comes off their sheet when the roll happens. Out of combat nothing is counted.
+- **Closing a table:** when the table turns `closed`, players' open saloon scenes close (`watchSaloon` → `closeTable` + a toast with their net). Bets were already refunded server-side.
+- **Start combat with no enemies:** opens Add enemies first. `openAddEnemies(combat, done, {intro})` now returns a Promise of how many were added; then it re-fetches combat and opens `pickFighters`.
+- **Finished roll calls:** they never auto-close, because Helping stays possible.
+  - On Run the Game (`desk.js` `renderChecks`), once everyone named has rolled (or a Challenge has a winner), the card gets `.ck-finished` and a "Close it" button; while waiting, the button is "Call off".
+  - `wardenNeeds` lists it urgent with the results ("Tess made it (3/3). Close it?") plus `closeCheck`. The Needs you list shows it as a `.needs-row` with a Close it button (`checkClose`).
+
 ## Reviving the fallen
 - pc op `revive` is **Warden-only** (`pcOp(state, a, warden)`). It throws if the character isn't dead, sets health to at least 1, and logs "… is back among the living."
 - Entry points: fallen characters stay listed at the bottom of Run the Game's posse list (`.item-row.fallen`, Revive button with a confirm); a Revive button on the sheet's FALLEN note (Warden only); and the fighter card's Revive on the Battle Map.

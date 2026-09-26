@@ -389,12 +389,24 @@ try { localStorage.removeItem('wiw.pin'); } catch {}
 // Everything waiting on the Warden (store requests, open rolls, enemy turns…), refreshed every few seconds.
 let stopNeeds = null;
 function pollNeeds(btn, list) {
+  if (!list.dataset.wired) { // "Close it" on a finished roll, right from the list
+    list.dataset.wired = '1';
+    list.addEventListener('click', async (e) => {
+      const b = e.target.closest('[data-needs-close]');
+      if (!b) return;
+      e.stopPropagation(); b.disabled = true;
+      try { await api('POST', { action: 'checkClose', id: b.dataset.needsClose }, '', '/api/combat'); toast('Roll closed.'); } catch (err) { toast(err.message, true); }
+      tick();
+    });
+  }
   const tick = async () => {
     if (!document.body.contains(btn)) return;
     try {
       const n = await api('GET', null, '?view=needs', '/api/combat');
       btn.innerHTML = `<span class="nn">Needs you</span> <b class="${n.count ? 'hot' : ''}">${n.count}</b>`;
-      list.innerHTML = `${n.items.length ? n.items.map((x) => `<a class="${x.urgent ? 'urgent' : ''}" href="${esc(x.href)}">${esc(x.text)}</a>`).join('') : '<span class="muted">All quiet — nothing waiting on you.</span>'}
+      list.innerHTML = `${n.items.length ? n.items.map((x) => (x.closeCheck
+        ? `<div class="needs-row${x.urgent ? ' urgent' : ''}"><a href="${esc(x.href)}">${esc(x.text)}</a><button type="button" class="btn small" data-needs-close="${esc(x.closeCheck)}">Close it</button></div>`
+        : `<a class="${x.urgent ? 'urgent' : ''}" href="${esc(x.href)}">${esc(x.text)}</a>`)).join('') : '<span class="muted">All quiet — nothing waiting on you.</span>'}
         <div class="needs-links"><a href="/run"><b>Open Run the Game ›</b></a></div>`;
     } catch { /* offline for a moment */ }
   };

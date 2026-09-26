@@ -641,7 +641,17 @@ export function watchSaloon() {
     const before = view;
     view = d;
     const t = d.table;
-    if (!t || t.status === 'closed') { attention('saloon', null); if (scene) render(); showChip(); return; }
+    if (!t || t.status === 'closed') {
+      attention('saloon', null);
+      // the Warden broke the game up: take the table off everyone's screen, with how they came out of it
+      if (scene) {
+        const mine = t?.seats?.find((s) => s.key === `pc:${me()}`);
+        closeTable();
+        toast(`The Warden closed the table${t?.where ? ` at ${t.where}` : ''}.${mine?.net ? ` You ${mine.net > 0 ? `came out ${$$(mine.net)} ahead` : `lost ${$$(-mine.net)}`}.` : ''} Unfinished bets went back.`);
+      }
+      showChip();
+      return;
+    }
     const key = `pc:${me()}`, seated = t.seats.some((s) => s.key === key);
     const invited = !t.invite?.length || t.invite.includes(me());
     if (!seated && invited && store.get('wiw.saloonAsked', '') !== t.id && !scene && !busy) {
