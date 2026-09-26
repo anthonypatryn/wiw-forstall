@@ -419,12 +419,12 @@ a.btn { text-decoration: none; }
 .sitenav-inner { max-width: 1240px; margin: 0 auto; padding: 0 12px; display: flex; align-items: stretch; gap: 2px; }
 .nav-main, .nav-side { display: flex; align-items: stretch; gap: 2px; }
 .nav-main { flex: 1; min-width: 0; }
-.sitenav a, .nav-drop, .nav-unlock, .nav-menu-btn, .nav-needs {
+.sitenav a, .sitenav .nav-help, .nav-drop, .nav-unlock, .nav-menu-btn, .nav-needs {
   flex: none; display: flex; align-items: center; gap: 6px; color: var(--on-dark-dim); text-decoration: none; font: var(--fs-lg)/1 var(--display); letter-spacing: .1em;
   padding: 12px 14px 9px; border: 0; border-bottom: 3px solid transparent; margin-bottom: -3px; background: none; cursor: pointer;
 }
 .sitenav .gl { width: 1em; height: 1em; margin-top: -3px; }
-.sitenav a:hover, .nav-drop:hover, .nav-unlock:hover, .nav-menu-btn:hover { color: #fff; }
+.sitenav a:hover, .sitenav .nav-help:hover, .nav-drop:hover, .nav-unlock:hover, .nav-menu-btn:hover { color: #fff; }
 .sitenav a[aria-current="page"], .nav-group.current > .nav-drop { color: #fff; border-bottom-color: var(--brass); }
 .nav-drop i { font-style: normal; font-size: .7em; opacity: .7; }
 .nav-group { position: relative; display: flex; }
@@ -1029,3 +1029,15 @@ body.warden-mode main > .muted, body.warden-mode main > p:not([class]) { color: 
 .prev-h { margin: 12px 0 6px; font: var(--fs-md) var(--display); letter-spacing: .1em; color: var(--accent); }
 .prev-quests { margin: 0 0 12px; padding-left: 20px; font-size: var(--fs-sm); }
 .prev-quests li { margin: 3px 0; }
+
+/* rules lookup (rules.js) */
+.rules-modal { max-width: 580px; width: min(580px, calc(100vw - 32px)); }
+.rules-modal .rules-q { width: 100%; margin: 6px 0 10px; }
+.rules-list { max-height: min(55vh, 520px); overflow-y: auto; display: grid; gap: 8px; padding-right: 4px; }
+.rule-card { border: 1.5px solid var(--line, var(--ink-faint)); border-radius: var(--radius); padding: 10px 14px; background: var(--surface); }
+.rule-card h3 { margin: 0 0 4px; font: var(--fs-lg) var(--display); letter-spacing: .04em; }
+.rule-card p { margin: 0 0 6px; font: var(--fs-md)/1.5 var(--body); }
+.rule-skill { font: var(--fs-xs) var(--body); color: var(--ink-soft); letter-spacing: 0; }
+.rule-page { font-size: var(--fs-xs); color: var(--ink-soft); display: inline-flex; gap: 4px; align-items: center; }
+.rules-none { margin: 8px 0; }
+button.rule-link { border: 0; background: none; padding: 0 2px; font: inherit; color: var(--accent); text-decoration: underline dotted; cursor: help; }

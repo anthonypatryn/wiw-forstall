@@ -984,7 +984,7 @@ function hydrate(p) {
   const stBox = view.querySelector('[data-dyn="statuses"]');
   stBox.innerHTML = SHEET_STATUSES.map(([s, sk, txt]) => { const v = p.statuses?.[s] || 0; return `<div class="st-row${v ? ' on' : ''}">
       <label class="st-check"><span class="st-sk">${sk}</span><input type="checkbox" data-stc="${s}"${v ? ' checked' : ''}><b>${s}</b></label>
-      <span class="st-desc">${esc(txt)}</span>
+      <span class="st-desc">${esc(txt)} <button type="button" class="rule-link" data-rule="${s}" aria-label="The ${s} rule">more</button></span>
       <span class="sev">${v ? `<button type="button" data-st="${s}" data-v="${v - 1}" aria-label="Lower ${s}">−</button><b title="Severity">${v}</b><button type="button" data-st="${s}" data-v="${v + 1}" aria-label="Raise ${s}">+</button>` : ''}</span>
     </div>`; }).join('');
   stBox.querySelectorAll('[data-st]').forEach((b) => b.addEventListener('click', () => send({ op: 'status', status: b.dataset.st, value: Number(b.dataset.v) })));

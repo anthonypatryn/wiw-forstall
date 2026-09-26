@@ -306,7 +306,7 @@ export function mountNav(active) {
       <div class="nav-main">${top}</div>
       <div class="nav-side">
         <button type="button" class="nav-sound" title="Sound effects" aria-pressed="${!isMuted()}">${gl(isMuted() ? 'mute' : 'sound')}</button>
-        ${link('/howto', '?', ' class="nav-help" title="How to Play" aria-label="How to Play"')}
+        <button type="button" class="nav-help" data-rule="" title="Look up a rule" aria-label="Look up a rule">?</button>
         ${on ? `<button type="button" class="nav-needs" aria-expanded="false" title="What's waiting on you"><span class="nn">Needs you</span> <b>·</b></button>
           <div class="nav-group nav-warden"><button type="button" class="nav-drop" aria-expanded="false">${gl('star')} Warden <i>▾</i></button>
             <div class="nav-menu right" hidden><a href="/run">Run the Game</a><a href="/battle">Battle Map</a><a href="/run#grp-tools">Backup &amp; homebrew</a><button type="button" data-player>Switch to player view</button></div></div>`
@@ -315,13 +315,26 @@ export function mountNav(active) {
       </div>
     </div>
     <div class="needs-list" hidden></div>
-    <div class="nav-sheet" hidden><nav aria-label="All pages">${all.map(([h, l]) => (h && h.startsWith('<b>') ? `<div class="nav-sheet-h">${h}</div>` : link(h, esc(l)))).join('')}${link('/howto', 'How to Play')}<div class="nav-sheet-h">Sound</div><div class="nav-sheet-sound"><button type="button" class="nav-sound-sheet">${isMuted() ? 'Sound is off — turn on' : 'Sound is on — mute'}</button><input type="range" min="0" max="1" step="0.05" value="${volume()}" aria-label="Volume" class="nav-vol"></div>${on ? '<div class="nav-sheet-h">Warden</div><a href="/run#grp-tools">Backup &amp; homebrew</a><button type="button" data-player>Switch to player view</button>' : ''}</nav></div>`;
+    <div class="nav-sheet" hidden><nav aria-label="All pages">${all.map(([h, l]) => (h && h.startsWith('<b>') ? `<div class="nav-sheet-h">${h}</div>` : link(h, esc(l)))).join('')}<button type="button" data-rule="">Look up a rule</button>${link('/howto', 'How to Play')}<div class="nav-sheet-h">Sound</div><div class="nav-sheet-sound"><button type="button" class="nav-sound-sheet">${isMuted() ? 'Sound is off — turn on' : 'Sound is on — mute'}</button><input type="range" min="0" max="1" step="0.05" value="${volume()}" aria-label="Volume" class="nav-vol"></div>${on ? '<div class="nav-sheet-h">Warden</div><a href="/run#grp-tools">Backup &amp; homebrew</a><button type="button" data-player>Switch to player view</button>' : ''}</nav></div>`;
   wireNav(el, on);
   // other sticky bars (sheet toolbar, contents bars) sit just under the nav
   const navH = () => document.documentElement.style.setProperty('--nav-h', `${el.offsetHeight}px`);
   navH(); if (!window.__navH) { window.__navH = true; window.addEventListener('resize', navH); }
   // static pages mark icons as <span data-gl="name"> — draw them
   document.querySelectorAll('[data-gl]').forEach((s) => { s.outerHTML = gl(s.dataset.gl); });
+}
+// anything marked data-rule="Dodge" opens the rules lookup on that term (data-rule="" opens it empty)
+export const openRule = (q = '') => import('./rules.js').then((m) => m.openRules(q));
+if (!window.__ruleClicks) {
+  window.__ruleClicks = true;
+  document.addEventListener('click', (e) => {
+    const t = e.target.closest('[data-rule]');
+    if (!t) return;
+    e.preventDefault(); e.stopPropagation();
+    document.querySelector('.nav-sheet')?.setAttribute('hidden', '');
+    document.body.classList.remove('nav-open');
+    openRule(t.dataset.rule);
+  }, true);
 }
 function wireNav(el, on) {
   const closeAll = (except) => el.querySelectorAll('.nav-group').forEach((g) => { if (g !== except) { g.querySelector('.nav-menu').hidden = true; g.querySelector('.nav-drop').setAttribute('aria-expanded', 'false'); } });
