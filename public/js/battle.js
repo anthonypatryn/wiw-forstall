@@ -286,7 +286,7 @@ function renderPanel() {
     const art = sel.photo || sel.img ? `<span class="av" style="background:${color(sel)} url('${esc(sel.photo || `/img/tokens/${sel.img}.webp`)}') center / cover"></span>` : `<span class="av" style="background:${color(sel)}">${esc(initials(sel.name))}</span>`;
     head.innerHTML = cardHead(art, sel.name, `${kindLabel}${sel.hidden ? ' · HIDDEN' : ''}`, actor ? '<span class="tag turn">THEIR TURN</span>' : '');
     box.innerHTML = `<div class="sel-card">
-      ${actor ? `${actor.actionsHTML}` : ''}
+      ${actor ? `${actor.actionsHTML}${actor.extrasHTML}` : ''}
       ${fcHTML}${detail}
       <details class="d-dist"><summary>Distances</summary>
       ${others.length ? others.map(({ t, d }) => `<div class="tok-row" data-pick="${t.id}"><span class="chip" style="background:${color(t)}">${esc(initials(t.name))}</span>
@@ -322,6 +322,84 @@ function renderPanel() {
   }));
   list.querySelectorAll('[data-rm]').forEach((b) => b.addEventListener('click', () => act({ action: 'removeToken', id: b.dataset.rm })));
 }
+
+// ---------- painted terrain: rough ground and fog of war ----------
+// same hex line as the server (lib/battle.js hexLine): the hexes a straight move passes through
+function hexLine(from, to) {
+  const cu = (c) => { const q = c.col - (c.row - (c.row & 1)) / 2; return { q, r: c.row, s: -q - c.row }; };
+  const a = cu(from), b = cu(to), n = dist(from, to), out = [];
+  for (let i = 1; i <= n; i++) {
+    const t = i / n, q = a.q + (b.q - a.q) * t + 1e-6, r = a.r + (b.r - a.r) * t + 1e-6, sv = a.s + (b.s - a.s) * t - 2e-6;
+    let rq = Math.round(q), rr = Math.round(r), rs = Math.round(sv);
+    const dq = Math.abs(rq - q), dr = Math.abs(rr - r), ds = Math.abs(rs - sv);
+    if (dq > dr && dq > ds) rq = -rr - rs; else if (dr > ds) rr = -rq - rs;
+    out.push({ col: rq + (rr - (rr & 1)) / 2, row: rr });
+  }
+  return out;
+}
+function roughOnPath(from, to) { const set = new Set(data?.rough || []); return !!set.size && hexLine(from, to).some((h) => set.has(`${h.col},${h.row}`)); }
+function renderTerrain() {
+  const svg = $('#terrain');
+  if (!data) return;
+  svg.setAttribute('width', data.map.w); svg.setAttribute('height', data.map.h);
+  const path = (list) => list.map((k) => { const [c, r] = k.split(',').map(Number); return hexPath(c, r); }).join('');
+  svg.innerHTML = `<defs><pattern id="rough-hatch" width="14" height="14" patternUnits="userSpaceOnUse" patternTransform="rotate(35)"><rect width="14" height="14" fill="rgba(122,82,40,.35)"/><path d="M0 0v14" stroke="rgba(60,36,14,.75)" stroke-width="4"/></pattern></defs>
+    ${data.rough?.length ? `<path class="rough" d="${path(data.rough)}"/>` : ''}
+    ${data.fog?.length ? `<path class="fog${warden ? ' warden' : ''}" d="${path(data.fog)}"/>` : ''}`;
+}
+const paint = { layer: null, on: true, size: 1, cells: new Map() };
+function paintBar() {
+  const b = $('#paint-bar');
+  b.hidden = !paint.layer;
+  if (!paint.layer) return;
+  b.innerHTML = `<b>${paint.layer === 'fog' ? 'FOG OF WAR' : 'ROUGH TERRAIN'}</b>
+    <div class="chip-row">${[[true, paint.layer === 'fog' ? 'Hide' : 'Paint'], [false, paint.layer === 'fog' ? 'Reveal' : 'Erase']].map(([v, l]) => `<button type="button" class="chip-btn${paint.on === v ? ' on' : ''}" data-pb-on="${v}">${l}</button>`).join('')}</div>
+    <div class="chip-row"><span>Brush</span>${[1, 2, 4].map((n) => `<button type="button" class="chip-btn${paint.size === n ? ' on' : ''}" data-pb-size="${n}">${n === 1 ? 'Small' : n === 2 ? 'Medium' : 'Large'}</button>`).join('')}</div>
+    <small>Drag on the map. Scroll to zoom.</small>
+    <button type="button" class="btn small" data-pb-done>Done</button>`;
+  b.querySelectorAll('[data-pb-on]').forEach((x) => x.addEventListener('click', () => { paint.on = x.dataset.pbOn === 'true'; paintBar(); }));
+  b.querySelectorAll('[data-pb-size]').forEach((x) => x.addEventListener('click', () => { paint.size = Number(x.dataset.pbSize); paintBar(); }));
+  b.querySelector('[data-pb-done]').addEventListener('click', () => { paint.layer = null; vp.classList.remove('painting'); paintBar(); toast('Done painting.'); });
+}
+function startPaint(layer) { paint.layer = layer; paint.on = true; $('#setup').hidden = true; vp.classList.add('painting'); select(null); paintBar(); }
+function brushAt(cx, cy) {
+  const pt = pz.toStage(cx, cy), h = toHex(pt.x, pt.y), r = paint.size - 1;
+  const key = `${paint.layer}`, set = new Set(data[key] || []);
+  for (let row = h.row - r; row <= h.row + r; row++) for (let col = h.col - r - 1; col <= h.col + r + 1; col++) {
+    if (row < 0 || col < 0 || row >= data.size.rows || col >= data.size.cols || dist(h, { col, row }) > r) continue;
+    const k = `${col},${row}`;
+    if (paint.on) set.add(k); else set.delete(k);
+    paint.cells.set(k, [col, row]);
+  }
+  data[key] = [...set];
+  renderTerrain();
+}
+let painting = false;
+vp.addEventListener('pointerdown', (e) => {
+  if (!paint.layer || e.button !== 0 || e.target.closest('.map-ctrls, .paint-bar, .fcard, .side-toggle')) return;
+  e.stopImmediatePropagation(); e.preventDefault();
+  painting = true; paint.cells.clear(); brushAt(e.clientX, e.clientY);
+  try { vp.setPointerCapture(e.pointerId); } catch {}
+}, true);
+vp.addEventListener('pointermove', (e) => { if (painting) { e.stopImmediatePropagation(); brushAt(e.clientX, e.clientY); } }, true);
+const paintEnd = async (e) => {
+  if (!painting) return;
+  e?.stopImmediatePropagation?.();
+  painting = false;
+  const cells = [...paint.cells.values()];
+  paint.cells.clear();
+  if (cells.length) await act({ action: 'paint', layer: paint.layer, cells, on: paint.on });
+};
+vp.addEventListener('pointerup', paintEnd, true);
+vp.addEventListener('pointercancel', paintEnd, true);
+document.querySelectorAll('[data-paint]').forEach((b) => b.addEventListener('click', () => startPaint(b.dataset.paint)));
+document.querySelectorAll('[data-layer-all]').forEach((b) => b.addEventListener('click', async () => {
+  const [layer, on] = b.dataset.layerAll.split(':');
+  const msg = on === '1' ? 'Cover the whole map in fog? Then paint Reveal where the posse can see.' : `Clear all ${layer === 'fog' ? 'fog' : 'rough terrain'}?`;
+  if (!await ask(msg, { ok: on === '1' ? 'Fog it' : 'Clear it', danger: on !== '1' })) return;
+  await act({ action: 'layerAll', layer, on: on === '1' }, on === '1' ? 'The map is fogged. Paint Reveal where they can see.' : 'Cleared.');
+  if (on === '1') startPaint('fog'), paint.on = false, paintBar();
+}));
 
 // ---------- the fighter card: header, where it sits, dragging it ----------
 function cardHead(av, name, kind, extra = '') {
@@ -374,8 +452,9 @@ function moveReadout(t, d) {
   const actor = t.kind === 'pc' ? combat?.posse.find((p) => p.id === t.ref) : t.kind === 'enemy' ? combat?.enemies.find((e) => e.id === t.ref) : null;
   if (!c?.active || !actor) return `${t.name} moves ${d}″`;
   if (c.current !== t.ref) return warden ? `${t.name} moves ${d}″ · free (Warden, off-turn)` : `Not ${t.name}’s turn`;
-  const m = moveCostFor(t.kind, actor, d, tp.rough);
-  return `${t.name} moves ${d}″ · ${m.cost} Grit (${m.speed}${tp.rough ? ', rough' : ''})${m.cost > (actor.grit || 0) ? ` · only ${actor.grit || 0} left!` : ''}`;
+  const rough = tp.rough || (dragging?.hex && roughOnPath(t, dragging.hex));
+  const m = moveCostFor(t.kind, actor, d, rough);
+  return `${t.name} moves ${d}″ · ${m.cost} Grit (${m.speed}${rough ? ', rough ground' : ''})${m.cost > (actor.grit || 0) ? ` · only ${actor.grit || 0} left!` : ''}`;
 }
 // ---------- turn panel: whose turn, Grit left, this turn's actions (pp. 40–43) ----------
 const tp = { open: '', pp: { kind: 'attack', trig: 'within-short', grit: 1, gear: 0, aim: false, ammo: '', ab: {} }, ab: {}, rough: false, dodge: 1, gear: 0, imp: 1, impLabel: '', impSkill: '', prep: 1, prepLabel: '', rl: '', rlDice: 1 };
@@ -448,7 +527,6 @@ function renderFightTurn(bar, fb, c) {
   const abil = isPc && meta ? abilityOptions(a, meta) : [];
   const ACTIONS = [
     ['attack', 'gun', 'Attack', 'weapon’s Grit'],
-    ['move', 'boot', 'Move', 'drag token'],
     ['dodge', 'shield', 'Dodge', '1 per die'],
     ...(abil.length ? [['ability', 'star', 'Ability', 'varies']] : []),
     ...(gear.length ? [['item', 'backpack', 'Use Item', 'item’s Grit']] : []),
@@ -463,12 +541,6 @@ function renderFightTurn(bar, fb, c) {
   if (can) switch (tp.open) {
     case 'attack':
       drawer = tok ? attackHTML(tok) : '<p class="muted">Put their token on the board first.</p>';
-      break;
-    case 'move':
-      drawer = `<p class="tp-hint">Drag <b>${esc(a.name)}</b>’s token on the map — the Grit cost shows while you drag, and it’s spent when you drop.</p>
-        <label class="check"><input type="checkbox" data-tp="rough"${tp.rough ? ' checked' : ''}> Rough terrain (costs double)</label>
-        ${isPc && (a.horse?.breed || a.mech?.class) ? `<select data-tp-mount aria-label="On foot or mounted"><option value="">On foot (Normal)</option>${a.horse?.breed ? `<option value="horse"${a.mounted === 'horse' ? ' selected' : ''}>Riding ${esc(a.horse.name || a.horse.breed)} (Fast)</option>` : ''}${a.mech?.class ? `<option value="mech"${a.mounted === 'mech' ? ' selected' : ''}>Driving the ${esc(a.mech.class)} mech</option>` : ''}</select>` : ''}
-        ${isPc && /arabian/i.test(a.horse?.breed || '') && a.horse?.bond === 'Revered' && a.mounted === 'horse' ? `<button type="button" class="btn small secondary" data-tp-horse${(a.horseGrit || 0) >= 2 ? ' disabled' : ''}>${gl('horseshoe')} Arabian +1 Grit (${a.horseGrit || 0}/2)</button>` : ''}`;
       break;
     case 'forstall': {
       const list = workable(a.id);
@@ -544,7 +616,12 @@ function renderFightTurn(bar, fb, c) {
     lastTurn = c.current; tp.open = '';
     if (tok && can) { selected = tok.id; selFs = null; cardPos = null; renderRanges(); }
   }
-  turnUI = { cur, tok, can, ACTIONS, drawer,
+  // moving is dragging the token; what changes its cost sits under the actions
+  const extrasHTML = `<div class="tp-extras"><p class="tp-hint">${gl('boot')} Drag ${isPc ? 'the' : 'its'} token to move: ${isPc && a.mounted === 'horse' ? 'riding, 1 Grit per 12″' : '1 Grit per 6″'}. ${data?.rough?.length ? 'Painted rough ground costs double by itself.' : ''}</p>
+      <label class="check"><input type="checkbox" data-tp="rough"${tp.rough ? ' checked' : ''}> Rough ground that isn’t painted (double Grit)</label>
+      ${isPc && (a.horse?.breed || a.mech?.class) ? `<select data-tp-mount aria-label="On foot or mounted"><option value="">On foot (Normal)</option>${a.horse?.breed ? `<option value="horse"${a.mounted === 'horse' ? ' selected' : ''}>Riding ${esc(a.horse.name || a.horse.breed)} (Fast)</option>` : ''}${a.mech?.class ? `<option value="mech"${a.mounted === 'mech' ? ' selected' : ''}>Driving the ${esc(a.mech.class)} mech</option>` : ''}</select>` : ''}
+      ${isPc && /arabian/i.test(a.horse?.breed || '') && a.horse?.bond === 'Revered' && a.mounted === 'horse' ? `<button type="button" class="btn small secondary" data-tp-horse${(a.horseGrit || 0) >= 2 ? ' disabled' : ''}>${gl('horseshoe')} Arabian +1 Grit (${a.horseGrit || 0}/2)</button>` : ''}</div>`;
+  turnUI = { cur, tok, can, ACTIONS, drawer, extrasHTML,
     actionsHTML: `<div class="tp-actions">${ACTIONS.map(([k, ic, label, cost, off]) => `<button type="button" class="tp-act${tp.open === k ? ' on' : ''}" data-open="${k}"${off ? ' disabled' : ''}><span class="ic">${gl(ic)}</span>${label}<small>${off ? 'used' : cost}</small></button>`).join('')}</div>` };
   $('#acc-turn [data-acc-title]').textContent = `${a.name.toUpperCase()}’S TURN`;
   bar.innerHTML = `<div class="turn-panel${can && !warden ? ' mine' : ''}">
@@ -715,7 +792,6 @@ function wireTurnBar(bar, cur, tok) {
     const k = b.dataset.open;
     if (k === 'fool') { if (await ask('Fool’s Grit: +1 Grit for 1 Health?')) tpAct({ ...base, op: 'fool' }, '+1 Grit, −1 Health.'); return; }
     tp.open = tp.open === k ? '' : k;
-    if (k === 'move' && tp.open && tok) { select(tok.id); const p = center(tok.col, tok.row); pz.centerOn(p.x, p.y, Math.max(pz.view.s, 0.45)); }
     renderTurnBar();
   }));
   if (tok && tp.open === 'attack') wireAttack(bar, tok);
@@ -829,6 +905,7 @@ function renderWarden() {
 function render() {
   if (dragging) return; // don't yank a token out from under a drag
   renderStage();
+  renderTerrain();
   renderFields();
   renderRanges();
   renderTokens();

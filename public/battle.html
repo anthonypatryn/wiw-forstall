@@ -12,7 +12,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Rye&family=Special+Elite&family=Reenie+Beanie&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css?v=80">
   <link rel="stylesheet" href="/css/fighter.css?v=5">
-  <link rel="stylesheet" href="/css/battle.css?v=39">
+  <link rel="stylesheet" href="/css/battle.css?v=40">
 </head>
 <body>
   <header class="masthead">
@@ -33,6 +33,7 @@
       <div class="stage" id="stage">
         <img id="bg" alt="" draggable="false">
         <svg class="grid" id="grid" aria-hidden="true"></svg>
+        <svg class="terrain" id="terrain" aria-hidden="true"></svg>
         <svg class="fields" id="fields" aria-hidden="true"></svg>
         <svg class="ranges" id="ranges" aria-hidden="true"></svg>
         <div class="tokens" id="tokens"></div>
@@ -47,6 +48,7 @@
       <button type="button" class="side-toggle" id="side-toggle" aria-label="Hide the sidebar" title="Hide the sidebar">›</button>
       <div class="drag-readout" id="readout" hidden></div>
       <div class="map-banner" id="map-banner" hidden></div>
+      <div class="paint-bar" id="paint-bar" hidden></div>
       <div class="range-legend" id="range-legend" hidden></div>
       <!-- the fighter card: opens beside whichever token is selected; drag it by its header -->
       <div class="fcard" id="fcard" role="dialog" aria-label="Fighter card" hidden><div class="fcard-h" id="fcard-h"></div><div class="fcard-b" id="sel-box"></div></div>
@@ -64,7 +66,7 @@
     <div class="modal setup-modal" role="dialog" aria-modal="true" aria-label="Map setup">
       <div class="setup-h"><b>MAP SETUP</b><button type="button" class="setup-x" data-setup-x aria-label="Close">×</button></div>
       <div class="setup-tabs" role="tablist">
-        <button type="button" role="tab" data-stab="map" class="on">Map</button><button type="button" role="tab" data-stab="grid">Grid</button><button type="button" role="tab" data-stab="fs">Forstalls</button><button type="button" role="tab" data-stab="npc">NPC tokens</button>
+        <button type="button" role="tab" data-stab="map" class="on">Map</button><button type="button" role="tab" data-stab="grid">Grid</button><button type="button" role="tab" data-stab="fs">Forstalls</button><button type="button" role="tab" data-stab="terrain">Terrain &amp; fog</button><button type="button" role="tab" data-stab="npc">NPC tokens</button>
       </div>
       <div class="setup-b">
         <div data-spane="map">
@@ -93,6 +95,12 @@
           <p class="muted fs-note">Anyone within Arm’s Reach (1″) of a placed Forstall can work it on their turn.</p>
           <div id="fs-list"></div>
         </div>
+        <div data-spane="terrain" hidden>
+          <p class="fs-note"><b>Rough terrain</b> (mud, rubble, deep snow): moving through it costs double Grit (p. 42). Everyone sees it on the map.</p>
+          <p class="fs-note"><b>Fog of war</b>: the posse sees fog there, and any enemy, NPC or placed Forstall inside it is hidden from them. You see it faintly.</p>
+          <div class="btn-row"><button type="button" class="btn small" data-paint="rough">Paint rough terrain</button><button type="button" class="btn small" data-paint="fog">Paint fog of war</button></div>
+          <div class="btn-row"><button type="button" class="btn small secondary" data-layer-all="fog:1">Fog the whole map</button><button type="button" class="btn small secondary" data-layer-all="fog:0">Clear all fog</button><button type="button" class="btn small secondary danger" data-layer-all="rough:0">Clear all rough terrain</button></div>
+        </div>
         <div data-spane="npc" hidden>
           <form class="npc-add" id="npc-add"><input id="npc-name" maxlength="40" placeholder="NPC name" aria-label="NPC name"><button class="btn small secondary" type="submit">+ NPC token</button></form>
           <p class="muted fs-note">The posse and enemies get their tokens automatically when a fight starts, or when you add enemies.</p>
@@ -102,6 +110,6 @@
     </div>
   </div>
 
-  <script type="module" src="/js/battle.js?v=99"></script>
+  <script type="module" src="/js/battle.js?v=100"></script>
 </body>
 </html>

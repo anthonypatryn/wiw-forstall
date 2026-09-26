@@ -1067,3 +1067,21 @@ test('Battle Map: a player moves only their own token; the Warden moves anything
   battleAction(s, { action: 'move', id: 'tb', col: 6, row: 6 }, { warden: true, combat: null });
   assert.equal(s.tokens[1].col, 6);
 });
+
+test('Battle Map terrain: rough on the path doubles a move; fog hides enemies (not the posse) from players', async () => {
+  const { freshBattle, battleAction, battleView, hexLine, roughOnPath } = await import('../lib/battle.js');
+  const s = freshBattle();
+  assert.deepEqual(hexLine({ col: 2, row: 2 }, { col: 5, row: 2 }).map((h) => `${h.col},${h.row}`), ['3,2', '4,2', '5,2']);
+  battleAction(s, { action: 'paint', layer: 'rough', cells: [[4, 2]], on: true }, { warden: true, combat: null });
+  assert.ok(roughOnPath(s, { col: 2, row: 2 }, { col: 5, row: 2 }));
+  assert.ok(!roughOnPath(s, { col: 2, row: 4 }, { col: 5, row: 4 }));
+  assert.throws(() => battleAction(s, { action: 'paint', layer: 'fog', cells: [[1, 1]] }, { warden: false, combat: null }), /Warden/);
+  s.tokens = [{ id: 'a', kind: 'pc', ref: 'p', name: 'Lila', col: 7, row: 7 }, { id: 'w', kind: 'enemy', ref: 'e', name: 'Wolf', col: 8, row: 7 }];
+  battleAction(s, { action: 'paint', layer: 'fog', cells: [[7, 7], [8, 7]], on: true }, { warden: true, combat: null });
+  assert.deepEqual(battleView(s, { warden: false, combat: null }).tokens.map((t) => t.name), ['Lila'], 'the wolf in the fog is hidden');
+  assert.equal(battleView(s, { warden: true, combat: null }).tokens.length, 2);
+  battleAction(s, { action: 'paint', layer: 'fog', cells: [[8, 7]], on: false }, { warden: true, combat: null });
+  assert.equal(battleView(s, { warden: false, combat: null }).tokens.length, 2, 'revealed');
+  battleAction(s, { action: 'layerAll', layer: 'fog', on: false }, { warden: true, combat: null });
+  assert.equal(s.fog.length, 0);
+});

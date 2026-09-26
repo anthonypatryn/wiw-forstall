@@ -241,6 +241,11 @@
   - Action icons: gun (Attack), shield (Dodge), backpack (Use Item), hourglass (Prepare), bulb (Improvise), all in glyphs.js.
   - Tokens always show a picture: art (trade art for the posse unless they uploaded a photo, book art for monsters and NPCs), otherwise a white silhouette (`SIL.beast` for monster enemies, flagged `beast` in `battleView`; `SIL.person` for everyone else) on their color, with initials.
 
+- **Terrain & fog (Warden paints them):** the battle state has `rough` and `fog` lists of "col,row" keys. The Warden-only actions are `paint {layer, cells, on}` and `layerAll {layer, on}`. Map setup → Terrain & fog → "Paint rough terrain" / "Paint fog of war" opens `#paint-bar` (Paint/Erase or Hide/Reveal, brush Small/Medium/Large, Done). A capture-phase pointer handler on the viewport paints while dragging and sends the batch on release.
+  - `roughOnPath` (lib/battle.js `hexLine`, mirrored client-side) makes a move through painted rough ground cost double in the battle route's `chargeMove`. The unpainted-rough checkbox still works.
+  - `battleView` hides, from players, enemy and NPC tokens and placed Forstalls inside fog (the posse's own tokens always show). Players see the fog near-opaque (`#terrain .fog`); the Warden sees it faint and dashed.
+  - The **Move tile is gone**: moving is dragging. The card has a `.tp-extras` row (drag hint, unpainted-rough toggle, mount select, Arabian bonus).
+
 ## Playtest fixes (2026-09-26)
 - **Scanning in a fight** (pp. 83–84), in `lib/routes/scan.js`:
   - `combatScan {pc, key?, monster}` requires:
