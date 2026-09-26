@@ -100,7 +100,7 @@ function attackHTML(sel) {
 }
 const vp = $('#viewport'), stage = $('#stage');
 const pz = panZoom(vp, stage, {
-  maxScale: 2.5, ignore: '.btoken, .fstoken, .map-ctrls, .fcard, .side-toggle, .map-banner, .range-legend',
+  maxScale: 2.5, ignore: '.btoken, .fstoken, .map-ctrls, .fcard, .side-toggle, .map-banner, .range-legend, .paint-bar',
   onTap: (target) => { if (!target.closest('.btoken, .fstoken, .fcard')) select(null); },
   onChange: () => positionCard(),
 });
