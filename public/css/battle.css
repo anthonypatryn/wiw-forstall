@@ -384,7 +384,7 @@ body.warden-mode .fc-t small { color: var(--w-teal-pale); }
 /* the Attack view: numbered steps, big choices, one Roll button */
 .focus-banner { background: var(--accent-tint); border-left: 4px solid var(--accent); padding: 8px 10px; font-size: var(--fs-sm); border-radius: 0 var(--r-sm) var(--r-sm) 0; }
 .pick-h { margin: 2px 0 -4px; font: var(--fs-sm) var(--display); letter-spacing: .14em; color: var(--ink-soft); }
-.opts { display: grid; gap: 6px; }
+.pick-list { display: grid; gap: 6px; }
 .opt { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 1px 10px; width: 100%; text-align: left; padding: 8px 10px 7px; border: 1.5px solid var(--line); border-radius: var(--radius); background: #fff; color: var(--ink); cursor: pointer; font: inherit; }
 .opt b { font: var(--fs-md)/1.1 var(--display); letter-spacing: .06em; display: flex; align-items: center; }
 .opt small { grid-column: 1; font-size: var(--fs-xs); color: var(--ink-soft); }
@@ -396,13 +396,13 @@ body.warden-mode .fc-t small { color: var(--w-teal-pale); }
 .bdot.arm { background: var(--red); } .bdot.short { background: var(--yellow); } .bdot.long { background: var(--teal); } .bdot.distant { background: transparent; border: 1.5px solid var(--ink-soft); }
 .btn.go { width: 100%; justify-content: center; }
 
-/* targets light up on the map while the Attack view is open */
-.btoken.target { cursor: crosshair; animation: tglow 1.1s ease-in-out infinite alternate; }
-.btoken.target.band-arm { --tg: var(--red); } .btoken.target.band-short { --tg: var(--yellow); } .btoken.target.band-long { --tg: var(--teal); } .btoken.target.band-distant { --tg: #9aa7ad; }
-.btoken.target.picked { animation: none; box-shadow: 0 0 0 5px var(--tg), 0 0 26px var(--tg); }
-.btoken.dimmed { opacity: .4; }
+/* targets light up on the map while the Attack view is open ("tgt", never "target": style.css owns .target for the Scanner banner) */
+.btoken.tgt { cursor: crosshair; animation: tglow 1.1s ease-in-out infinite alternate; }
+.btoken.tgt-arm { --tg: var(--red); } .btoken.tgt-short { --tg: var(--yellow); } .btoken.tgt-long { --tg: var(--teal); } .btoken.tgt-distant { --tg: #9aa7ad; }
+.btoken.tgt-picked { animation: none; box-shadow: 0 0 0 5px var(--tg), 0 0 26px var(--tg); }
+.btoken.tgt-dim { opacity: .4; }
 @keyframes tglow { from { box-shadow: 0 0 0 3px var(--tg), 0 0 8px var(--tg); } to { box-shadow: 0 0 0 7px var(--tg), 0 0 24px var(--tg); } }
-@media (prefers-reduced-motion: reduce) { .btoken.target { animation: none; box-shadow: 0 0 0 5px var(--tg); } }
+@media (prefers-reduced-motion: reduce) { .btoken.tgt { animation: none; box-shadow: 0 0 0 5px var(--tg); } }
 .map-banner { position: absolute; left: 50%; top: 12px; transform: translateX(-50%); z-index: 5; display: flex; align-items: center; gap: 8px; white-space: nowrap; max-width: calc(100% - 120px); overflow: hidden; background: var(--ink); color: var(--paper); border: 2px solid var(--gold); border-radius: var(--r-pill); padding: 7px 16px 5px; font: var(--fs-md) var(--display); letter-spacing: .1em; box-shadow: 0 6px 18px var(--shade-4); pointer-events: none; }
 .map-banner em { font: italic var(--fs-sm) var(--body); letter-spacing: 0; color: var(--on-dark-dim); text-overflow: ellipsis; overflow: hidden; }
 .map-banner .gl { width: 1.1em; height: 1.1em; }

@@ -60,7 +60,7 @@ function attackHTML(sel) {
     const tgt = s.t ? foes.find((f) => f.t.id === s.t) : null;
     let html = `${tgt ? '' : '<div class="focus-banner">Click a lit-up enemy on the map, or pick one here.</div>'}
       <p class="pick-h">1 · TARGET</p>
-      <div class="opts">${foes.map(({ t, d }) => { const b = band(d), ok = reach(d); return `<button type="button" class="opt${t.id === s.t ? ' on' : ''}" data-as-t="${t.id}"${ok ? '' : ' disabled'}><b>${bdot(b)}${esc(t.name)}</b><small>${d}″ · ${BAND_LABEL[b]}${ok ? '' : ' · nothing reaches'}</small></button>`; }).join('')}</div>`;
+      <div class="pick-list">${foes.map(({ t, d }) => { const b = band(d), ok = reach(d); return `<button type="button" class="opt${t.id === s.t ? ' on' : ''}" data-as-t="${t.id}"${ok ? '' : ' disabled'}><b>${bdot(b)}${esc(t.name)}</b><small>${d}″ · ${BAND_LABEL[b]}${ok ? '' : ' · nothing reaches'}</small></button>`; }).join('')}</div>`;
     if (!tgt) return html;
     const key = WEAPON_KEY[band(tgt.d)];
     if (!armed.some(([w, i]) => i === s.w && isPool(w[key]))) s.w = armed.find(([w]) => isPool(w[key]))?.[1];
@@ -70,7 +70,7 @@ function attackHTML(sel) {
     const gritOf = (x) => parseInt(String(x.grit || '').split('|')[0], 10) || 0;
     const cost = gritOf(w) + (s.aim ? 1 : 0);
     html += `<p class="pick-h">2 · WEAPON AT ${BAND_LABEL[band(tgt.d)].toUpperCase()} (${tgt.d}″)</p>
-      <div class="opts">${armed.map(([x, i]) => { const pool = isPool(x[key]) ? String(x[key]).toUpperCase() : ''; return `<button type="button" class="opt${i === s.w ? ' on' : ''}" data-as-w="${i}"${pool ? '' : ' disabled'}><b>${esc(x.model || x.manufacturer)}</b><small>${pool ? `${gritOf(x)} Grit${thrown(x, key)}` : 'can’t reach'}</small><span class="dice">${pool || '—'}</span></button>`; }).join('')}</div>
+      <div class="pick-list">${armed.map(([x, i]) => { const pool = isPool(x[key]) ? String(x[key]).toUpperCase() : ''; return `<button type="button" class="opt${i === s.w ? ' on' : ''}" data-as-w="${i}"${pool ? '' : ' disabled'}><b>${esc(x.model || x.manufacturer)}</b><small>${pool ? `${gritOf(x)} Grit${thrown(x, key)}` : 'can’t reach'}</small><span class="dice">${pool || '—'}</span></button>`; }).join('')}</div>
       ${loaded.length ? `<label class="field-inline">Ammo <select data-as="ammo" aria-label="Ammo"><option value="">regular</option>${loaded.map(([a, k]) => `<option value="${k}"${String(k) === String(s.ammo) ? ' selected' : ''}>${esc(a.name)} (${a.rds})</option>`).join('')}</select></label>` : ''}
       <label class="check"><input type="checkbox" data-as="aim"${s.aim ? ' checked' : ''}${pc.aimed ? ' disabled' : ''}> Aim: reroll one die (+1 Grit)${pc.aimed ? ' · used this turn' : ''}</label>
       <button type="button" class="btn go" data-map-attack${isPool(w[key]) ? '' : ' disabled'}>${gl('gun')} Roll ${isPool(w[key]) ? String(w[key]).toUpperCase() : ''} · ${cost} Grit</button>`;
@@ -88,10 +88,10 @@ function attackHTML(sel) {
     const atk = prof.attacks[s.a], tgt = s.t ? posse.find((f) => f.t.id === s.t) : null;
     const fits = (a, d) => (ATK_BAND[a.range] || 'arm') === band(d) || (band(d) === 'arm' && a.range === 'Short');
     return `<p class="pick-h">1 · ATTACK</p>
-      <div class="opts">${prof.attacks.map((a, i) => `<button type="button" class="opt${i === s.a ? ' on' : ''}" data-as-a="${i}"><b>${esc(a.name)}</b><small>${esc(a.range)}${a.grit ? ` · ${a.grit} Grit` : ''}${a.aoe ? ' · area' : ''}</small><span class="dice">${effPool(a) || ''}</span></button>`).join('')}</div>
+      <div class="pick-list">${prof.attacks.map((a, i) => `<button type="button" class="opt${i === s.a ? ' on' : ''}" data-as-a="${i}"><b>${esc(a.name)}</b><small>${esc(a.range)}${a.grit ? ` · ${a.grit} Grit` : ''}${a.aoe ? ' · area' : ''}</small><span class="dice">${effPool(a) || ''}</span></button>`).join('')}</div>
       ${tgt ? '' : '<div class="focus-banner">Click who it attacks on the map, or pick them here.</div>'}
       <p class="pick-h">2 · TARGET</p>
-      <div class="opts">${posse.map(({ t, d }) => `<button type="button" class="opt${t.id === s.t ? ' on' : ''}" data-as-t="${t.id}"><b>${bdot(band(d))}${esc(t.name)}</b><small>${d}″ · ${BAND_LABEL[band(d)]}${fits(atk, d) ? '' : ` · out of ${esc(atk.range)} range`}</small></button>`).join('')}</div>
+      <div class="pick-list">${posse.map(({ t, d }) => `<button type="button" class="opt${t.id === s.t ? ' on' : ''}" data-as-t="${t.id}"><b>${bdot(band(d))}${esc(t.name)}</b><small>${d}″ · ${BAND_LABEL[band(d)]}${fits(atk, d) ? '' : ` · out of ${esc(atk.range)} range`}</small></button>`).join('')}</div>
       <p class="pick-h">3 · THEIR COVER</p>
       <div class="chip-row">${[['0', 'None'], ['1', 'Light (+1B)'], ['2', 'Heavy (+2B)']].map(([v, l]) => `<button type="button" class="chip-btn${String(s.cover || 0) === v ? ' on' : ''}" data-as-cover="${v}">${l}</button>`).join('')}</div>
       <button type="button" class="btn go" data-map-eattack${tgt ? '' : ' disabled'}>${gl('claws')} Roll ${esc(atk.name)}${atk.grit ? ` · ${atk.grit} Grit` : ''}</button>`;
@@ -221,7 +221,7 @@ function renderTokens() {
   layer.innerHTML = data.tokens.map((t) => {
     const c = center(t.col, t.row);
     const d = sel && sel.id !== t.id ? dist(sel, t) : null;
-    const tg = att && t.id !== att.id ? (targetable(att, t) ? ` target band-${band(dist(att, t))}${picked === t.id ? ' picked' : ''}` : ' dimmed') : '';
+    const tg = att && t.id !== att.id ? (targetable(att, t) ? ` tgt tgt-${band(dist(att, t))}${picked === t.id ? ' tgt-picked' : ''}` : ' tgt-dim') : '';
     const hasHp = t.maxHealth != null;
     const pct = hasHp ? Math.max(0, Math.min(100, (t.health / Math.max(1, t.maxHealth)) * 100)) : 0;
     const art = t.photo || (t.img ? `/img/tokens/${t.img}.webp` : '');
