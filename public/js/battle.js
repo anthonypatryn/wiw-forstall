@@ -1068,7 +1068,9 @@ function canWork(f, pcId) {
 const workable = (pcId) => (data?.forstalls || []).filter((f) => canWork(f, pcId));
 // the Forstall's operator this turn: the character whose turn it is, if they may work it
 function scanOperator(f) {
-  const cur = combat?.combat?.active ? combat.combat.current : null;
+  // out of a fight it's whoever this device is ("This is me"), if they're at the controls
+  if (!combat?.combat?.active) { const me = combat?.posse?.find((p) => p.id === myId()); return me && canWork(f, me.id) ? me : null; }
+  const cur = combat.combat.current;
   const pc = cur && combat.posse.find((p) => p.id === cur);
   if (!pc || !(warden || myId() === pc.id)) return null;
   return canWork(f, pc.id) ? pc : null;
@@ -1076,10 +1078,10 @@ function scanOperator(f) {
 function scanHTML(f) {
   const pc = scanOperator(f);
   if (!pc) return '';
-  const cost = scanCost(), pool = intuitionOf(pc);
-  const head = `<div class="fs-scan-h">${gl('target')} SCAN <small>${cost} Grit · Intuition ${poolTxt(pool)}${scanEasy ? ' · Warden’s aid: positions shown' : ''}</small></div>`;
+  const fight = !!combat?.combat?.active, cost = fight ? scanCost() : 0, pool = intuitionOf(pc);
+  const head = `<div class="fs-scan-h">${gl('target')} SCAN <small>${fight ? `${cost} Grit` : 'free out of a fight'} · Intuition ${poolTxt(pool)}${scanEasy ? ' · Warden’s aid: positions shown' : ''}</small></div>`;
   if (scanPending && scanPending.pc === pc.id) return `<div class="fs-scan">${head}${guessHTML(scanPending.name)}</div>`;
-  const sr = combat.scanRound, taken = sr && sr.round === combat.combat.round && sr.by !== pc.id ? sr.name : null;
+  const sr = fight ? combat.scanRound : null, taken = sr && sr.round === combat.combat.round && sr.by !== pc.id ? sr.name : null;
   const kinds = {};
   for (const e of combat.enemies.filter((x) => !x.defeated && x.profile)) {
     const t = data.tokens.find((x) => x.kind === 'enemy' && x.ref === e.id && !x.hidden);
@@ -1089,8 +1091,8 @@ function scanHTML(f) {
   }
   const rows = Object.entries(kinds).sort((a, b) => a[1] - b[1]).map(([name, d]) => {
     const decoded = kzPosse.some((k) => k.name === name);
-    const why = decoded ? 'already decoded' : f.rangeIn < 999 && d > f.rangeIn ? `${d}″ away, out of Range (${f.rangeIn}″)` : f.jammed ? 'scrambled by a Natural EMP' : taken ? `${taken} Scanned this round` : (pc.grit ?? 0) < cost ? `needs ${cost} Grit (${pc.name} has ${pc.grit ?? 0})` : '';
-    return `<button type="button" class="btn small fs-scan-btn" data-fs-scan="${esc(f.key)}" data-mon="${esc(name)}"${why ? ' disabled' : ''}>Scan the ${esc(name)}<small>${why || `${d}″ away · ${cost} Grit`}</small></button>`;
+    const why = decoded ? 'already decoded' : f.rangeIn < 999 && d > f.rangeIn ? `${d}″ away, out of Range (${f.rangeIn}″)` : f.jammed ? 'scrambled by a Natural EMP' : taken ? `${taken} Scanned this round` : fight && (pc.grit ?? 0) < cost ? `needs ${cost} Grit (${pc.name} has ${pc.grit ?? 0})` : '';
+    return `<button type="button" class="btn small fs-scan-btn" data-fs-scan="${esc(f.key)}" data-mon="${esc(name)}"${why ? ' disabled' : ''}>Scan the ${esc(name)}<small>${why || `${d}″ away${fight ? ` · ${cost} Grit` : ''}`}</small></button>`;
   });
   return `<div class="fs-scan">${head}${rows.length ? `<div class="fs-scan-list">${rows.join('')}</div>` : '<p class="muted fs-note">No monsters on the board to Scan.</p>'}</div>`;
 }
@@ -1180,8 +1182,11 @@ function fsMarkers() {
 }
 function slotOptions(cur, list) {
   const opts = list.map((o) => `${o.name} · ${o.kz}`);
-  if (cur && !opts.includes(cur)) opts.unshift(cur);
-  return `<option value="">— empty —</option>${opts.map((v) => `<option value="${esc(v)}"${v === cur ? ' selected' : ''}>${esc(v)}</option>`).join('')}`
+  // a placed Forstall's slot comes masked to players ("Wolf · (programmed)"); once the posse has decoded it, show it plainly
+  if (/\(programmed\)$/.test(cur || '')) { const k = list.find((o) => o.name === cur.split('·')[0].trim()); if (k) cur = `${k.name} · ${k.kz}`; }
+  const stale = cur && !opts.includes(cur); // set by the Warden (or no longer decoded): shown, but it can't be picked again
+  if (stale) opts.unshift(cur);
+  return `<option value="">— empty —</option>${opts.map((v) => `<option value="${esc(v)}"${v === cur ? ' selected' : ''}${stale && v === cur ? ' disabled' : ''}>${esc(v)}</option>`).join('')}`
     + (list.length ? '' : '<option value="" disabled>Nothing decoded yet — use the Forstall Scanner</option>');
 }
 function forstallCard(f) {
@@ -1198,11 +1203,11 @@ function forstallCard(f) {
     ${f.jammed ? `<p class="fs-warn">${gl('flash')} Scrambled by a Natural EMP — no Scan or Burst until the monster’s next turn.</p>` : ''}
     ${f.pulse ? `<p class="fs-state">${gl('heart')} <b>Heartbeat Sensor:</b> ${f.pulse.count ? `${f.pulse.count} monster${f.pulse.count === 1 ? '' : 's'} within ${f.rangeIn + 6}″ — the nearest is ${f.pulse.nearest}″ away.` : `quiet — nothing within ${f.rangeIn + 6}″.`}</p>` : ''}
     ${clashWith.length ? `<p class="fs-warn">${gl('flash')} Edison’s Rule 1: its waves cross ${esc(clashWith.join(' and '))}’s.</p>` : ''}
-    ${fight ? scanHTML(f) : ''}
+    ${scanHTML(f)}
     ${may ? `<div class="fs-btns"><button type="button" class="btn small" data-fs-sweep="${esc(f.key)}"${f.owner && !f.charges ? ' disabled' : ''}>${gl('forstall')} ${f.sweep ? 'Readjust' : 'Sweep'} · ${cost}</button>
         ${f.sweep ? `<button type="button" class="btn small secondary" data-fs-off="${esc(f.key)}">Switch off</button>` : ''}</div>
       ${f.efficiency != null ? `<label class="check fs-eff"><input type="checkbox" data-fs-eff="${esc(f.key)}"${f.efficiency < 1 ? ' disabled' : ''}> Forstall Efficiency — turn one Hit into an Ace (${f.efficiency}/2 left today)</label>` : ''}
-      <div class="fs-slots"${!f.owner && !warden ? ' hidden' : ''}><span>MEMORY SLOTS</span>${[0, 1, 2, 3].map((i) => `<select data-fs-slot="${esc(f.key)}" data-i="${i}" aria-label="Memory slot ${i + 1}">${slotOptions(f.slots[i] || '', f.owner ? kzPosse : kzAll)}</select>`).join('')}</div>
+      <div class="fs-slots"><span>MEMORY SLOTS</span>${[0, 1, 2, 3].map((i) => `<select data-fs-slot="${esc(f.key)}" data-i="${i}" aria-label="Memory slot ${i + 1}">${slotOptions(f.slots[i] || '', f.owner || !warden ? kzPosse : kzAll)}</select>`).join('')}</div>
       ${f.fuse ? (f.burst?.length ? `<div class="fs-burst"><select data-fs-bt="${esc(f.key)}" aria-label="Burst target">${f.burst.map((b) => `<option value="${esc(b.ref)}">${esc(b.name)}</option>`).join('')}</select>
           <button type="button" class="btn small danger" data-fs-burst="${esc(f.key)}">${gl('flash')} Burst${f.owner ? ' · 1 crystal' : ''}</button></div>`
         : '<p class="muted fs-note">Burst: no programmed monster in Range.</p>')
@@ -1247,9 +1252,13 @@ function wireFs(box) {
     if (f.owner) {
       try { await api('POST', { action: 'sheet', id: f.owner, path: `forstall.kz.${i}`, value: el.value }, '', '/api/combat'); combatPoller?.now?.(); poller?.now?.(); toast(el.value ? `Programmed ${el.value.split(' · ')[0]}.` : 'Slot cleared.'); }
       catch (e) { toast(e.message, true); }
-    } else {
+    } else if (warden) {
       const slots = [...f.slots]; slots[i] = el.value;
       act({ action: 'editForstall', id: f.key, slots }, el.value ? `Programmed ${el.value.split(' · ')[0]}.` : 'Slot cleared.');
+    } else {
+      const who = opFor(f.key) || myId();
+      const ok = await act({ action: 'programForstall', id: f.key, i, value: el.value, pc: who }, el.value ? `Programmed ${el.value.split(' · ')[0]} into the ${f.name}.` : 'Slot cleared.');
+      if (ok === null) el.value = f.slots[i] || '';
     }
   }));
   box.querySelectorAll('[data-fs-burst]').forEach((b) => b.addEventListener('click', async () => {

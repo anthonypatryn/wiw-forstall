@@ -1097,3 +1097,17 @@ test('Battle Map: shrinking the grid pulls stranded tokens back on the map; Rece
   const r = battleAction(s, { action: 'recenter', id: 'b' }, { warden: true, combat: null });
   assert.ok(Math.abs(r.col - Math.floor(cols / 2)) <= 2 && Math.abs(r.row - Math.floor(rows / 2)) <= 2, 'near the middle');
 });
+
+test('a placed Forstall: anyone within Arm’s Reach can program its memory slots; players never see the Warden’s digits', async () => {
+  const { freshBattle, battleAction, battleView } = await import('../lib/battle.js');
+  const s = freshBattle();
+  s.forstalls = [{ id: 'fs1', kind: 'town', name: 'Town Forstall', col: 10, row: 10, slots: ['', '', '', ''] }];
+  s.tokens = [{ id: 'a', kind: 'pc', ref: 'p1', name: 'Lila', col: 11, row: 10 }, { id: 'b', kind: 'pc', ref: 'p2', name: 'Bo', col: 20, row: 10 }];
+  battleAction(s, { action: 'programForstall', id: 'fs1', i: 0, value: 'Golden Bear · 6-1-2829', pc: 'p1' }, { warden: false, combat: null });
+  assert.equal(s.forstalls[0].slots[0], 'Golden Bear · 6-1-2829');
+  assert.throws(() => battleAction(s, { action: 'programForstall', id: 'fs1', i: 1, value: 'x', pc: 'p2' }, { warden: false, combat: null }), /Arm’s Reach/);
+  assert.throws(() => battleAction(s, { action: 'programForstall', id: 'fs1', i: 1, value: 'Golden Bear · 6-1-2829', pc: 'p1' }, { warden: false, combat: null }), /already in another slot/);
+  battleAction(s, { action: 'programForstall', id: 'fs1', i: 2, value: 'Chupacabra · 3-5-1234' }, { warden: true, combat: null });
+  const seen = battleView(s, { warden: false, combat: { posse: [], enemies: [] } }).forstalls.find((f) => f.key === 'fs1').slots;
+  assert.equal(seen[2], 'Chupacabra · (programmed)');
+});
