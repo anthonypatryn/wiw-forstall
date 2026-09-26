@@ -38,6 +38,7 @@
 - `lib/http.js`:
   - The PIN comes from the `x-warden-pin` header.
   - Locally the PIN defaults to `1234`. In production it is the `WARDEN_PIN` env var, currently **1327**.
+  - Wrong guesses are counted per connection (`guardPin` in api/[area].js, Redis counter `wiw-forstall:n:badpin:<ip>`): after 30 in 15 minutes that connection is treated as a player, even with the right PIN, until the window passes. Locally the count lives in memory (restart the dev server to clear it).
 - **Live updates:** every save also bumps a per-document counter (`wiw-forstall:ver:<key>`, inside the same atomic commit). Each tab polls **`/api/pulse`** (lib/routes/pulse.js: all counters in one Redis MGET) every 2.5 s (15 s hidden; checks at once when the tab comes back). `startPolling(view, onState, onConn, endpoint)` keeps its API but only fetches its view when a document in `DEPS[endpoint]` (common.js) changed — add a new area's docs there. `onChange(docs, fn)` runs fn on a change (used instead of setInterval refreshers: needs list, saloon/lock desks, stash page, duel card). Views still honor `?since=v`.
 - Warden mode:
   - The PIN is kept in `sessionStorage` key `wiw.pin`, per tab.

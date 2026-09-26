@@ -21,7 +21,19 @@ import whispers from '../lib/routes/whispers.js';
 
 const ROUTES = { backup, battle, combat, handouts, image, journal, lockpick, map, npcs, papers, pulse, saloon, scan, scenes, session, shop, wanted, whispers };
 
-import { transaction } from '../lib/store.js';
+import { transaction, counter, bump } from '../lib/store.js';
+import { pinOk } from '../lib/http.js';
+
+// The Warden PIN is short, so wrong guesses are counted per connection: after BAD_PIN_LIMIT in BAD_PIN_WINDOW seconds,
+// that connection is treated as a player (even with the right PIN) until the window passes.
+const BAD_PIN_LIMIT = 30, BAD_PIN_WINDOW = 15 * 60;
+async function guardPin(req) {
+  const pin = req.headers['x-warden-pin'];
+  if (!pin) return;
+  const who = `badpin:${String(req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown').split(',')[0].trim()}`;
+  if (await counter(who) >= BAD_PIN_LIMIT) { delete req.headers['x-warden-pin']; return; }
+  if (!pinOk(pin)) await bump(who, BAD_PIN_WINDOW);
+}
 
 // A stand-in response: the route writes here, and it only reaches the real response once its saves are committed.
 function heldResponse() {
@@ -33,6 +45,7 @@ export default async function handler(req, res) {
   const area = new URL(req.url, 'http://x').pathname.split('/')[2] || '';
   const route = Object.hasOwn(ROUTES, area) ? ROUTES[area] : null;
   if (!route) { res.statusCode = 404; return res.end('Not found'); }
+  if (area !== 'pulse') await guardPin(req);
   // read the body once, so a retried request sees it again (readBody uses req.body when it's there)
   if (req.method !== 'GET' && req.body === undefined) { let raw = ''; for await (const chunk of req) raw += chunk; req.body = raw; }
   // every request is a transaction (lib/store.js): if two land at once, the later one re-runs on fresh data
