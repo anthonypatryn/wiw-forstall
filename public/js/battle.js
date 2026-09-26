@@ -450,9 +450,13 @@ function renderTurnBar() {
       <div class="tp-actions">${ACTIONS.map(([k, ic, label, cost, off]) => `<button type="button" class="tp-act${tp.open === k ? ' on' : ''}" data-open="${k}"${off ? ' disabled' : ''}><span class="ic">${gl(ic)}</span>${label}<small>${off ? 'used' : cost}</small></button>`).join('')}</div>
       ${drawer ? `<div class="tp-drawer">${drawer}</div>` : ''}
       <div class="tp-end">
-        <span class="tp-undo">${(warden ? u.last : u.lastIsThisTurn && u.last) ? `<button type="button" class="btn small secondary" data-undo="last" title="Undo: ${esc(u.last)}">↶ Undo <small>${esc(u.last)}</small></button>` : ''}
-          ${u.thisTurn ? `<button type="button" class="btn small secondary" data-undo="turn">⟲ Restart turn</button>` : ''}</span>
-        ${warden ? `<button type="button" class="btn small secondary" data-addenemies title="Reinforcements">${gl('claws')} + Enemies</button><button type="button" class="btn small secondary" data-endfight>End combat</button><button type="button" class="btn" data-nextturn>Next turn</button>` : '<button type="button" class="btn" data-endmine>End my turn</button>'}
+        ${(() => { // fix-ups on one row, the Warden's fight controls on the next, the big "next" button full width at the bottom
+          const fix = [(warden ? u.last : u.lastIsThisTurn && u.last) ? `<button type="button" class="btn small secondary tp-undo-last" data-undo="last" title="Undo: ${esc(u.last)}">↶ Undo <small>${esc(u.last)}</small></button>` : '',
+            u.thisTurn ? '<button type="button" class="btn small secondary" data-undo="turn">⟲ Restart turn</button>' : ''].filter(Boolean);
+          return fix.length ? `<div class="tp-row${fix.length === 1 ? ' solo' : ''}">${fix.join('')}</div>` : '';
+        })()}
+        ${warden ? `<div class="tp-row"><button type="button" class="btn small secondary" data-addenemies title="Reinforcements">${gl('claws')} + Enemies</button><button type="button" class="btn small secondary danger" data-endfight>End combat</button></div>
+        <button type="button" class="btn tp-next" data-nextturn>Next turn</button>` : '<button type="button" class="btn tp-next" data-endmine>End my turn</button>'}
       </div>`
     : `<p class="muted tp-empty">${isPc ? `Waiting on ${esc(a.name)}’s player (or the Warden).` : 'The enemies are acting.'}</p>`}
   </div>`;

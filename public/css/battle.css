@@ -281,3 +281,12 @@ body.warden-mode .battle-wrap { grid-template-columns: minmax(0, 1fr) 440px; }
 .tp-quick:hover:not(:disabled) small { color: rgba(255,255,255,.85); }
 .tp-quick:disabled { opacity: .5; cursor: not-allowed; }
 .tp-quick-none { font-size: var(--fs-xs); color: var(--ink-soft); font-style: italic; }
+
+/* turn panel footer: [Undo | Restart turn] / [+ Enemies | End combat] / [NEXT TURN] */
+.tp-end { display: flex; flex-direction: column; align-items: stretch; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px dotted var(--line); }
+.tp-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.tp-row.solo { grid-template-columns: 1fr; }
+.tp-row > .btn { min-width: 0; width: 100%; }
+.tp-undo-last { overflow: hidden; }
+.tp-undo-last small { font: italic var(--fs-xs) var(--body); letter-spacing: 0; margin-left: 4px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tp-next { width: 100%; }
