@@ -70,7 +70,7 @@ function itemCard(i) {
     <div class="actions">
       ${i.cost != null ? `<input type="number" min="1" max="99" value="1" aria-label="Quantity" data-qty><button class="btn small" data-buy type="button"${shopper ? '' : ' disabled'}>Ask to buy</button>` : ''}
       ${warden ? `<button class="btn small secondary" data-give type="button"${shopper ? '' : ' disabled'} title="Hand it over free — loot, rewards">Give</button>` : ''}
-      ${warden && i.custom ? '<button class="btn small secondary" data-edit type="button">Edit</button><button class="btn small secondary danger" data-rm type="button">✕</button>' : ''}
+      ${warden && i.custom ? '<button class="btn small secondary" data-edit type="button">Edit</button><button aria-label="Delete this item" class="btn small secondary danger" data-rm type="button">✕</button>' : ''}
     </div></article>`;
 }
 

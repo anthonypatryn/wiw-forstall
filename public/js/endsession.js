@@ -53,7 +53,7 @@ export function openEndSession({ getCombat, refresh = () => {} }) {
       return `<p class="es-lead">How much Prestige did each rider earn tonight? It goes to their unclaimed Prestige to spend on their sheet. Leave 0 to skip someone.</p>
         <div class="es-quick"><span>EVERYONE GETS</span>${[1, 2, 3, 4, 5].map((n) => `<button type="button" class="chip-btn" data-es-all="${n}">${n}</button>`).join('')}</div>
         <div class="es-list">${alive().map((p) => `<div class="item-row"><span class="item-who"><b>${esc(p.name)}</b><small class="muted">${p.prestige?.total || 0} total · ${p.prestige?.unclaimed || 0} unclaimed</small></span>
-          <span class="es-step"><button type="button" class="pm-btn" data-es-pm="${esc(p.id)}" data-d="-1">−</button><b>${w.prestige[p.id] || 0}</b><button type="button" class="pm-btn" data-es-pm="${esc(p.id)}" data-d="1">+</button></span></div>`).join('') || '<p class="muted">No characters yet.</p>'}</div>
+          <span class="es-step"><button type="button" class="pm-btn" data-es-pm="${esc(p.id)}" data-d="-1" aria-label="Less Prestige">−</button><b>${w.prestige[p.id] || 0}</b><button type="button" class="pm-btn" data-es-pm="${esc(p.id)}" data-d="1" aria-label="More Prestige">+</button></span></div>`).join('') || '<p class="muted">No characters yet.</p>'}</div>
         <label class="es-field"><span>WHAT FOR</span><input data-es-f="reason" maxlength="120" value="${esc(w.reason)}" placeholder="e.g. Ran the Cutler gang out of Eureka Ridge"></label>
         ${w.done.prestige ? `<p class="es-ok">${gl('trophy')} ${esc(w.done.prestige)}</p>` : ''}`;
     },
@@ -90,14 +90,14 @@ export function openEndSession({ getCombat, refresh = () => {} }) {
       paperStyles();
       const p = w.paper, towns = w.towns || [];
       return `<p class="es-lead">Tonight’s news, set in type for the posse. It’s written from the Table Log (nothing Warden-only), and you can fix anything before it’s printed.</p>
-        <div class="field-step"><span>WHICH TOWN’S PAPER?</span><select data-np-town>${[{ id: '', name: 'Out on the frontier' }, ...towns].map((t) => `<option value="${esc(t.id)}"${t.id === w.town ? ' selected' : ''}>${esc(t.name)}${t.id && t.id === w.here ? ' (the posse is here)' : ''}</option>`).join('')}</select></div>
+        <div class="field-step"><span>WHICH TOWN’S PAPER?</span><select aria-label="Which town’s paper" data-np-town>${[{ id: '', name: 'Out on the frontier' }, ...towns].map((t) => `<option value="${esc(t.id)}"${t.id === w.town ? ' selected' : ''}>${esc(t.name)}${t.id && t.id === w.here ? ' (the posse is here)' : ''}</option>`).join('')}</select></div>
         <div class="btn-row"><button type="button" class="btn" data-es="setType"${w.setting ? ' disabled' : ''}>${gl('scroll')} ${w.setting ? 'Setting the type…' : p ? 'Write it again' : 'Set the type'}</button>${p ? '<button type="button" class="btn secondary" data-es="bigPaper">See it full size</button>' : ''}</div>
         ${p ? `<div class="es-np-edit">
           <label class="es-field"><span>PAPER</span><input data-np="paper" maxlength="60" value="${esc(p.paper)}"></label>
           <label class="es-field"><span>HEADLINE</span><input data-np="headline" maxlength="90" value="${esc(p.headline)}"></label>
           <label class="es-field"><span>BELOW THE HEADLINE</span><input data-np="subhead" maxlength="200" value="${esc(p.subhead)}"></label>
           <label class="es-field"><span>THE MAIN STORY</span><textarea data-np="lead" rows="5" maxlength="2400">${esc(p.lead)}</textarea></label>
-          ${(p.stories || []).map((st, i) => `<label class="es-field"><span>STORY ${i + 2}</span><input data-np-story="${i}" data-k="head" maxlength="80" value="${esc(st.head)}"><textarea data-np-story="${i}" data-k="text" rows="3" maxlength="900">${esc(st.text)}</textarea></label>`).join('')}
+          ${(p.stories || []).map((st, i) => `<label class="es-field"><span>STORY ${i + 2}</span><input data-np-story="${i}" data-k="head" maxlength="80" value="${esc(st.head)}"><textarea aria-label="Story text" data-np-story="${i}" data-k="text" rows="3" maxlength="900">${esc(st.text)}</textarea></label>`).join('')}
           <label class="es-field"><span>QUOTE OF THE NIGHT</span><input data-np="quote" maxlength="240" value="${esc(p.quote)}"></label>
         </div>
         <div class="es-preview np-mini">${paperHTML(p, w.faces || [])}</div>` : ''}

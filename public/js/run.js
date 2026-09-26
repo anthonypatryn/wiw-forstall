@@ -59,7 +59,7 @@ function renderFight() {
   const box = $('#fight');
   if (!c.active) {
     const n = combat.enemies.filter((e) => !e.defeated).length, pcs = combat.posse.filter((p) => !p.dead).length;
-    box.innerHTML = `<p class="muted">No fight running · ${pcs} in the posse · ${n} enem${n === 1 ? 'y' : 'ies'} ready${n ? '' : ' (add them on the Battle Mapat Control)'}.</p>
+    box.innerHTML = `<p class="muted">No fight running · ${pcs} in the posse · ${n} enem${n === 1 ? 'y' : 'ies'} ready${n ? '' : ' (add them on the Battle Map)'}.</p>
       <button type="button" class="btn" data-start${pcs + n ? '' : ' disabled'}>${gl('revolver')} Start combat</button>`;
     box.querySelector('[data-start]')?.addEventListener('click', async () => { const who = await pickFighters(combat); if (who) act({ action: 'start', ...who }, 'Combat begins.'); });
     return;
@@ -89,7 +89,7 @@ function renderEnemies() {
         <button type="button" class="pm-btn" data-e="${esc(e.id)}" data-d="-1" aria-label="${esc(e.name)} loses 1 Health">−</button><button type="button" class="pm-btn" data-e="${esc(e.id)}" data-d="1" aria-label="${esc(e.name)} gains 1 Health">+</button>
         <span class="stat" title="Grit">${e.grit ?? '—'} Grit</span></div></div>`).join('')
     + (gone ? `<p class="muted run-gone">${gone} down or fled — loot them on the <a href="/battle">Battle Map</a> (tap the token).</p>` : '')
-    : `<p class="muted">No enemies standing.${gone ? ` ${gone} down or fled — <a href="/battle">loot them</a>.` : ' Add some on the <a href="/battle">Bambat Control</a>.'}</p>`;
+    : `<p class="muted">No enemies standing.${gone ? ` ${gone} down or fled — <a href="/battle">loot them</a>.` : ' Add some on the <a href="/battle">Battle Map</a>.'}</p>`;
   $('#enemies').querySelectorAll('[data-leave]').forEach((b) => b.addEventListener('click', () => act({ action: 'leave', id: b.dataset.leave })));
   $('#enemies').querySelectorAll('[data-e]').forEach((b) => b.addEventListener('click', () => act({ action: 'enemy', id: b.dataset.e, op: 'health', delta: Number(b.dataset.d) })));
 }

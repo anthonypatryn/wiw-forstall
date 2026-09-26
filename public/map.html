@@ -4,13 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Map of the West · Wild Imaginary West</title>
+  <meta name="robots" content="noindex, nofollow">
   <meta name="description" content="Interactive map of the Uncivilized West — towns, regions, and where the posse is.">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗺️</text></svg>">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Rye&family=Special+Elite&family=Reenie+Beanie&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=68">
-  <link rel="stylesheet" href="/css/map.css?v=14">
+  <link rel="stylesheet" href="/css/style.css?v=70">
+  <link rel="stylesheet" href="/css/map.css?v=15">
 </head>
 <body>
   <header class="masthead">
@@ -29,7 +30,7 @@
   <main class="map-wrap">
     <div class="viewport" id="viewport" aria-label="Map of the West">
       <div class="stage" id="stage">
-        <img src="/img/map.jpg" alt="Map of the United States of America and the Uncivilized West" draggable="false" width="2456" height="1584">
+        <img src="/img/map.webp" alt="Map of the United States of America and the Uncivilized West" draggable="false" width="2456" height="1584">
         <div class="layer" id="places"></div>
         <div class="layer" id="tokens"></div>
       </div>
@@ -44,17 +45,17 @@
     <aside class="panel" id="panel">
       <div id="panel-body"></div>
       <section class="posse-box">
-        <h3>THE POSSE ON THE MAP</h3>
+        <h3 aria-level="2">THE POSSE ON THE MAP</h3>
         <div id="posse-list"></div>
       </section>
       <section class="warden-box" id="warden-box" hidden>
-        <h3>WARDEN TOOLS</h3>
+        <h3 aria-level="2">WARDEN TOOLS</h3>
         <button class="btn small" id="add-pin" type="button"><span data-gl="pin"></span> Add a place</button>
         <p class="muted">Then tap the map where it goes.</p>
       </section>
     </aside>
   </main>
 
-  <script type="module" src="/js/map.js?v=57"></script>
+  <script type="module" src="/js/map.js?v=59"></script>
 </body>
 </html>

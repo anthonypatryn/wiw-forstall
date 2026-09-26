@@ -1,0 +1,3 @@
+# A private table kit for one gaming group: please don't index it.
+User-agent: *
+Disallow: /

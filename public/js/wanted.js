@@ -113,10 +113,10 @@ function editPoster(p = null) {
     <div class="field-step"><span>WANTED FOR</span><textarea data-f="crime" rows="2" maxlength="300" placeholder="e.g. Robbing the Wells Fargo stage and 28 other crimes">${esc(st.crime)}</textarea></div>
     <div class="field-step"><span>REWARD ($)</span><input data-f="reward" type="number" min="0" step="1" value="${esc(st.reward)}" placeholder="e.g. 250"></div>
     <div class="field-step"><span>TERMS</span>${data.terms.map((t) => `<button type="button" class="chip-btn${st.terms === t ? ' on' : ''}" data-terms="${esc(t)}">${esc(t)}</button>`).join('')}</div>
-    <div class="field-step"><span>TOWN</span><select data-f="town">${data.towns.map((t) => `<option value="${esc(t.id)}"${t.id === st.town ? ' selected' : ''}>${esc(t.name)}</option>`).join('')}</select></div>
-    <div class="field-step"><span>WHOSE FACE — or upload a picture below</span><select data-f="npcId">${opt(data.npcs || [], st.npcId, 'An NPC from the ledger…')}</select><select data-f="pcId">${opt(data.posse || [], st.pcId, 'Or one of the posse…')}</select></div>
+    <div class="field-step"><span>TOWN</span><select aria-label="Town" data-f="town">${data.towns.map((t) => `<option value="${esc(t.id)}"${t.id === st.town ? ' selected' : ''}>${esc(t.name)}</option>`).join('')}</select></div>
+    <div class="field-step"><span>WHOSE FACE — or upload a picture below</span><select aria-label="NPC from the ledger" data-f="npcId">${opt(data.npcs || [], st.npcId, 'An NPC from the ledger…')}</select><select aria-label="A character" data-f="pcId">${opt(data.posse || [], st.pcId, 'Or one of the posse…')}</select></div>
     <div class="ho-photo" data-photo-row></div>
-    <div class="field-step"><span>WARDEN NOTE — only you see this</span><textarea data-f="wardenNote" rows="2" maxlength="1000">${esc(st.wardenNote)}</textarea></div>
+    <div class="field-step"><span>WARDEN NOTE — only you see this</span><textarea aria-label="Warden note" data-f="wardenNote" rows="2" maxlength="1000">${esc(st.wardenNote)}</textarea></div>
     <label class="check"><input type="checkbox" data-hidden${st.hidden ? ' checked' : ''}> Keep it hidden from the posse for now</label>
     <div class="ask-btns"><button type="button" class="btn secondary" data-no>Cancel</button><button type="button" class="btn" data-go>${p ? 'Save' : 'Nail it up'}</button></div></div>`;
   document.body.append(back);

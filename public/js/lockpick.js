@@ -105,6 +105,7 @@ function openScene(a) {
   document.body.append(scene);
   play('chime');
   render();
+  requestAnimationFrame(() => { if (scene && !scene.contains(document.activeElement)) scene.querySelector('button')?.focus({ preventScroll: true }); }); // keyboard users land inside the scene
 }
 function closeScene() { scene?.remove(); scene = null; cur = null; }
 // done with this lock: tell the server, and never reopen it on this device (a poll already in flight can't bring it back)
@@ -144,11 +145,11 @@ export function mountLockSend(el, getCombat) {
         ${st.retries ? `<input data-lp-f="cost" maxlength="60" value="${esc(st.cost)}" placeholder="each retry costs… e.g. one lockpick, 2 Grit">` : ''}</div>
       <div class="field-step"><span>WHAT’S INSIDE — goes straight to their sheet</span>${LOOT.map(([k, l]) => `<button type="button" class="chip-btn${st.loot === k ? ' on' : ''}" data-lp-loot="${k}">${l}</button>`).join('')}
         ${st.loot === 'money' || st.loot === 'scrap' ? `<input type="number" min="0" step="${st.loot === 'money' ? '0.01' : '1'}" data-lp-f="amount" value="${esc(st.amount)}" placeholder="${st.loot === 'money' ? 'How many dollars' : 'How much Scrap'}">` : ''}
-        ${st.loot === 'item' ? `<select data-lp-f="itemId"><option value="">Pick an item…</option>${catalog.map((c) => `<option value="${esc(c.id)}"${st.itemId === c.id ? ' selected' : ''}>${esc(c.name)}${c.cat ? ` · ${esc(c.cat)}` : ''}</option>`).join('')}</select>` : ''}
+        ${st.loot === 'item' ? `<select aria-label="Item inside" data-lp-f="itemId"><option value="">Pick an item…</option>${catalog.map((c) => `<option value="${esc(c.id)}"${st.itemId === c.id ? ' selected' : ''}>${esc(c.name)}${c.cat ? ` · ${esc(c.cat)}` : ''}</option>`).join('')}</select>` : ''}
         ${st.loot === 'custom' ? `<input data-lp-f="name" maxlength="80" value="${esc(st.name)}" placeholder="Item name, e.g. a silver pocket watch"><textarea data-lp-f="desc" rows="2" maxlength="300" placeholder="What it is (optional)">${esc(st.desc)}</textarea>` : ''}</div>
       <div class="field-step"><span>TRAPPED? — hurts whoever opens it</span><button type="button" class="chip-btn${st.trap ? '' : ' on'}" data-lp-trap="0">No</button><button type="button" class="chip-btn${st.trap ? ' on' : ''}" data-lp-trap="1">Trapped</button>
         ${st.trap ? `<label class="lp-num">Damage <input type="number" min="0" max="30" data-lp-f="damage" value="${esc(st.damage)}"></label>
-        <select data-lp-f="status"><option value="">No Status</option>${TRAP_STATUS.map((s) => `<option${st.status === s ? ' selected' : ''}>${s}</option>`).join('')}</select>
+        <select aria-label="Trap Status" data-lp-f="status"><option value="">No Status</option>${TRAP_STATUS.map((s) => `<option${st.status === s ? ' selected' : ''}>${s}</option>`).join('')}</select>
         ${st.status ? `<label class="lp-num">Severity <input type="number" min="1" max="6" data-lp-f="sev" value="${esc(st.sev)}"></label>` : ''}` : ''}</div>
       <button type="button" class="btn" data-lp-send>${gl('lock')} Send the lock</button>
       <div class="lp-recent">${listHTML}</div>`;

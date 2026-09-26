@@ -364,7 +364,7 @@ initAccordions();
 function renderBook() {
   if (!book) return;
   const person = (pp, faction, prof) => `<article class="bnpc" data-name="${esc(pp.name)}" data-faction="${esc(faction)}">
-      <div class="hd">${prof ? `<img src="/img/tokens/npc-${esc(prof.img)}.webp" alt="">` : ''}<div><div class="nm">${esc(pp.name)}</div><div class="tag">${esc(faction.toUpperCase())} · P. ${pp.page}</div></div></div>
+      <div class="hd">${prof ? `<img src="/img/tokens/npc-${esc(prof.img)}.webp" alt="" loading="lazy">` : ''}<div><div class="nm">${esc(pp.name)}</div><div class="tag">${esc(faction.toUpperCase())} · P. ${pp.page}</div></div></div>
       ${pp.quote ? `<q>${esc(pp.quote.replace(/^“|”$/g, ''))}</q>` : ''}<p>${esc(pp.desc)}</p>
       ${prof ? statBlock(prof) : ''}
       <div class="acts"><button class="btn small secondary" data-ledger type="button">+ NPC ledger</button>${prof ? '<button class="btn small" data-fight type="button">' + gl('revolver') + ' Add to Combat</button>' : ''}</div>

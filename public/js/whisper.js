@@ -12,7 +12,7 @@ function writeBox({ title, sub = '', placeholder = '', max = 500, ok = 'Send', q
     back.innerHTML = `<div class="modal ask whisper-box" role="dialog" aria-modal="true" aria-label="${esc(title)}">
       <h2>${gl('scroll')} ${esc(title)}</h2>${sub ? `<p class="ask-body">${esc(sub)}</p>` : ''}
       ${quote ? `<blockquote class="whisper-quote">${esc(quote)}</blockquote>` : ''}
-      <textarea maxlength="${max}" rows="${max > 250 ? 4 : 2}" placeholder="${esc(placeholder)}"></textarea>
+      <textarea aria-label="Your message" maxlength="${max}" rows="${max > 250 ? 4 : 2}" placeholder="${esc(placeholder)}"></textarea>
       <div class="ask-btns"><button type="button" class="btn secondary" data-no>Cancel</button><button type="button" class="btn" data-go>${esc(ok)}</button></div></div>`;
     document.body.append(back);
     const ta = back.querySelector('textarea');

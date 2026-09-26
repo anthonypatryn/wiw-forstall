@@ -80,6 +80,7 @@ function watch(d, warden) {
     document.body.append(box);
     box.addEventListener('click', onClick);
     if (shownAt !== d.at) { shownAt = d.at; seenRounds = d.rounds.length; play('chime'); }
+    setTimeout(() => { if (!box.contains(document.activeElement)) box.querySelector('button')?.focus({ preventScroll: true }); }, 0); // keyboard users land inside the scene
   }
   box.dataset.warden = warden ? '1' : '';
   const cell = (r, i) => (r ? `<td><div class="tray duel-tray" data-dt="${r.skill}-${i}"></div><span class="dh">${r.rolls[i].hits} hit${r.rolls[i].hits === 1 ? '' : 's'}</span>${r.won?.[i] ? ' <b class="plus">+1B</b>' : ''}</td>` : '<td class="muted">—</td>');

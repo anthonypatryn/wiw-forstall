@@ -226,7 +226,7 @@ function renderLiars(t) {
     btns.push(`<button type="button" class="btn" data-sl="deal">${gl('die')} ${L ? 'Another game' : 'Start the game'}</button>`, '<button type="button" class="btn secondary" data-sl="leave">Cash out &amp; leave</button>');
   } else if (myTurn) {
     const ok = legal(L.bid, lb.qty, lb.face) && lb.qty <= L.total;
-    btns.push(`<div class="ld-picker"><div class="fr-amt"><button type="button" class="pm-btn" data-lq="-1">−</button><b>${lb.qty}</b><button type="button" class="pm-btn" data-lq="1">+</button></div>
+    btns.push(`<div class="ld-picker"><div class="fr-amt"><button type="button" class="pm-btn" data-lq="-1" aria-label="Fewer dice">−</button><b>${lb.qty}</b><button type="button" class="pm-btn" data-lq="1" aria-label="More dice">+</button></div>
       <div class="ld-faces">${[2, 3, 4, 5, 6].map((f) => `<button type="button" class="ld-face${lb.face === f ? ' on' : ''}" data-lf="${f}">${die(f, 'sm')}</button>`).join('')}</div></div>`);
     btns.push(`<button type="button" class="btn" data-ld="bid"${ok ? '' : ' disabled'}>Bid ${esc(bidText({ qty: lb.qty, face: lb.face }))}</button>`);
     if (L.bid) btns.push('<button type="button" class="btn danger" data-ld="call">Liar!</button>');
@@ -423,7 +423,7 @@ function betDialog(t, r, cur) {
     back.className = 'modal-back ask-back fr-bet-back';
     const draw = () => {
       back.innerHTML = `<div class="modal ask" role="dialog" aria-modal="true" aria-label="Bet on the ${esc(rn(r))}"><h2>Bet on the ${esc(rn(r))}</h2>
-        <div class="fr-amt"><button type="button" class="pm-btn" data-d="-1">−</button><b>${$$(st.amt)}</b><button type="button" class="pm-btn" data-d="1">+</button></div>
+        <div class="fr-amt"><button type="button" class="pm-btn" data-d="-1" aria-label="Bet less">−</button><b>${$$(st.amt)}</b><button type="button" class="pm-btn" data-d="1" aria-label="Bet more">+</button></div>
         <div class="field-step"><button type="button" class="chip-btn${st.copper ? '' : ' on'}" data-cop="0">Straight<small>wins as the player’s card</small></button><button type="button" class="chip-btn${st.copper ? ' on' : ''}" data-cop="1">Coppered<small>wins as the bank’s card</small></button></div>
         <div class="ask-btns">${cur ? '<button type="button" class="btn secondary" data-take>Take it back</button>' : ''}<button type="button" class="btn secondary" data-no>Cancel</button><button type="button" class="btn" data-go>${cur ? 'Change the bet' : 'Place the bet'}</button></div></div>`;
     };
@@ -609,6 +609,9 @@ function openTable(warden = false) {
     scene.addEventListener('click', onClick);
     document.body.append(scene);
     document.body.classList.add('nav-open');
+    render();
+    requestAnimationFrame(() => { if (scene && !scene.contains(document.activeElement)) scene.querySelector('button')?.focus({ preventScroll: true }); }); // keyboard users land inside the scene
+    return;
   }
   render();
 }

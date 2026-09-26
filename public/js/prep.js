@@ -33,7 +33,7 @@ function renderEditor() {
   $('#editor').innerHTML = `
     <div class="head-row"><h2 class="section-title">${ed.id ? 'Edit scene' : 'New scene'}</h2><span class="btn-row">${ed.id ? `<button type="button" class="btn small secondary" data-copy>Copy</button><button type="button" class="btn small secondary danger" data-del>Delete</button>` : ''}</span></div>
     <div class="field-step"><span>SCENE</span><input data-f="title" maxlength="90" value="${esc(ed.title)}" placeholder="e.g. Ambush at Dry Gulch"></div>
-    <div class="field-step"><span>WHERE</span><select data-f="town">${opt('', 'Anywhere', ed.town)}${ref.towns.map((t) => opt(t.id, t.name, ed.town)).join('')}</select></div>
+    <div class="field-step"><span>WHERE</span><select aria-label="Town" data-f="town">${opt('', 'Anywhere', ed.town)}${ref.towns.map((t) => opt(t.id, t.name, ed.town)).join('')}</select></div>
     <div class="field-step"><span>READ ALOUD <small>what you say to set the scene</small></span><textarea data-f="readAloud" rows="4" maxlength="4000" placeholder="The wind dies. Somewhere up the canyon, a horse whinnies…">${esc(ed.readAloud)}</textarea></div>
     <div class="field-step"><span>YOUR NOTES <small>only you see these</small></span><textarea data-f="notes" rows="3" maxlength="4000" placeholder="What the NPCs want, what happens if the posse runs…">${esc(ed.notes)}</textarea></div>
 
@@ -45,7 +45,7 @@ function renderEditor() {
     <h3 class="prep-h">${gl('revolver')} The fight</h3>
     <div class="field-step"><span>BATTLE MAP</span>${MAPS.map(([v, l]) => `<button type="button" class="chip-btn${ed.battleMap === v ? ' on' : ''}" data-map="${v}">${l}</button>`).join('')}</div>
     <div class="prep-rows">${ed.enemies.map((e, i) => `<div class="prep-row">
-        <select data-row="enemies" data-i="${i}" data-k="profile"><option value="">Pick a monster or NPC…</option>
+        <select aria-label="Enemy" data-row="enemies" data-i="${i}" data-k="profile"><option value="">Pick a monster or NPC…</option>
           <optgroup label="Monsters">${monsters.map((m) => opt(m.name, m.name, e.profile)).join('')}</optgroup>
           <optgroup label="Book NPCs">${npcProfiles.filter((n) => n.faction).map((n) => opt(n.key, n.name, e.profile)).join('')}</optgroup>
           <optgroup label="Human combatants (p. 191)">${npcProfiles.filter((n) => !n.faction).map((n) => opt(n.key, n.name.replace('Human - ', ''), e.profile)).join('')}</optgroup></select>
@@ -77,8 +77,8 @@ function renderEditor() {
 
     <h3 class="prep-h">${gl('die')} Rolls to call <small>you pick who rolls when you call it</small></h3>
     <div class="prep-rows">${ed.checks.map((c, i) => `<div class="prep-row">
-        <select data-row="checks" data-i="${i}" data-k="skill">${SKILLS.map((s) => opt(s, s, c.skill)).join('')}</select>
-        <select data-row="checks" data-i="${i}" data-k="diff">${DIFFS.map((d) => opt(d, d, c.diff)).join('')}</select>
+        <select aria-label="Skill" data-row="checks" data-i="${i}" data-k="skill">${SKILLS.map((s) => opt(s, s, c.skill)).join('')}</select>
+        <select aria-label="Difficulty" data-row="checks" data-i="${i}" data-k="diff">${DIFFS.map((d) => opt(d, d, c.diff)).join('')}</select>
         <input data-row="checks" data-i="${i}" data-k="note" maxlength="80" value="${esc(c.note)}" placeholder="For what? (e.g. spot the tripwire)">
         <button type="button" class="rm-btn" data-rm="checks" data-i="${i}" aria-label="Remove">×</button></div>`).join('')}</div>
     <button type="button" class="btn small secondary" data-add="checks">+ Add a roll</button>

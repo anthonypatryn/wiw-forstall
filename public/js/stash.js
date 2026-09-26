@@ -35,7 +35,7 @@ export async function openStash() {
         <div class="trade-money"><b>${$$(stash.money)}</b>${!warden && stash.money ? `<span class="muted">take</span><button type="button" class="pm-btn" data-tm="-1" aria-label="Less">−</button><label class="lp-num">$<input type="number" min="0" step="0.25" data-takemoney value="${st.takeMoney || ''}" placeholder="0"></label><button type="button" class="pm-btn" data-tm="1" aria-label="More">+</button><button type="button" class="btn small secondary" data-takecash>Take it</button>` : ''}</div></div>
       ${warden ? `<div class="field-step trade-side"><span>PUT LOOT IN (the posse finds…)</span>
           <label class="lp-num">$<input type="number" min="0" step="0.25" data-lootmoney value="${st.lootMoney || ''}" placeholder="0"></label>
-          <select data-lootitem><option value="">An item from the Store…</option>${catalog.map((c) => `<option value="${esc(c.id)}"${st.lootItem === c.id ? ' selected' : ''}>${esc(c.name)} · ${esc(c.cat)}</option>`).join('')}</select>
+          <select aria-label="An item from the Store" data-lootitem><option value="">An item from the Store…</option>${catalog.map((c) => `<option value="${esc(c.id)}"${st.lootItem === c.id ? ' selected' : ''}>${esc(c.name)} · ${esc(c.cat)}</option>`).join('')}</select>
           ${st.lootItem ? `<label class="lp-num">How many <input type="number" min="1" max="99" data-lootqty value="${st.lootQty}"></label>` : ''}
           <button type="button" class="btn small" data-loot>Put it in the stash</button></div>`
         : `<div class="field-step trade-side"><span>PUT IN FROM YOUR SHEET</span>

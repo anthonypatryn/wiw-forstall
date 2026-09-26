@@ -4,7 +4,7 @@
   --paper-2: #e4dac9;
   --ink: #221f1f;
   --ink-soft: #4a4340;
-  --ink-faint: #8a7f76;
+  --ink-faint: #675e57;
   --rust: #a4401f;
   --rust-dark: #7a2c14;
   --sunset: #d1753f;
@@ -73,7 +73,7 @@ button { cursor: pointer; }
 /* ---------- masthead ---------- */
 .masthead {
   position: relative;
-  background: #2a160e url('../img/cover.jpg') center 58% / cover no-repeat;
+  background: #2a160e url('../img/cover.webp') center 58% / cover no-repeat;
   border-bottom: 3px solid var(--ink);
 }
 .masthead::after {
@@ -143,7 +143,7 @@ button { cursor: pointer; }
 /* ---------- target ---------- */
 .target {
   display: grid; grid-template-columns: 1fr auto; gap: 14px; align-items: center;
-  background: var(--iron) url('../img/forstall.jpg') center 40% / cover;
+  background: var(--iron) url('../img/forstall.webp') center 40% / cover;
   color: var(--surface-2); border-color: var(--iron);
   min-height: 150px;
 }
@@ -979,10 +979,11 @@ body.warden-mode {
   --paper: #cdd5d8; --paper-2: #bcc7cb; --surface: #eef3f4; --surface-2: #dfe7ea;
   --rust: #2f6d73; --rust-dark: #1d4a50; --accent: #25586a; --accent-dark: #1b3f4d; --accent-tint: rgba(37,88,106,.12);
   --line: rgba(27,63,77,.35); --line-soft: rgba(27,63,77,.18);
+  --ink-faint: #4e5860; /* readable on the grey cards */
   --desk: #1e272c; --w-slate: #151d22; --w-teal: #5fb3b3; --w-teal-pale: #a9dcd9;
   background-color: var(--desk);
 }
-body.warden-mode .masthead { background-image: url('../img/map.jpg'); background-position: 38% 42%; border-bottom-color: var(--w-slate); box-shadow: inset 0 -4px 0 var(--w-teal); }
+body.warden-mode .masthead { background-image: url('../img/map-header.webp'); background-position: 38% 50%; border-bottom-color: var(--w-slate); box-shadow: inset 0 -4px 0 var(--w-teal); }
 body.warden-mode .masthead::after { background: linear-gradient(90deg, rgba(12,20,26,.94) 0%, rgba(16,32,40,.72) 50%, rgba(20,48,58,.4) 100%); }
 body.warden-mode .brand-title { border-left-color: rgba(95,179,179,.7); }
 body.warden-mode .brand-title .kicker { color: var(--w-teal-pale); }

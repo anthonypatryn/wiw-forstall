@@ -56,7 +56,7 @@ function renderQuests() {
 function clueNote(c) {
   return `<button type="button" class="jc-note${warden && !c.revealed ? ' secret' : ''}" data-clue="${esc(c.id)}" style="--tilt:${tilt(c.id)}deg">
     <span class="jc-pin" aria-hidden="true"></span>
-    ${c.img ? `<img src="/api/image?ns=clue&id=${esc(c.id)}&size=head&v=${c.img}" alt="">` : ''}
+    ${c.img ? `<img src="/api/image?ns=clue&id=${esc(c.id)}&size=head&v=${c.img}" alt="" loading="lazy">` : ''}
     ${c.title ? `<b>${esc(c.title)}</b>` : ''}<span class="jc-text">${esc(c.text.length > 140 ? `${c.text.slice(0, 140)}…` : c.text)}</span>
     ${warden && !c.revealed ? '<small class="jc-hid">hidden</small>' : ''}</button>`;
 }
@@ -110,10 +110,10 @@ function editQuest(q = null) {
   const draw = () => {
     back.querySelector('.modal').innerHTML = `<h2>${q ? 'Edit the quest' : 'A new quest'}</h2>
       <div class="field-step"><span>QUEST</span><input data-f="title" maxlength="90" value="${esc(st.title)}" placeholder="e.g. The Missing Kurtz Crystal"></div>
-      <div class="field-step"><span>WHO GAVE IT · WHERE</span><select data-f="giver">${pick(J.npcs, st.giver, 'Nobody in particular')}</select><select data-f="where">${pick(J.towns, st.where, 'Anywhere')}</select></div>
+      <div class="field-step"><span>WHO GAVE IT · WHERE</span><select aria-label="Who gave the quest" data-f="giver">${pick(J.npcs, st.giver, 'Nobody in particular')}</select><select aria-label="Where" data-f="where">${pick(J.towns, st.where, 'Anywhere')}</select></div>
       <div class="field-step"><span>THE JOB</span><textarea data-f="text" rows="3" maxlength="3000" placeholder="What they were asked to do, in a sentence or two">${esc(st.text)}</textarea></div>
       <div class="field-step"><span>STEPS — hidden ones stay secret until you show them</span>
-        <div class="jn-steps">${st.steps.map((s, i) => `<div class="jn-step"><input data-step="${i}" maxlength="200" value="${esc(s.text)}"><button type="button" class="chip-btn${s.hidden ? ' on' : ''}" data-hide="${i}">hidden</button><button type="button" class="rm-btn" data-rm="${i}" aria-label="Remove">×</button></div>`).join('')}</div>
+        <div class="jn-steps">${st.steps.map((s, i) => `<div class="jn-step"><input aria-label="Step" data-step="${i}" maxlength="200" value="${esc(s.text)}"><button type="button" class="chip-btn${s.hidden ? ' on' : ''}" data-hide="${i}">hidden</button><button type="button" class="rm-btn" data-rm="${i}" aria-label="Remove">×</button></div>`).join('')}</div>
         <button type="button" class="btn small secondary" data-addstep>+ Add a step</button></div>
       <div class="field-step"><span>REWARD (optional)</span><input data-f="reward" maxlength="120" value="${esc(st.reward)}" placeholder="e.g. $200 and the sheriff’s favor"></div>
       ${q ? '' : `<label class="check"><input type="checkbox" data-reveal${st.revealed ? ' checked' : ''}> Show it to the posse now</label>`}
@@ -143,9 +143,9 @@ function editClue(c = null) {
     back.querySelector('.modal').innerHTML = `<h2>${c ? 'Edit the clue' : 'Pin up a clue'}</h2>
       <div class="field-step"><span>CLUE</span><input data-f="title" maxlength="90" value="${esc(st.title)}" placeholder="e.g. Muddy boot prints"></div>
       <div class="field-step"><span>WHAT THEY FOUND</span><textarea data-f="text" rows="3" maxlength="2000" placeholder="Size 13, heading toward the old mine…">${esc(st.text)}</textarea></div>
-      <div class="field-step"><span>PART OF A QUEST?</span><select data-f="quest">${pick(J.quests, st.quest, 'No quest')}</select></div>
+      <div class="field-step"><span>PART OF A QUEST?</span><select aria-label="Part of a quest" data-f="quest">${pick(J.quests, st.quest, 'No quest')}</select></div>
       ${J.npcs.length ? `<div class="field-step"><span>WHO IT’S ABOUT</span>${J.npcs.map((n) => `<button type="button" class="chip-btn${st.npcs.includes(n.id) ? ' on' : ''}" data-npc="${esc(n.id)}">${esc(n.name)}</button>`).join('')}</div>` : ''}
-      <div class="field-step"><span>WHERE</span><select data-place>${pick(J.towns, st.places[0] || '', 'Nowhere in particular')}</select></div>
+      <div class="field-step"><span>WHERE</span><select aria-label="Where" data-place>${pick(J.towns, st.places[0] || '', 'Nowhere in particular')}</select></div>
       <div class="ho-photo">${photo ? `<img src="${photo.head}" alt="">` : c?.img ? `<img src="/api/image?ns=clue&id=${esc(c.id)}&size=head&v=${c.img}" alt="">` : ''}<button type="button" class="btn small secondary" data-photo>${gl('camera')} ${photo || c?.img ? 'Change picture' : 'Add a picture'}</button></div>
       ${c ? '' : `<label class="check"><input type="checkbox" data-reveal${st.revealed ? ' checked' : ''}> Show it to the posse now</label>`}
       <div class="ask-btns"><button type="button" class="btn secondary" data-no>Cancel</button><button type="button" class="btn" data-go>Save</button></div>`;
