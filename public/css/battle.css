@@ -290,3 +290,66 @@ body.warden-mode .battle-wrap { grid-template-columns: minmax(0, 1fr) 440px; }
 .tp-undo-last { overflow: hidden; }
 .tp-undo-last small { font: italic var(--fs-xs) var(--body); letter-spacing: 0; margin-left: 4px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .tp-next { width: 100%; }
+
+/* ---------- sidebar v2: pinned fight bar, folding sections, gear pop-up for map setup ---------- */
+.battle-wrap { transition: grid-template-columns .2s; }
+.battle-wrap.side-closed, body.warden-mode .battle-wrap.side-closed { grid-template-columns: minmax(0, 1fr) 0; }
+.battle-wrap.side-closed .panel { visibility: hidden; padding: 0; }
+.side-toggle { position: absolute; right: 0; top: 50%; transform: translateY(-50%); z-index: 4; width: 26px; height: 64px; border: 2px solid var(--ink); border-right: 0; border-radius: var(--radius) 0 0 var(--radius); background: rgba(238,243,244,.95); font: var(--fs-xl)/1 var(--display); color: var(--ink); cursor: pointer; box-shadow: -2px 2px 0 var(--shade-3); padding: 0; }
+.side-toggle:hover { background: var(--ink); color: var(--paper); }
+.panel { gap: 10px; padding-top: 12px; }
+
+.fightbar { background: var(--iron, #22282c); color: var(--on-dark); border-radius: var(--radius); padding: 10px 12px; display: grid; gap: 8px; box-shadow: 3px 3px 0 var(--shade-3); }
+body.warden-mode .fightbar { background: var(--w-slate); border: 1px solid rgba(95,179,179,.4); }
+.fb-top { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; }
+.fb-top b { font: var(--fs-xl)/1 var(--display); letter-spacing: .08em; color: #fff; }
+.fb-top small { font: var(--fs-xs) var(--display); letter-spacing: .1em; color: var(--on-dark-dim); }
+.fb-top small .now { color: var(--gold); }
+.fb-sub { color: var(--on-dark-dim); font-style: italic; }
+.fb-who { font-size: var(--fs-md); }
+.fb-who b { color: var(--gold); cursor: pointer; text-decoration: underline dotted; }
+.fb-btns { display: grid; grid-template-columns: 1fr auto auto; gap: 6px; align-items: stretch; }
+.fb-btns.two { grid-template-columns: 1fr auto; }
+.fightbar .fb-next { width: 100%; }
+body.warden-mode .fightbar .fb-next { background: var(--w-teal); border-color: var(--w-teal-pale); color: var(--w-slate); }
+body.warden-mode .fightbar .fb-next:hover { background: var(--w-teal-pale); }
+.fightbar .fb-ghost { background: transparent; color: var(--on-dark); border-color: rgba(232,220,196,.5); box-shadow: none; }
+body.warden-mode .fightbar .fb-ghost { color: var(--w-teal-pale); border-color: rgba(169,220,217,.55); }
+.fightbar .fb-ghost:hover { background: rgba(255,255,255,.1); }
+.fb-more { position: relative; display: flex; }
+.fb-more > .fb-ghost { min-width: 40px; font-size: var(--fs-lg); }
+.fb-menu { position: absolute; right: 0; top: calc(100% + 6px); z-index: var(--z-menu, 45); min-width: 260px; display: grid; padding: 6px; background: var(--surface); color: var(--ink); border: 2px solid var(--ink); border-radius: var(--radius); box-shadow: 0 10px 28px var(--shade-4); }
+.fb-menu > button, .fb-menu > label { text-align: left; background: none; border: 0; padding: 9px 10px; border-radius: var(--r-sm); font: var(--fs-md) var(--body); color: var(--ink); cursor: pointer; }
+.fb-menu > button:hover, .fb-menu > label:hover { background: var(--accent-tint); }
+.fb-menu .danger { color: var(--danger); }
+.fb-menu hr { border: 0; border-top: 1px solid var(--line-soft, var(--line)); margin: 4px 0; }
+.fb-menu .muted { padding: 8px 10px; }
+
+.acc { background: var(--surface); border: 1.5px solid var(--line); border-radius: var(--radius); }
+.acc-h { width: 100%; display: flex; align-items: baseline; gap: 8px; padding: 10px 12px 8px; background: none; border: 0; text-align: left; font: var(--fs-lg) var(--display); letter-spacing: .12em; color: var(--ink); cursor: pointer; }
+.acc-h small { font: italic var(--fs-sm) var(--body); letter-spacing: 0; color: var(--ink-soft); }
+.acc-h .chev { margin-left: auto; font-style: normal; font-size: var(--fs-xs); color: var(--ink-soft); transition: transform .15s; align-self: center; }
+.acc.open > .acc-h .chev { transform: rotate(90deg); }
+.acc-h:hover { background: var(--accent-tint); }
+.acc > .acc-b { padding: 0 12px 12px; }
+.acc:not(.open) > .acc-b { display: none; }
+.acc .turn-panel { padding: 0; border: 0; background: none; box-shadow: none; }
+
+.map-ctrls .gear { margin-top: 6px; background: var(--ink); color: var(--paper); display: grid; place-items: center; }
+body.warden-mode .map-ctrls .gear { background: var(--w-slate); color: var(--w-teal-pale); border-color: var(--w-teal); }
+.map-ctrls .gear svg { width: 24px; height: 24px; transition: transform .4s; }
+.map-ctrls .gear:hover svg { transform: rotate(60deg); }
+body.warden-mode .map-ctrls .gear:hover { background: var(--w-teal); color: var(--w-slate); }
+@media (prefers-reduced-motion: reduce) { .map-ctrls .gear svg { transition: none; } }
+
+.setup-back { z-index: var(--z-dialog); }
+.setup-modal { width: min(600px, calc(100vw - 32px)); max-height: calc(100vh - 48px); overflow-y: auto; padding: 0; }
+.setup-h { display: flex; align-items: center; padding: 12px 14px 10px; background: var(--ink); color: var(--paper); }
+body.warden-mode .setup-h { background: var(--w-slate); color: var(--on-dark); }
+.setup-h b { font: var(--fs-xl) var(--display); letter-spacing: .12em; }
+.setup-x { margin-left: auto; width: 32px; height: 32px; border-radius: 50%; border: 2px solid currentColor; background: none; color: inherit; font-size: 18px; line-height: 1; cursor: pointer; }
+.setup-tabs { display: flex; flex-wrap: wrap; gap: 6px; padding: 12px 14px 0; }
+.setup-tabs button { border: 1.5px solid var(--line); border-bottom: 0; border-radius: var(--radius) var(--radius) 0 0; background: var(--surface-2); padding: 8px 14px 6px; font: var(--fs-md) var(--display); letter-spacing: .1em; cursor: pointer; color: var(--ink); }
+.setup-tabs button.on { background: var(--surface); border-color: var(--ink); }
+.setup-b { margin: 0 14px 14px; padding: 14px; border: 1.5px solid var(--ink); border-radius: 0 var(--radius) var(--radius) var(--radius); background: var(--surface); }
+.setup-b > div { display: grid; gap: 12px; }

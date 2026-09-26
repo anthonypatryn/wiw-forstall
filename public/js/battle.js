@@ -275,7 +275,8 @@ function renderPanel() {
       <span class="chip" style="background:${color(t)}">${esc(initials(t.name))}</span>
       <span class="n">${esc(t.name)}<small>${t.kind === 'pc' ? `The ${esc(t.trade || '')}` : t.kind === 'enemy' ? 'Enemy' : 'NPC'}${t.down ? ' · down' : ''}${t.gone ? ' · removed from Combat' : ''}</small></span>
       ${warden ? `<button type="button" data-hide="${t.id}">${t.hidden ? 'Reveal' : 'Hide'}</button><button aria-label="Remove this token" type="button" data-rm="${t.id}">✕</button>` : ''}</div>`).join('')
-    : `<p class="muted">${warden ? 'Use “Add posse & enemies from Combat” below.' : 'The Warden hasn’t set the board yet.'}</p>`;
+    : `<p class="muted">${warden ? 'Tokens appear when a fight starts or you add enemies. NPCs: the gear on the map.' : 'The Warden hasn’t set the board yet.'}</p>`;
+  $('#board-count').textContent = data.tokens.length ? `${data.tokens.length} token${data.tokens.length === 1 ? '' : 's'}` : '';
   document.querySelectorAll('#panel [data-pick]').forEach((el) => el.addEventListener('click', (e) => {
     if (e.target.closest('button')) return;
     select(el.dataset.pick);
@@ -322,33 +323,41 @@ function moveCostFor(kind, a, inches, rough) {
 const pips = (n) => `<span class="grit-pips">${Array.from({ length: Math.max(6, n) }, (_, i) => `<i class="${i < n ? 'on' : ''}"></i>`).join('')}</span>`;
 
 function renderTurnBar() {
-  const bar = $('#turn-bar');
-  if (bar.contains(document.activeElement) && /^(SELECT|INPUT)$/.test(document.activeElement.tagName)) return;
+  const bar = $('#turn-bar'), fb = $('#fight-bar');
+  const busy = (el) => el.contains(document.activeElement) && /^(SELECT|INPUT)$/.test(document.activeElement.tagName);
+  if (busy(bar) || busy(fb)) return;
   const c = combat?.combat;
   if (!c?.active) {
-    bar.hidden = !warden;
+    $('#acc-turn').hidden = true;
     const n = (combat?.enemies || []).filter((e) => !e.defeated).length, pcs = (combat?.posse || []).filter((p) => !p.dead).length;
-    bar.innerHTML = warden ? `<div class="turn-bar"><div><small>NO COMBAT RUNNING</small><span class="muted">${pcs} in the posse · ${n} enem${n === 1 ? 'y' : 'ies'} ready</span></div>
-      <button type="button" class="btn secondary" data-addenemies>${gl('claws')} Add enemies</button>
-      <button type="button" class="btn" data-startfight${pcs ? '' : ' disabled'}>${gl('revolver')} Start combat</button></div>` : '';
+    fb.innerHTML = warden ? `<div class="fightbar idle"><div class="fb-top"><b>NO FIGHT RUNNING</b><small>${pcs} in the posse · ${n} enem${n === 1 ? 'y' : 'ies'} ready</small></div>
+      <div class="fb-btns two"><button type="button" class="btn fb-next" data-startfight${pcs ? '' : ' disabled'}>${gl('revolver')} Start combat</button><button type="button" class="btn small fb-ghost" data-addenemies>${gl('claws')} Add enemies</button></div></div>`
+      : '<div class="fightbar idle"><div class="fb-top"><b>NO FIGHT RUNNING</b></div><small class="fb-sub">Tap a token to see its ranges.</small></div>';
+    const bar = fb;
     bar.querySelector('[data-addenemies]')?.addEventListener('click', () => openAddEnemies(combat, () => poller?.now?.()));
-    bar.querySelector('[data-startfight]')?.addEventListener('click', async () => {
-      // nothing to fight yet: bring in the enemies first, then pick who's in
-      if (!n) {
-        const added = await openAddEnemies(combat, () => poller?.now?.(), { intro: 'Nobody to fight yet. Add the enemies, then press Done to pick who’s in.' });
-        if (!added) return;
-        try { combat = await api('GET', null, '?view=warden', '/api/combat'); } catch {} // the picker needs the new enemies
-        poller?.now?.();
-      }
-      const who = await pickFighters(combat); if (who && await tpAct({ action: 'start', ...who }, 'Combat begins — tokens placed.')) poller?.now?.(); });
+    bar.querySelector('[data-startfight]')?.addEventListener('click', startFight);
     return;
   }
-  bar.hidden = false;
+  renderFightTurn(bar, fb, c);
+}
+async function startFight() {
+  const n = (combat?.enemies || []).filter((e) => !e.defeated).length;
+  // nothing to fight yet: bring in the enemies first, then pick who's in
+  if (!n) {
+    const added = await openAddEnemies(combat, () => poller?.now?.(), { intro: 'Nobody to fight yet. Add the enemies, then press Done to pick who’s in.' });
+    if (!added) return;
+    try { combat = await api('GET', null, '?view=warden', '/api/combat'); } catch {} // the picker needs the new enemies
+    poller?.now?.();
+  }
+  const who = await pickFighters(combat); if (who && await tpAct({ action: 'start', ...who }, 'Combat begins — tokens placed.')) poller?.now?.();
+}
+function renderFightTurn(bar, fb, c) {
+  $('#acc-turn').hidden = false;
   const cur = currentActor();
   const nm = (k) => combat.posse.find((p) => p.id === k)?.name || combat.enemies.find((e) => e.id === k)?.name || '—';
   const order = c.turnList || [], i = order.indexOf(c.current), next = order.length > 1 ? order[(i + 1) % order.length] : null;
   const u = combat.undo || {};
-  if (!cur) { bar.innerHTML = `<div class="turn-bar"><span>Round ${c.round || 1}</span>${warden ? '<button type="button" class="btn small" data-nextturn>Next turn</button>' : ''}</div>`; wireTurnBar(bar, null); return; }
+  if (!cur) { fb.innerHTML = fightBarHTML(null); bar.innerHTML = '<p class="muted">Between turns.</p>'; wireFightBar(fb); return; }
   const a = cur.a, isPc = cur.kind === 'pc';
   const can = warden || (isPc && myId() === a.id);
   const log = a.turnLog || [];
@@ -448,32 +457,76 @@ function renderTurnBar() {
       break;
     }
   }
+  fb.innerHTML = fightBarHTML(cur);
+  wireFightBar(fb);
+  $('#acc-turn [data-acc-title]').textContent = `${a.name.toUpperCase()}’S TURN`;
   bar.innerHTML = `<div class="turn-panel${can && !warden ? ' mine' : ''}">
-    <div class="tp-top">
-      <div><small>ROUND ${c.round || 1}${next ? ` · NEXT UP: ${esc(nm(next))}` : ''}</small><b data-goto="${esc(a.id)}">${esc(a.name)}</b><span class="tp-sub">’s turn</span></div>
-      <div class="tp-grit" title="Grit left this turn">${pips(a.grit || 0)}<span><b>${a.grit ?? 0}</b> Grit</span></div>
-    </div>
     ${holdsHTML()}
     <div class="tp-log">${log.length ? log.map((l) => `<span class="tp-chip">${esc(l.text)}${l.grit > 0 ? ` <i>−${l.grit}</i>` : l.grit < 0 ? ` <i class="plus">+${-l.grit}</i>` : ''}</span>`).join('') : '<span class="muted">Nothing done yet this turn.</span>'}
       ${a.dodge ? `<span class="tp-chip good">${gl('dodge')} ${a.dodge} Dodge ready</span>` : ''}</div>
     ${can ? `
       ${quickHTML(cur, tok)}
       <div class="tp-actions">${ACTIONS.map(([k, ic, label, cost, off]) => `<button type="button" class="tp-act${tp.open === k ? ' on' : ''}" data-open="${k}"${off ? ' disabled' : ''}><span class="ic">${gl(ic)}</span>${label}<small>${off ? 'used' : cost}</small></button>`).join('')}</div>
-      ${drawer ? `<div class="tp-drawer">${drawer}</div>` : ''}
-      <div class="tp-end">
-        ${(() => { // fix-ups on one row, the Warden's fight controls on the next, the big "next" button full width at the bottom
-          const fix = [(warden ? u.last : u.lastIsThisTurn && u.last) ? `<button type="button" class="btn small secondary tp-undo-last" data-undo="last" title="Undo: ${esc(u.last)}">↶ Undo <small>${esc(u.last)}</small></button>` : '',
-            u.thisTurn ? '<button type="button" class="btn small secondary" data-undo="turn">⟲ Restart turn</button>' : ''].filter(Boolean);
-          return fix.length ? `<div class="tp-row${fix.length === 1 ? ' solo' : ''}">${fix.join('')}</div>` : '';
-        })()}
-        ${warden ? `<div class="tp-row"><button type="button" class="btn small secondary" data-addenemies title="Reinforcements">${gl('claws')} + Enemies</button><button type="button" class="btn small secondary danger" data-endfight>End combat</button></div>
-        <button type="button" class="btn tp-next" data-nextturn>Next turn</button>` : '<button type="button" class="btn tp-next" data-endmine>End my turn</button>'}
-      </div>`
+      ${drawer ? `<div class="tp-drawer">${drawer}</div>` : ''}`
     : `<p class="muted tp-empty">${isPc ? `Waiting on ${esc(a.name)}’s player (or the Warden).` : 'The enemies are acting.'}</p>`}
   </div>`;
   wireTurnBar(bar, cur, tok);
   if (can) wireQuick(bar, cur, tok);
 }
+
+// ---------- the fight bar: pinned at the top of the sidebar ----------
+const fbState = { menu: false };
+function fightBarHTML(cur) {
+  const c = combat.combat, u = combat.undo || {};
+  const nm = (k) => (k === 'enemies' ? 'Enemies' : combat.posse.find((p) => p.id === k)?.name || combat.enemies.find((e) => e.id === k)?.name || '—');
+  const order = c.turnList || [];
+  const a = cur?.a, mine = cur && cur.kind === 'pc' && myId() === a.id;
+  const undoLast = (warden ? u.last : u.lastIsThisTurn && mine && u.last) || '';
+  const restart = u.thisTurn && (warden || mine);
+  const menu = `<div class="fb-menu" ${fbState.menu ? '' : 'hidden'}>
+      ${warden ? `<label class="check"><input type="checkbox" data-showhp${combat.settings?.showEnemyHealth ? ' checked' : ''}> Show enemy Health to the posse</label>` : ''}
+      ${undoLast ? `<button type="button" data-undo="last">↶ Undo: ${esc(undoLast)}</button>` : ''}
+      ${restart ? `<button type="button" data-undo="turn">⟲ Restart ${esc(a?.name || 'this')}’s turn</button>` : ''}
+      ${!undoLast && !restart && !warden ? '<span class="muted">Nothing to undo.</span>' : ''}
+      ${warden ? `<hr><button type="button" class="danger" data-clear-enemies>Remove every enemy</button><button type="button" class="danger" data-endfight>End combat</button>` : ''}
+    </div>`;
+  const next = warden ? '<button type="button" class="btn fb-next" data-nextturn>Next turn ›</button>' : mine ? '<button type="button" class="btn fb-next" data-endmine>End my turn</button>' : '';
+  const hasMenu = warden || undoLast || restart;
+  return `<div class="fightbar">
+    <div class="fb-top"><b>ROUND ${c.round || 1}</b><small>${order.map((k) => `<span class="${k === c.current || (k === 'enemies' && cur?.kind === 'enemy') ? 'now' : ''}">${esc(nm(k))}</span>`).join(' → ')}</small></div>
+    ${cur ? `<div class="fb-who"><b data-goto title="Find them on the map">${esc(a.name)}</b>’s turn · ${a.grit ?? 0} Grit left</div>` : ''}
+    ${next || hasMenu ? `<div class="fb-btns${warden ? '' : ' two'}">${next}${warden ? `<button type="button" class="btn small fb-ghost" data-addenemies title="Reinforcements">${gl('claws')} + Enemies</button>` : ''}
+      ${hasMenu ? `<div class="fb-more"><button type="button" class="btn small fb-ghost" data-fbmenu aria-expanded="${fbState.menu}" aria-label="More fight controls">⋯</button>${menu}</div>` : ''}</div>` : ''}
+  </div>`;
+}
+function wireFightBar(fb) {
+  const c = combat?.combat;
+  fb.querySelector('[data-fbmenu]')?.addEventListener('click', (e) => { e.stopPropagation(); fbState.menu = !fbState.menu; fb.querySelector('.fb-menu').hidden = !fbState.menu; e.currentTarget.setAttribute('aria-expanded', String(fbState.menu)); });
+  fb.querySelector('[data-showhp]')?.addEventListener('change', async (e) => { await combatAct({ action: 'setting', key: 'showEnemyHealth', value: e.target.checked }); toast(e.target.checked ? 'The posse can see enemy Health.' : 'Enemy Health is hidden from the posse.'); e.target.blur(); poller?.now?.(); });
+  fb.querySelector('[data-clear-enemies]')?.addEventListener('click', async () => { fbState.menu = false; if (await ask('Remove every enemy from the fight?', { ok: 'Remove them all' })) { await combatAct({ action: 'clearEnemies' }); poller?.now?.(); } renderTurnBar(); });
+  fb.querySelector('[data-nextturn]')?.addEventListener('click', () => { tp.open = ''; fbState.menu = false; tpAct({ action: 'next' }); });
+  fb.querySelector('[data-addenemies]')?.addEventListener('click', () => openAddEnemies(combat, () => poller?.now?.()));
+  fb.querySelector('[data-endmine]')?.addEventListener('click', () => { tp.open = ''; tpAct({ action: 'pc', id: c.current, op: 'endTurn' }); });
+  fb.querySelector('[data-endfight]')?.addEventListener('click', async () => {
+    fbState.menu = false;
+    if (!await ask('End combat? Grit refills and Dodge/Aim clear. Health and Statuses stay as they are.')) { renderTurnBar(); return; }
+    if (!await tpAct({ action: 'end' }, 'Combat is over.')) return;
+    poller?.now?.();
+    openSpoils({ getData: () => combat, meta, act: async (body) => { const r = await combatAct(body); renderPanel(); return r; } }); // loot the fallen now (p. 79)
+  });
+  fb.querySelector('[data-goto]')?.addEventListener('click', () => {
+    const t = data?.tokens.find((x) => x.ref === c.current);
+    if (t) { select(t.id); const p = center(t.col, t.row); pz.centerOn(p.x, p.y, Math.max(pz.view.s, 0.45)); }
+  });
+  fb.querySelectorAll('[data-undo]').forEach((b) => b.addEventListener('click', async () => {
+    fbState.menu = false;
+    if (b.dataset.undo === 'turn' && !await ask('Restart this turn? Everything done this turn is undone.')) { renderTurnBar(); return; }
+    const r = await tpAct({ action: 'undo', mode: b.dataset.undo });
+    if (r) toast(`↶ Undone: ${r.labels.join(' · ')}`);
+  }));
+  fb.querySelector('[data-startfight]')?.addEventListener('click', startFight);
+}
+document.addEventListener('click', (e) => { if (fbState.menu && !e.target.closest('.fb-more')) { fbState.menu = false; const m = document.querySelector('.fb-menu'); if (m) m.hidden = true; } });
 // ---------- quick moves: one tap for the usual thing (the full Attack menu is still there for aim, ammo…) ----------
 const QUICK_MAX = 3; // nearest targets shown
 const diceIn = (pool) => (String(pool || '').match(/\d+/g) || []).reduce((n, d) => n + Number(d), 0);
@@ -566,25 +619,6 @@ async function tpAct(body, msg) {
 }
 function wireTurnBar(bar, cur, tok) {
   const c = combat?.combat;
-  bar.querySelector('[data-nextturn]')?.addEventListener('click', () => { tp.open = ''; tpAct({ action: 'next' }); });
-  bar.querySelector('[data-addenemies]')?.addEventListener('click', () => openAddEnemies(combat, () => poller?.now?.()));
-  bar.querySelector('[data-endmine]')?.addEventListener('click', () => { tp.open = ''; tpAct({ action: 'pc', id: c.current, op: 'endTurn' }); });
-  bar.querySelector('[data-endfight]')?.addEventListener('click', async () => {
-    if (!await ask('End combat? Grit refills and Dodge/Aim clear. Health and Statuses stay as they are.')) return;
-    if (!await tpAct({ action: 'end' }, 'Combat is over.')) return;
-    poller?.now?.();
-    // loot the fallen now, while it matters (p. 79)
-    openSpoils({ getData: () => combat, meta, act: async (body) => { const r = await combatAct(body); renderPanel(); return r; } });
-  });
-  bar.querySelector('[data-goto]')?.addEventListener('click', () => {
-    const t = data?.tokens.find((x) => x.ref === c.current);
-    if (t) { select(t.id); const p = center(t.col, t.row); pz.centerOn(p.x, p.y, Math.max(pz.view.s, 0.45)); }
-  });
-  bar.querySelectorAll('[data-undo]').forEach((b) => b.addEventListener('click', async () => {
-    if (b.dataset.undo === 'turn' && !await ask('Restart this turn? Everything done this turn is undone.')) return;
-    const r = await tpAct({ action: 'undo', mode: b.dataset.undo });
-    if (r) toast(`↶ Undone: ${r.labels.join(' · ')}`);
-  }));
   if (!cur) return;
   const a = cur.a, isPc = cur.kind === 'pc';
   const base = isPc ? { action: 'pc', id: a.id } : { action: 'enemy', id: a.id };
@@ -686,8 +720,8 @@ function wireAttack(box, sel) {
 }
 
 function renderWarden() {
-  $('#warden-box').hidden = !warden;
-  if (!warden) return;
+  $('#setup-btn').hidden = !warden;
+  if (!warden) { $('#setup').hidden = true; return; }
   const pre = $('#presets');
   pre.innerHTML = data.presets.map((p) => `<button type="button" data-preset="${p.id}" aria-pressed="${data.map.kind === 'preset' && data.map.id === p.id}">
     <img src="${p.thumb}" alt="" loading="lazy"><span>${esc(p.name)}</span></button>`).join('');
@@ -695,7 +729,6 @@ function renderWarden() {
   if (document.activeElement?.id !== 'g-ppi') $('#g-ppi').value = data.grid.ppi;
   if (document.activeElement?.id !== 'g-op') $('#g-op').value = data.grid.opacity;
   $('#g-show').checked = data.grid.show;
-  $('#show-hp').checked = !!combat?.settings?.showEnemyHealth;
   renderFsWarden();
 }
 
@@ -764,9 +797,33 @@ document.querySelectorAll('[data-n]').forEach((b) => b.addEventListener('click',
   const [x, y] = b.dataset.n.split(',').map(Number);
   act({ action: 'grid', dx: data.grid.dx + x, dy: data.grid.dy + y });
 }));
-$('#show-hp').addEventListener('change', (e) => combatAct({ action: 'setting', key: 'showEnemyHealth', value: e.target.checked }));
-$('#clear-enemies').addEventListener('click', async () => { if (await ask('Remove every enemy from the fight?', { ok: 'Remove them all' })) { await combatAct({ action: 'clearEnemies' }); poller?.now?.(); } });
-$('#sync').addEventListener('click', () => act({ action: 'syncCombat', hidden: $('#sync-hidden').checked }, 'Tokens added.'));
+// ---------- the map setup pop-up (gear on the map) ----------
+function setupTab(k) {
+  document.querySelectorAll('[data-stab]').forEach((b) => { b.classList.toggle('on', b.dataset.stab === k); b.setAttribute('aria-selected', String(b.dataset.stab === k)); });
+  document.querySelectorAll('[data-spane]').forEach((p) => { p.hidden = p.dataset.spane !== k; });
+}
+$('#setup-btn').addEventListener('click', () => { $('#setup').hidden = false; });
+$('#setup').addEventListener('click', (e) => { if (e.target.id === 'setup' || e.target.closest('[data-setup-x]')) $('#setup').hidden = true; });
+document.querySelectorAll('[data-stab]').forEach((b) => b.addEventListener('click', () => setupTab(b.dataset.stab)));
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('#setup').hidden) $('#setup').hidden = true; });
+
+// ---------- sidebar: sections fold, and the whole thing can tuck away (remembered on this device) ----------
+const accOpen = (() => { try { return JSON.parse(localStorage.getItem('wiw.bmAcc') || 'null') || {}; } catch { return {}; } })();
+document.querySelectorAll('.acc').forEach((sec) => {
+  const k = sec.dataset.acc, h = sec.querySelector('.acc-h');
+  const set = (on) => { sec.classList.toggle('open', on); h.setAttribute('aria-expanded', String(on)); };
+  set(accOpen[k] ?? k !== 'board');
+  h.addEventListener('click', () => { const on = !sec.classList.contains('open'); set(on); accOpen[k] = on; try { localStorage.setItem('wiw.bmAcc', JSON.stringify(accOpen)); } catch {} });
+});
+function sideOpen(on) {
+  $('.battle-wrap').classList.toggle('side-closed', !on);
+  const b = $('#side-toggle');
+  b.textContent = on ? '›' : '‹'; b.setAttribute('aria-label', on ? 'Hide the sidebar' : 'Show the sidebar'); b.title = b.getAttribute('aria-label');
+  try { localStorage.setItem('wiw.bmSide', on ? '1' : '0'); } catch {}
+  setTimeout(() => dispatchEvent(new Event('resize')), 50);
+}
+$('#side-toggle').addEventListener('click', () => sideOpen($('.battle-wrap').classList.contains('side-closed')));
+try { if (localStorage.getItem('wiw.bmSide') === '0') sideOpen(false); } catch {}
 $('#npc-add').addEventListener('submit', async (e) => {
   e.preventDefault();
   const name = $('#npc-name').value.trim();
