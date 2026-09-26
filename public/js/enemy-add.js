@@ -77,7 +77,7 @@ export async function openAddEnemies(combat, done = () => {}) {
     try {
       b.disabled = true;
       await api('POST', body, '', '/api/combat');
-      await api('POST', { action: 'syncCombat', hidden: st.hidden }, '', '/api/battle'); // onto the map
+      await api('POST', { action: 'syncCombat', only: 'enemies', hidden: st.hidden }, '', '/api/battle'); // onto the map
       st.added.push(st.tab === 'monster' ? `${st.count > 1 ? `${st.count}× ` : ''}${st.name || st.monster}` : st.tab === 'person' ? st.name || 'someone' : st.ce.name);
       if (st.tab === 'person') st.name = randName();
       if (st.tab === 'custom') st.ce = { name: '', hp: '' };

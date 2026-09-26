@@ -928,3 +928,27 @@ test('Map pings: anyone can ping a hex; it shows for a few seconds with their na
   s.pings[0].at -= 60000;
   assert.equal(battleView(s, { warden: false, combat }).pings.length, 1, 'the old one has expired');
 });
+
+test('Battle Map tokens: new ones land mid-map; Add enemies never brings back removed characters', async () => {
+  const { freshBattle, battleAction, autoSync, hexDist } = await import('../lib/battle.js');
+  const s = freshBattle();
+  const combat = { posse: [{ id: 'a', name: 'Lila' }, { id: 'b', name: 'Bo' }], enemies: [], combat: { active: false } };
+  battleAction(s, { action: 'syncCombat' }, { warden: true, combat });
+  assert.equal(s.tokens.length, 2);
+  const R = s.grid.ppi / Math.sqrt(3), cols = Math.ceil((s.map.w - s.grid.dx) / (R * Math.sqrt(3))), rows = Math.ceil((s.map.h - s.grid.dy - R / 2) / (1.5 * R));
+  const mid = { col: Math.floor(cols / 2), row: Math.floor(rows / 2) };
+  s.tokens.forEach((t) => assert.ok(hexDist(t, mid) <= 2, `${t.name} is near the middle`));
+  // the Warden takes Bo off the map, then adds a monster
+  battleAction(s, { action: 'removeToken', id: s.tokens.find((t) => t.ref === 'b').id }, { warden: true, combat });
+  combat.enemies.push({ id: 'e1', name: 'Wolf' });
+  battleAction(s, { action: 'syncCombat', only: 'enemies' }, { warden: true, combat });
+  assert.deepEqual(s.tokens.map((t) => t.ref).sort(), ['a', 'e1']);
+  assert.ok(hexDist(s.tokens.find((t) => t.ref === 'e1'), mid) <= 2, 'the monster is near the middle too');
+  // mid-fight, the map doesn't put a removed token back on its own
+  combat.combat = { active: true, party: ['a', 'b'] };
+  autoSync(s, combat);
+  assert.ok(!s.tokens.some((t) => t.ref === 'b'));
+  // "Add posse & enemies" is an explicit ask for everyone
+  battleAction(s, { action: 'syncCombat' }, { warden: true, combat });
+  assert.ok(s.tokens.some((t) => t.ref === 'b'));
+});
