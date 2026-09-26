@@ -1,5 +1,5 @@
 // The Posse Stash page (World ▾): what's in the stash, kept fresh; the button opens the put-in / take-out dialog (stash.js).
-import { $, esc, api, mountNav } from './common.js';
+import { $, esc, api, mountNav, onChange } from './common.js';
 import { mountTableLog } from './tablelog.js';
 
 mountTableLog(); // also wires every [data-stash] button to the stash dialog
@@ -14,4 +14,4 @@ async function refresh() {
   } catch (err) { $('#st-list').innerHTML = `<p class="muted">${esc(err.message)}</p>`; }
 }
 refresh();
-setInterval(refresh, 5000);
+onChange(['combat'], refresh); // the stash lives in the combat document

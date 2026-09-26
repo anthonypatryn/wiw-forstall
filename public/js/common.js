@@ -21,28 +21,72 @@ export async function api(method, body, query = '', endpoint = '/api/scan') {
   return data;
 }
 
+// ---------- live updates ----------
+// One small request per tab (/api/pulse, every 2.5 s; 15 s in a background tab) returns every document's change counter.
+// Each poller only fetches its own view when a document it depends on actually changed — instead of every poller asking
+// the server every 2 s. DEPS lists what each API area's view is built from (lib/routes/*.js load() calls).
+const DEPS = {
+  '/api/scan': ['state', 'battle', 'combat'], '/api/combat': ['combat', 'battle', 'shop', 'whispers'], '/api/battle': ['battle', 'combat'],
+  '/api/handouts': ['handouts', 'combat'], '/api/journal': ['journal', 'map', 'npcs', 'wanted'], '/api/lockpick': ['locks', 'combat', 'shop'],
+  '/api/map': ['map', 'combat'], '/api/npcs': ['npcs'], '/api/papers': ['papers', 'combat', 'map', 'session', 'wanted'],
+  '/api/saloon': ['saloon', 'combat'], '/api/scenes': ['scenes'], '/api/session': ['session', 'combat'], '/api/shop': ['shop', 'combat'],
+  '/api/wanted': ['wanted', 'combat', 'journal', 'map', 'npcs'], '/api/whispers': ['whispers', 'combat'],
+};
+const PULSE_MS = 2500, PULSE_HIDDEN_MS = 15000, PULSE_RETRY_MS = 5000;
+const pulse = { subs: new Set(), timer: null, running: false };
+async function pulseTick() {
+  clearTimeout(pulse.timer);
+  if (!pulse.subs.size) { pulse.running = false; return; }
+  let wait = document.hidden ? PULSE_HIDDEN_MS : PULSE_MS;
+  try {
+    const { v } = await api('GET', null, '', '/api/pulse');
+    for (const sub of [...pulse.subs]) {
+      const sig = sub.deps.map((k) => v[k] ?? 0).join('.');
+      if (sig !== sub.sig) { const first = sub.sig === null; sub.sig = sig; if (!first || sub.fireFirst) sub.run(); }
+    }
+  } catch (e) {
+    pulse.subs.forEach((sub) => sub.onConn?.(false, e));
+    wait = PULSE_RETRY_MS;
+  }
+  pulse.timer = setTimeout(pulseTick, wait);
+}
+function subscribe(sub) {
+  pulse.subs.add(sub);
+  if (!pulse.running) { pulse.running = true; pulse.timer = setTimeout(pulseTick, 50); }
+  return () => pulse.subs.delete(sub);
+}
+// a background tab coming back: check straight away
+document.addEventListener('visibilitychange', () => { if (!document.hidden && pulse.running) pulseTick(); });
+
 // Poll for shared state; onState only fires when something changed.
 export function startPolling(view, onState, onConn, endpoint = '/api/scan') {
-  let v = null, timer = null, stopped = false;
-  async function tick() {
+  let v = null, stopped = false, busy = false, again = false;
+  async function fetchView() {
+    if (stopped) return;
+    if (busy) { again = true; return; }
+    busy = true;
     try {
       const q = `?view=${view}` + (v !== null ? `&since=${v}` : '');
       const data = await api('GET', null, q, endpoint);
       onConn?.(true);
-      if (!data.unchanged) { v = data.v; onState(data); }
+      if (!data.unchanged && !stopped) { v = data.v; onState(data); }
     } catch (e) {
       onConn?.(false, e);
-      if (e.status === 401) { stopped = true; return; }
+      if (e.status === 401) { stopped = true; unsub(); }
     }
-    if (!stopped) timer = setTimeout(tick, document.hidden ? 6000 : 2000);
+    busy = false;
+    if (again) { again = false; fetchView(); }
   }
-  tick();
+  const unsub = subscribe({ deps: DEPS[endpoint] || Object.values(DEPS).flat(), sig: null, fireFirst: false, run: fetchView, onConn });
+  fetchView();
   return {
     push(data) { v = data.v; onState(data); },
-    now() { clearTimeout(timer); tick(); },
-    stop() { stopped = true; clearTimeout(timer); },
+    now() { fetchView(); },
+    stop() { stopped = true; unsub(); },
   };
 }
+// run fn whenever any of these documents change (not straight away); returns a function that stops it
+export function onChange(docs, fn) { return subscribe({ deps: docs, sig: null, fireFirst: false, run: fn }); }
 
 // ---------- bullet dice ----------
 // Shared gradients live in one hidden sprite so each die is a light <svg>.
@@ -294,7 +338,7 @@ function wireNav(el, on) {
     const list = el.querySelector('.needs-list');
     needs.addEventListener('click', (e) => { e.stopPropagation(); closeAll(); list.hidden = !list.hidden; needs.setAttribute('aria-expanded', String(!list.hidden)); });
     pollNeeds(needs, list);
-  } else clearInterval(needsTimer);
+  } else { stopNeeds?.(); stopNeeds = null; }
 }
 
 // ---------- Warden PIN (shared across pages) ----------
@@ -315,10 +359,10 @@ const pinStore = {
 try { localStorage.removeItem('wiw.pin'); } catch {}
 
 // Everything waiting on the Warden (store requests, open rolls, enemy turns…), refreshed every few seconds.
-let needsTimer = null;
+let stopNeeds = null;
 function pollNeeds(btn, list) {
   const tick = async () => {
-    if (!document.body.contains(btn) || document.hidden) return;
+    if (!document.body.contains(btn)) return;
     try {
       const n = await api('GET', null, '?view=needs', '/api/combat');
       btn.innerHTML = `<span class="nn">Needs you</span> <b class="${n.count ? 'hot' : ''}">${n.count}</b>`;
@@ -326,9 +370,9 @@ function pollNeeds(btn, list) {
         <div class="needs-links"><a href="/run"><b>Open Run the Game ›</b></a></div>`;
     } catch { /* offline for a moment */ }
   };
-  clearInterval(needsTimer);
+  stopNeeds?.();
   setTimeout(tick, 400); setTimeout(tick, 1500); // the page sets the PIN a moment after the nav appears
-  needsTimer = setInterval(tick, 6000);
+  stopNeeds = onChange(['combat', 'shop', 'whispers', 'battle'], tick); // whatever the list is built from
 }
 // Warden mode shows in the nav itself (red rule + star, Needs you, Warden ▾) — redraw it when it changes.
 export function markWarden() { if (document.querySelector('[data-nav]')?.innerHTML) mountNav(); }

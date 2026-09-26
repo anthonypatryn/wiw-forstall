@@ -1,5 +1,5 @@
 // Lock picking — the player's scene (old brass padlock + High/Low cards) and the Warden's "Lock Pick" card.
-import { esc, api, toast, startPolling, savedPin, store, rollPopup, ask } from './common.js';
+import { esc, api, toast, startPolling, savedPin, store, rollPopup, ask, onChange } from './common.js';
 import { gl } from './glyphs.js';
 import { play } from './sound.js';
 
@@ -130,7 +130,7 @@ export function mountLockSend(el, getCombat) {
   api('GET', null, '?view=catalog', '/api/shop').then((c) => { catalog = (c.catalog || []).slice().sort((x, y) => x.name.localeCompare(y.name)); if (st.loot === 'item') draw(); }).catch(() => {});
   let recent = [];
   const refresh = () => api('GET', null, '?view=warden', EP).then((d) => { recent = d.list || []; draw(true); }).catch(() => {});
-  setInterval(refresh, 5000); refresh();
+  onChange(['locks'], refresh); refresh();
   function draw(listOnly) {
     const list = el.querySelector('.lp-recent');
     const listHTML = recent.filter((a) => !a.closed).slice(0, 6).map((a) => `<div class="notice${a.status === 'picked' ? '' : a.status === 'failed' ? ' urgent' : ''}"><span><b>${esc(a.name)}</b> · ${esc(a.what)} · ${a.wins}/${a.need} · <i>${{ finesse: 'rolling Finesse', ace: 'calling an Ace', playing: 'picking…', picked: 'OPENED', failed: a.retriesLeft ? `failed (${a.retriesLeft} tr${a.retriesLeft === 1 ? 'y' : 'ies'} left)` : 'failed' }[a.status]}</i>${a.tries > 1 ? ` · try ${a.tries}` : ''}</span><button type="button" class="btn small secondary" data-lp-clear="${esc(a.id)}">Clear</button></div>`).join('') || '<p class="muted small-text">No locks out right now.</p>';

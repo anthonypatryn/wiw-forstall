@@ -1,5 +1,5 @@
 // The saloon card table: the Warden's Saloon card (Run the Game), the players' invite, and the full-screen poker table.
-import { esc, api, toast, startPolling, savedPin, store, rollPopup, ask } from './common.js';
+import { esc, api, toast, startPolling, savedPin, store, rollPopup, ask, onChange } from './common.js';
 import { gl } from './glyphs.js';
 import { play } from './sound.js';
 
@@ -664,7 +664,7 @@ export function mountSaloonDesk(el, getCombat) {
   let ledger = [], data = null;
   api('GET', null, '?view=warden', '/api/npcs').then((d) => { ledger = d.npcs || []; draw(); }).catch(() => {});
   const refresh = () => api('GET', null, '?view=warden', EP).then((d) => { data = d; view = d; draw(); if (scene) render(); }).catch(() => {});
-  setInterval(refresh, 4000); refresh();
+  onChange(['saloon', 'combat'], refresh); refresh(); // redraw when the table or a wallet changes
   function draw() {
     if (el.contains(document.activeElement) && /INPUT|SELECT/.test(document.activeElement.tagName)) return;
     const t = data?.table;

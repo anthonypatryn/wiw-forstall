@@ -1,5 +1,5 @@
 // Run the Game — the Warden's one page: what needs you, the fight, the enemies and the posse at a glance.
-import { $, esc, api, startPolling, toast, mountNav, tryWarden, savedPin, wardenModal, ask, tell, pickFighters } from './common.js';
+import { $, esc, api, startPolling, toast, mountNav, tryWarden, savedPin, wardenModal, ask, tell, pickFighters, onChange } from './common.js';
 import { gl } from './glyphs.js';
 import { mountTableLog } from './tablelog.js';
 import { mountRollCaller } from './rollcall.js';
@@ -16,7 +16,7 @@ import { mountDuelStart } from './duel-start.js';
 mountTableLog();
 mountNav('/run');
 
-let combat = null, poller = null, needsTimer = null;
+let combat = null, poller = null, stopNeedsWatch = null;
 const handout = mountHandout($('#handout'), () => combat);
 const wwhisper = mountWardenWhisper($('#wwhisper'), () => combat);
 const locks = mountLockSend($('#lockpick'), () => combat);
@@ -195,8 +195,8 @@ function open() {
   if (!sceneRun) sceneRun = mountSceneRun($('#scene-run'), () => combat, () => { poller?.now?.(); refreshNeeds(); });
   poller?.stop();
   poller = startPolling('warden', (d) => { combat = d; render(); refreshNeeds(); }, (ok) => { $('#conn').textContent = ok ? '● live' : 'reconnecting…'; }, '/api/combat');
-  clearInterval(needsTimer);
-  needsTimer = setInterval(refreshNeeds, 5000); // store requests live in another document
+  stopNeedsWatch?.();
+  stopNeedsWatch = onChange(['shop', 'whispers', 'locks'], refreshNeeds); // store requests and whispers live in other documents
 }
 $('#unlock').addEventListener('click', async () => { if (await wardenModal('/api/combat')) { mountNav('/run'); open(); } });
 (async () => {

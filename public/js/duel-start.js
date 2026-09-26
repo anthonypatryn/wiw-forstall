@@ -1,6 +1,6 @@
 // Run the Game → "High Noon Duel": the Warden picks two duelists and calls it (p. 58). The Duel itself then plays out in the
 // Duel pop-up on every page (duel-hud.js), where the Warden rolls each step. Moved here from the old Combat Control page.
-import { esc, api, toast } from './common.js';
+import { esc, api, toast, onChange } from './common.js';
 import { gl } from './glyphs.js';
 
 export function mountDuelStart(el, getCombat) {
@@ -30,7 +30,7 @@ export function mountDuelStart(el, getCombat) {
       try { await api('POST', { action: 'duelStart', a, b }, '', '/api/combat'); sig = ''; toast('High noon. The Duel pop-up is up.'); } catch (err) { toast(err.message, true); }
     });
   }
-  setInterval(draw, 3000);
+  onChange(['combat', 'npcs'], () => setTimeout(draw, 300)); // after Run the Game's own poll has the new data (draw skips if nothing it shows changed)
   draw();
   return { draw };
 }
