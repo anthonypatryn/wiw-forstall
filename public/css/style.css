@@ -1044,3 +1044,27 @@ button.rule-link { border: 0; background: none; padding: 0 2px; font: inherit; c
 
 /* a Forstall memory slot holding a frequency the Scanner notebook no longer has */
 select.kz-stale { color: var(--danger, #b3261e); border-bottom-color: currentColor; }
+
+/* ---------- round +/−/× controls: one look, matching .btn (ink border, hard offset shadow, rust hover, press) ----------
+   `body` in front so these win over the older per-page rules (posse.css, fighter.css, saloon.css load after this file).
+   -webkit-text-stroke thickens the thin − + × glyphs without changing the font. */
+body :is(.pmb, .pm-btn, .sev button, .inv-item .qty button, .pm > button, .rm-btn, .rp-x) {
+  display: inline-grid; place-items: center; padding: 0 0 1px; border: 2px solid var(--ink); border-radius: 50%;
+  background: var(--surface); color: var(--ink); font-family: var(--body); font-weight: 700; line-height: 1;
+  -webkit-text-stroke: 1.1px currentColor; box-shadow: 2px 2px 0 rgba(34,31,31,.25); cursor: pointer;
+  transition: transform .08s, box-shadow .08s, background .15s, color .15s;
+}
+body :is(.pmb, .pm-btn, .sev button, .inv-item .qty button, .pm > button, .rp-x):hover:not(:disabled) { background: var(--rust); border-color: var(--rust-dark); color: #fff; }
+body :is(.pmb, .pm-btn, .sev button, .inv-item .qty button, .pm > button, .rm-btn, .rp-x):active:not(:disabled) { transform: translate(2px, 2px); box-shadow: 0 0 0 transparent; }
+body :is(.pmb, .pm-btn, .sev button, .inv-item .qty button, .pm > button, .rm-btn, .rp-x):disabled { opacity: .45; cursor: not-allowed; box-shadow: none; }
+body :is(.pmb, .pm-btn, .pm > button) { min-width: 30px; min-height: 30px; font-size: var(--fs-lg); }
+body :is(.sev button, .inv-item .qty button, .pmb.sm) { min-width: 26px; min-height: 26px; font-size: var(--fs-md); }
+/* remove / close: the danger colour, same weight (.rm-btn repeated to outrank the :is() list above, which carries
+   the specificity of its most specific entry) */
+body .rm-btn.rm-btn.rm-btn { border-color: var(--danger); color: var(--danger); font-size: var(--fs-md); }
+body .rm-btn.rm-btn.rm-btn:hover:not(:disabled) { background: var(--danger); border-color: var(--danger); color: #fff; }
+/* on the dark saloon felt and status chips: same thickness, light ink */
+body .sl-x { border-width: 2px; font-weight: 700; -webkit-text-stroke: 1.1px currentColor; }
+body .sl-x:hover { background: var(--on-dark); color: var(--ink); }
+body .st button { font-weight: 700; -webkit-text-stroke: .8px currentColor; font-size: var(--fs-md); }
+body.warden-mode :is(.pmb, .pm-btn, .sev button, .inv-item .qty button, .pm > button, .rp-x) { box-shadow: 2px 2px 0 rgba(0,0,0,.35); }

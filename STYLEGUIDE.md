@@ -119,3 +119,11 @@ Small helpers: `.btn-row` (a row of buttons), `.fine` (12px note), `.small-text`
 - **Shades of black:** `--shade-1` (.06) … `--shade-5` (.8) for shadows and dimming; `--line` / `--line-soft` for ink-colored rules; `--gold` for the warm highlight on dark scenes.
 - **Breakpoints** (CSS variables can't be used in media queries, so these are the agreed numbers): **380** tiny phones, **480** phones, **600** small tablets / big phones, **900** two columns → one, **1080** wide. A few are tuned to their content and stay as they are: 700 / 1100 (the sheet's page grid), 760 / 1020 (when the nav collapses), 980 / 1000 (page grids).
 - `!important` only for: the global `[hidden]`, the restyled select arrow, `.lp-num input`, the print stylesheet, and overriding inline token styles (Battle Map stand-ins) or the Warden theme (the Forstall jam button).
+
+## Round +/−/× controls
+Steppers (`.pmb`, `.pm-btn`, `.sev button`, inventory `.qty button`, fighter-card `.pm > button`), the roll pop-up close (`.rp-x`) and remove buttons (`.rm-btn`) share one look (end of style.css), matching `.btn`:
+- 2px ink border, `--surface` fill, and the hard offset shadow `2px 2px 0`.
+- Rust on hover; a 2px press on click.
+- Glyphs thickened with `-webkit-text-stroke: 1.1px`.
+
+Sizes: 30px for most steppers, 26px for small ones. Remove buttons (`.rm-btn`) use the danger red and fill red on hover. Don't restyle these per page; the shared block is prefixed with `body` so it wins over older page CSS.
