@@ -234,6 +234,14 @@
   - UI: the battle.js Forstall card gets `scanHTML(f)`, a list of monster kinds with a reason when disabled, or `guessHTML` (known digits, positions under Warden's aid, past guesses as `.dia` lights, six inputs) while a guess is pending. It's wired in `wireScan`. The turn tile reads "Scan 3 · Sweep N".
 - **Closing a table:** when the table turns `closed`, players' open saloon scenes close (`watchSaloon` → `closeTable` + a toast with their net). Bets were already refunded server-side.
 - **Start combat with no enemies:** opens Add enemies first. `openAddEnemies(combat, done, {intro})` now returns a Promise of how many were added; then it re-fetches combat and opens `pickFighters`.
+- **Placed Forstalls are anyone's:**
+  - Any living character whose token is within Arm's Reach (1″) of a Forstall the Warden placed can work it: Scan, Sweep, Burst (if its Crystal Burst Fuse is on), or switch it off. In a fight this happens on their turn, paying the Forstall's Grit.
+  - Server (lib/combat.js): `operatorOf` checks the reach; `claimOperator` sets `state.fsOperator[key] = {round, pc, name}` (p. 84: one operator a round; cleared at combat end, and in the combat views as `fsOperator`).
+  - `forstallAction` separates the **owner** (sheet Forstall: charges, crystals, Forstall Efficiency) from the **operator** `pc` (Grit, rolls, notes). Every op body carries `pc` (battle.js `opFor`).
+  - The Scan route's `operates` accepts placed ones too.
+  - Placed Forstalls have `fuse` (default on), toggled from the Warden's Forstall list ("Fuse on / No fuse", `editForstall {fuse}`). Players can't program a placed one's memory slots; only the Warden can.
+  - UI: `canWork`/`workable(pcId)` decide the turn tile (shown whenever a Forstall is to hand) and the drawer's chips when there's more than one ("Their Backpack Forstall" / "Town Forstall (next to them)"). The card shows "Worked by X this round".
+  - Players' combat view now includes each monster enemy's `profile` (humans stay null), so the Scan list works for them.
 - **Lock Pick:** a How to play link in the scene header (`showHowTo`, an `.ask-back` dialog over the scene). `retry` no longer asks for a second Finesse roll: it deals a fresh deck and restores `rolledPeeks` (the first roll's Hits).
 - **Sheet pictures:** the Forstall box has a `ride-art` image like the Horse and Mech boxes (`data-art="forstall"`). The picture comes from the catalog item's `img`, by `itemId`, or by name when the model or class was typed in ("Mule" finds "Mule Mech").
 - **Saloon powers on anyone:** Skill moves can target posse members as well as NPCs; a character rolls their own sheet (`ctx.poolOf`, Poisoned counted). "Sharpest eye" is `sharpest(seats, ctx)` in lib/saloon-common.js, and it includes players.

@@ -365,7 +365,7 @@ function renderTurnBar() {
     ...(gear.length ? [['item', 'satchel', 'Use Item', 'item’s Grit']] : []),
     ...(sts.length ? [['relieve', 'bandage', 'Relieve', '1 per die']] : []),
     ['improvise', 'lasso', 'Improvise', '1+'],
-    ...(isPc && a.forstall?.model ? [['forstall', 'forstall', 'Forstall', `Scan ${scanCost()} · Sweep ${parseInt(a.forstall.grit, 10) || 4}`]] : []),
+    ...(isPc && workable(a.id).length ? [['forstall', 'forstall', 'Forstall', `Scan ${scanCost()} · Sweep ${workable(a.id)[0].grit}`]] : []),
     ...(isPc ? [['prepare', 'watch', 'Prepare', 'held', a.prepared]] : []),
     ...(isPc ? [['fool', 'heart', 'Fool’s Grit', '+1 for 1 HP', a.foolUsed]] : []),
   ];
@@ -382,8 +382,11 @@ function renderTurnBar() {
         ${isPc && /arabian/i.test(a.horse?.breed || '') && a.horse?.bond === 'Revered' && a.mounted === 'horse' ? `<button type="button" class="btn small secondary" data-tp-horse${(a.horseGrit || 0) >= 2 ? ' disabled' : ''}>${gl('horseshoe')} Arabian +1 Grit (${a.horseGrit || 0}/2)</button>` : ''}`;
       break;
     case 'forstall': {
-      const f = fsOf(`pc:${a.id}`);
-      drawer = f ? forstallCard(f) : '<p class="muted">Put their token on the board first.</p>';
+      const list = workable(a.id);
+      if (!list.some((x) => x.key === tp.fs)) tp.fs = list[0]?.key;
+      const f = fsOf(tp.fs);
+      const pick = list.length > 1 ? `<div class="chip-row fs-pick">${list.map((x) => `<button type="button" class="chip-btn${x.key === tp.fs ? ' on' : ''}" data-fs-pick="${esc(x.key)}">${x.owner ? `Their ${esc(x.name)}` : `${esc(x.name)} (next to them)`}</button>`).join('')}</div>` : '';
+      drawer = f ? pick + forstallCard(f) : '<p class="muted">Put their token on the board first.</p>';
       break;
     }
     case 'dodge':
@@ -806,12 +809,19 @@ function intuitionOf(pc) {
   let n = b + g; if (pc?.statuses?.Poisoned) n = Math.max(0, n - 2);
   const gold = Math.min(g, n); return { black: n - gold, gold };
 }
+// Forstalls a character can work: their own, and any the Warden placed within Arm's Reach (1″) of their token
+function canWork(f, pcId) {
+  if (f.owner) return f.owner === pcId;
+  const t = data?.tokens?.find((x) => x.kind === 'pc' && x.ref === pcId);
+  return !!(t && f.pos && dist(f.pos, t) <= 1);
+}
+const workable = (pcId) => (data?.forstalls || []).filter((f) => canWork(f, pcId));
 // the Forstall's operator this turn: the character whose turn it is, if they may work it
 function scanOperator(f) {
   const cur = combat?.combat?.active ? combat.combat.current : null;
   const pc = cur && combat.posse.find((p) => p.id === cur);
   if (!pc || !(warden || myId() === pc.id)) return null;
-  return (f.owner ? f.owner === pc.id : (f.operable || []).includes(pc.id)) ? pc : null;
+  return canWork(f, pc.id) ? pc : null;
 }
 function scanHTML(f) {
   const pc = scanOperator(f);
@@ -925,12 +935,15 @@ function slotOptions(cur, list) {
     + (list.length ? '' : '<option value="" disabled>Nothing decoded yet — use the Forstall Scanner</option>');
 }
 function forstallCard(f) {
-  const may = warden || (f.owner && myId() === f.owner);
   const fight = combat?.combat?.active;
+  const runner = !f.owner && !warden && fight ? scanOperator(f) : !f.owner && !warden ? combat?.posse?.find((p) => p.id === myId() && canWork(f, p.id)) : null;
+  const may = warden || (f.owner && myId() === f.owner) || !!runner;
+  const opNow = !f.owner && fight ? combat?.fsOperator?.[f.key] : null;
   const clashWith = (data.edison || []).filter((p) => p.includes(f.key)).map((p) => fsOf(p.find((k) => k !== f.key))?.name).filter(Boolean);
-  const cost = f.owner ? `${fight ? `${f.grit} Grit · ` : ''}1 charge` : 'Warden';
+  const cost = f.owner ? `${fight ? `${f.grit} Grit · ` : ''}1 charge` : runner ? `${fight ? `${f.grit} Grit` : 'no Grit out of a fight'}` : 'Warden';
   return `<div class="fs-card${f.sweep ? ' on' : ''}">
     <div class="fs-head"><span class="fs-ic">${gl('forstall')}</span><div><b>${esc(f.name)}</b><small>${esc(f.range)} Range${f.rangeIn < 999 ? ` (${f.rangeIn}″)` : ''} · Sweep ${esc(f.pool)}${data.cave ? ' −1 (cave)' : ''}${f.charges != null ? ` · ${f.charges} charge${f.charges === 1 ? '' : 's'} left` : ''}${f.ownerName ? ` · ${esc(f.ownerName)}` : ''}</small></div></div>
+    ${opNow ? `<p class="fs-state">${gl('hat')} Worked by <b>${esc(opNow.name)}</b> this round.</p>` : !f.owner && !warden ? '<p class="muted fs-note">Anyone within Arm’s Reach (1″) can work this one.</p>' : ''}
     <p class="fs-state">${f.sweep ? `<b>Sweeping · ${f.sweep.hits} Hit${f.sweep.hits === 1 ? '' : 's'}.</b> Monsters in Range lose that much Grit when their turn starts or they come into Range (+1 for programmed frequencies, minus their Sweep Tolerance).` : 'Switched off.'}</p>
     ${f.jammed ? `<p class="fs-warn">${gl('flash')} Scrambled by a Natural EMP — no Scan or Burst until the monster’s next turn.</p>` : ''}
     ${f.pulse ? `<p class="fs-state">${gl('heart')} <b>Heartbeat Sensor:</b> ${f.pulse.count ? `${f.pulse.count} monster${f.pulse.count === 1 ? '' : 's'} within ${f.rangeIn + 6}″ — the nearest is ${f.pulse.nearest}″ away.` : `quiet — nothing within ${f.rangeIn + 6}″.`}</p>` : ''}
@@ -939,7 +952,7 @@ function forstallCard(f) {
     ${may ? `<div class="fs-btns"><button type="button" class="btn small" data-fs-sweep="${esc(f.key)}"${f.owner && !f.charges ? ' disabled' : ''}>${gl('forstall')} ${f.sweep ? 'Readjust' : 'Sweep'} · ${cost}</button>
         ${f.sweep ? `<button type="button" class="btn small secondary" data-fs-off="${esc(f.key)}">Switch off</button>` : ''}</div>
       ${f.efficiency != null ? `<label class="check fs-eff"><input type="checkbox" data-fs-eff="${esc(f.key)}"${f.efficiency < 1 ? ' disabled' : ''}> Forstall Efficiency — turn one Hit into an Ace (${f.efficiency}/2 left today)</label>` : ''}
-      <div class="fs-slots"><span>MEMORY SLOTS</span>${[0, 1, 2, 3].map((i) => `<select data-fs-slot="${esc(f.key)}" data-i="${i}" aria-label="Memory slot ${i + 1}">${slotOptions(f.slots[i] || '', f.owner ? kzPosse : kzAll)}</select>`).join('')}</div>
+      <div class="fs-slots"${!f.owner && !warden ? ' hidden' : ''}><span>MEMORY SLOTS</span>${[0, 1, 2, 3].map((i) => `<select data-fs-slot="${esc(f.key)}" data-i="${i}" aria-label="Memory slot ${i + 1}">${slotOptions(f.slots[i] || '', f.owner ? kzPosse : kzAll)}</select>`).join('')}</div>
       ${f.fuse ? (f.burst?.length ? `<div class="fs-burst"><select data-fs-bt="${esc(f.key)}" aria-label="Burst target">${f.burst.map((b) => `<option value="${esc(b.ref)}">${esc(b.name)}</option>`).join('')}</select>
           <button type="button" class="btn small danger" data-fs-burst="${esc(f.key)}">${gl('flash')} Burst${f.owner ? ' · 1 crystal' : ''}</button></div>`
         : '<p class="muted fs-note">Burst: no programmed monster in Range.</p>')
@@ -957,17 +970,25 @@ async function fsAct(body) {
     return fsAct({ ...body, force: true });
   }
 }
+// who's working a placed Forstall from this screen: the character whose turn it is (or this device's character out of a fight)
+function opFor(key) {
+  const f = fsOf(key);
+  if (!f || f.owner) return undefined;
+  const cur = combat?.combat?.active ? combat.combat.current : myId();
+  return cur && combat?.posse?.some((p) => p.id === cur) && canWork(f, cur) ? cur : undefined;
+}
 function wireFs(box) {
   wireScan(box);
   box.querySelectorAll('[data-fs-sweep]').forEach((b) => b.addEventListener('click', async () => {
     const eff = box.querySelector(`[data-fs-eff="${CSS.escape(b.dataset.fsSweep)}"]`)?.checked;
     play('forstall');
-    const r = await fsAct({ action: 'forstall', op: 'sweep', key: b.dataset.fsSweep, efficiency: !!eff });
+    const r = await fsAct({ action: 'forstall', op: 'sweep', key: b.dataset.fsSweep, efficiency: !!eff, pc: opFor(b.dataset.fsSweep) });
     if (r?.melted) play('zap');
     if (r?.dice) { await rollPopup(r, `${r.label} · ${r.pool}`); toast(`Sweep ${r.hits} — monsters in Range lose ${r.hits} Grit at their turn (+1 if programmed).`); }
     else if (r?.melted) toast('The waves crossed — sparks, Electrocuted, batteries melted.', true);
   }));
-  box.querySelectorAll('[data-fs-off]').forEach((b) => b.addEventListener('click', () => fsAct({ action: 'forstall', op: 'off', key: b.dataset.fsOff })));
+  box.querySelectorAll('[data-fs-off]').forEach((b) => b.addEventListener('click', () => fsAct({ action: 'forstall', op: 'off', key: b.dataset.fsOff, pc: opFor(b.dataset.fsOff) })));
+  box.querySelectorAll('[data-fs-pick]').forEach((b) => b.addEventListener('click', () => { tp.fs = b.dataset.fsPick; renderTurnBar(); }));
   box.querySelectorAll('[data-fs-slot]').forEach((el) => el.addEventListener('change', async () => {
     const f = fsOf(el.dataset.fsSlot), i = Number(el.dataset.i);
     el.blur();
@@ -985,7 +1006,7 @@ function wireFs(box) {
     const f = fsOf(b.dataset.fsBurst), sel = box.querySelector(`[data-fs-bt="${CSS.escape(b.dataset.fsBurst)}"]`);
     const tgt = f?.burst.find((x) => x.ref === sel?.value);
     if (!tgt || !await ask(`Burst ${f.name} on the ${tgt.name}’s frequency?\n\nThe crystal shatters and the monster flees for at least two hours.`, { ok: 'Burst', danger: true })) return;
-    const r = await fsAct({ action: 'forstall', op: 'burst', key: f.key, enemy: tgt.ref });
+    const r = await fsAct({ action: 'forstall', op: 'burst', key: f.key, enemy: tgt.ref, pc: opFor(f.key) });
     if (r?.fled) play('explosion');
     if (r?.fled) toast(`${r.fled} flees!`);
   }));
@@ -999,7 +1020,7 @@ function renderFsWarden() {
       <button type="button" class="btn small danger" data-edison="${esc(a.key)}|${esc(b.key)}">Apply Rule 1</button></div>`).join('')}
     ${[...mine, ...carried].map((f) => `<div class="tok-row fs-row${selFs === f.key ? ' sel' : ''}" data-fs-pick="${esc(f.key)}"><span class="chip fs-chip${f.sweep ? ' on' : ''}">${gl('forstall')}</span>
       <span class="n">${esc(f.name)}<small>${f.owner ? `carried by ${esc(f.ownerName)}` : esc(f.range)}${f.sweep ? ` · Sweep ${f.sweep.hits}` : ''}</small></span>
-      ${f.owner ? '' : `<button type="button" data-fs-hide="${esc(f.key)}">${f.hidden ? 'Reveal' : 'Hide'}</button><button aria-label="Remove this Forstall" type="button" data-fs-rm="${esc(f.key)}">✕</button>`}</div>`).join('')
+      ${f.owner ? '' : `<button type="button" data-fs-fuse="${esc(f.key)}" title="Crystal Burst Fuse: lets it Burst">${f.fuse ? 'Fuse on' : 'No fuse'}</button><button type="button" data-fs-hide="${esc(f.key)}">${f.hidden ? 'Reveal' : 'Hide'}</button><button aria-label="Remove this Forstall" type="button" data-fs-rm="${esc(f.key)}">✕</button>`}</div>`).join('')
     || '<p class="muted">No Forstalls on the board. A character’s own Forstall appears on their token.</p>'}`;
   list.querySelectorAll('[data-edison]').forEach((b) => b.addEventListener('click', async () => {
     if (!await ask('Apply Edison’s Rule 1? Everyone within Short Range of either Forstall is Electrocuted [6], and both batteries melt.', { ok: 'Apply', danger: true })) return;
@@ -1012,6 +1033,7 @@ function renderFsWarden() {
     if (f.owner) select(f.tokenId); else selectFs(f.key);
     const c = center(f.pos.col, f.pos.row); pz.centerOn(c.x, c.y, Math.max(pz.view.s, 0.35));
   }));
+  list.querySelectorAll('[data-fs-fuse]').forEach((b) => b.addEventListener('click', () => act({ action: 'editForstall', id: b.dataset.fsFuse, fuse: !fsOf(b.dataset.fsFuse)?.fuse }, fsOf(b.dataset.fsFuse)?.fuse ? 'Fuse removed: it can’t Burst.' : 'Crystal Burst Fuse fitted: it can Burst.')));
   list.querySelectorAll('[data-fs-hide]').forEach((b) => b.addEventListener('click', () => act({ action: 'editForstall', id: b.dataset.fsHide, hidden: !fsOf(b.dataset.fsHide)?.hidden })));
   list.querySelectorAll('[data-fs-rm]').forEach((b) => b.addEventListener('click', async () => {
     if (!await ask(`Remove ${fsOf(b.dataset.fsRm)?.name || 'this Forstall'} from the board?`)) return;

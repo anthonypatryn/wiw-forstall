@@ -1032,3 +1032,25 @@ test('a Scan in a fight costs 3 Grit, or 5 with the Warden’s aid (positions sh
   assert.equal(scanCost({ settings: { easyMode: false } }), 3);
   assert.equal(scanCost({ settings: { easyMode: true } }), 5);
 });
+
+test('a Forstall the Warden placed: anyone within Arm’s Reach works it on their turn, one operator a round', () => {
+  const state = freshCombat();
+  const a = publicAction(state, { action: 'addPc', trade: 'Hunter', name: 'Tess' }, { warden: true });
+  const b = publicAction(state, { action: 'addPc', trade: 'Doctor', name: 'Bo' }, { warden: true });
+  publicAction(state, { action: 'addEnemy', profile: 'Chupacabra' }, { warden: true });
+  publicAction(state, { action: 'start' }, { warden: true });
+  const tokens = [{ kind: 'pc', ref: a.id, col: 5, row: 5, id: 'a' }, { kind: 'pc', ref: b.id, col: 9, row: 5, id: 'b' }, { kind: 'enemy', ref: state.enemies[0].id, col: 7, row: 5, id: 'e' }];
+  const battle = { tokens, forstalls: [{ id: 'town1', kind: 'town', name: 'Town Forstall', col: 6, row: 5 }] };
+  const ctx = () => ({ list: fields(battle, state), tokens, cave: false });
+  state.combat.current = b.id; b.grit = 6;
+  assert.throws(() => publicAction(state, { action: 'forstall', op: 'sweep', key: 'town1', pc: b.id }, { warden: false, ctx: ctx() }), /Arm’s Reach/);
+  assert.throws(() => publicAction(state, { action: 'forstall', op: 'sweep', key: 'town1' }, { warden: false, ctx: ctx() }), /Arm’s Reach/);
+  state.combat.current = a.id; a.grit = 6;
+  const grit = ctx().list.find((f) => f.key === 'town1').grit;
+  publicAction(state, { action: 'forstall', op: 'sweep', key: 'town1', pc: a.id }, { warden: false, ctx: ctx() });
+  assert.equal(a.grit, 6 - grit, 'the operator pays its Grit');
+  assert.equal(state.fsOperator.town1.pc, a.id);
+  // Bo walks up the same round: Tess is working it
+  tokens[1].col = 7; state.combat.current = b.id; b.grit = 6;
+  assert.throws(() => publicAction(state, { action: 'forstall', op: 'off', key: 'town1', pc: b.id }, { warden: false, ctx: ctx() }), /Tess is working/);
+});
