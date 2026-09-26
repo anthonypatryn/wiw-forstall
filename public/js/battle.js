@@ -306,7 +306,7 @@ function renderPanel() {
   list.innerHTML = data.tokens.length ? data.tokens.map((t) => `<div class="tok-row${t.id === selected ? ' sel' : ''}" data-pick="${t.id}">
       <span class="chip" style="background:${color(t)}">${esc(initials(t.name))}</span>
       <span class="n">${esc(t.name)}<small>${t.kind === 'pc' ? `The ${esc(t.trade || '')}` : t.kind === 'enemy' ? 'Enemy' : 'NPC'}${t.down ? ' · down' : ''}${t.gone ? ' · removed from Combat' : ''}</small></span>
-      ${warden ? `<button type="button" class="btn small secondary" data-hide="${t.id}">${t.hidden ? 'Reveal' : 'Hide'}</button><button aria-label="Remove this token" title="Remove this token" type="button" class="rm-btn" data-rm="${t.id}">×</button>` : ''}</div>`).join('')
+      ${warden ? `<button type="button" class="btn small secondary" data-recenter="${t.id}" title="Move this token back to the middle of the map">Recenter</button><button type="button" class="btn small secondary" data-hide="${t.id}">${t.hidden ? 'Reveal' : 'Hide'}</button><button aria-label="Remove this token" title="Remove this token" type="button" class="rm-btn" data-rm="${t.id}">×</button>` : ''}</div>`).join('')
     : `<p class="muted">${warden ? 'Tokens appear when a fight starts or you add enemies. NPCs: the gear on the map.' : 'The Warden hasn’t set the board yet.'}</p>`;
   $('#board-count').textContent = data.tokens.length ? `${data.tokens.length} token${data.tokens.length === 1 ? '' : 's'}` : '';
   requestAnimationFrame(positionCard);
@@ -319,6 +319,12 @@ function renderPanel() {
   list.querySelectorAll('[data-hide]').forEach((b) => b.addEventListener('click', () => {
     const t = data.tokens.find((x) => x.id === b.dataset.hide);
     act({ action: 'tokenEdit', id: t.id, hidden: !t.hidden });
+  }));
+  list.querySelectorAll('[data-recenter]').forEach((b) => b.addEventListener('click', async () => {
+    const r = await act({ action: 'recenter', id: b.dataset.recenter });
+    if (!r) return;
+    const t = data.tokens.find((x) => x.id === b.dataset.recenter);
+    if (t) { t.col = r.col; t.row = r.row; select(t.id); const c = center(r.col, r.row); pz.centerOn(c.x, c.y, Math.max(pz.view.s, 0.45)); toast(`${t.name} is back in the middle of the map.`); }
   }));
   list.querySelectorAll('[data-rm]').forEach((b) => b.addEventListener('click', () => act({ action: 'removeToken', id: b.dataset.rm })));
 }

@@ -1085,3 +1085,15 @@ test('Battle Map terrain: rough on the path doubles a move; fog hides enemies (n
   battleAction(s, { action: 'layerAll', layer: 'fog', on: false }, { warden: true, combat: null });
   assert.equal(s.fog.length, 0);
 });
+
+test('Battle Map: shrinking the grid pulls stranded tokens back on the map; Recenter brings one to the middle', async () => {
+  const { freshBattle, battleAction } = await import('../lib/battle.js');
+  const s = freshBattle();
+  s.tokens = [{ id: 'a', kind: 'pc', ref: 'p', name: 'Lila', col: 34, row: 22 }, { id: 'b', kind: 'enemy', ref: 'e', name: 'Wolf', col: 2, row: 2 }];
+  battleAction(s, { action: 'grid', ppi: 400 }, { warden: true, combat: null }); // hexes 4× bigger: far fewer columns
+  const R = s.grid.ppi / Math.sqrt(3), cols = Math.ceil((s.map.w - s.grid.dx) / (R * Math.sqrt(3))), rows = Math.ceil((s.map.h - s.grid.dy - R / 2) / (1.5 * R));
+  for (const t of s.tokens) assert.ok(t.col < cols && t.row < rows, `${t.name} is on the map`);
+  assert.throws(() => battleAction(s, { action: 'recenter', id: 'b' }, { warden: false, combat: null }), /Warden/);
+  const r = battleAction(s, { action: 'recenter', id: 'b' }, { warden: true, combat: null });
+  assert.ok(Math.abs(r.col - Math.floor(cols / 2)) <= 2 && Math.abs(r.row - Math.floor(rows / 2)) <= 2, 'near the middle');
+});
