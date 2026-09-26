@@ -878,3 +878,25 @@ test('Start combat with a surprise: the side that springs it takes the first tur
   publicAction(s, { action: 'start', posse: [a.id], enemies: s.enemies.map((e) => e.id), surprise: 'posse' }, { warden: true });
   assert.equal(s.combat.slots[0], a.id);
 });
+
+test('Saves are all-or-nothing: a request that read stale data is refused (and re-run) instead of overwriting', async () => {
+  const { transaction, load, save } = await import('../lib/store.js');
+  const fs = await import('node:fs');
+  const KEY = 'test-cas-' + process.pid;
+  await save({ n: 0 }, KEY);
+  let release;
+  const gate = new Promise((r) => { release = r; });
+  // A reads, then waits; B reads, writes and commits first; A's commit must be refused
+  const a = transaction(async () => { const d = await load(KEY); await gate; d.n += 1; await save(d, KEY); });
+  await transaction(async () => { const d = await load(KEY); d.n += 10; await save(d, KEY); });
+  release();
+  await assert.rejects(a, (e) => e.conflict === true);
+  assert.equal((await load(KEY)).n, 10, 'B’s change survived');
+  // the retry pattern the API router uses: re-run on fresh data
+  for (let i = 0; i < 3; i++) { try { await transaction(async () => { const d = await load(KEY); d.n += 1; await save(d, KEY); }); break; } catch (e) { if (!e.conflict) throw e; } }
+  assert.equal((await load(KEY)).n, 11);
+  // two saves in one request land together; a write-only key needs no read
+  await transaction(async () => { const d = await load(KEY); d.n += 1; await save(d, KEY); await save({ x: 1 }, KEY + '-b'); });
+  assert.equal((await load(KEY)).n, 12); assert.equal((await load(KEY + '-b')).x, 1);
+  for (const k of [KEY, KEY + '-b']) fs.rmSync(new URL(`../.data/${k}.json`, import.meta.url), { force: true });
+});
