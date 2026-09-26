@@ -16,15 +16,15 @@
 .sess-notes textarea { min-height: 340px; resize: vertical; line-height: 1.45; }
 .sess-notes textarea.short { min-height: 110px; }
 .sess-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.sess-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px dashed rgba(0,0,0,.2); font-size: var(--fs-xs); }
-@media (max-width: 560px) { .sess-head { grid-template-columns: 1fr; } .sess-notes textarea { min-height: 240px; } }
+.sess-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--shade-2); font-size: var(--fs-xs); }
+@media (max-width: 600px) { .sess-head { grid-template-columns: 1fr; } .sess-notes textarea { min-height: 240px; } }
 
 .glance-log { max-height: 420px; }
 
 .hb-h { margin: 12px 0 4px; font: var(--fs-sm) var(--display); letter-spacing: .12em; font-weight: 400; color: var(--rust); }
 .hb-h small { font: italic var(--fs-xs) var(--body); letter-spacing: 0; color: var(--ink-soft); margin-left: 6px; }
 .hb-list { list-style: none; margin: 0; padding: 0; max-height: 320px; overflow-y: auto; }
-.hb-list li { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 5px 0; border-top: 1px dotted rgba(34,31,31,.3); }
+.hb-list li { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 5px 0; border-top: 1px dotted var(--line); }
 .hb-list li span { min-width: 0; }
 .hb-list small { display: block; font-size: var(--fs-xs); color: var(--ink-soft); }
 
@@ -32,7 +32,7 @@
 .ck-body { flex: 1 1 240px; min-width: 0; font-size: var(--fs-sm); }
 .ck-body .gl { width: 1.1em; height: 1.1em; vertical-align: -3px; color: var(--rust); }
 .ck-who { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
-.pill.wait { background: rgba(0,0,0,.05); font-style: italic; }
+.pill.wait { background: var(--shade-1); font-style: italic; }
 .pill.ok { background: var(--success); color: #fff; }
 .pill.no { background: var(--danger); color: #fff; }
 .ck-win { margin-top: 5px; font-weight: 700; color: var(--success); }

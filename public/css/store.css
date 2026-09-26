@@ -18,7 +18,7 @@
 .items { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
 .item {
   position: relative; background: var(--surface); border: 1.5px solid var(--ink); border-radius: var(--radius); padding: 12px 12px 10px;
-  box-shadow: 2px 2px 0 rgba(34,31,31,.15); display: flex; flex-direction: column; gap: 6px;
+  box-shadow: 2px 2px 0 var(--line-soft); display: flex; flex-direction: column; gap: 6px;
 }
 .item.custom { border-style: dashed; }
 .item .pic { height: 120px; display: grid; place-items: center; margin: -4px 0 2px; }
@@ -43,7 +43,7 @@
 .shopper select { width: 100%; padding: 8px 10px; border: 1.5px solid var(--ink); border-radius: var(--radius); background: var(--surface); font: var(--fs-md) var(--body); }
 .wallet { display: flex; align-items: baseline; justify-content: space-between; margin-top: 10px; font: var(--fs-md) var(--display); letter-spacing: .12em; color: var(--ink-soft); }
 .wallet b { font: var(--fs-2xl)/1 var(--display); color: var(--green); font-weight: 400; letter-spacing: .04em; }
-.req { border-bottom: 1px dotted rgba(34,31,31,.3); padding: 8px 0; font-size: var(--fs-sm); display: flex; flex-direction: column; gap: 4px; }
+.req { border-bottom: 1px dotted var(--line); padding: 8px 0; font-size: var(--fs-sm); display: flex; flex-direction: column; gap: 4px; }
 .req .top { display: flex; justify-content: space-between; gap: 8px; }
 .req .kind { font: var(--fs-xs) var(--display); letter-spacing: .12em; }
 .req .kind.buy { color: var(--teal); } .req .kind.sell { color: var(--rust); }
@@ -52,7 +52,7 @@
 .req .ctrl { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
 .req .ctrl input { width: 84px; padding: 5px; border: 1px solid var(--ink-faint); border-radius: var(--r-sm); font: var(--fs-sm) var(--type); }
 .req .ctrl .btn { font-size: var(--fs-sm); padding: 6px 9px 4px; box-shadow: none; }
-.inv-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px dotted rgba(34,31,31,.3); font-size: var(--fs-sm); }
+.inv-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px dotted var(--line); font-size: var(--fs-sm); }
 .inv-row small { color: var(--ink-faint); display: block; font-size: var(--fs-xs); }
 .inv-row .btn { font-size: var(--fs-xs); padding: 5px 8px 3px; box-shadow: none; }
 
@@ -64,9 +64,8 @@
 .create .dp input { width: 44px; }
 
 /* make an item: dice boxes sit inline (the form's column labels were stacking them) */
-.create [hidden] { display: none !important; }
 .create .dp label { flex-direction: row; align-items: center; gap: 4px; }
-.create .dice-set { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 14px; padding: 8px 0 4px; border-top: 1px dotted rgba(34,31,31,.3); border-bottom: 1px dotted rgba(34,31,31,.3); }
+.create .dice-set { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 14px; padding: 8px 0 4px; border-top: 1px dotted var(--line); border-bottom: 1px dotted var(--line); }
 .create .ds-title { grid-column: 1 / -1; font: var(--fs-xs) var(--display); letter-spacing: .12em; color: var(--ink-soft); }
 .create .ds-title small { font: italic var(--fs-xs) var(--body); letter-spacing: 0; }
 .create .ds-row { display: flex; flex-direction: column; gap: 3px; font: var(--fs-xs) var(--display); letter-spacing: .1em; color: var(--rust); }

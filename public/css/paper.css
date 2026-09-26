@@ -1,5 +1,5 @@
 /* The newspaper front page — newsprint art, so it keeps its own inks (see STYLEGUIDE: art is the exception) */
-.paper-back { z-index: 400; align-items: start; overflow-y: auto; background: rgba(15,11,9,.82); }
+.paper-back { z-index: var(--z-paper); align-items: start; overflow-y: auto; background: rgba(15,11,9,.82); }
 .paper-wrap { width: min(920px, 100%); margin: 12px auto 40px; display: grid; gap: 12px; }
 .paper-kicker { justify-self: center; font: 400 var(--fs-xl) var(--display); letter-spacing: .2em; color: #f3e6c6; background: #7a2c14; padding: 6px 18px 3px; border-radius: var(--r-sm); animation: extra 0.6s ease-out; transform: rotate(-1.5deg); }
 @keyframes extra { from { transform: scale(.4) rotate(-12deg); opacity: 0; } to { transform: scale(1) rotate(-1.5deg); opacity: 1; } }
@@ -10,7 +10,7 @@
   --np-ink: #1d1a17; --np-soft: #4a4238; --np-rule: #1d1a17;
   color: var(--np-ink); padding: 26px 30px 30px;
   background: #ede3cc url('../img/paper.jpg') center / 700px; background-blend-mode: multiply;
-  box-shadow: 0 10px 30px rgba(0,0,0,.55), inset 0 0 70px rgba(120,90,40,.35);
+  box-shadow: 0 10px 30px var(--shade-4), inset 0 0 70px rgba(120,90,40,.35);
   font: 16px/1.45 'Old Standard TT', Georgia, serif;
 }
 .np-mast { text-align: center; border-bottom: 3px double var(--np-rule); padding-bottom: 6px; }

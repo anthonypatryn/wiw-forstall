@@ -28,7 +28,7 @@
 .lbl { font: var(--fs-sm) var(--display); letter-spacing: .14em; color: var(--ink-soft); min-width: 44px; }
 .pips { display: flex; gap: 4px; }
 .pip { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--ink); background: transparent; padding: 0; }
-.pip.on { background: var(--rust); border-color: var(--rust-dark); box-shadow: inset 0 -2px 0 rgba(0,0,0,.25); }
+.pip.on { background: var(--rust); border-color: var(--rust-dark); box-shadow: inset 0 -2px 0 var(--shade-3); }
 .pip.ace { border-radius: var(--r-sm); transform: rotate(45deg) scale(.82); }
 .pip.ace.on { background: var(--brass); border-color: #8a6a2a; }
 
@@ -58,7 +58,7 @@
 .e-stats button { border: 1px solid var(--ink-faint); background: #fff; border-radius: var(--r-sm); padding: 4px 2px; cursor: pointer; font: inherit; color: inherit; }
 .e-stats button:hover { border-color: var(--rust); color: var(--rust); }
 .attacks { display: flex; flex-direction: column; gap: 4px; }
-.atk { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; align-items: center; padding: 5px 0; border-top: 1px dotted rgba(34,31,31,.3); font-size: var(--fs-sm); }
+.atk { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; align-items: center; padding: 5px 0; border-top: 1px dotted var(--line); font-size: var(--fs-sm); }
 .atk .an { font-weight: 700; }
 .atk .an small { font: var(--fs-xs) var(--display); letter-spacing: .1em; color: var(--ink-faint); margin-left: 4px; }
 .atk .ae { grid-column: 1; color: var(--ink-soft); }
@@ -68,7 +68,7 @@
 .atk .rolls button:hover { background: var(--rust); border-color: var(--rust); color: #fff; }
 details.more summary { cursor: pointer; font: var(--fs-sm) var(--display); letter-spacing: .12em; color: var(--rust); }
 details.more p { font-size: var(--fs-sm); margin: 6px 0; }
-.frenzy-row { font-size: var(--fs-sm); padding: 6px 8px; border-left: 3px solid var(--ink-faint); background: rgba(0,0,0,.04); margin-top: 4px; }
+.frenzy-row { font-size: var(--fs-sm); padding: 6px 8px; border-left: 3px solid var(--ink-faint); background: var(--shade-1); margin-top: 4px; }
 .frenzy-row.hit { border-left-color: var(--red); background: rgba(200,55,45,.1); }
 .frenzy-row b { font: var(--fs-sm) var(--display); letter-spacing: .08em; }
 

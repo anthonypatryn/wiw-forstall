@@ -6,9 +6,9 @@
 /* the board: rough planks the posters are nailed to */
 .wt-board {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 26px 20px; padding: 26px 20px 30px; margin-top: var(--sp-2);
-  border-radius: var(--radius); box-shadow: inset 0 0 40px rgba(0,0,0,.55); overflow: hidden;
+  border-radius: var(--radius); box-shadow: inset 0 0 40px var(--shade-4); overflow: hidden;
   background:
-    repeating-linear-gradient(0deg, rgba(0,0,0,.28) 0 2px, transparent 2px 64px),
+    repeating-linear-gradient(0deg, var(--shade-3) 0 2px, transparent 2px 64px),
     repeating-linear-gradient(90deg, rgba(255,255,255,.03) 0 1px, transparent 1px 7px),
     linear-gradient(180deg, #6b4a2f, #4d331f);
 }
@@ -22,14 +22,14 @@
   position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px;
   padding: 26px 16px 18px; color: #2a1d12; text-align: center;
   background: #e9d7b0 url('../img/paper.jpg') center / 600px; background-blend-mode: multiply;
-  box-shadow: 3px 6px 12px rgba(0,0,0,.55), inset 0 0 38px rgba(110,70,25,.45);
+  box-shadow: 3px 6px 12px var(--shade-4), inset 0 0 38px rgba(110,70,25,.45);
   clip-path: polygon(0 2%, 6% 0, 18% 1.5%, 33% 0, 50% 1%, 64% 0, 80% 1.8%, 94% 0, 100% 2.5%, 99% 20%, 100% 42%, 98.8% 63%, 100% 84%, 99% 100%, 82% 98.6%, 64% 100%, 47% 98.4%, 30% 100%, 14% 98.8%, 0 100%, 1.2% 78%, 0 55%, 1% 32%);
   font-family: var(--body);
 }
-.poster .nail { position: absolute; top: 9px; left: 50%; width: 12px; height: 12px; margin-left: -6px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #d9d2c6, #6d655c 55%, #2c2824); box-shadow: 0 2px 2px rgba(0,0,0,.5); }
+.poster .nail { position: absolute; top: 9px; left: 50%; width: 12px; height: 12px; margin-left: -6px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #d9d2c6, #6d655c 55%, #2c2824); box-shadow: 0 2px 2px var(--shade-4); }
 .ps-wanted { font: 400 44px/0.95 var(--western); letter-spacing: .04em; color: #2a1d12; text-shadow: 0 1px 0 rgba(255,255,255,.25); }
 .ps-terms { font: var(--fs-sm) var(--display); letter-spacing: var(--track-wide); color: #7a2c14; border-top: 1.5px solid #2a1d12; border-bottom: 1.5px solid #2a1d12; padding: 2px 8px 0; }
-.ps-photo { width: 78%; aspect-ratio: 1; margin: 6px 0 2px; border: 3px solid #2a1d12; background: #c9b58e; overflow: hidden; display: grid; place-items: center; box-shadow: inset 0 0 18px rgba(0,0,0,.4); }
+.ps-photo { width: 78%; aspect-ratio: 1; margin: 6px 0 2px; border: 3px solid #2a1d12; background: #c9b58e; overflow: hidden; display: grid; place-items: center; box-shadow: inset 0 0 18px var(--shade-4); }
 .ps-photo img { width: 100%; height: 100%; object-fit: cover; filter: sepia(.85) contrast(1.15) brightness(.95) grayscale(.2); mix-blend-mode: multiply; }
 .ps-nophoto { display: grid; justify-items: center; gap: 4px; color: #6d5436; }
 .ps-nophoto .gl { width: 44px; height: 44px; }
@@ -48,7 +48,7 @@
 .poster.is-hidden { opacity: .6; }
 
 /* one poster, large */
-.wt-back { z-index: 80; align-items: start; overflow-y: auto; }
+.wt-back { z-index: var(--z-float); align-items: start; overflow-y: auto; }
 .wt-view { width: min(460px, 100%); display: grid; gap: 14px; margin: 16px auto; }
 .poster.big { padding: 34px 26px 26px; }
 .poster.big .ps-wanted { font-size: 72px; }

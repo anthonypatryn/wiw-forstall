@@ -8,7 +8,7 @@
 .run-turn b { font: var(--fs-2xl)/1 var(--display); letter-spacing: .04em; font-weight: 400; }
 .run-turn span { font-size: var(--fs-sm); }
 .run-order { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin: 10px 0; font-size: var(--fs-sm); }
-.run-order span { padding: 2px 8px; border-radius: var(--radius); background: rgba(0,0,0,.06); }
+.run-order span { padding: 2px 8px; border-radius: var(--radius); background: var(--shade-1); }
 .run-order span.foe { color: var(--rust-dark); }
 .run-order span.now { background: var(--ink); color: #fff; }
 .run-order i { opacity: .4; font-style: normal; }
@@ -18,10 +18,10 @@
 .run-gone { margin: 8px 0 0; font-size: var(--fs-sm); }
 
 
-.run-join { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 12px; padding-top: 10px; border-top: 1px dashed rgba(0,0,0,.2); }
+.run-join { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--shade-2); }
 .run-join select { min-width: 0; flex: 1 1 160px; }
-.run-out { font: var(--fs-xs) var(--body); padding: 1px 7px; border-radius: var(--r-pill); border: 1px solid rgba(0,0,0,.3); background: transparent; cursor: pointer; opacity: .7; }
-.run-out:hover { opacity: 1; background: rgba(0,0,0,.06); }
+.run-out { font: var(--fs-xs) var(--body); padding: 1px 7px; border-radius: var(--r-pill); border: 1px solid var(--shade-3); background: transparent; cursor: pointer; opacity: .7; }
+.run-out:hover { opacity: 1; background: var(--shade-1); }
 .run-out.in { border-color: var(--rust); color: var(--rust); opacity: 1; }
 
 /* grouped bands + a sticky contents bar, like the Posse sheet */
@@ -30,7 +30,7 @@
 .aw-nums { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 10px; }
 .aw-nums label { display: flex; flex-direction: column; gap: 4px; font: var(--fs-xs) var(--display); letter-spacing: .1em; color: var(--ink-soft); min-width: 0; }
 .aw-nums label .gl { width: 1em; height: 1em; vertical-align: -2px; color: var(--rust); }
-.aw-nums input { width: 100%; min-width: 0; padding: 8px 10px; border: 1px solid rgba(0,0,0,.3); border-radius: var(--r-sm); background: var(--surface); font: var(--fs-lg) var(--display); letter-spacing: .04em; color: var(--ink); box-sizing: border-box; }
+.aw-nums input { width: 100%; min-width: 0; padding: 8px 10px; border: 1px solid var(--shade-3); border-radius: var(--r-sm); background: var(--surface); font: var(--fs-lg) var(--display); letter-spacing: .04em; color: var(--ink); box-sizing: border-box; }
 #award .btn, #jackpot .btn { margin-top: 4px; }
 
 /* card headers: title left, button right (the shared header row wasn't loaded on this page) */
@@ -48,7 +48,7 @@
 
 /* ---------- End Session walkthrough ---------- */
 .toc-end { margin-left: auto; flex: none; }
-.endsess-back { z-index: 250; align-items: start; overflow-y: auto; }
+.endsess-back { z-index: var(--z-end-session); align-items: start; overflow-y: auto; }
 .modal.endsess { width: min(640px, 100%); margin: var(--sp-4) 0; padding: var(--sp-5); }
 .modal.endsess input:not([type=checkbox]):not([type=radio]), .modal.endsess textarea { flex: none; width: 100%; padding: 9px 11px; border: 1px solid var(--line); border-radius: var(--r-sm); background: var(--surface); font: var(--fs-md) var(--body); letter-spacing: 0; }
 .es-top { display: flex; justify-content: space-between; align-items: baseline; gap: var(--sp-3); }
@@ -90,7 +90,7 @@
 .es-recap { margin: 0; padding-left: 1.2em; font: var(--fs-md)/1.6 var(--body); }
 .es-nav { display: flex; justify-content: space-between; align-items: center; gap: var(--sp-2); margin-top: var(--sp-5); padding-top: var(--sp-3); border-top: 1.5px solid var(--line); }
 .es-nav .btn-row { margin: 0; }
-@media (max-width: 560px) {
+@media (max-width: 600px) {
   .modal.endsess { padding: var(--sp-4) var(--sp-3); }
   .es-steps button { padding: 4px 8px 4px 4px; }
 }

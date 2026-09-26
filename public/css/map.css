@@ -17,7 +17,7 @@
 }
 .place .dot {
   display: block; width: 26px; height: 26px; border-radius: 50%; background: radial-gradient(circle, var(--surface-2) 0 28%, var(--rust) 30% 60%, #3a1509 62%);
-  box-shadow: 0 0 0 2px rgba(244,234,214,.9), 0 2px 6px rgba(0,0,0,.5); transition: transform .15s;
+  box-shadow: 0 0 0 2px rgba(244,234,214,.9), 0 2px 6px var(--shade-4); transition: transform .15s;
 }
 .place.rail .dot { width: 20px; height: 20px; background: radial-gradient(circle, var(--surface-2) 0 28%, var(--ink) 30% 60%, #000 62%); }
 .place.settlement .dot, .place.pin .dot { width: 16px; height: 16px; background: radial-gradient(circle, var(--surface-2) 0 30%, var(--teal) 32%); }
@@ -47,9 +47,9 @@
 }
 .token .disc {
   width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; color: #fff; font: var(--fs-lg)/1 var(--display); letter-spacing: .04em;
-  border: 3px solid var(--surface-2); box-shadow: 0 3px 8px rgba(0,0,0,.55); padding-top: 3px;
+  border: 3px solid var(--surface-2); box-shadow: 0 3px 8px var(--shade-4); padding-top: 3px;
 }
-.token .stem { width: 3px; height: 10px; background: var(--surface-2); box-shadow: 0 2px 3px rgba(0,0,0,.4); }
+.token .stem { width: 3px; height: 10px; background: var(--surface-2); box-shadow: 0 2px 3px var(--shade-4); }
 .token .nm { font: var(--fs-sm)/1 var(--display); letter-spacing: .06em; color: #fff; background: rgba(34,31,31,.85); padding: 3px 5px 1px; border-radius: var(--r-sm); margin-bottom: 3px; white-space: nowrap; }
 .token.dragging { cursor: grabbing; z-index: 5; }
 .token.dragging .disc { transform: scale(1.15); }
@@ -58,19 +58,19 @@
 .map-ctrls { position: absolute; right: 12px; top: 12px; display: flex; flex-direction: column; gap: 6px; z-index: 3; }
 .map-ctrls button {
   width: 40px; height: 40px; border-radius: var(--r-sm); border: 2px solid var(--ink); background: rgba(244,234,214,.95); font: var(--fs-xl)/1 var(--display);
-  box-shadow: 2px 2px 0 rgba(0,0,0,.3);
+  box-shadow: 2px 2px 0 var(--shade-3);
 }
 .map-ctrls button:hover { background: var(--ink); color: var(--paper); }
 .map-banner {
   position: absolute; left: 50%; top: 12px; transform: translateX(-50%); z-index: 3; background: var(--ink); color: var(--paper);
-  padding: 8px 14px 6px; border-radius: var(--radius); font: var(--fs-md) var(--display); letter-spacing: .08em; box-shadow: 3px 3px 0 rgba(0,0,0,.3);
+  padding: 8px 14px 6px; border-radius: var(--radius); font: var(--fs-md) var(--display); letter-spacing: .08em; box-shadow: 3px 3px 0 var(--shade-3);
 }
 .map-banner button { margin-left: 10px; background: none; border: 1px solid var(--paper); color: var(--paper); font: inherit; padding: 2px 8px; border-radius: var(--r-sm); }
 
 /* side panel */
 .panel { overflow-y: auto; background: var(--paper) url('../img/paper.jpg') center / 900px; background-blend-mode: multiply; padding: 18px; display: flex; flex-direction: column; gap: 18px; }
 .panel h2 { margin: 0; font: 400 var(--fs-2xl)/1.05 var(--western); }
-.panel h3 { margin: 0 0 8px; font: var(--fs-lg) var(--display); letter-spacing: .16em; color: var(--rust); border-bottom: 1px solid rgba(34,31,31,.3); padding-bottom: 4px; }
+.panel h3 { margin: 0 0 8px; font: var(--fs-lg) var(--display); letter-spacing: .16em; color: var(--rust); border-bottom: 1px solid var(--line); padding-bottom: 4px; }
 .kind { font: var(--fs-sm) var(--display); letter-spacing: .16em; color: var(--ink-faint); }
 .book-text p { margin: 0 0 10px; font-size: var(--fs-md); line-height: 1.5; }
 .book-text .src { font: italic var(--fs-xs) var(--body); color: var(--ink-faint); }
@@ -81,7 +81,7 @@
 .note-actions { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
 .here { display: flex; flex-wrap: wrap; gap: 6px; }
 .here span { font: var(--fs-sm) var(--display); letter-spacing: .06em; padding: 4px 8px 2px; border-radius: var(--radius); color: #fff; }
-.posse-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px dotted rgba(34,31,31,.3); }
+.posse-row { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px dotted var(--line); }
 .posse-row .chip { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; color: #fff; font: var(--fs-xs)/1 var(--display); padding-top: 2px; flex: none; }
 .posse-row .n { flex: 1; font-size: var(--fs-md); }
 .posse-row .n small { display: block; color: var(--ink-faint); font-size: var(--fs-xs); }

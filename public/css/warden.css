@@ -26,7 +26,7 @@
 .w-legend { font: var(--fs-xs) var(--type); color: var(--screen-mute); margin-top: 8px; }
 .w-legend b { font-weight: 400; }
 .w-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
-.w-actions .btn { color: var(--surface-2); border-color: rgba(244,234,214,.5); background: rgba(0,0,0,.35); }
+.w-actions .btn { color: var(--surface-2); border-color: rgba(244,234,214,.5); background: var(--shade-3); }
 .w-actions .btn:hover { background: var(--rust); }
 
 .feed { display: flex; flex-direction: column; gap: 10px; max-height: 620px; overflow-y: auto; }
@@ -71,7 +71,7 @@
 
 /* target traits + jam */
 .w-traits { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; max-width: 640px; }
-.w-trait { font: var(--fs-sm)/1.4 var(--body); color: var(--screen-text); background: rgba(0,0,0,.4); border-left: 3px solid var(--brass); padding: 6px 10px; }
+.w-trait { font: var(--fs-sm)/1.4 var(--body); color: var(--screen-text); background: var(--shade-4); border-left: 3px solid var(--brass); padding: 6px 10px; }
 .w-trait b { font: var(--fs-md) var(--display); letter-spacing: .08em; color: var(--surface-2); }
 .w-trait.jam { border-left-color: var(--rust); }
 .w-trait.auto { border-left-color: #5fb3b9; }

@@ -1,6 +1,6 @@
 /* Call for a roll: tap who → how hard → Skill */
 .rc-skills { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 4px; }
-@media (max-width: 560px) { .rc-skills { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 600px) { .rc-skills { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .rc-skill { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 6px 8px; border: 2px solid var(--rust); border-radius: var(--radius); background: rgba(164,64,31,.08); color: var(--ink); cursor: pointer; }
 .rc-skill:hover { background: var(--rust); color: #fff; }
 .rc-skill:disabled { opacity: .5; }

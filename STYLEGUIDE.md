@@ -113,3 +113,9 @@ Small helpers: `.btn-row` (a row of buttons), `.fine` (12px note), `.small-text`
 - New components: use tokens and they follow. Anything with a hard-coded light background or dark text on the page background needs a `body.warden-mode` rule — check it in Warden mode.
 - Dropdown lists (`.sel-pop`, z 700) and tooltips (`.tip-pop`, z 710) sit above every dialog, the tour and toasts, so a select inside a dialog opens on top.
 - The site nav (z 25) sits above the sticky sheet bar and contents bars (20 / 18) so its drop-down menus cover them.
+
+## Layers, shades and breakpoints
+- **Layers:** never write a raw `z-index` number; use the `--z-*` tokens in `:root` (style.css), listed low to high: sticky bars (`--z-contents-bar` 18 … `--z-turn-bar` 30), floating buttons and HUD (40–95), full-screen game scenes (`--z-scene` 210 … `--z-end-session` 250), the roll pop-up (300), the newspaper (400), dialogs (`--z-dialog` 450, Rules & key 460), lightbox 500, tour 510, toast 600, dropdown lists 700, tooltips 710. Small local values (1–5) inside a component are fine as numbers.
+- **Shades of black:** `--shade-1` (.06) … `--shade-5` (.8) for shadows and dimming; `--line` / `--line-soft` for ink-colored rules; `--gold` for the warm highlight on dark scenes.
+- **Breakpoints** (CSS variables can't be used in media queries, so these are the agreed numbers): **380** tiny phones, **480** phones, **600** small tablets / big phones, **900** two columns → one, **1080** wide. A few are tuned to their content and stay as they are: 700 / 1100 (the sheet's page grid), 760 / 1020 (when the nav collapses), 980 / 1000 (page grids).
+- `!important` only for: the global `[hidden]`, the restyled select arrow, `.lp-num input`, the print stylesheet, and overriding inline token styles (Battle Map stand-ins) or the Warden theme (the Forstall jam button).
