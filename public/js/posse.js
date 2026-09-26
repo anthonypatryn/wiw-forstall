@@ -196,7 +196,7 @@ function buildSheet(p) {
   const gearGroups = groupBy(gearItems);
 
   const weapon = (i) => `<div class="weapon" data-w="${i}">
-      <div class="w-top">${pick('weapon', i, weaponGroups, '— pick a weapon from the store list —')}<span data-wspur="${i}"></span><button type="button" class="rm-btn" data-rm-thing="weapon" data-i="${i}" title="Remove this weapon" aria-label="Remove this weapon">✕</button></div>
+      <div class="w-top">${pick('weapon', i, weaponGroups, '— pick a weapon from the store list —')}<span data-wspur="${i}"></span><button type="button" class="rm-btn" data-rm-thing="weapon" data-i="${i}" title="Remove this weapon" aria-label="Remove this weapon">×</button></div>
       <div class="w-grid">
         ${inp(`weapons.${i}.manufacturer`, 'Manufacturer')}${inp(`weapons.${i}.model`, 'Model')}
         ${inp(`weapons.${i}.slots`, 'Upgrade slots', { max: 4, cls: 'narrow' })}${inp(`weapons.${i}.grit`, 'Grit', { max: 8, cls: 'narrow' })}
@@ -219,7 +219,7 @@ function buildSheet(p) {
       <p><b>${esc(a.name)}.</b> ${esc(a.text)}</p></div>`).join('');
 
   const gear = (i) => `<div class="gear" data-g="${i}">
-      <div class="w-top">${pick('gear', i, gearGroups, '— pick gear —')}<span data-gspur="${i}"></span><button type="button" class="rm-btn" data-rm-thing="gear" data-i="${i}" title="Remove this gear" aria-label="Remove this gear">✕</button></div>
+      <div class="w-top">${pick('gear', i, gearGroups, '— pick gear —')}<span data-gspur="${i}"></span><button type="button" class="rm-btn" data-rm-thing="gear" data-i="${i}" title="Remove this gear" aria-label="Remove this gear">×</button></div>
       <div class="w-grid">${inp(`gear.${i}.item`, 'Item')}${inp(`gear.${i}.type`, 'Type', { cls: 'narrow2' })}${inp(`gear.${i}.grit`, 'Grit', { max: 4, cls: 'narrow' })}</div>
       <div class="g-row">${inp(`gear.${i}.notes`, 'Dice / effect')}<button type="button" class="roll-mini" data-gear-roll="${i}" aria-label="Roll this gear">${gl('die')}</button></div>
       <div class="row2" data-dyn="gear-${i}"></div></div>`;
@@ -285,7 +285,7 @@ function buildSheet(p) {
           <div class="w-grid">${inp('wallet', 'Wallet $', { max: 20 })}${inp('scrap', 'Scrap (pcs)', { max: 20 })}${inp('supplies', 'Supplies', { max: 20 })}</div>
           <div data-dyn="items"></div>${inp('inventory', 'Other items', { type: 'textarea' })}`, 'inventory')}
       ${box('FORSTALL', 'emits energy waves that disturb &amp; repel monstrous creatures', `
-          <div class="w-top">${pick('forstall', 0, [['Forstall models', forstalls]], '— pick a model —')}${spurBox('Forstalls')}<button type="button" class="rm-btn" data-rm-thing="forstall" data-i="0" title="Remove the Forstall" aria-label="Remove the Forstall">✕</button></div>
+          <div class="w-top">${pick('forstall', 0, [['Forstall models', forstalls]], '— pick a model —')}${spurBox('Forstalls')}<button type="button" class="rm-btn" data-rm-thing="forstall" data-i="0" title="Remove the Forstall" aria-label="Remove the Forstall">×</button></div>
           <img class="ride-art" data-art="forstall" alt="" hidden>
           <div class="w-grid">${inp('forstall.model', 'Model')}${inp('forstall.slots', 'Total upgrade slots', { max: 4, cls: 'narrow2' })}${inp('forstall.range', 'Range', { cls: 'narrow2' })}</div>
           <div class="w-grid">${inp('forstall.grit', 'Grit', { max: 4, cls: 'narrow' })}${inp('forstall.duration', 'Duration (hrs)', { max: 6, cls: 'narrow2' })}
@@ -296,14 +296,14 @@ function buildSheet(p) {
           <p class="muted kz-help">Memory slots: program a frequency the posse has decoded on the Forstall Scanner. Monsters in these slots take +1 from your Sweeps and can be Burst.</p>
           <div class="w-grid">${[0, 1, 2, 3].map((u) => `<label class="f"><span>Memory slot ${u + 1}</span><select data-path="forstall.kz.${u}" data-kz></select></label>`).join('')}</div>`, 'forstall')}
       ${box('HORSE', 'you’re only as good as your loyal steed', `
-          <div class="w-top">${pick('horse', 0, [['Horse breeds', horses]], '— pick a breed —')}<button type="button" class="rm-btn" data-rm-thing="horse" data-i="0" title="Remove the horse" aria-label="Remove the horse">✕</button></div>
+          <div class="w-top">${pick('horse', 0, [['Horse breeds', horses]], '— pick a breed —')}<button type="button" class="rm-btn" data-rm-thing="horse" data-i="0" title="Remove the horse" aria-label="Remove the horse">×</button></div>
           <img class="ride-art" data-art="horse" alt="" hidden>
           <div class="w-grid">${inp('horse.name', 'Name')}${inp('horse.breed', 'Breed')}${inp('horse.breakingPoint', 'Breaking point', { cls: 'narrow2' })}</div>
           <div class="w-grid">${inp('horse.maxHealth', 'Max health', { max: 4, cls: 'narrow' })}${inp('horse.health', 'Health', { max: 4, cls: 'narrow' })}${inp('horse.bond', 'Bond', { type: 'select', options: meta.reputationLevels })}</div>
           <div class="ride-dyn" data-dyn="horse"></div>
           ${inp('horse.breedAbility', 'Breed ability', { type: 'textarea', max: 300, cls: 'wide' })}${inp('horse.disposition', 'Disposition', { type: 'textarea', max: 300, cls: 'wide' })}${inp('horse.appearance', 'Appearance', { type: 'textarea', max: 300, cls: 'wide' })}`, 'horse')}
       ${box('MECH', 'carts, wagons, &amp; cabins given the chance at a new life', `
-          <div class="w-top">${pick('mech', 0, [['Mech classes', mechs]], '— pick a class —')}${spurBox('Mechs')}<button type="button" class="rm-btn" data-rm-thing="mech" data-i="0" title="Remove the mech" aria-label="Remove the mech">✕</button></div>
+          <div class="w-top">${pick('mech', 0, [['Mech classes', mechs]], '— pick a class —')}${spurBox('Mechs')}<button type="button" class="rm-btn" data-rm-thing="mech" data-i="0" title="Remove the mech" aria-label="Remove the mech">×</button></div>
           <img class="ride-art" data-art="mech" alt="" hidden>
           <div class="w-grid">${inp('mech.class', 'Class')}${inp('mech.slots', 'Upgrade slots', { max: 4, cls: 'narrow2' })}${inp('mech.speed', 'Speed', { cls: 'narrow2' })}</div>
           <div class="w-grid">${inp('mech.maxHealth', 'Max health', { max: 4, cls: 'narrow' })}${inp('mech.health', 'Health', { max: 4, cls: 'narrow' })}</div>
@@ -1023,7 +1023,7 @@ function hydrate(p) {
   const offSheet = (it) => it.placed === null;
   itemsBox.innerHTML = items.length ? `<div class="items-list">${items.map((it, i) => `<div class="inv-item"><span>${esc(it.name)}<small>${esc(it.sub || it.cat || '')}${it.placed ? ` · <b class="inv-where">on sheet: ${esc(it.placed)}</b>` : it.placed === null ? ' · <b class="inv-off">not on the sheet yet</b>' : ''}</small></span>
       <span class="qty"><button type="button" data-q="${i}" data-d="-1" aria-label="One fewer">−</button><b>${it.qty}</b><button type="button" data-q="${i}" data-d="1" aria-label="One more">+</button></span>
-      ${offSheet(it) ? `<button type="button" class="btn small" data-equip="${esc(it.uid)}" title="Fill it into the right section of the sheet">Put on sheet</button>` : ''}<button type="button" class="btn small secondary" data-sell="${esc(it.uid)}">Sell…</button><button type="button" class="rm-btn" data-rm-item="${i}" title="Remove this item" aria-label="Remove ${esc(it.name)}">✕</button></div>`).join('')}</div>`
+      ${offSheet(it) ? `<button type="button" class="btn small" data-equip="${esc(it.uid)}" title="Fill it into the right section of the sheet">Put on sheet</button>` : ''}<button type="button" class="btn small secondary" data-sell="${esc(it.uid)}">Sell…</button><button type="button" class="rm-btn" data-rm-item="${i}" title="Remove this item" aria-label="Remove ${esc(it.name)}">×</button></div>`).join('')}</div>`
     : '<p class="muted small-text empty-inline">Nothing from the <a href="/store">Store</a> yet.</p>';
   itemsBox.querySelectorAll('[data-q]').forEach((b) => b.addEventListener('click', () => {
     const it = items[b.dataset.q];

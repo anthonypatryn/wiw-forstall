@@ -1048,15 +1048,15 @@ select.kz-stale { color: var(--danger, #b3261e); border-bottom-color: currentCol
 /* ---------- round +/−/× controls: one look, matching .btn (ink border, hard offset shadow, rust hover, press) ----------
    `body` in front so these win over the older per-page rules (posse.css, fighter.css, saloon.css load after this file).
    -webkit-text-stroke thickens the thin − + × glyphs without changing the font. */
-body :is(.pmb, .pm-btn, .sev button, .inv-item .qty button, .pm > button, .rm-btn, .rp-x) {
+body :is(.pmb, .pm-btn, .sev button, .inv-item .qty button, .pm > button, .dd-step button, .stepper button, .hud-x, .dd-x, .sl-x.dark, .rm-btn, .rp-x) {
   display: inline-grid; place-items: center; padding: 0 0 1px; border: 2px solid var(--ink); border-radius: 50%;
   background: var(--surface); color: var(--ink); font-family: var(--body); font-weight: 700; line-height: 1;
   -webkit-text-stroke: 1.1px currentColor; box-shadow: 2px 2px 0 rgba(34,31,31,.25); cursor: pointer;
   transition: transform .08s, box-shadow .08s, background .15s, color .15s;
 }
-body :is(.pmb, .pm-btn, .sev button, .inv-item .qty button, .pm > button, .rp-x):hover:not(:disabled) { background: var(--rust); border-color: var(--rust-dark); color: #fff; }
-body :is(.pmb, .pm-btn, .sev button, .inv-item .qty button, .pm > button, .rm-btn, .rp-x):active:not(:disabled) { transform: translate(2px, 2px); box-shadow: 0 0 0 transparent; }
-body :is(.pmb, .pm-btn, .sev button, .inv-item .qty button, .pm > button, .rm-btn, .rp-x):disabled { opacity: .45; cursor: not-allowed; box-shadow: none; }
+body :is(.pmb, .pm-btn, .sev button, .inv-item .qty button, .pm > button, .dd-step button, .stepper button, .hud-x, .dd-x, .sl-x.dark, .rp-x):hover:not(:disabled) { background: var(--rust); border-color: var(--rust-dark); color: #fff; }
+body :is(.pmb, .pm-btn, .sev button, .inv-item .qty button, .pm > button, .dd-step button, .stepper button, .hud-x, .dd-x, .sl-x.dark, .rm-btn, .rp-x):active:not(:disabled) { transform: translate(2px, 2px); box-shadow: 0 0 0 transparent; }
+body :is(.pmb, .pm-btn, .sev button, .inv-item .qty button, .pm > button, .dd-step button, .stepper button, .hud-x, .dd-x, .sl-x.dark, .rm-btn, .rp-x):disabled { opacity: .45; cursor: not-allowed; box-shadow: none; }
 body :is(.pmb, .pm-btn, .pm > button) { min-width: 30px; min-height: 30px; font-size: var(--fs-lg); }
 body :is(.sev button, .inv-item .qty button, .pmb.sm) { min-width: 26px; min-height: 26px; font-size: var(--fs-md); }
 /* remove / close: the danger colour, same weight (.rm-btn repeated to outrank the :is() list above, which carries
@@ -1067,15 +1067,24 @@ body .rm-btn.rm-btn.rm-btn:hover:not(:disabled) { background: var(--danger); bor
 body .sl-x { border-width: 2px; font-weight: 700; -webkit-text-stroke: 1.1px currentColor; }
 body .sl-x:hover { background: var(--on-dark); color: var(--ink); }
 /* close (×) on a dark header — the saloon's .sl-x look, shared by the Battle Map's fighter card and Map setup */
-body :is(.fc-x, .setup-x) {
+body :is(.fc-x, .setup-x, .log-close, .lb-close, .hud-myturn-x) {
   flex: none; margin-left: auto; width: 34px; height: 34px; display: inline-grid; place-items: center; padding: 0 0 1px;
   border: 2px solid rgba(232,220,196,.6); border-radius: 50%; background: transparent; color: var(--on-dark);
   font: 700 20px/1 var(--body); -webkit-text-stroke: 1.1px currentColor; cursor: pointer; transition: background .15s, color .15s;
 }
-body :is(.fc-x, .setup-x):hover { background: var(--on-dark); color: var(--ink); border-color: var(--on-dark); }
+body :is(.fc-x, .setup-x, .log-close, .lb-close, .hud-myturn-x):hover { background: var(--on-dark); color: var(--ink); border-color: var(--on-dark); }
 body .rm-btn { min-width: 28px; min-height: 28px; } /* posse.css sizes it on the sheet; other pages need it too */
+/* sizes the shared looks leave to each spot */
+body :is(.hud-x, .dd-x, .sl-x.dark) { width: 32px; height: 32px; font-size: var(--fs-lg); }
+body .stepper button { width: 34px; height: 34px; font-size: var(--fs-xl); }
+body .dd-step button { width: 28px; height: 28px; font-size: var(--fs-md); }
+body .lb-close { width: 40px; height: 40px; font-size: 22px; }
+body .hud-myturn-x { width: 28px; height: 28px; margin-top: -14px; font-size: 16px; margin-left: 0; }
+body .log-close { width: 30px; height: 30px; font-size: 17px; }
+/* the little × inside a chip (upgrade chips, faction members): same weight as every other × */
+body :is(.upg-chip button, .fac-members .mem button) { font-weight: 700; -webkit-text-stroke: .8px currentColor; line-height: 1; }
 body .st button { font-weight: 700; -webkit-text-stroke: .8px currentColor; font-size: var(--fs-md); }
-body.warden-mode :is(.pmb, .pm-btn, .sev button, .inv-item .qty button, .pm > button, .rp-x) { box-shadow: 2px 2px 0 rgba(0,0,0,.35); }
+body.warden-mode :is(.pmb, .pm-btn, .sev button, .inv-item .qty button, .pm > button, .dd-step button, .stepper button, .hud-x, .dd-x, .sl-x.dark, .rp-x) { box-shadow: 2px 2px 0 rgba(0,0,0,.35); }
 
 /* Needs you: a finished roll with its Close button; Run the Game's finished roll card */
 .needs-row { display: flex; align-items: center; gap: 8px; padding: 7px 8px; margin: 3px 0; border-radius: var(--r-sm); background: var(--wash); }

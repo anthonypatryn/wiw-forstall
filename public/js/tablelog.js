@@ -43,7 +43,7 @@ export function mountTableLog() {
   panel.className = 'log-drawer';
   panel.setAttribute('aria-label', 'Table Log');
   panel.hidden = true;
-  panel.innerHTML = `<div class="log-drawer-head"><b>TABLE LOG</b><a href="/battle">Battle Map ›</a><button type="button" class="log-clear" hidden>Clear</button><button type="button" class="log-close" aria-label="Close">✕</button></div><div class="log"></div>`;
+  panel.innerHTML = `<div class="log-drawer-head"><b>TABLE LOG</b><a href="/battle">Battle Map ›</a><button type="button" class="log-clear" hidden>Clear</button><button type="button" class="log-close" aria-label="Close">×</button></div><div class="log"></div>`;
   // Roll dice + Table Log share one bottom-right row, so a wider button (unread badge) never overlaps
   const row = document.createElement('div');
   row.className = 'fab-row';

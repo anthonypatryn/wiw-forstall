@@ -9,7 +9,7 @@ export const faceUrl = (p) => portraitUrl(p) || `/img/tokens/trade-${String(p?.t
 export function showImage(src, caption = '') {
   const back = document.createElement('div');
   back.className = 'modal-back lightbox';
-  back.innerHTML = `<figure><img src="${esc(src)}" alt="${esc(caption)}">${caption ? `<figcaption>${esc(caption)}</figcaption>` : ''}</figure><button type="button" class="lb-close" aria-label="Close">✕</button>`;
+  back.innerHTML = `<figure><img src="${esc(src)}" alt="${esc(caption)}">${caption ? `<figcaption>${esc(caption)}</figcaption>` : ''}</figure><button type="button" class="lb-close" aria-label="Close">×</button>`;
   const close = () => { back.remove(); document.removeEventListener('keydown', key); };
   const key = (e) => { if (e.key === 'Escape') close(); };
   back.addEventListener('click', close);

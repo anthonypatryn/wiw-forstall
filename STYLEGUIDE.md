@@ -128,6 +128,11 @@ Steppers (`.pmb`, `.pm-btn`, `.sev button`, inventory `.qty button`, fighter-car
 
 Sizes: 30px for most steppers, 26px for small ones. Remove buttons (`.rm-btn`) use the danger red and fill red on hover. Don't restyle these per page; the shared block is prefixed with `body` so it wins over older page CSS.
 
+Everything round with − + or × uses one of two looks, and nothing else:
+- **On a light card** — the round-control look above: every stepper (`.pmb`, `.pm-btn`, `.sev`, inventory qty, fighter-card `.pm`, the dice drawer `.dd-step`, the Scanner's `.stepper`) and every light close (`.rp-x` roll pop-up, `.hud-x` turn order, `.dd-x` dice drawer, `.sl-x.dark` saloon rules).
+- **On a dark surface** — the light-bordered circle below: `.sl-x`, `.fc-x`, `.setup-x`, `.log-close` (Table Log), `.lb-close` (photo lightbox), `.hud-myturn-x` (your-turn bar).
+- Chip dismiss ×s (`.upg-chip`, faction `.mem`) stay small but carry the same stroke weight. The glyph is always ×, never ✕.
+
 Close (×) buttons on a dark header (saloon `.sl-x`, the Battle Map's fighter card `.fc-x`, Map setup `.setup-x`) share one look: a 34–36px circle, 2px light border, thickened ×, and a light fill on hover. Remove buttons in lists are `.rm-btn` with ×, never ✕, and the small actions next to them are `.btn.small.secondary`.
 
 ## Class names: check style.css before reusing a short name
