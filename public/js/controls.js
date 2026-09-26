@@ -5,6 +5,7 @@
 // Loaded once by common.js; everything is event delegation, so content drawn later just works.
 
 let pop = null, popFor = null, active = -1, items = [];
+// its own copy of esc(): common.js imports this file, so importing back from common.js would be a circular import
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 function close() {

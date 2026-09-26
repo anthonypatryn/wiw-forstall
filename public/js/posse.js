@@ -1,5 +1,4 @@
-import {
-  $, esc, api, startPolling, tryWarden, forgetWarden, savedPin, wardenModal, store, injectDefs, toast, mountNav, poolHTML, readPool, fillPool, rollPopup, bleedPanel, ask, askText, tell } from './common.js';
+import { $, esc, api, startPolling, tryWarden, forgetWarden, savedPin, wardenModal, store, injectDefs, toast, mountNav, poolHTML, readPool, fillPool, rollPopup, bleedPanel, ask, askText, tell, isPool } from './common.js';
 import { mountTableLog } from './tablelog.js';
 import { ICONS } from './icons.js';
 import { NPC } from './npc-data.js';
@@ -99,7 +98,6 @@ async function deletePc(id) {
 }
 const pcById = (id) => data?.posse.find((p) => p.id === id);
 const get = (obj, path) => path.split('.').reduce((o, k) => (o == null ? o : o[k]), obj);
-const isPool = (s) => /^(\d+[BG])+$/i.test(String(s || '').replace(/\s+/g, ''));
 const firstPool = (s) => (String(s || '').toUpperCase().match(/(?:\d+[BG])+/) || [''])[0];
 const itemById = (id) => catalog.find((i) => i.id === id);
 const diceCount = (pool) => [...String(pool || '').toUpperCase().matchAll(/(\d+)[BG]/g)].reduce((n, m) => n + Number(m[1]), 0);

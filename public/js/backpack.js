@@ -1,5 +1,5 @@
 // The Backpack: items and notes the posse has been handed and shown around — plus "just you" for this device's character.
-import { $, esc, api, startPolling, toast, mountNav, tryWarden, savedPin, store, ask } from './common.js';
+import { $, esc, api, startPolling, toast, mountNav, tryWarden, savedPin, store, ask, me } from './common.js';
 import { mountTableLog } from './tablelog.js';
 import { gl } from './glyphs.js';
 import { handoutHTML, openHandout } from './handouts.js';
@@ -7,7 +7,6 @@ import { handoutHTML, openHandout } from './handouts.js';
 mountTableLog();
 mountNav('/backpack');
 let data = null, warden = false, names = {};
-const me = () => store.get('wiw.me', null);
 
 function tile(h) {
   const to = h.to === 'all' ? 'the posse' : (h.to || []).map((id) => names[id] || '?').join(' & ');

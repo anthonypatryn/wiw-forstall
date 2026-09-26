@@ -1,4 +1,4 @@
-import { $, esc, api, startPolling, toast, mountNav, tryWarden, forgetWarden, savedPin, wardenModal, rollPopup, abilityOptions, abilityTargetsHTML, abilityBody , ask, pickFighters } from './common.js';
+import { $, esc, api, startPolling, toast, mountNav, tryWarden, forgetWarden, savedPin, wardenModal, rollPopup, abilityOptions, abilityTargetsHTML, abilityBody, ask, pickFighters, isPool } from './common.js';
 import { gl } from './glyphs.js';
 import { play, weaponSound } from './sound.js';
 let meta = null;
@@ -30,7 +30,6 @@ let combat = null, combatPoller = null;
 const atkSel = {}; // per selected token: remembered picks
 const WEAPON_KEY = { arm: 'arms', short: 'short', long: 'long', distant: 'distant' };
 const ATK_BAND = { Melee: 'arm', Short: 'short', Long: 'long', Distant: 'distant' };
-const isPool = (s) => /^(\d+[BG])+$/.test(String(s || '').toUpperCase());
 async function combatAct(body) {
   try { const res = await api('POST', body, '', '/api/combat'); combat = res.state || combat; return res.result ?? true; }
   catch (e) { toast(e.message, true); return null; }

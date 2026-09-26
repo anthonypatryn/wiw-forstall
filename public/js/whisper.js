@@ -1,9 +1,8 @@
 // Whisper to the Warden: players send a short secret message; the Warden gets a pop-up on any page and can send one line back.
-import { esc, api, toast, startPolling, savedPin, store } from './common.js';
+import { esc, api, toast, startPolling, savedPin, store, me } from './common.js';
 import { gl } from './glyphs.js';
 import { play } from './sound.js';
 
-const me = () => store.get('wiw.me', null);
 
 // a small styled box with a text area (dialog, not a browser prompt)
 function writeBox({ title, sub = '', placeholder = '', max = 500, ok = 'Send', quote = '' }) {

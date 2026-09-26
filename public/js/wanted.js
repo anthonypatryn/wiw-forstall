@@ -1,13 +1,12 @@
 // Wanted posters, town by town. Everyone reads the board; the Warden puts posters up, edits, hides and pays them out.
-import { $, esc, api, startPolling, toast, mountNav, tryWarden, savedPin, ask, askText, store } from './common.js';
+import { $, esc, api, startPolling, toast, mountNav, tryWarden, savedPin, ask, askText, store, me } from './common.js';
 import { mountTableLog } from './tablelog.js';
 import { gl } from './glyphs.js';
-import { shrink, showImage } from './portrait.js';
+import { shrink, showImage, loadImg } from './portrait.js';
 
 mountTableLog();
 mountNav('/wanted');
 const EP = '/api/wanted';
-const me = () => store.get('wiw.me', null);
 const takers = (p) => (p.takenBy || []).map((id) => data?.names?.[id]).filter(Boolean);
 const STAMP = { captured: 'CAPTURED', dead: 'DEAD', claimed: 'BOUNTY PAID' };
 let data = null, warden = false, town = decodeURIComponent(location.hash.slice(1)) || null;
@@ -102,7 +101,6 @@ function openPoster(p) {
 }
 
 // ---------- the Warden: new / edit poster ----------
-const loadImg = (file) => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = URL.createObjectURL(file); });
 function editPoster(p = null) {
   const st = p ? { ...p, photoNew: null } : { name: '', alias: '', crime: '', reward: '', terms: 'Dead or Alive', town, npcId: '', pcId: '', wardenNote: '', hidden: false, photoNew: null };
   const back = document.createElement('div');

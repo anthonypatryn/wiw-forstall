@@ -1,5 +1,5 @@
 // Lock picking — the player's scene (old brass padlock + High/Low cards) and the Warden's "Lock Pick" card.
-import { esc, api, toast, startPolling, savedPin, store, rollPopup, ask, onChange } from './common.js';
+import { esc, api, toast, startPolling, savedPin, store, rollPopup, ask, onChange, me } from './common.js';
 import { gl } from './glyphs.js';
 import { play } from './sound.js';
 
@@ -39,7 +39,6 @@ function lockSVG(need, wins) {
 
 // ---------- the player's scene ----------
 let scene = null, cur = null, busy = false;
-const me = () => store.get('wiw.me', null);
 async function act(action, extra = {}) {
   const res = await api('POST', { action, id: cur.id, pc: me(), ...extra }, '', EP);
   const a = (res.state?.list || []).find((x) => x.id === cur.id);

@@ -1,5 +1,5 @@
 // The shared Table Log: every roll from any page (combat, sheets, Forstall scans) in one place.
-import { esc, api, startPolling, staticDice, timeAgo, injectDefs, savedPin, toast, store, rollPopup, animateRoll , ask, play } from './common.js';
+import { esc, api, startPolling, staticDice, timeAgo, injectDefs, savedPin, toast, store, rollPopup, animateRoll, ask, play, me } from './common.js';
 import { gl } from './glyphs.js';
 import { duelHud } from './duel-hud.js';
 import { tradeHud, openTrade } from './trade.js';
@@ -103,7 +103,6 @@ export function mountTableLog() {
 }
 
 // ---------- HUD on every page: turn order strip, start-of-combat rolls, the Warden's Skill checks ----------
-const me = () => store.get('wiw.me', null);
 let hudEls = null;
 function hudMount() {
   if (hudEls) return hudEls;

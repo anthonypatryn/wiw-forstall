@@ -199,3 +199,7 @@
 ## Saves are transactions (no lost updates)
 - `api/[area].js` runs every request inside `transaction()` (lib/store.js, AsyncLocalStorage): `load()` fingerprints what it read (sha1), `save()` is held back, and at the end every write is committed at once by a Redis Lua script (`CAS`) — only if each written key still matches what that request read. Otherwise `Conflict` → the router re-runs the whole request on fresh data (up to 5 tries, small random wait; then 409 "The table is busy"). The router reads the body once into `req.body` (so retries see it) and holds the response until the commit succeeds. Routes need no special code: keep using `load`/`save`. A key saved without being read first isn't checked. If Redis scripting ever errors, it falls back to plain SETs (logged as "CAS script failed").
 - Backup (`lib/routes/backup.js`) lists every document key — add new ones there.
+
+## Shared helpers (use these, don't copy them)
+- Server: `lib/util.js` — `clean` (trims), `cleanKeepSpaces` (for text that autosaves while typed: notes), `id`, `int`, `cents`, `money`. `lib/saloon-common.js` — `seatOf`, `pcOf`, `say`, `walletOf`, `add` for the saloon games. Hex distance: `hexDist` in lib/forstall.js (re-exported by lib/battle.js).
+- Client (`public/js/common.js`): `me()`, `dollars()`, `tabFlag`/`setTabFlag`, `isPool`, `paras` (blank line = new paragraph, line break = `<br>`, escaped). `loadImg` lives in portrait.js. `controls.js` keeps its own `esc` on purpose (common.js imports it; importing back would be circular).

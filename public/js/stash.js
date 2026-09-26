@@ -1,11 +1,9 @@
 // The posse stash: shared money and things anyone in the posse can put in or take out. Every move goes in the Table Log.
 // The Warden can also drop loot straight in. Things keep their sheet data while stored (a gun's upgrades, a horse's Bond).
-import { esc, api, toast, savedPin, store } from './common.js';
+import { esc, api, toast, savedPin, store, me, dollars as $$ } from './common.js';
 import { gl } from './glyphs.js';
 import { play } from './sound.js';
 
-const me = () => store.get('wiw.me', null);
-const $$ = (n) => `$${Number(n || 0).toFixed(2)}`;
 const post = (body) => api('POST', { action: 'stash', pc: me(), ...body }, '', '/api/combat');
 
 // a one-line summary for a card ("$12.00 · Used Pistol, Biscuit (Morgan), 3× Bandages")

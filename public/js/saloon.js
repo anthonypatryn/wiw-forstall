@@ -1,14 +1,12 @@
 // The saloon card table: the Warden's Saloon card (Run the Game), the players' invite, and the full-screen poker table.
-import { esc, api, toast, startPolling, savedPin, store, rollPopup, ask, onChange } from './common.js';
+import { esc, api, toast, startPolling, savedPin, store, rollPopup, ask, onChange, me, dollars as $$ } from './common.js';
 import { gl } from './glyphs.js';
 import { play } from './sound.js';
 
 const EP = '/api/saloon';
-const me = () => store.get('wiw.me', null);
 const TOUGH = [['npc:Human - Weak Combatant', 'Green', 'weak Skills'], ['npc:Human - Moderate Combatant', 'Seasoned', 'fair Skills'], ['npc:Human - Strong Combatant', 'Sharp', 'strong Skills']];
 const STYLE = { tight: 'Plays it close', loose: 'Calls anything', bluffer: 'Loves a bluff' };
 const PHASE = { bet1: 'First betting round', draw: 'The draw', bet2: 'Second betting round (double stakes)', over: 'Hand over' };
-const $$ = (n) => `$${Number(n || 0).toFixed(2)}`;
 export function saloonStyles() {
   if (document.getElementById('saloon-css')) return;
   document.head.insertAdjacentHTML('beforeend', '<link id="saloon-css" rel="stylesheet" href="/css/saloon.css?v=9">');

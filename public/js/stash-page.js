@@ -1,10 +1,9 @@
 // The Posse Stash page (World ▾): what's in the stash, kept fresh; the button opens the put-in / take-out dialog (stash.js).
-import { $, esc, api, mountNav, onChange } from './common.js';
+import { $, esc, api, mountNav, onChange, dollars as $$ } from './common.js';
 import { mountTableLog } from './tablelog.js';
 
 mountTableLog(); // also wires every [data-stash] button to the stash dialog
 mountNav('/stash');
-const $$ = (n) => `$${Number(n || 0).toFixed(2)}`;
 async function refresh() {
   try {
     const s = (await api('GET', null, '', '/api/combat')).stash || { money: 0, items: [] };

@@ -1,15 +1,11 @@
 // Player-to-player trading: make an offer (money and/or things, asking money and/or things back), and the pop-ups
 // that let the other player accept or decline. Fed by the Table Log poll (logView().hud.trades) via renderHud.
-import { esc, api, toast, savedPin, store, tell } from './common.js';
+import { esc, api, toast, savedPin, store, tell, me, dollars as $$, tabFlag as tabSeen, setTabFlag as setTabSeen } from './common.js';
 import { gl } from './glyphs.js';
 import { play } from './sound.js';
 
-const me = () => store.get('wiw.me', null);
-const $$ = (n) => `$${Number(n || 0).toFixed(2)}`;
 const post = (body) => api('POST', { action: 'trade', pc: me(), ...body }, '', '/api/combat');
 const describe = (s) => [s?.money ? $$(s.money) : '', ...(s?.things || []).map((t) => `${t.qty > 1 ? `${t.qty}× ` : ''}${t.name}`)].filter(Boolean).join(', ') || 'nothing';
-const tabSeen = (k) => { try { return sessionStorage.getItem(k); } catch { return null; } };
-const setTabSeen = (k) => { try { sessionStorage.setItem(k, '1'); } catch {} };
 
 let lastHud = null, busy = false;
 

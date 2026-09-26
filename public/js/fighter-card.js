@@ -2,11 +2,10 @@
 // tap-to-roll dice, frenzy, features and loot. Every roll is public (it goes in the Table Log and pops up).
 // Used by the Battle Map's side panel; styles in css/fighter.css.
 // ctx = { data: the Warden combat view (posse, enemies, combat, profiles, loot), meta: ?view=meta, act(body) → result }
-import { esc, bleedPanel, rollPopup, ask, askText, toast } from './common.js';
+import { esc, bleedPanel, rollPopup, ask, askText, toast, isPool } from './common.js';
 import { gl } from './glyphs.js';
 
 const poolText = (s) => String(s || '').toUpperCase().replace(/\s+/g, '');
-const isPool = (s) => /^(\d+[BG])+$/.test(poolText(s));
 const damagePool = (effect) => { const m = effect.match(/((?:\d+[BG])+)\s+damage/i); return m ? m[1].toUpperCase() : null; };
 const statusPools = (effect) => [...effect.matchAll(/(\w+)\s*\[((?:\d+[BG])+)\]/gi)].map((m) => ({ status: m[1], pool: m[2].toUpperCase() }));
 

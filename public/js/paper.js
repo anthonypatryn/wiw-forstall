@@ -1,5 +1,5 @@
 // The newspaper front page: rendering, the full-screen reader (with Print), and the "Extra! Extra!" pop-up for players.
-import { esc, api, startPolling, savedPin, store } from './common.js';
+import { esc, api, startPolling, savedPin, store, paras } from './common.js';
 import { gl } from './glyphs.js';
 import { play } from './sound.js';
 
@@ -11,7 +11,6 @@ export function paperStyles() {
     <link id="paper-css" rel="stylesheet" href="/css/paper.css?v=1">`);
 }
 const face = (p) => (p.portrait ? `/api/image?ns=pc&id=${encodeURIComponent(p.id)}&size=head&v=${p.portrait}` : `/img/tokens/trade-${String(p.trade || '').toLowerCase()}.webp`);
-const paras = (t) => String(t || '').split(/\n\s*\n/).map((x) => x.trim()).filter(Boolean).map((x) => `<p>${esc(x)}</p>`).join('');
 const roman = (n) => [[10, 'X'], [9, 'IX'], [5, 'V'], [4, 'IV'], [1, 'I']].reduce((s, [v, r]) => { while (n >= v) { s += r; n -= v; } return s; }, '');
 
 export function paperHTML(p, posse = []) {

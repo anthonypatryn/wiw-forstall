@@ -1,14 +1,11 @@
 // High-Noon Duels on any page (p. 58): the Warden answers a player's challenge, and everyone watches the Duel play out.
 // Fed by the Table Log poll (logView().hud.duel / duelReqs) via renderHud in tablelog.js.
-import { esc, api, toast, savedPin, store, staticDice, animateRoll, ask, askText } from './common.js';
+import { esc, api, toast, savedPin, store, staticDice, animateRoll, ask, askText, me, tabFlag as tabSeen, setTabFlag as setTabSeen } from './common.js';
 import { gl } from './glyphs.js';
 import { play } from './sound.js';
 
 const STEPS = ['Charm', 'Finesse', 'Intuition', 'Nerve', 'Draw!'];
 const TOUGH = [['Weak', 'A weak shot'], ['Moderate', 'Handy with a pistol'], ['Strong', 'A born killer']];
-const me = () => store.get('wiw.me', null);
-const tabSeen = (k) => { try { return sessionStorage.getItem(k); } catch { return null; } };
-const setTabSeen = (k) => { try { sessionStorage.setItem(k, '1'); } catch {} };
 const post = (body) => api('POST', body, '', '/api/combat');
 
 let busy = false, box = null, sig = '', shownAt = null, seenRounds = 0;

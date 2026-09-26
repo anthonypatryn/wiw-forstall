@@ -1,10 +1,10 @@
 // The Journal: quests (step checklists), clues (a corkboard of pinned notes) and the newspapers.
 // Players read what the Warden has revealed and keep the posse's own notes; the Warden writes, reveals and ticks things off here.
-import { $, esc, api, startPolling, toast, mountNav, tryWarden, savedPin, ask, store } from './common.js';
+import { $, esc, api, startPolling, toast, mountNav, tryWarden, savedPin, ask, store, paras } from './common.js';
 import { mountTableLog } from './tablelog.js';
 import { gl } from './glyphs.js';
 import { paperHTML, openPaper } from './paper.js';
-import { shrink, showImage } from './portrait.js';
+import { shrink, showImage, loadImg } from './portrait.js';
 
 mountTableLog();
 mountNav('/journal');
@@ -17,7 +17,6 @@ const townName = (id) => J?.towns.find((t) => t.id === id)?.name || '';
 const questName = (id) => J?.quests.find((q) => q.id === id)?.title || '';
 const STATUS = { open: ['Open', 'info'], done: ['Complete', 'ok'], failed: ['Failed', 'no'] };
 const tilt = (id) => ((parseInt(id, 16) % 9) - 4) * 0.7;
-const paras = (t) => String(t || '').split(/\n+/).filter(Boolean).map((x) => `<p>${esc(x)}</p>`).join('');
 
 function showTab() {
   document.querySelectorAll('[data-tab]').forEach((b) => b.classList.toggle('on', b.dataset.tab === tab));
@@ -96,7 +95,6 @@ function openClue(c) {
 }
 
 // ---------- the Warden's forms ----------
-const loadImg = (file) => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = URL.createObjectURL(file); });
 function modal(html) {
   const back = document.createElement('div');
   back.className = 'modal-back ask-back';

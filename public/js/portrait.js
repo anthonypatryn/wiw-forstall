@@ -23,7 +23,7 @@ const readFile = () => new Promise((resolve) => {
   input.addEventListener('change', () => { resolve(input.files[0] || null); input.remove(); });
   document.body.append(input); input.click();
 });
-const loadImg = (file) => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = URL.createObjectURL(file); });
+export const loadImg = (file) => new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = URL.createObjectURL(file); });
 // shrink a whole picture so it fits the store (longest side ≤ max)
 export function shrink(img, max = 1200, q = 0.82) {
   const s = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));

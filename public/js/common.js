@@ -234,6 +234,19 @@ export function toast(msg, err = false) {
   toastTimer = setTimeout(() => t.classList.remove('show'), 3200);
 }
 
+// ---------- small shared helpers ----------
+// which character this device plays ("This is me")
+export const me = () => store.get('wiw.me', null);
+// 12.5 → "$12.50"
+export const dollars = (n) => `$${Number(n || 0).toFixed(2)}`;
+// a flag for this browser tab only (e.g. "Later" on a pop-up); safe when storage is blocked
+export const tabFlag = (k) => { try { return sessionStorage.getItem(k); } catch { return null; } };
+export const setTabFlag = (k, v = '1') => { try { sessionStorage.setItem(k, v); } catch {} };
+// "3B1G" (any case, spaces allowed) is a dice pool
+export const isPool = (s) => /^(\d+[BG])+$/i.test(String(s || '').replace(/\s+/g, ''));
+// typed text → paragraphs: a blank line starts a new one, a single line break stays a line break (escaped)
+export const paras = (t) => esc(t).split(/\n\s*\n/).map((x) => x.trim()).filter(Boolean).map((x) => `<p>${x.replace(/\n/g, '<br>')}</p>`).join('');
+
 export const store = {
   get(k, d = null) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch { return d; } },
   set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} },
