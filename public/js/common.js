@@ -10,7 +10,6 @@ export const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&a
 // ---------- API ----------
 let wardenPin = null;
 export function setPin(p) { wardenPin = p; }
-export const getPin = () => wardenPin;
 
 export async function api(method, body, query = '', endpoint = '/api/scan') {
   const headers = { 'Content-Type': 'application/json' };
@@ -121,7 +120,7 @@ export function bulletSVG(color, face, { title } = {}) {
   </svg>`;
 }
 
-export const FACE_LABEL = { hit: 'Hit', ace: 'Ace (2 Hits)', spur: 'Spur', blank: 'Blank' };
+const FACE_LABEL = { hit: 'Hit', ace: 'Ace (2 Hits)', spur: 'Spur', blank: 'Blank' };
 const FACES = { B: ['blank', 'blank', 'spur', 'hit', 'hit', 'ace'], G: ['blank', 'spur', 'hit', 'hit', 'hit', 'ace'] };
 
 // Animate a finished roll into the tray. Returns a promise that resolves when dice settle.
@@ -375,15 +374,15 @@ function pollNeeds(btn, list) {
   stopNeeds = onChange(['combat', 'shop', 'whispers', 'battle'], tick); // whatever the list is built from
 }
 // Warden mode shows in the nav itself (red rule + star, Needs you, Warden ▾) — redraw it when it changes.
-export function markWarden() { if (document.querySelector('[data-nav]')?.innerHTML) mountNav(); }
+function markWarden() { if (document.querySelector('[data-nav]')?.innerHTML) mountNav(); }
 
 // ---------- dice-pool inputs: two numbers, never typed letters ----------
-export function parsePoolStr(s) {
+function parsePoolStr(s) {
   const out = { B: 0, G: 0 };
   for (const [, n, c] of String(s || '').toUpperCase().matchAll(/(\d+)\s*([BG])/g)) out[c] += Number(n);
   return out;
 }
-export const composePool = (b, g) => `${b > 0 ? b + 'B' : ''}${g > 0 ? g + 'G' : ''}`;
+const composePool = (b, g) => `${b > 0 ? b + 'B' : ''}${g > 0 ? g + 'G' : ''}`;
 export function poolHTML(attrs = '', label = '') {
   const one = (c, name) => `<label class="dp-${c.toLowerCase()}" title="${name} dice"><span class="dp-chip" aria-hidden="true">${miniBullet(c)}</span><input type="number" min="0" max="12" step="1" inputmode="numeric" data-c="${c}" placeholder="0" aria-label="${label ? label + ' — ' : ''}${name} dice"></label>`;
   return `<span class="dp" ${attrs}>${one('B', 'Black')}${one('G', 'Gold')}</span>`;
@@ -498,7 +497,7 @@ export const tell = (msg, opts = {}) => dialog({ msg, ok: 'OK', cancel: null, da
 export const askText = (msg, value = '', opts = {}) => dialog({ msg, input: { value }, ok: 'OK', danger: false, ...opts });
 
 // ---------- tiny bullet icons (Black / Gold dice) ----------
-export const miniBullet = (c) => `<svg class="mini-bullet" viewBox="0 0 180 60" aria-hidden="true">
+const miniBullet = (c) => `<svg class="mini-bullet" viewBox="0 0 180 60" aria-hidden="true">
   <rect x="3" y="6" width="11" height="48" rx="2" fill="url(#rim${c})"/><rect x="19" y="7" width="98" height="46" rx="3" fill="url(#case${c})"/>
   <path d="M117 9 C143 9 166 19 177 30 C166 41 143 51 117 51 Z" fill="url(#tip${c})"/></svg>`;
 // "2B1G" -> 2 ▸black 1 ▸gold

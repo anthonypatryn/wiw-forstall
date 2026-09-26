@@ -1,10 +1,10 @@
 // The shared Table Log: every roll from any page (combat, sheets, Forstall scans) in one place.
-import { esc, api, startPolling, staticDice, timeAgo, injectDefs, savedPin, toast, store, rollPopup, animateRoll , ask, askText, play } from './common.js';
+import { esc, api, startPolling, staticDice, timeAgo, injectDefs, savedPin, toast, store, rollPopup, animateRoll , ask, play } from './common.js';
 import { gl } from './glyphs.js';
 import { duelHud } from './duel-hud.js';
 import { tradeHud, openTrade } from './trade.js';
 
-export function logHTML(log) {
+function logHTML(log) {
   if (!log.length) return '<p class="empty-note">Rolls and big moments show up here for everyone.</p>';
   return log.map((l) => {
     if (l.type === 'round') return `<div class="ent round">— ${esc(l.text)} —</div>`;
@@ -214,11 +214,6 @@ export function renderHud(h) {
       }
     } catch (err) { toast(err.message, true); e.target.disabled = false; }
   });
-}
-// the Combat page has its own log card, so it mounts only the HUD
-export function mountHud() {
-  injectDefs();
-  startPolling('log', (d) => renderHud(d.hud), null, '/api/combat');
 }
 
 let holdEl = null;

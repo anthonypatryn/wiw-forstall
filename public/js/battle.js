@@ -1,4 +1,4 @@
-import { $, esc, api, startPolling, toast, mountNav, tryWarden, forgetWarden, savedPin, wardenModal, rollPopup, abilityOptions, abilityTargetsHTML, abilityBody , ask, askText, pickFighters } from './common.js';
+import { $, esc, api, startPolling, toast, mountNav, tryWarden, forgetWarden, savedPin, wardenModal, rollPopup, abilityOptions, abilityTargetsHTML, abilityBody , ask, pickFighters } from './common.js';
 import { gl } from './glyphs.js';
 import { play, weaponSound } from './sound.js';
 let meta = null;
@@ -683,7 +683,6 @@ $('#upload').addEventListener('change', async (e) => {
 // ---------- Forstalls (pp. 81–87): Range fields, Sweep, memory slots, Burst, Edison's Rule 1 ----------
 let kzPosse = [], kzAll = [], selFs = null, fieldsKey = '';
 const fsOf = (key) => data?.forstalls?.find((f) => f.key === key) || null;
-const inField = (f, t) => !!f.pos && (f.rangeIn >= 999 || dist(f.pos, t) <= f.rangeIn);
 const clashKeys = () => new Set((data?.edison || []).flat());
 // What a slot can be programmed with: decoded monsters for the posse, every monster for the Warden.
 async function loadKz() {

@@ -24,15 +24,14 @@
   --wash: rgba(0,0,0,.05);   /* quiet fill behind a row */
   /* roles */
   --accent: var(--rust); --accent-dark: var(--rust-dark); --accent-tint: rgba(164,64,31,.1);
-  --success: #3d6b3a; --success-tint: rgba(61,107,58,.12);
-  --warning: #b88c14; --warning-tint: rgba(224,176,42,.18);
+  --success: #3d6b3a;
   --danger: #8f1d17;  --danger-tint: rgba(143,29,23,.1);
-  --info: var(--teal); --info-tint: rgba(47,109,115,.1);
+  --info: var(--teal);
   --now: rgba(255,221,138,.3); /* whose turn it is */
   --on-dark: #e8dcc4; --on-dark-dim: #cbbda4; --on-dark-bright: #f6ecd9; --on-dark-warn: #ffb4a6; /* text on ink / iron backgrounds */
   --secret: #7a2c9e; --secret-tint: #f4ecf7; --secret-line: #b58ad0; /* Warden-only / hidden from players */
   /* themed screens (keep them, but only through these) */
-  --screen-bg: #0b0f0c; --screen-ink: var(--phosphor);          /* Forstall Scanner display */
+  --screen-bg: #0b0f0c;          /* Forstall Scanner display */
   --screen-line: #4d4540; --screen-dim: #6f675e; --screen-mute: #a89c88; --screen-text: #d8ccb6; --screen-alert: #ff7a5c;
   --forstall-bg: #1d3b3d; --forstall-ink: #bdf0ee; --forstall-glow: #5cc4c4; /* Forstalls on the map */
   --felt: #1d4a2e; --felt-rail: #5a3420; --felt-ink: #cfe3d3;    /* NPC card table */
@@ -114,8 +113,6 @@ button { cursor: pointer; }
   font: var(--fs-sm) var(--display); letter-spacing: .14em; background: var(--ink); color: var(--paper); padding: 4px 8px 2px; border-radius: var(--r-sm);
   white-space: nowrap; flex: none;
 }
-.flourish { display: flex; align-items: center; gap: 8px; color: var(--ink-faint); margin: 6px 0 14px; }
-.flourish::before, .flourish::after { content: ''; flex: 1; height: 1px; background: currentColor; opacity: .5; }
 
 .card {
   position: relative;
@@ -141,7 +138,6 @@ button { cursor: pointer; }
 .small-text { font-size: var(--fs-sm); }
 .empty-inline { margin: 4px 0; }
 .mt-0 { margin-top: 0; } .mt-2 { margin-top: var(--sp-2); }
-.opts.tight-top { margin: -4px 0 14px; }
 .btn-row { display: flex; flex-wrap: wrap; gap: var(--sp-2); align-items: center; }
 
 /* ---------- target ---------- */
@@ -257,7 +253,6 @@ a.btn { text-decoration: none; }
   border: 1.5px solid var(--ink); border-radius: var(--r-sm); background: var(--surface); font: var(--fs-xl)/1 var(--display);
 }
 .chip.new { background: var(--brass); animation: pop .4s ease-out both; }
-.chip.dim { opacity: .55; border-style: dashed; }
 @keyframes pop { 0% { transform: scale(.4); } 70% { transform: scale(1.15); } 100% { transform: none; } }
 
 /* ---------- Forstall display ---------- */
@@ -363,6 +358,7 @@ a.btn { text-decoration: none; }
 .mini-rows .diamonds { gap: 3px; }
 .mini-rows .dia { width: 22px; height: 22px; font-size: var(--fs-sm); }
 .mini-rows .dia::before { width: 15px; height: 15px; border-radius: var(--r-sm); }
+.empty-note a { color: var(--rust); }
 .empty-note { font: italic var(--fs-sm) var(--body); color: var(--ink-faint); margin: 4px 0; }
 
 /* ---------- misc ---------- */
@@ -485,7 +481,6 @@ body.nav-open .fab-row, body.nav-open .hud-strip { display: none; }
 .dp input:focus { outline: none; border-color: var(--rust); }
 
 /* ---------- table log (shared) ---------- */
-.log-card { max-height: 720px; display: flex; flex-direction: column; }
 .log { display: flex; flex-direction: column; gap: 6px; overflow-y: auto; min-height: 0; }
 .log .ent { padding: 7px 9px; background: rgba(255,255,255,.5); border-left: 3px solid var(--ink-faint); font-size: var(--fs-sm); }
 .log .ent.roll { border-left-color: var(--brass); }

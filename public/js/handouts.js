@@ -3,7 +3,7 @@ import { esc, api, toast, startPolling, savedPin, store } from './common.js';
 import { gl } from './glyphs.js';
 import { play } from './sound.js';
 
-export const photoUrl = (h, size = 'head') => (h.img ? `/api/image?ns=handout&id=${encodeURIComponent(h.id)}&size=${size}&v=${h.img}` : null);
+const photoUrl = (h, size = 'head') => (h.img ? `/api/image?ns=handout&id=${encodeURIComponent(h.id)}&size=${size}&v=${h.img}` : null);
 const paras = (t) => esc(t).split(/\n{2,}/).map((p) => `<p>${p.replace(/\n/g, '<br>')}</p>`).join('');
 
 // a note on old paper, or an item card

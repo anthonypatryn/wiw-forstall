@@ -3,7 +3,6 @@
 import { esc, store, savedPin } from './common.js';
 
 const done = (key) => store.get(`wiw.tour.${key}`, false);
-export const resetTour = (key) => store.set(`wiw.tour.${key}`, false);
 
 // steps: [{ sel, up?, title, text }] — `up` highlights the nearest ancestor matching it (e.g. the whole section)
 export function runTour(steps, key, { force = false } = {}) {
