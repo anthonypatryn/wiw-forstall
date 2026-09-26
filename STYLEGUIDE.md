@@ -127,3 +127,10 @@ Steppers (`.pmb`, `.pm-btn`, `.sev button`, inventory `.qty button`, fighter-car
 - Glyphs thickened with `-webkit-text-stroke: 1.1px`.
 
 Sizes: 30px for most steppers, 26px for small ones. Remove buttons (`.rm-btn`) use the danger red and fill red on hover. Don't restyle these per page; the shared block is prefixed with `body` so it wins over older page CSS.
+
+## Class names: check style.css before reusing a short name
+style.css is loaded on every page, so a page's class can pick up a site-wide rule with the same name. Two bugs came from this:
+- `.ping`: the Table Log button's new-entry bump.
+- `.target`: the Scanner's target banner.
+
+Battle Map tokens use `.map-ping` and `.tgt` instead. Before adding a short, generic class (`target`, `opts`, `ping`, `go`…), grep style.css for it.
