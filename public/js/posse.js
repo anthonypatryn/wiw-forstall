@@ -286,6 +286,7 @@ function buildSheet(p) {
           <div data-dyn="items"></div>${inp('inventory', 'Other items', { type: 'textarea' })}`, 'inventory')}
       ${box('FORSTALL', 'emits energy waves that disturb &amp; repel monstrous creatures', `
           <div class="w-top">${pick('forstall', 0, [['Forstall models', forstalls]], '— pick a model —')}${spurBox('Forstalls')}<button type="button" class="rm-btn" data-rm-thing="forstall" data-i="0" title="Remove the Forstall" aria-label="Remove the Forstall">✕</button></div>
+          <img class="ride-art" data-art="forstall" alt="" hidden>
           <div class="w-grid">${inp('forstall.model', 'Model')}${inp('forstall.slots', 'Total upgrade slots', { max: 4, cls: 'narrow2' })}${inp('forstall.range', 'Range', { cls: 'narrow2' })}</div>
           <div class="w-grid">${inp('forstall.grit', 'Grit', { max: 4, cls: 'narrow' })}${inp('forstall.duration', 'Duration (hrs)', { max: 6, cls: 'narrow2' })}
             <div class="range-in full"><span class="rl">Sweep</span>${poolHTML('data-pool="forstall.sweep"', 'Sweep')}<button type="button" class="roll-mini" data-roll-path="forstall.sweep" data-roll-label="Forstall Sweep" data-talent="Forstalls" aria-label="Roll Sweep">${gl('die')}</button></div></div>
@@ -910,10 +911,11 @@ function hydrate(p) {
   view.querySelector('[data-pack2-wrap]').hidden = (tierOf(p)?.packs || 1) < 2 && !p.pack2;
   const tt = tierByPrestige(p.prestige.total), nx = meta.tiers[meta.tiers.indexOf(tt) + 1];
   view.querySelector('[data-dyn="tier-title"]').innerHTML = `Prestige tier: <b>${tt.name}</b>${nx ? ` <span class="muted">· ${nx.name} at ${nx.prestige}</span>` : ''}`;
-  for (const k of ['horse', 'mech']) {
-    // the picture follows the item — gone as soon as the section is emptied
-    const named = k === 'horse' ? p.horse?.breed : p.mech?.class;
-    const img = view.querySelector(`[data-art="${k}"]`), it = named && p[k]?.itemId && itemById(p[k].itemId);
+  for (const k of ['forstall', 'horse', 'mech']) {
+    // the picture follows the item — gone as soon as the section is emptied (a typed-in name still finds its picture)
+    const named = k === 'horse' ? p.horse?.breed : k === 'mech' ? p.mech?.class : p.forstall?.model;
+    const byName = (n) => catalog.find((x) => x.img && x.name.toLowerCase() === String(n).trim().toLowerCase());
+    const img = view.querySelector(`[data-art="${k}"]`), it = named && ((p[k]?.itemId && itemById(p[k].itemId)) || byName(named) || byName(`${named} ${k === 'mech' ? 'Mech' : k === 'forstall' ? 'Forstall' : ''}`));
     img.hidden = !it?.img;
     if (it?.img && img.dataset.src !== it.img) { img.dataset.src = it.img; img.src = `/img/store/${it.img}.webp`; img.alt = it.name; }
   }
