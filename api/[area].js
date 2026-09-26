@@ -27,6 +27,7 @@ import { pinOk } from '../lib/http.js';
 // The Warden PIN is short, so wrong guesses are counted per connection: after BAD_PIN_LIMIT in BAD_PIN_WINDOW seconds,
 // that connection is treated as a player (even with the right PIN) until the window passes.
 const BAD_PIN_LIMIT = 30, BAD_PIN_WINDOW = 15 * 60;
+const MAX_BODY = 6_000_000; // characters; photo uploads are the biggest thing sent
 async function guardPin(req) {
   const pin = req.headers['x-warden-pin'];
   if (!pin) return;
@@ -47,7 +48,11 @@ export default async function handler(req, res) {
   if (!route) { res.statusCode = 404; return res.end('Not found'); }
   if (area !== 'pulse') await guardPin(req);
   // read the body once, so a retried request sees it again (readBody uses req.body when it's there)
-  if (req.method !== 'GET' && req.body === undefined) { let raw = ''; for await (const chunk of req) raw += chunk; req.body = raw; }
+  if (req.method !== 'GET' && req.body === undefined) {
+    let raw = '';
+    for await (const chunk of req) { raw += chunk; if (raw.length > MAX_BODY) { res.statusCode = 413; res.setHeader('Content-Type', 'application/json'); return res.end(JSON.stringify({ error: 'That’s too big to send.' })); } }
+    req.body = raw;
+  }
   // every request is a transaction (lib/store.js): if two land at once, the later one re-runs on fresh data
   for (let attempt = 0; attempt < 5; attempt++) {
     const held = heldResponse();

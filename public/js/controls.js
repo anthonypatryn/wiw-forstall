@@ -8,8 +8,10 @@ let pop = null, popFor = null, active = -1, items = [];
 // its own copy of esc(): common.js imports this file, so importing back from common.js would be a circular import
 const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
+let watchdog = null; // while a list is open: drop it if its field is redrawn away
 function close() {
   pop?.remove(); pop = null; popFor = null; items = []; active = -1;
+  clearInterval(watchdog); watchdog = null;
 }
 function place(el) {
   const r = el.getBoundingClientRect(), vh = window.innerHeight;
@@ -28,7 +30,7 @@ function highlight(i) {
 function openList(el, entries, pick, { search = false } = {}) {
   close();
   popFor = el;
-  pop = document.createElement('div');
+  watchdog =   pop = document.createElement('div');
   pop.className = 'sel-pop';
   pop.setAttribute('role', 'listbox');
   const draw = (q = '') => {
