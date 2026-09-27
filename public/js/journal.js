@@ -6,12 +6,14 @@ import { mountTableLog } from './tablelog.js';
 import { gl } from './glyphs.js';
 import { paperHTML, openPaper } from './paper.js';
 import { shrink, showImage, loadImg } from './portrait.js';
+import { mountRecords } from './records.js';
 
 mountTableLog();
 mountNav('/journal');
+mountRecords(document.getElementById('records'));
 const EP = '/api/journal';
 let J = null, papers = null, warden = false, filter = '';
-let tab = ['quests', 'clues', 'papers'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'quests';
+let tab = ['quests', 'clues', 'papers', 'records'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'quests';
 
 const npcName = (id) => J?.npcs.find((n) => n.id === id)?.name || '';
 const townName = (id) => J?.towns.find((t) => t.id === id)?.name || '';
@@ -227,7 +229,7 @@ document.addEventListener('click', async (e) => {
     else if (d.delq !== undefined) { if (await ask(`Delete the quest “${q.title}”?`)) await act({ action: 'remove', kind: 'quest', id: q.id }, 'Deleted.'); }
   } catch (err) { toast(err.message, true); }
 });
-window.addEventListener('hashchange', () => { const h = location.hash.slice(1); if (['quests', 'clues', 'papers'].includes(h)) { tab = h; showTab(); } });
+window.addEventListener('hashchange', () => { const h = location.hash.slice(1); if (['quests', 'clues', 'papers', 'records'].includes(h)) { tab = h; showTab(); } });
 document.addEventListener('change', (e) => { if (e.target.dataset.filter !== undefined) { filter = e.target.value; renderClues(); } });
 // posse notes save shortly after typing stops
 let noteTimer = null;

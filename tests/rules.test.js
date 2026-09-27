@@ -1273,3 +1273,21 @@ test('search: the house loot table by Hits, the Warden OKs the find; salvage (p.
   if (sv.ok) assert.equal(Number(pc.scrap), before + sv.scrap);
   assert.ok(state.log.some((l) => l.label === 'Perpetual Salvager') || !sv.ok);
 });
+
+test('records: wallet changes at a game book to that game; net = won − lost; carnival prizes count', async () => {
+  const { snapWallets, tally, recordsView } = await import('../lib/records.js');
+  const combat = freshCombat();
+  combat.posse.push({ id: 'a', name: 'Bo', wallet: '10', items: [] }, { id: 'b', name: 'Tess', wallet: '10', items: [] });
+  let before = snapWallets(combat.posse);
+  combat.posse[0].wallet = '5'; combat.posse[1].wallet = '5'; tally(combat, before, 'poker'); // both buy in
+  before = snapWallets(combat.posse);
+  combat.posse[0].wallet = '15.5'; tally(combat, before, 'poker'); // Bo cashes out
+  before = snapWallets(combat.posse);
+  combat.posse[1].wallet = '4.9'; combat.posse[1].items.push({ name: 'Doll' }); tally(combat, before, 'carnival');
+  const v = recordsView(combat);
+  assert.deepEqual(v.rows.map((r) => [r.name, r.net]), [['Bo', 5.5], ['Tess', -5.1]]);
+  assert.equal(v.rows[0].best, 10.5);
+  assert.equal(v.rows[1].prizes, 1);
+  tally(combat, snapWallets(combat.posse), 'not-a-game');
+  assert.equal(Object.keys(combat.records.a).length, 1);
+});

@@ -13,9 +13,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Rye&family=Special+Elite&family=Reenie+Beanie&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=101">
-  <link rel="stylesheet" href="/css/journal.css?v=19">
-  <link id="paper-css" rel="stylesheet" href="/css/paper.css?v=17">
+  <link rel="stylesheet" href="/css/style.css?v=102">
+  <link rel="stylesheet" href="/css/journal.css?v=20">
+  <link id="paper-css" rel="stylesheet" href="/css/paper.css?v=18">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&display=swap">
 </head>
 <body>
@@ -36,6 +36,7 @@
       <button type="button" class="chip-btn" data-tab="quests">Quests</button>
       <button type="button" class="chip-btn" data-tab="clues">Clues</button>
       <button type="button" class="chip-btn" data-tab="papers">Newspapers</button>
+      <button type="button" class="chip-btn" data-tab="records">Records</button>
     </nav>
     <section class="card corner" data-pane="quests">
       <div class="head-row"><h2 class="section-title">Quests</h2><span data-warden-only hidden><button type="button" class="btn small" data-new-quest>+ New quest</button></span></div>
@@ -51,8 +52,13 @@
       <p class="muted small-text mt-0">Every front page printed about the posse, newest first. Tap one to read it.</p>
       <div class="jn-papers" id="papers"><p class="loading" role="status">Loading…</p></div>
     </section>
+    <section class="card corner" data-pane="records" hidden>
+      <h2 class="section-title">Records</h2>
+      <p class="muted small-text mt-0">Lifetime winnings and losses at the card tables, the carnival and the contests. Tap a name for the game-by-game.</p>
+      <div id="records"><p class="loading" role="status">Loading…</p></div>
+    </section>
   </main>
 
-  <script type="module" src="/js/journal.js?v=54"></script>
+  <script type="module" src="/js/journal.js?v=55"></script>
 </body>
 </html>

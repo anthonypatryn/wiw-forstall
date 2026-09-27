@@ -82,3 +82,22 @@ button.jq-tick { cursor: pointer; }
 .jn-books { margin: 0 0 10px; font-size: var(--fs-sm); }
 .jn-books summary { cursor: pointer; color: var(--accent); font-weight: 700; }
 .jn-books .chip-row { margin-top: 6px; }
+
+/* Records: lifetime winnings and losses */
+.rec-champs { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; margin-bottom: 14px; }
+.rec-champ { border: 1px solid var(--line); border-radius: 6px; padding: 8px 10px; background: var(--surface); display: grid; gap: 2px; }
+.rec-champ small { font-size: var(--fs-xs); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); }
+.rec-board { max-width: 720px; list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
+.rec-board summary { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; cursor: pointer; list-style: none; }
+.rec-board summary::-webkit-details-marker { display: none; }
+.rec-rank { font-weight: 700; min-width: 1.6em; text-align: center; color: var(--ink-soft); }
+.rec-board li:first-child .rec-rank { color: var(--brass); }
+.rec-name { flex: 1; min-width: 0; font-weight: 600; }
+.rec-net { font-weight: 700; font-variant-numeric: tabular-nums; }
+.rec-up { color: var(--success); }
+.rec-down { color: var(--danger); }
+.rec-dead { opacity: .7; }
+.rec-sum { padding: 8px 10px 4px; font-size: var(--fs-sm); }
+.rec-games { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); font-variant-numeric: tabular-nums; }
+.rec-games th { text-align: left; font-weight: 600; padding: 4px 10px; }
+.rec-games td { padding: 4px 6px; text-align: right; white-space: nowrap; }
