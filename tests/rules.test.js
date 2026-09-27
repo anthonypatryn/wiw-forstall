@@ -1219,3 +1219,20 @@ test('carnival: tickets, horseshoes, the wheel, the high striker and the prize b
   assert.equal(pc.items[0].name, 'Pocket Compass'); assert.equal(s.vouchers.p1.medium, 1);
   assert.throws(() => carnivalAction(s, { action: 'prize', pc: 'p1', prize: 'Two-Pound Turkey Leg' }, ctx), /large voucher/);
 });
+
+test('carnival: the greased pig (house rule) and the details each booth animation needs', async () => {
+  const { freshCarnival, carnivalAction } = await import('../lib/carnival.js');
+  const pc = { id: 'p1', name: 'Bo', wallet: '5', items: [] };
+  const seq = [1, 2, 4]; let i = 0;
+  const ctx = { warden: true, pc: () => pc, pay: (p, a) => { p.wallet = (Number(p.wallet) + a).toFixed(2); }, log: () => {}, roll: () => ({ hits: seq[i++ % 3] ?? 3, dice: [{ face: 'hit' }, { face: 'spur' }] }), give: () => {} };
+  const s = freshCarnival();
+  carnivalAction(s, { action: 'open' }, ctx); carnivalAction(s, { action: 'ticket', pc: 'p1' }, ctx);
+  const r = carnivalAction(s, { action: 'pig', pc: 'p1' }, ctx);
+  assert.deepEqual(r.grabs, [1, 2, 4]); assert.equal(r.caught, true); assert.equal(s.vouchers.p1.small, 1);
+  i = 0; const a = carnivalAction(s, { action: 'archery', pc: 'p1' }, ctx);
+  assert.ok(a.shots.length >= 5 && 'me' in a.shots[0]);
+  const w = carnivalAction(s, { action: 'wheel', pc: 'p1', stake: 0.1 }, ctx);
+  assert.deepEqual(w.faces, ['hit', 'spur']); assert.equal(w.mult, 2);
+  const p = carnivalAction(s, { action: 'pie', pc: 'p1' }, ctx);
+  assert.ok(p.rounds[0].hits && p.eaters.length === 3 && Array.isArray(p.left));
+});

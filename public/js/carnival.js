@@ -4,6 +4,7 @@
 import { esc, api, toast, store, me, savedPin, startPolling, ask, onChange, dollars as $$ } from './common.js';
 import { gl } from './glyphs.js';
 import { play } from './sound.js';
+import { runShow, hasShow } from './carnival-shows.js';
 
 const EP = '/api/carnival';
 const FACE = { blank: 'Blank', spur: 'Spur', hit: 'Hit', ace: 'Ace' };
@@ -11,7 +12,7 @@ let view = null, scene = null, busy = false, lastRolls = [];
 
 export function carnivalStyles() {
   if (document.getElementById('carnival-css')) return;
-  document.head.insertAdjacentHTML('beforeend', '<link id="carnival-css" rel="stylesheet" href="/css/carnival.css?v=1">');
+  document.head.insertAdjacentHTML('beforeend', '<link id="carnival-css" rel="stylesheet" href="/css/carnival.css?v=2">');
 }
 
 const BOOTHS = [
@@ -21,6 +22,7 @@ const BOOTHS = [
   { id: 'striker', name: 'High Striker', icon: 'flash', rules: 'Swing the mallet: roll Nerve. 5 Hits or more rings the bell for a large prize. The first swing comes with your ticket; after that it’s $0.25 a swing.', go: 'Swing the mallet' },
   { id: 'fortune', name: 'Fortune Teller', icon: 'scroll', rules: 'The mystic reads your palm: roll 1B for a good fortune (Hit or Ace) or a bad one (Blank or Spur), then 1B for which.', go: 'Have your palm read' },
   { id: 'pie', name: 'Pie Eating Contest', icon: 'fire', rules: 'Memaw’s strawberry rhubarb pie against two carnies: roll Nerve each round, needing 2 Hits, then 3, then 4… Last one eating wins a medium prize voucher.', go: 'Dig in' },
+  { id: 'pig', name: 'Greased Pig Chase', icon: 'lasso', rules: 'Three grabs at a small pig covered in grease: roll Finesse, and 3 Hits holds on. Catch it for a small prize voucher. (House rule; the book leaves it to the Warden.)', go: 'Chase the pig' },
 ];
 
 const diceText = (r) => r.dice.map((d) => FACE[d.face]).join(', ');
@@ -39,7 +41,6 @@ function sceneHTML() {
       <h3>${gl(b.icon)} ${esc(b.name)}</h3><p>${esc(b.rules)}</p>
       ${b.stake ? '<label class="cv-stake">Stake $<input type="number" min="0.05" max="1" step="0.05" value="0.25" data-num="0.05" data-cv-stake></label>' : ''}
       <button type="button" class="btn small" data-cv="${b.id}"${m?.ticket && !busy ? '' : ' disabled'}>${esc(b.id === 'striker' && m?.swung ? `Swing again (${$$(d.retry)})` : b.go)}</button></section>`).join('')}
-      <section class="cv-booth cv-pig"><h3>${gl('lasso')} Greased Pig Chase</h3><p>Catch the greased pig before time runs out. The Warden runs this one with Skill rolls; the winner gets a small prize voucher.</p></section>
     </div>
     <section class="cv-prizes"><h3>${gl('trophy')} The Prize Booth</h3>
       <p class="muted">Trade two small vouchers for a medium, two medium for a large, or back down.</p>
@@ -61,10 +62,11 @@ export function openCarnival() {
   if (scene) return;
   scene = document.createElement('div');
   scene.className = 'cv-back';
-  scene.innerHTML = '<div class="cv-scene" role="dialog" aria-modal="true" aria-label="The Traveling Carnival"></div>';
+  scene.innerHTML = '<div class="cv-scene" role="dialog" aria-modal="true" aria-label="The Traveling Carnival"></div><div class="cv-showbox" hidden></div>';
   document.body.append(scene);
   render();
   scene.addEventListener('click', async (e) => {
+    if (e.target.closest('.cv-showbox')) return; // the booth's show has its own button
     if (e.target.closest('[data-cv-x]') || e.target === scene) { scene.remove(); scene = null; showChip(); return; }
     const b = e.target.closest('button'); if (!b || busy) return;
     const d = b.dataset;
@@ -78,8 +80,8 @@ export function openCarnival() {
     busy = true; render();
     try {
       const r = await act(body);
-      play(body.action === 'prize' || body.action === 'swap' || body.action === 'ticket' ? 'chips' : 'dice');
-      if (/voucher!|DING|Double|Triple|Quadruple|Inventory/.test(r.result?.text || '')) play('success');
+      if (hasShow(body.action) && r.result) await runShow(scene.querySelector('.cv-showbox'), body.action, r.result); // the booth plays out
+      else { play('chips'); if (/Inventory/.test(r.result?.text || '')) play('success'); }
     } catch (err) { toast(err.message, true); }
     busy = false; render();
   });
@@ -126,8 +128,7 @@ export function mountCarnivalDesk(el, getCombat) {
     el.innerHTML = data?.open
       ? `<p><b>Open in ${esc(data.where)}.</b> Players got an invite; the booths are on their screens.</p>
         ${rows.length ? `<ul class="cv-desk">${rows.map(([id, m]) => `<li><b>${esc(names[id] || id)}</b> ${m.ticket ? 'has a ticket' : 'no ticket yet'} · vouchers ${m.vouchers.small}/${m.vouchers.medium}/${m.vouchers.large}${m.last ? ` · <i>${esc(m.last.text)}</i>` : ''}</li>`).join('')}</ul>` : '<p class="muted">Nobody’s bought a ticket yet.</p>'}
-        <p class="muted">The Greased Pig Chase is yours to run with Call for a Roll; give the winner a small voucher’s prize from the Store or Hand Out.</p>
-        <button type="button" class="btn small secondary danger" data-cv-close>Pack up the carnival</button>`
+            <button type="button" class="btn small secondary danger" data-cv-close>Pack up the carnival</button>`
       : `<p class="muted">Judgment on the Iron Road’s traveling carnival (Omaha, pp. 62–67). Everyone gets an invite; they buy a $0.25 ticket and play the booths with their own dice.</p>
         <label class="field-step"><span>WHERE</span><input maxlength="40" value="${esc(st.where)}" data-cv-where></label>
         <button type="button" class="btn small" data-cv-open>${gl('star')} Open the carnival</button>`;
