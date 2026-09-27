@@ -1154,3 +1154,17 @@ html.cb-ranges { --band-arm: #0072b2; --band-short: #e69f00; --band-long: #cc79a
 .set-vol { display: flex; align-items: center; gap: 10px; font-size: var(--fs-sm); margin-top: 6px; }
 .set-vol input { flex: 1; accent-color: var(--accent); }
 @media (max-width: 760px) { .nav-settings { display: none; } }
+
+/* ---------- number fields: typed, or stepped with the ▲ ▼ arrows (controls.js) ---------- */
+.num-wrap { position: relative; display: inline-flex; align-items: stretch; max-width: 100%; vertical-align: middle; }
+label .num-wrap, .f .num-wrap { display: flex; }
+body .num-wrap > input.has-step { padding-right: 22px; min-width: 0; width: 100%; }
+.num-step { position: absolute; right: 2px; top: 2px; bottom: 2px; width: 18px; display: grid; grid-template-rows: 1fr 1fr; gap: 1px; }
+.num-step button { display: grid; place-items: center; padding: 0; border: 0; border-radius: 2px; background: var(--wash, rgba(0,0,0,.05)); color: var(--ink-soft); font-size: 8px; line-height: 1; cursor: pointer; }
+.num-step button:hover { background: var(--accent); color: #fff; }
+.num-step button:active { background: var(--accent-dark); }
+/* fields that were sized for the bare number get room for the arrows */
+body .dp .num-wrap { width: 60px; }
+body .field-inline .num-wrap { width: 84px; }
+body .fs-dig-row .num-wrap { width: 54px; }
+body .fs-dig-row .num-wrap .fs-dig { width: 100%; }

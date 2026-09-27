@@ -228,6 +228,10 @@
 - **Problems:** common.js reports uncaught errors and rejections from our own scripts (not extensions; at most 8 a page; repeats within a minute are skipped) to `/api/problems` `report`. lib/routes/problems.js keeps the last 80, counting repeats of the same message on the same page within a day. The Warden reads them (GET), `seen` and `clear`.
   - UI: the Problems card on Tools (desk.js `renderProblems`), with new ones counted on the Tools nav badge `#rn-tools`.
 
+## Number fields
+- controls.js wraps every number field (`input[type=number]`, `inputmode=numeric|decimal`, `data-num`) in `.num-wrap` with `.num-step` ▲ ▼ buttons; a MutationObserver catches fields drawn later. `stepNum` honours min, max and step (or `data-num`), keeps decimals, leaves non-numeric text like "1 | 2" alone, and fires `input` and `change`. Holding repeats; ↑ ↓ work on the text-type ones.
+- posse.js marks the sheet's numeric text fields through `NUM_PATH` (`numAttrs`). Use `data-no-step` to opt out.
+
 ## Smoke test (`npm run smoke`)
 - `scripts/smoke.mjs`: starts dev-server.mjs on port 5199 with `WIW_DATA_DIR` set to a temp folder (lib/store.js honours it; `.data` is never touched) and seeds a Hunter with a Backpack Forstall, a Chupacabra, a running fight, a placed Town Forstall and a session. It then drives headless Chrome or Edge over the DevTools protocol (Node's built-in WebSocket, no packages).
 - It opens every page as the Warden and as a player and fails on any script error, console error or missing key element. It also clicks an attack through on the Battle Map, opens Start Session and Map setup, and presses `/`. Exit code 1 means a check failed.

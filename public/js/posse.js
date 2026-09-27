@@ -177,11 +177,14 @@ const spurIcon = `<svg viewBox="0 0 100 100" aria-hidden="true"><path fill="curr
 const spurBox = (talent, extra = '') => talent
   ? `<button type="button" class="spur" data-spur="${esc(talent)}" title="Talent: ${esc(talent)} — reroll Spurs" aria-label="${esc(talent)} Talent"${extra}>${spurIcon}</button>`
   : `<span class="spur off" title="Pick an item first">${spurIcon}</span>`;
+// sheet fields that hold a number (they're stored as text): the global stepper adds ▲ ▼ to these (controls.js)
+const NUM_PATH = /^(wallet|scrap|supplies|prestige\.(total|unclaimed)|forstall\.(duration|grit|slots|charges)|horse\.(breakingPoint|health|maxHealth)|mech\.(health|maxHealth|slots|supplies)|gear\.\d+\.grit|weapons\.\d+\.(grit|slots)|weapons\.\d+\.ammo\.\d+\.rds)$/;
+const numAttrs = (path) => (NUM_PATH.test(path) ? ` inputmode="${path === 'wallet' ? 'decimal' : 'numeric'}" data-num="1" min="0"` : '');
 const inp = (path, label, opts = {}) => `<label class="f${opts.cls ? ' ' + opts.cls : ''}">${label ? `<span>${label}</span>` : ''}
   ${opts.type === 'select' ? `<select data-path="${path}">${opts.options.map((o) => (Array.isArray(o)
       ? `<option value="${esc(o[0])}">${esc(o[1])}</option>` : `<option>${esc(o)}</option>`)).join('')}</select>`
     : opts.type === 'textarea' ? `<textarea data-path="${path}" maxlength="${opts.max || 3000}" placeholder="${esc(opts.ph || '')}"></textarea>`
-    : `<input data-path="${path}" type="${opts.type || 'text'}" maxlength="${opts.max || 60}" placeholder="${esc(opts.ph || '')}"${opts.list ? ` list="${opts.list}"` : ''}>`}</label>`;
+    : `<input data-path="${path}" type="${opts.type || 'text'}" maxlength="${opts.max || 60}" placeholder="${esc(opts.ph || '')}"${opts.list ? ` list="${opts.list}"` : ''}${numAttrs(path)}>`}</label>`;
 const box = (title, sub, body, cls = '') => `<section class="sbox ${cls}"${cls ? ` id="sec-${cls}"` : ''}><h3><span>${title}</span></h3>${sub ? `<div class="sbox-sub">${sub}</div>` : ''}<div class="sbox-in">${body}</div></section>`;
 const pick = (kind, i, groups, placeholder) => `<select class="pick" data-pick="${kind}" data-i="${i}" aria-label="${placeholder}">
   <option value="">${placeholder}</option>${groups.map(([g, list]) => `<optgroup label="${esc(g)}">${list.map((it) => `<option value="${esc(it.id)}">${esc(it.name)}${it.cost != null ? ` — $${it.cost.toFixed(2)}` : ''}</option>`).join('')}</optgroup>`).join('')}</select>`;

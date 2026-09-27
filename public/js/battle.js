@@ -1105,7 +1105,7 @@ function guessHTML(name) {
     ${scanEasy && e.positional?.some((x) => x != null) ? `<small class="muted">WHERE THEY GO</small>${dias(e.positional, e.positional.map((x) => (x != null ? 'green' : '')))}` : ''}
     ${e.guesses?.length ? `<small class="muted">EARLIER GUESSES</small>${e.guesses.slice(-3).map((g) => dias(g.digits, g.result)).join('')}` : ''}
     <small class="muted">YOUR GUESS — ONE PER SCAN</small>
-    <div class="fs-dig-row">${[0, 1, 2, 3, 4, 5].map((i) => `<input class="fs-dig" data-dig="${i}" inputmode="numeric" maxlength="1" aria-label="Digit ${i + 1}" value="${e.positional?.[i] ?? ''}">`).join('')}</div>
+    <div class="fs-dig-row">${[0, 1, 2, 3, 4, 5].map((i) => `<input class="fs-dig" data-dig="${i}" inputmode="numeric" min="0" max="9" maxlength="1" aria-label="Digit ${i + 1}" value="${e.positional?.[i] ?? ''}">`).join('')}</div>
     <button type="button" class="btn small" data-fs-guess>${gl('target')} Guess the ${esc(name)}’s frequency</button>
   </div>`;
 }

@@ -85,7 +85,7 @@ Small helpers: `.btn-row` (a row of buttons), `.fine` (12px note), `.small-text`
 - **`<select>`** — keep writing normal selects (optgroups welcome). They're restyled (ink caret) and open a styled list (`.sel-pop`) with keyboard support and a search box over 12 options. The select stays the source of truth, so `value`, `change` and "skip redraw while a select is focused" all keep working. Add `data-native` only if you truly need the browser's list.
 - **Suggestions** — `<input list="…">` + `<datalist>` opens the same styled list, filtered as you type.
 - **Checkboxes** — styled automatically (rust when ticked). For choosing people/options prefer `.chip-btn`s.
-- **Number fields** — no spinner arrows; add ± buttons (`.pm-btn`) where stepping matters.
+- **Number fields**: typed, or stepped with the built-in ▲ ▼ arrows (hold to repeat) and the ↑ ↓ keys. controls.js adds them to every `input[type=number]` and to text fields marked `inputmode="numeric|decimal"` or `data-num` (set `min`, `max` and `step`; money keeps its cents). Opt out with `data-no-step`. The browser's own spinners stay hidden. Bigger ± buttons (`.pm-btn`) are still right where stepping is the main thing (Health, dice counts).
 - **Sliders** — styled `input[type=range]`.
 - **Dates** — a plain text field (`2026-09-25`), no calendar pop-up.
 - **Tooltips** — just use `title="…"`; it's shown as a styled `.tip-pop`.

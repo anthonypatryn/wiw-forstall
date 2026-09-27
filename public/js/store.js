@@ -162,7 +162,7 @@ function buildCreate() {
     <label class="full">NAME<input name="name" maxlength="80" required></label>
     <label>COST ($)<input name="cost" type="number" min="0" step="0.01" placeholder="blank = not sold"></label>
     <label data-for="quality">QUALITY<select name="quality"><option value="">—</option><option>Used</option><option>Basic</option><option>Premium</option><option>Elite</option></select></label>
-    <label data-for="grit">GRIT<input name="grit" maxlength="10"></label>
+    <label data-for="grit">GRIT<input name="grit" maxlength="10" inputmode="numeric" data-num="1" min="0"></label>
     <label data-for="slots">UPGRADE SLOTS<input name="slots" type="number" min="0" max="4"></label>
     <div class="full dice-set" data-for="dice"><span class="ds-title">DICE <small>Black · Gold</small></span>
       ${[['arms', 'Arm’s Reach'], ['short', 'Short Range'], ['long', 'Long Range'], ['distant', 'Distant']].map(([k, l]) =>

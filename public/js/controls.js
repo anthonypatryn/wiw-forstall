@@ -148,3 +148,62 @@ document.addEventListener('mouseover', (e) => {
 document.addEventListener('mouseout', (e) => { if (tipFor && !tipFor.contains(e.relatedTarget)) hideTip(); });
 document.addEventListener('mousedown', hideTip, true);
 window.addEventListener('scroll', hideTip, true);
+
+// ---------- number fields: type a number, or use the ▲ ▼ arrows (hold to keep going) or the ↑ ↓ keys ----------
+// Applies to every <input type="number"> and to text fields marked inputmode="numeric|decimal" or data-num,
+// including ones drawn later (a MutationObserver wraps them). Changes fire `input` and `change` like typing does.
+// Opt out with data-no-step (e.g. one-digit code boxes).
+const NUM_SEL = 'input[type=number], input[inputmode=numeric], input[inputmode=decimal], input[data-num]';
+function stepNum(input, dir) {
+  if (input.disabled || input.readOnly) return;
+  const raw = String(input.value).trim();
+  if (raw && !/^-?\d*\.?\d*$/.test(raw.replace(/^\$/, ''))) return; // not a plain number (e.g. "1 | 2"): leave it alone
+  const step = Number(input.step) || Number(input.dataset.num) || 1;
+  const decimals = Math.max((raw.split('.')[1] || '').length, (String(step).split('.')[1] || '').length);
+  let v = (Number(raw.replace(/^\$/, '')) || 0) + dir * step;
+  if (input.min !== '' && !Number.isNaN(Number(input.min))) v = Math.max(Number(input.min), v);
+  if (input.max !== '' && !Number.isNaN(Number(input.max))) v = Math.min(Number(input.max), v);
+  input.value = decimals ? v.toFixed(decimals) : String(Math.round(v));
+  input.dispatchEvent(new Event('input', { bubbles: true }));
+  input.dispatchEvent(new Event('change', { bubbles: true }));
+}
+function enhanceNum(input) {
+  if (input.dataset.stepper || input.dataset.noStep !== undefined || input.type === 'hidden' || input.type === 'range') return;
+  input.dataset.stepper = '1';
+  input.classList.add('has-step');
+  const wrap = document.createElement('span');
+  wrap.className = 'num-wrap';
+  input.replaceWith(wrap);
+  wrap.append(input);
+  const arrows = document.createElement('span');
+  arrows.className = 'num-step';
+  arrows.innerHTML = '<button type="button" tabindex="-1" data-dir="1" aria-label="Up">▲</button><button type="button" tabindex="-1" data-dir="-1" aria-label="Down">▼</button>';
+  wrap.append(arrows);
+}
+let holdTimer = null;
+document.addEventListener('pointerdown', (e) => {
+  const b = e.target.closest?.('.num-step button');
+  if (!b) return;
+  e.preventDefault(); // keep the field focused (and don't start a map drag underneath)
+  e.stopPropagation();
+  const input = b.closest('.num-wrap')?.querySelector('input');
+  if (!input) return;
+  const dir = Number(b.dataset.dir);
+  stepNum(input, dir);
+  clearInterval(holdTimer); clearTimeout(holdTimer);
+  holdTimer = setTimeout(() => { holdTimer = setInterval(() => stepNum(input, dir), 80); }, 420);
+}, true);
+const stopHold = () => { clearTimeout(holdTimer); clearInterval(holdTimer); holdTimer = null; };
+document.addEventListener('pointerup', stopHold, true);
+document.addEventListener('pointercancel', stopHold, true);
+// text-type number fields get the arrow keys too (type=number already has them)
+document.addEventListener('keydown', (e) => {
+  const t = e.target;
+  if ((e.key !== 'ArrowUp' && e.key !== 'ArrowDown') || !t?.matches?.(NUM_SEL) || t.type === 'number' || t.dataset.noStep !== undefined) return;
+  e.preventDefault();
+  stepNum(t, e.key === 'ArrowUp' ? 1 : -1);
+}, true);
+const scanNums = (root) => { if (root.matches?.(NUM_SEL)) enhanceNum(root); root.querySelectorAll?.(NUM_SEL).forEach(enhanceNum); };
+new MutationObserver((muts) => { for (const m of muts) for (const n of m.addedNodes) if (n.nodeType === 1) scanNums(n); })
+  .observe(document.documentElement, { childList: true, subtree: true });
+if (document.body) scanNums(document.body); else addEventListener('DOMContentLoaded', () => scanNums(document.body));
