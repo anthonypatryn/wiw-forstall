@@ -1153,3 +1153,18 @@ test('the Sheriff’s Badge reaches the Warden anonymously; Iron Road titles are
   assert.equal(whisperView(s, { warden: false, pc: 'x' }).list.length, 0);
   assert.equal(ACHIEVEMENTS.find((a) => a.name === 'Badlands Ranger').trade, 'Hunter');
 });
+
+test('downtime earns the Prestige and spends it on the Talent; a refused one changes nothing', () => {
+  const s = freshCombat();
+  publicAction(s, { action: 'addPc', trade: 'Hunter', name: 'Bo' }, { warden: true });
+  const pc = s.posse[0], before = pc.prestige.total;
+  publicAction(s, { action: 'downtime', id: pc.id, what: 'talent', talent: 'Forstalls', activity: 'volunteering with Ivan' }, { warden: true });
+  assert.ok(pc.talents.includes('Forstalls'));
+  assert.equal(pc.prestige.total, before + 4);
+  assert.equal(pc.prestige.unclaimed, 0);
+  const logLen = s.log.length;
+  assert.throws(() => publicAction(s, { action: 'downtime', id: pc.id, what: 'talent', talent: 'Forstalls' }, { warden: true }), /already/);
+  assert.equal(pc.prestige.total, before + 4);
+  assert.equal(s.log.length, logLen);
+  assert.throws(() => publicAction(s, { action: 'downtime', id: pc.id, what: 'talent', talent: 'Traps' }, { warden: false }), /PIN/);
+});

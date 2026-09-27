@@ -13,6 +13,7 @@ import { mountSceneRun } from './scene-run.js';
 import { mountSaloonDesk, saloonStyles } from './saloon.js';
 import { mountDuelStart } from './duel-start.js';
 import { mountBookTables } from './tables-desk.js';
+import { mountDowntime } from './downtime.js';
 
 mountTableLog();
 mountNav('/run');
@@ -21,6 +22,7 @@ let combat = null, poller = null, stopNeedsWatch = null;
 const handout = mountHandout($('#handout'), () => combat);
 const wwhisper = mountWardenWhisper($('#wwhisper'), () => combat);
 const locks = mountLockSend($('#lockpick'), () => combat);
+const downtime = mountDowntime($('#downtime'), () => combat);
 const caller = mountRollCaller($('#rollcall'), () => combat, () => { poller?.now?.(); refreshNeeds(); });
 
 async function act(body, msg) {
@@ -133,7 +135,7 @@ function renderPosse() {
 }
 function render() {
   if (!combat) return;
-  renderFight(); renderEnemies(); renderPosse(); caller.draw(); renderChecks(); renderRecent(); renderRewards(); handout.draw(); wwhisper.draw(); locks.draw();
+  renderFight(); renderEnemies(); renderPosse(); caller.draw(); renderChecks(); renderRecent(); renderRewards(); handout.draw(); wwhisper.draw(); locks.draw(); downtime.draw();
 }
 
 // ---------- Rewards: award the posse, Jackpot, Town Rest (moved here from the Posse page) ----------
