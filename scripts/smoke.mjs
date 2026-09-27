@@ -11,6 +11,8 @@ import { fileURLToPath } from 'node:url';
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PORT = 5199, DEBUG = 9333, BASE = `http://localhost:${PORT}`, PIN = '1234';
 // `npm run smoke -- --shots <folder>` also saves a full-page screenshot of every check (for looking the pages over)
+// `--phone` runs every check at 375px wide (a phone), for layout bugs
+const PHONE = process.argv.includes('--phone');
 const SHOTS = process.argv.includes('--shots') ? (process.argv[process.argv.indexOf('--shots') + 1] || path.join(os.tmpdir(), 'wiw-shots')) : null;
 if (SHOTS) fs.mkdirSync(SHOTS, { recursive: true });
 const CHROMES = [process.env.CHROME, 'C:/Program Files/Google/Chrome/Application/chrome.exe', 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',
@@ -84,7 +86,8 @@ async function main() {
     if (m.method === 'Runtime.consoleAPICalled' && m.params.type === 'error') errors.push(m.params.args.map((a) => a.value ?? a.description).join(' '));
   });
   const js = async (expr) => { const r = await c.send('Runtime.evaluate', { expression: `(async () => { ${expr} })()`, awaitPromise: true, returnByValue: true }); return r.result?.result?.value; };
-  const goto = async (p, wait = 2500) => { await c.send('Page.navigate', { url: BASE + p }); await sleep(wait); await js("document.querySelectorAll('.tour-back, .prev-modal').forEach((m) => m.closest('.modal-back, .tour-back')?.remove())"); };
+  const size = () => (PHONE ? c.send('Emulation.setDeviceMetricsOverride', { width: 375, height: 812, deviceScaleFactor: 1, mobile: true }) : null);
+  const goto = async (p, wait = 2500) => { await size(); await c.send('Page.navigate', { url: BASE + p }); await sleep(wait); await js("document.querySelectorAll('.tour-back, .prev-modal').forEach((m) => m.closest('.modal-back, .tour-back')?.remove())"); };
   const as = async (who) => {
     await goto('/howto', 800);
     await js(who === 'warden'
@@ -98,15 +101,19 @@ async function main() {
     try { ok = await js(expr); } catch (e) { why = e.message; }
     const stuck = await js("return [...document.querySelectorAll('.loading')].filter((e) => e.offsetParent).map((e) => e.parentElement.id || 'a list').join(', ')");
     if (stuck) errors.push(`Still loading: ${stuck}`);
+    if (PHONE) { // on a phone nothing should push the page sideways
+      const wide = await js("const w = document.documentElement.clientWidth; return [...document.querySelectorAll('body *')].filter((e) => { const r = e.getBoundingClientRect(); return e.offsetParent && r.width && r.right > w + 2 && getComputedStyle(e).position !== 'fixed' && !e.closest('.viewport, .stage, [style*=\"overflow\"], .toc-bar, .run-nav, .sheet-toc, .chip-row, .tabs, .cat-tabs, .hud-strip, .sitenav'); }).slice(0, 3).map((e) => e.tagName.toLowerCase() + (e.id ? '#' + e.id : '') + (e.className && typeof e.className === 'string' ? '.' + e.className.trim().split(/\s+/).join('.') : '')).join(', ')");
+      if (wide) errors.push(`Wider than the phone: ${wide}`);
+    }
     const errs = errors.filter((e) => !/Failed to load resource/.test(e));
     if (SHOTS) {
       const m = await c.send('Page.getLayoutMetrics');
       const h = Math.min(4000, Math.ceil(m.result.cssContentSize?.height || 900));
-      await c.send('Emulation.setDeviceMetricsOverride', { width: 1400, height: h, deviceScaleFactor: 1, mobile: false });
+      await c.send('Emulation.setDeviceMetricsOverride', { width: PHONE ? 375 : 1400, height: h, deviceScaleFactor: 1, mobile: PHONE });
       await sleep(300);
       const shot = await c.send('Page.captureScreenshot', { format: 'jpeg', quality: 70 });
       fs.writeFileSync(path.join(SHOTS, `${String(results.length + 1).padStart(2, '0')}-${name.replace(/[^a-z0-9]+/gi, '-').toLowerCase().slice(0, 50)}.jpg`), Buffer.from(shot.result.data, 'base64'));
-      await c.send('Emulation.clearDeviceMetricsOverride');
+      await c.send('Emulation.clearDeviceMetricsOverride'); await size();
     }
     const pass = ok === true && !errs.length;
     results.push({ name, pass, why: pass ? '' : (errs[0] || why || (typeof ok === 'string' ? ok : 'check failed')) });
