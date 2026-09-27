@@ -220,6 +220,14 @@
 ## Quick moves (Battle Map turn bar)
 - `quickHTML` / `wireQuick` in battle.js: above the Actions grid, one button per nearest target (`QUICK_MAX` 3). A character's turn: "Shoot/Hit <enemy>" with the weapon that has the most dice at that range (Grit cost shown; disabled without the Grit) → the same `pc attack` call as the Attack drawer (no aim / special ammo — use the drawer for those). An enemy's turn (Warden): "<attack> → <character>" with the first attack that fits the range → `enemyAttack` (asks before forcing an out-of-range roll). Out-of-reach targets are listed as such. `render()` redraws the turn bar too, so quick moves appear once token positions load.
 
+## Backups & the Problems log
+- **Nightly backups:** vercel.json `crons` hits `/api/backup?nightly=1` daily at 09:00 UTC. If `CRON_SECRET` is set in Vercel, the request must carry it; at most one nightly snapshot per 12 hours.
+  - lib/routes/backup.js `snapshot(kind)` saves every document except `battle-img` to rotating keys `snap:0…6` (plus `snap:pre`, taken automatically before any restore), indexed in `snaps`.
+  - Warden actions: `GET ?view=snaps`, POST `snapshot` / `restoreSnap {key}` / `restoreFile {data}`. Restore writes back every document the backup holds.
+  - UI: the Backup card on Run the Game → Tools (desk.js `renderSnaps`): Back up now, Restore buttons, and Restore from a file.
+- **Problems:** common.js reports uncaught errors and rejections from our own scripts (not extensions; at most 8 a page; repeats within a minute are skipped) to `/api/problems` `report`. lib/routes/problems.js keeps the last 80, counting repeats of the same message on the same page within a day. The Warden reads them (GET), `seen` and `clear`.
+  - UI: the Problems card on Tools (desk.js `renderProblems`), with new ones counted on the Tools nav badge `#rn-tools`.
+
 ## Run the Game v2 (side nav of views)
 - `public/run.html` `#desk.run-desk` is a grid: a sticky `.run-nav` on the left, and `#run-main` holding the bands. The cards are grouped by job:
   - **Now** `#grp-now`: what you watch (Needs You, Open Rolls, The Posse, The Fight, Enemies).

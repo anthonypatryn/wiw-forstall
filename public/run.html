@@ -13,7 +13,7 @@
   <link rel="stylesheet" href="/css/style.css?v=82">
   <link rel="stylesheet" href="/css/rollcall.css?v=13">
   <link rel="stylesheet" href="/css/desk.css?v=16">
-  <link rel="stylesheet" href="/css/run.css?v=27">
+  <link rel="stylesheet" href="/css/run.css?v=28">
 </head>
 <body>
   <header class="masthead">
@@ -43,7 +43,7 @@
           <a href="#grp-start" data-view="grp-start"><span data-gl="die"></span><span>Start Something</span></a>
           <a href="#grp-rewards" data-view="grp-rewards"><span data-gl="trophy"></span><span>Rewards &amp; Handouts</span></a>
           <a href="#grp-notes" data-view="grp-notes"><span data-gl="pin"></span><span>Notes &amp; Log</span></a>
-          <a href="#grp-tools" data-view="grp-tools"><span data-gl="wrench"></span><span>Tools</span></a>
+          <a href="#grp-tools" data-view="grp-tools"><span data-gl="wrench"></span><span>Tools</span><b class="rn-badge" id="rn-tools" hidden></b></a>
           <a href="#all" data-view="all" class="rn-all"><span>Everything on one page</span></a>
         </div>
         <div class="rn-h">QUICK</div>
@@ -176,7 +176,15 @@
           </div>
         </section><section class="card corner" id="card-backup">
           <div class="head-row"><h2 class="section-title">Backup</h2><button class="btn small" id="backup" type="button"><span data-gl="satchel"></span> Download</button></div>
-          <p class="muted sess-note">Saves everything — sheets, NPCs, factions, maps, store, notes and the Table Log — to one file on this device. Do it after each session. <span id="backup-note"></span></p>
+          <p class="muted sess-note">Saves everything — sheets, NPCs, factions, maps, store, notes and the Table Log — to one file on this device. <span id="backup-note"></span></p>
+          <h3 class="sub-h">NIGHTLY BACKUPS</h3>
+          <p class="muted sess-note">Taken automatically every night; the last 7 are kept here. Restoring one replaces everything with how it was then (a copy of right now is kept first, so a restore can be undone).</p>
+          <div id="snaps"></div>
+          <div class="btn-row"><button class="btn small secondary" id="snap-now" type="button">Back up now</button><label class="btn small secondary upload-btn">Restore from a file<input type="file" id="restore-file" accept="application/json,.json" hidden></label></div>
+        </section><section class="card corner" id="card-problems">
+          <div class="head-row"><h2 class="section-title">Problems</h2><button class="btn small secondary" id="problems-clear" type="button">Clear</button></div>
+          <p class="muted sess-note">Errors from anyone’s screen, so you hear about bugs from the app itself. Mention them to whoever’s fixing things.</p>
+          <div id="problems"></div>
         </section>
           </div>
           <div class="stack-col">
@@ -193,6 +201,6 @@
     </div>
   </main>
 
-  <script type="module" src="/js/run.js?v=61"></script>
+  <script type="module" src="/js/run.js?v=62"></script>
 </body>
 </html>

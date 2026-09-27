@@ -10,6 +10,7 @@ import lockpick from '../lib/routes/lockpick.js';
 import map from '../lib/routes/map.js';
 import npcs from '../lib/routes/npcs.js';
 import papers from '../lib/routes/papers.js';
+import problems from '../lib/routes/problems.js';
 import pulse from '../lib/routes/pulse.js';
 import saloon from '../lib/routes/saloon.js';
 import scan from '../lib/routes/scan.js';
@@ -19,7 +20,7 @@ import shop from '../lib/routes/shop.js';
 import wanted from '../lib/routes/wanted.js';
 import whispers from '../lib/routes/whispers.js';
 
-const ROUTES = { backup, battle, combat, handouts, image, journal, lockpick, map, npcs, papers, pulse, saloon, scan, scenes, session, shop, wanted, whispers };
+const ROUTES = { backup, battle, combat, handouts, image, journal, lockpick, map, npcs, papers, problems, pulse, saloon, scan, scenes, session, shop, wanted, whispers };
 
 import { transaction, counter, bump } from '../lib/store.js';
 import { pinOk } from '../lib/http.js';

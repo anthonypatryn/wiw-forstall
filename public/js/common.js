@@ -571,3 +571,28 @@ export function abilityTargetsHTML(name, pc, posse, foes, sel) {
 export function abilityBody(pc, sel) {
   return { action: 'pc', id: pc.id, op: 'useAbility', name: sel.name, target: sel.target, option: sel.option, targets: [sel.t1, sel.t2].filter(Boolean) };
 }
+
+// ---------- Problems log: script errors from this page are reported (quietly) for the Warden ----------
+(() => {
+  let sent = 0; const recent = new Map();
+  const who = () => { try { return JSON.parse(localStorage.getItem('wiw.me') || 'null') || (sessionStorage.getItem('wiw.pin') ? 'Warden' : ''); } catch { return ''; } };
+  const browser = () => (navigator.userAgent.match(/(Edg|Firefox|Chrome|Safari)\/(\d+)/) || []).slice(1, 3).join(' ');
+  function report(msg, where) {
+    if (!msg || sent >= 8) return;
+    const k = `${msg}|${where}`;
+    if (recent.has(k) && Date.now() - recent.get(k) < 60000) return;
+    recent.set(k, Date.now()); sent += 1;
+    fetch('/api/problems', { method: 'POST', headers: { 'content-type': 'application/json' }, keepalive: true,
+      body: JSON.stringify({ action: 'report', msg: String(msg).slice(0, 300), where, page: location.pathname, who: who(), ua: browser() }) }).catch(() => {});
+  }
+  addEventListener('error', (e) => {
+    const f = e.filename || '';
+    if ((f && !f.startsWith(location.origin)) || /ResizeObserver/.test(e.message || '')) return; // browser extensions, harmless noise
+    report(e.message, `${f.replace(location.origin, '').replace(/\?v=\d+/, '')}:${e.lineno}`);
+  });
+  addEventListener('unhandledrejection', (e) => {
+    const r = e.reason, st = String(r?.stack || '');
+    if (st && !st.includes(location.origin)) return;
+    report(String(r?.message || r || 'Something went wrong'), (st.split('\n')[1] || '').trim().replace(location.origin, '').replace(/\?v=\d+/, '').slice(0, 150));
+  });
+})();

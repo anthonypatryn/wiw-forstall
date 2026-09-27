@@ -173,10 +173,63 @@ $('#backup').addEventListener('click', async () => {
 });
 
 
+// ---------- nightly backups: list, back up now, restore (a snapshot or a downloaded file) ----------
+const when = (t) => new Date(t).toLocaleString([], { weekday: 'short', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+const KIND = { nightly: 'nightly', manual: 'by hand', 'before-restore': 'just before a restore' };
+async function renderSnaps() {
+  const box = $('#snaps');
+  if (!box) return;
+  let list = [];
+  try { list = (await api('GET', null, '?view=snaps', '/api/backup')).list || []; } catch { box.innerHTML = '<p class="muted">Couldn’t load the backups.</p>'; return; }
+  box.innerHTML = list.length ? list.map((x) => `<div class="item-row snap-row"><span class="item-who"><b>${esc(when(x.at))}</b><small>${KIND[x.kind] || x.kind} · ${Math.max(1, Math.round(x.size / 1024))} KB</small></span>
+      <button type="button" class="btn small secondary" data-restore="${esc(x.key)}">Restore</button></div>`).join('')
+    : '<p class="muted">None yet. The first one is taken tonight, or press Back up now.</p>';
+  box.querySelectorAll('[data-restore]').forEach((b) => b.addEventListener('click', async () => {
+    const x = list.find((y) => y.key === b.dataset.restore);
+    if (!await ask(`Restore everything to ${when(x.at)}?\n\nSheets, NPCs, the fight, the Journal, the Store and notes all go back to how they were then. A copy of right now is saved first, so you can undo this.`, { ok: 'Restore it', danger: true })) return;
+    try { const r = await api('POST', { action: 'restoreSnap', key: x.key }, '', '/api/backup'); toast(`Restored ${r.result.restored} parts of the game. Reloading…`); setTimeout(() => location.reload(), 1200); }
+    catch (e) { toast(e.message, true); }
+  }));
+}
+$('#snap-now')?.addEventListener('click', async () => {
+  try { await api('POST', { action: 'snapshot' }, '', '/api/backup'); toast('Backed up.'); renderSnaps(); } catch (e) { toast(e.message, true); }
+});
+$('#restore-file')?.addEventListener('change', async (e) => {
+  const file = e.target.files[0]; e.target.value = '';
+  if (!file) return;
+  let data;
+  try { data = JSON.parse(await file.text()); } catch { toast('That file isn’t a backup.', true); return; }
+  if (!await ask(`Restore everything from “${file.name}”?\n\nThe whole game goes back to that file. A copy of right now is saved first, so you can undo this.`, { ok: 'Restore it', danger: true })) return;
+  try { const r = await api('POST', { action: 'restoreFile', data }, '', '/api/backup'); toast(`Restored ${r.result.restored} parts of the game. Reloading…`); setTimeout(() => location.reload(), 1200); }
+  catch (err) { toast(err.message, true); }
+});
+
+// ---------- Problems: errors reported from anyone's screen ----------
+async function renderProblems() {
+  const box = $('#problems');
+  if (!box) return;
+  let r;
+  try { r = await api('GET', null, '', '/api/problems'); } catch { return; }
+  const fresh = r.list.filter((x) => x.last > (r.seenAt || 0)).length;
+  const badge = $('#rn-tools'); if (badge) { badge.hidden = !fresh; badge.textContent = fresh; }
+  const names = Object.fromEntries((getCombat?.()?.posse || []).map((p) => [p.id, p.name]));
+  const who = (w) => String(w || '').split(', ').map((x) => names[x] || x).filter(Boolean).join(', ');
+  box.innerHTML = r.list.length ? r.list.map((x) => `<div class="notice${x.last > (r.seenAt || 0) ? ' urgent' : ''}"><div class="ck-body"><b>${esc(x.msg)}</b>
+      <div class="muted prob-meta">${esc(x.page)}${x.where ? ` · ${esc(x.where)}` : ''} · ${x.count > 1 ? `${x.count} times, last ` : ''}${esc(timeAgo(x.last))}${x.who ? ` · ${esc(who(x.who))}` : ''}${x.ua ? ` · ${esc(x.ua)}` : ''}</div></div></div>`).join('')
+    : '<p class="muted">No problems reported. Nice.</p>';
+}
+$('#problems-clear')?.addEventListener('click', async () => {
+  if (!await ask('Clear the Problems list?', { ok: 'Clear it' })) return;
+  try { await api('POST', { action: 'clear' }, '', '/api/problems'); renderProblems(); } catch (e) { toast(e.message, true); }
+});
+// looking at Tools counts as having seen them
+document.querySelector('#run-nav [data-view="grp-tools"]')?.addEventListener('click', async () => { try { await api('POST', { action: 'seen' }, '', '/api/problems'); } catch {} setTimeout(renderProblems, 300); });
+
 // ---------- start ----------
 export function mountDesk(opts) {
   getCombat = opts.getCombat; combatAct = opts.combatAct;
   poller?.stop();
   poller = startPolling('warden', onSessions, null, EP);
+  renderSnaps(); renderProblems(); setInterval(renderProblems, 60000);
   loadHomebrew();
 }

@@ -159,3 +159,10 @@ body.warden-mode .rn-quick button { background: transparent; color: var(--on-dar
   .rn-views a .gl, .rn-h, .rn-quick, .rn-views a.rn-all { display: none; }
   .rn-end { margin: 0; width: auto; flex: none; }
 }
+
+/* Backup: nightly list; Problems */
+.sub-h { margin: 14px 0 4px; font: var(--fs-sm) var(--display); letter-spacing: .16em; color: var(--ink-soft); }
+#snaps { display: grid; gap: 4px; margin: 6px 0 10px; }
+.snap-row .item-who small { display: block; }
+#problems { display: grid; gap: 6px; }
+.prob-meta { font-size: var(--fs-xs); margin-top: 2px; word-break: break-word; }
