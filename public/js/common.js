@@ -25,7 +25,9 @@ export function setPin(p) { wardenPin = p; }
 
 export async function api(method, body, query = '', endpoint = '/api/scan') {
   const headers = { 'Content-Type': 'application/json' };
-  if (wardenPin) headers['x-warden-pin'] = wardenPin;
+  // pages that never ran their own unlock (the Posse Stash page, dialogs opened anywhere) still act as the Warden in this tab
+  const pin = wardenPin || savedPin();
+  if (pin) headers['x-warden-pin'] = pin;
   let r;
   try { r = await fetch(endpoint + query, { method, headers, body: body ? JSON.stringify(body) : undefined }); }
   catch { connection(false); const e = new Error('Can’t reach the game right now. Check your connection, then try again.'); e.offline = true; throw e; }
