@@ -445,7 +445,7 @@ function positionCard() {
 function mapBanner() {
   const att = targeting(), b = $('#map-banner');
   b.hidden = !att;
-  if (att) b.innerHTML = att.kind === 'pc' ? `${gl('target')} CLICK A TARGET ON THE MAP <em>lit by range: red Arm’s Reach · yellow Short · teal Long</em>` : `${gl('claws')} CLICK WHO ${esc(att.name.toUpperCase())} ATTACKS`;
+  if (att) b.innerHTML = att.kind === 'pc' ? `${gl('target')} CLICK A TARGET ON THE MAP <em>lit by range: ${document.documentElement.classList.contains('cb-ranges') ? 'blue Arm’s Reach · orange Short · pink Long' : 'red Arm’s Reach · yellow Short · teal Long'}</em>` : `${gl('claws')} CLICK WHO ${esc(att.name.toUpperCase())} ATTACKS`;
 }
 addEventListener('resize', () => positionCard());
 addEventListener('keydown', (e) => {

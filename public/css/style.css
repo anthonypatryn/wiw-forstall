@@ -1137,3 +1137,20 @@ body.scan-in-fight #roll-btn { opacity: .45; pointer-events: none; }
 .keys-list dt, .keys-list dd { margin: 0; }
 .keys-list dd small { color: var(--ink-soft); font-size: var(--fs-xs); }
 kbd { display: inline-block; min-width: 28px; padding: 3px 8px 1px; border: 2px solid var(--ink); border-bottom-width: 3px; border-radius: var(--r-sm); background: var(--surface); font: var(--fs-md) var(--display); letter-spacing: .06em; text-align: center; }
+
+/* ---------- this device's settings (common.js prefs) ---------- */
+html[data-text="large"] { --fs-xs: 13px; --fs-sm: 15.5px; --fs-md: 17.5px; --fs-lg: 20px; --fs-xl: 24px; --fs-2xl: 30px; --fs-3xl: 43px; }
+html[data-text="larger"] { --fs-xs: 14.5px; --fs-sm: 17px; --fs-md: 19px; --fs-lg: 22px; --fs-xl: 26px; --fs-2xl: 33px; --fs-3xl: 46px; }
+html[data-text] body { font-size: var(--fs-md); }
+html.less-motion *, html.less-motion *::before, html.less-motion *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
+/* the Battle Map's range colours (the colour-blind option swaps them) */
+:root { --band-arm: #d63428; --band-short: #f0be28; --band-long: #40aab2; }
+html.cb-ranges { --band-arm: #0072b2; --band-short: #e69f00; --band-long: #cc79a7; }
+.nav-settings { flex: none; display: flex; align-items: center; justify-content: center; width: 38px; padding: 0; border: 0; background: none; color: var(--on-dark-dim); cursor: pointer; }
+.nav-settings:hover { color: #fff; }
+.nav-settings .gl { width: 20px; height: 20px; margin: 0; }
+.settings-modal { max-width: 460px; display: grid; gap: 14px; }
+.settings-modal .ho-kicker small { font: italic var(--fs-xs) var(--body); letter-spacing: 0; margin-left: 6px; }
+.set-vol { display: flex; align-items: center; gap: 10px; font-size: var(--fs-sm); margin-top: 6px; }
+.set-vol input { flex: 1; accent-color: var(--accent); }
+@media (max-width: 760px) { .nav-settings { display: none; } }

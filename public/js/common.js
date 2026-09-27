@@ -2,6 +2,18 @@ import { ICONS } from './icons.js';
 import { gl } from './glyphs.js';
 import './controls.js';
 import { play, isMuted, setMuted, volume, setVolume } from './sound.js';
+
+// ---------- this device's settings (applied before anything draws) ----------
+const PREFS_KEY = 'wiw.prefs';
+export function prefs() { try { return { motion: '', text: 'normal', cb: false, ...(JSON.parse(localStorage.getItem(PREFS_KEY) || '{}')) }; } catch { return { motion: '', text: 'normal', cb: false }; } }
+function applyPrefs(p = prefs()) {
+  const r = document.documentElement;
+  r.classList.toggle('less-motion', p.motion === 'less');
+  r.classList.toggle('cb-ranges', !!p.cb);
+  if (p.text && p.text !== 'normal') r.dataset.text = p.text; else delete r.dataset.text;
+}
+function setPref(k, v) { const p = { ...prefs(), [k]: v }; try { localStorage.setItem(PREFS_KEY, JSON.stringify(p)); } catch {} applyPrefs(p); }
+applyPrefs();
 export { play }; // styled drop-downs, suggestion lists and tooltips (no browser pop-up UI)
 
 export const $ = (s, r = document) => r.querySelector(s);
@@ -324,6 +336,7 @@ export function mountNav(active) {
       <div class="nav-main">${top}</div>
       <div class="nav-side">
         <button type="button" class="nav-sound" title="Sound effects" aria-pressed="${!isMuted()}">${gl(isMuted() ? 'mute' : 'sound')}</button>
+        <button type="button" class="nav-settings" data-settings title="Settings" aria-label="Settings">${gl('gear')}</button>
         <button type="button" class="nav-help" data-rule="" title="Look up a rule" aria-label="Look up a rule">?</button>
         ${on ? `<button type="button" class="nav-undo" aria-expanded="false" title="Undo a recent change" aria-label="Undo a recent change">↶</button>
           <button type="button" class="nav-needs" aria-expanded="false" title="What's waiting on you"><span class="nn">Needs you</span> <b>·</b></button>
@@ -335,7 +348,7 @@ export function mountNav(active) {
     </div>
     <div class="needs-list" hidden></div>
     <div class="needs-list undo-list" hidden></div>
-    <div class="nav-sheet" hidden><nav aria-label="All pages">${all.map(([h, l]) => (h && h.startsWith('<b>') ? `<div class="nav-sheet-h">${h}</div>` : link(h, esc(l)))).join('')}<button type="button" data-rule="">Look up a rule</button>${link('/howto', 'How to Play')}<div class="nav-sheet-h">Sound</div><div class="nav-sheet-sound"><button type="button" class="nav-sound-sheet">${isMuted() ? 'Sound is off — turn on' : 'Sound is on — mute'}</button><input type="range" min="0" max="1" step="0.05" value="${volume()}" aria-label="Volume" class="nav-vol"></div>${on ? '<div class="nav-sheet-h">Warden</div><a href="/run#grp-tools">Backup &amp; homebrew</a><button type="button" data-player>Switch to player view</button>' : ''}</nav></div>`;
+    <div class="nav-sheet" hidden><nav aria-label="All pages">${all.map(([h, l]) => (h && h.startsWith('<b>') ? `<div class="nav-sheet-h">${h}</div>` : link(h, esc(l)))).join('')}<button type="button" data-rule="">Look up a rule</button><button type="button" data-settings>Settings</button>${link('/howto', 'How to Play')}<div class="nav-sheet-h">Sound</div><div class="nav-sheet-sound"><button type="button" class="nav-sound-sheet">${isMuted() ? 'Sound is off — turn on' : 'Sound is on — mute'}</button><input type="range" min="0" max="1" step="0.05" value="${volume()}" aria-label="Volume" class="nav-vol"></div>${on ? '<div class="nav-sheet-h">Warden</div><a href="/run#grp-tools">Backup &amp; homebrew</a><button type="button" data-player>Switch to player view</button>' : ''}</nav></div>`;
   wireNav(el, on);
   // other sticky bars (sheet toolbar, contents bars) sit just under the nav
   const navH = () => document.documentElement.style.setProperty('--nav-h', `${el.offsetHeight}px`);
@@ -357,6 +370,7 @@ if (!window.__ruleClicks) {
   }, true);
 }
 function wireNav(el, on) {
+  el.querySelectorAll('[data-settings]').forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); el.querySelector('.nav-sheet').hidden = true; document.body.classList.remove('nav-open'); openSettings(); }));
   const closeAll = (except) => el.querySelectorAll('.nav-group').forEach((g) => { if (g !== except) { g.querySelector('.nav-menu').hidden = true; g.querySelector('.nav-drop').setAttribute('aria-expanded', 'false'); } });
   el.querySelectorAll('.nav-group').forEach((g) => g.querySelector('.nav-drop').addEventListener('click', (e) => {
     e.stopPropagation();
@@ -684,3 +698,29 @@ document.addEventListener('keydown', async (e) => {
     } catch (err) { toast(err.message, true); }
   }
 });
+
+// ---------- the Settings window (nav) ----------
+export function openSettings() {
+  if (document.querySelector('.settings-back')) return;
+  const p = prefs();
+  const back = document.createElement('div');
+  back.className = 'modal-back ask-back settings-back';
+  const chips = (k, opts) => opts.map(([v, l]) => `<button type="button" class="chip-btn${String(p[k]) === String(v) ? ' on' : ''}" data-pref="${k}" data-v="${v}">${l}</button>`).join('');
+  back.innerHTML = `<div class="modal ask settings-modal" role="dialog" aria-modal="true" aria-label="Settings">
+    <div class="ho-kicker">SETTINGS <small>on this device only</small></div>
+    <div class="field-step"><span>SOUND</span><div class="chip-row"><button type="button" class="chip-btn${isMuted() ? '' : ' on'}" data-sound="on">On</button><button type="button" class="chip-btn${isMuted() ? ' on' : ''}" data-sound="off">Off</button></div>
+      <label class="set-vol">Volume <input type="range" min="0" max="1" step="0.05" value="${volume()}" data-vol aria-label="Volume"></label></div>
+    <div class="field-step"><span>TEXT SIZE</span><div class="chip-row">${chips('text', [['normal', 'Normal'], ['large', 'Large'], ['larger', 'Larger']])}</div></div>
+    <div class="field-step"><span>MOTION</span><div class="chip-row">${chips('motion', [['', 'Normal'], ['less', 'Less motion']])}</div><small class="muted">Less motion turns off dice tumbling, pulsing rings and slides.</small></div>
+    <div class="field-step"><span>RANGE COLOURS</span><div class="chip-row">${chips('cb', [[false, 'Red · yellow · teal'], [true, 'Colour-blind friendly']])}</div><small class="muted">Changes the Arm’s Reach / Short / Long colours on the Battle Map.</small></div>
+    <div class="ask-btns"><button type="button" class="btn" data-x>Done</button></div></div>`;
+  document.body.append(back);
+  back.addEventListener('click', (e) => {
+    if (e.target === back || e.target.closest('[data-x]')) { back.remove(); return; }
+    const b = e.target.closest('[data-pref]');
+    if (b) { const v = b.dataset.v === 'true' ? true : b.dataset.v === 'false' ? false : b.dataset.v; setPref(b.dataset.pref, v); b.parentElement.querySelectorAll('.chip-btn').forEach((x) => x.classList.toggle('on', x === b)); return; }
+    const snd = e.target.closest('[data-sound]');
+    if (snd) { setMuted(snd.dataset.sound === 'off'); snd.parentElement.querySelectorAll('.chip-btn').forEach((x) => x.classList.toggle('on', x === snd)); if (snd.dataset.sound === 'on') play('chime'); mountNav(); }
+  });
+  back.querySelector('[data-vol]').addEventListener('change', (e) => { setVolume(e.target.value); play('chime'); });
+}

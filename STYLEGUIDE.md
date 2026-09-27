@@ -118,7 +118,7 @@ Small helpers: `.btn-row` (a row of buttons), `.fine` (12px note), `.small-text`
 - **Layers:** never write a raw `z-index` number; use the `--z-*` tokens in `:root` (style.css), listed low to high: sticky bars (`--z-contents-bar` 18 … `--z-turn-bar` 30), floating buttons and HUD (40–95), full-screen game scenes (`--z-scene` 210 … `--z-end-session` 250), the roll pop-up (300), the newspaper (400), dialogs (`--z-dialog` 450, Rules & key 460), lightbox 500, tour 510, toast 600, dropdown lists 700, tooltips 710. Small local values (1–5) inside a component are fine as numbers.
 - **Shades of black:** `--shade-1` (.06) … `--shade-5` (.8) for shadows and dimming; `--line` / `--line-soft` for ink-colored rules; `--gold` for the warm highlight on dark scenes.
 - **Breakpoints** (CSS variables can't be used in media queries, so these are the agreed numbers): **380** tiny phones, **480** phones, **600** small tablets / big phones, **900** two columns → one, **1080** wide. A few are tuned to their content and stay as they are: 700 / 1100 (the sheet's page grid), 760 / 1020 (when the nav collapses), 980 / 1000 (page grids).
-- `!important` only for: the global `[hidden]`, the restyled select arrow, `.lp-num input`, the print stylesheet, and overriding inline token styles (Battle Map stand-ins) or the Warden theme (the Forstall jam button).
+- `!important` only for: the global `[hidden]`, the Less-motion setting (`html.less-motion`), the restyled select arrow, `.lp-num input`, the print stylesheet, and overriding inline token styles (Battle Map stand-ins) or the Warden theme (the Forstall jam button).
 
 ## Round +/−/× controls
 Steppers (`.pmb`, `.pm-btn`, `.sev button`, inventory `.qty button`, fighter-card `.pm > button`), the roll pop-up close (`.rp-x`) and remove buttons (`.rm-btn`) share one look (end of style.css), matching `.btn`:
@@ -141,3 +141,11 @@ style.css is loaded on every page, so a page's class can pick up a site-wide rul
 - `.target`: the Scanner's target banner.
 
 Battle Map tokens use `.map-ping` and `.tgt` instead. Before adding a short, generic class (`target`, `opts`, `ping`, `go`…), grep style.css for it.
+
+## Device settings & range colours
+- The Settings window (nav cog, `openSettings()` in common.js) stores `wiw.prefs` {motion, text, cb} and applies it on `<html>` before anything draws:
+  - `data-text="large|larger"` scales the `--fs-*` tokens. Always size text with the tokens, never raw px, or this won't reach it.
+  - `.less-motion` turns animations and transitions off.
+  - `.cb-ranges` swaps the band colours.
+- Battle Map range colours are `--band-arm`, `--band-short` and `--band-long` (never `--red`, `--yellow` or `--teal` directly), so the colour-blind option (blue, orange, pink) reaches every place they're used.
+- App icon: the gold sheriff's star on slate. It's the same inline SVG favicon on every page (attention.js adds its red dot to it), plus `/img/icon-*.png` and `manifest.webmanifest`, which make the site installable.

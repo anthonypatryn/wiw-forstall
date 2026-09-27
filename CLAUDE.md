@@ -228,6 +228,11 @@
 - **Problems:** common.js reports uncaught errors and rejections from our own scripts (not extensions; at most 8 a page; repeats within a minute are skipped) to `/api/problems` `report`. lib/routes/problems.js keeps the last 80, counting repeats of the same message on the same page within a day. The Warden reads them (GET), `seen` and `clear`.
   - UI: the Problems card on Tools (desk.js `renderProblems`), with new ones counted on the Tools nav badge `#rn-tools`.
 
+## Settings & installable app
+- common.js `prefs()` / `applyPrefs()` / `setPref()` store per-device settings in `wiw.prefs`, applied at import on `<html>`: `data-text`, `.less-motion` and `.cb-ranges`. `openSettings()` is opened from the nav cog (`.nav-settings`, and "Settings" in the phone menu) and covers sound on/off plus volume, text size, motion, and range colours.
+- The Battle Map band colours come from `--band-*` in style.css.
+- `public/manifest.webmanifest` plus `/img/icon-180|192|512.png` and a maskable 512. Every page's `<head>` has the star favicon (inline SVG), the manifest link, the apple-touch-icon and `theme-color`. There's no service worker (Chrome no longer needs one to install, and a cache would fight the `?v=` busting).
+
 ## Start Session & keyboard shortcuts
 - **Start Session** (Run the Game nav, `public/js/startsession.js` `openStartSession`) is one window:
   - tonight's title (`Session N`) and date
