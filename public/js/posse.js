@@ -239,9 +239,11 @@ function buildSheet(p) {
       <button class="btn small" type="button" data-mode="view" hidden>✓ Done editing</button>
       <button class="btn small" type="button" data-mode="finish" hidden>Save character</button>
       <button class="btn small secondary" type="button" data-tableview hidden></button>
+      <button class="btn small secondary" type="button" data-print title="Print this sheet (or save it as a PDF)">Print</button>
       <button class="btn small secondary danger" id="delete-pc" type="button">Delete</button>
       <nav class="sheet-toc" aria-label="Jump to">${[['starter', 'Checklist'], ['fight', 'Fight'], ['skills', 'Skills'], ['health', 'Health'], ['statuses', 'Statuses'], ['weapons', 'Weapons'], ['abilities', 'Abilities'], ['prestige', 'Prestige'], ['talents', 'Talents'], ['achievements', 'Titles'], ['disposition', 'Story'], ['reputation', 'Reputation'], ['gear', 'Gear'], ['inventory', 'Inventory'], ['forstall', 'Forstall'], ['horse', 'Horse'], ['mech', 'Mech']].map(([id, label]) => `<a href="#${p.id}" data-jump="${id}">${label}</a>`).join('')}</nav>
     </div>
+    <div data-dyn="levelup"></div>
     <div class="sheet-head">
       <div class="sh-trade"><small>THE</small>${esc(p.trade.toUpperCase())}</div>
       <img class="sh-logo" src="/img/logo-light.svg" alt="Wild Imaginary West">
@@ -469,6 +471,7 @@ function wireSheet(p) {
   });
 
   $('#delete-pc').addEventListener('click', () => deletePc(p.id));
+  view.querySelector('[data-print]')?.addEventListener('click', () => window.print());
   view.querySelector('[data-me-bar]').addEventListener('click', () => setMe(myId() === p.id ? null : p.id));
   on('click', async (e) => {
     const go = e.target.closest('[data-upg-go]'), rm = e.target.closest('[data-upg-rm]'), rds = e.target.closest('[data-rds]');
@@ -623,6 +626,17 @@ function renderSpend(view, p) {
   box.innerHTML = `<div class="sp-have">UNCLAIMED PRESTIGE: <b>${have}</b></div>${SPEND.map(([k, cost, name, desc]) => `
     <div class="sp-row${have < cost || maxed[k] ? ' off' : ''}"><span class="sp-cost">${cost}</span><div class="sp-what"><b>${name}</b><small>${desc}</small></div>
       <div class="sp-pick">${pickers[k]}</div><button type="button" class="btn small" data-spend="${k}" ${have < cost || maxed[k] ? 'disabled' : ''}>Spend ${cost}</button></div>`).join('')}`;
+}
+// the guided level-up (levelup.js): a callout whenever there's Prestige to spend
+function renderLevelUp(view, p) {
+  const box = view.querySelector('[data-dyn="levelup"]');
+  if (!box) return;
+  const have = p.prestige?.unclaimed || 0, mine = warden || myId() === p.id;
+  if (have < 2 || !mine || p.dead || p.done === false) { box.innerHTML = ''; return; }
+  if (box.dataset.have === String(have) && box.innerHTML) return;
+  box.dataset.have = String(have);
+  box.innerHTML = `<div class="lu-callout">${gl('star')}<span><b>${esc(p.name)} has ${have} Prestige to spend.</b> New Skills, Talents, Abilities and Health.</span><button type="button" class="btn small" data-levelup>Level up</button></div>`;
+  box.querySelector('[data-levelup]').addEventListener('click', () => import('./levelup.js').then((m) => m.openLevelUp({ pc: structuredClone(pcById(p.id)), meta, act: (body) => act(body) })));
 }
 async function spendPrestige(view, p, what) {
   const pc = pcById(p.id);
@@ -921,6 +935,7 @@ function hydrate(p) {
   }
   renderStarter(view, p);
   renderSpend(view, p);
+  renderLevelUp(view, p);
   renderAch(view, p);
   renderUpgrades(view, p);
   renderRides(view, p);

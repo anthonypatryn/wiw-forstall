@@ -481,3 +481,41 @@ body.warden-mode .sheet-bar .sheet-toc a { background: transparent; color: #d5e2
 body.warden-mode .sheet-bar .sheet-toc a:hover { background: var(--w-teal); color: var(--w-slate); }
 body.warden-mode .sheet-bar .btn.secondary.danger { color: var(--on-dark-warn); border-color: var(--on-dark-warn); }
 body.warden-mode .sheet-bar .save-state { color: #9fb0b7; }
+
+/* guided level-up (levelup.js) */
+.lu-callout { display: flex; align-items: center; gap: 12px; margin: 10px 0; padding: 10px 14px; border: 2px solid var(--brass); border-radius: var(--radius); background: rgba(201,164,92,.14); }
+.lu-callout > .gl { width: 22px; height: 22px; color: var(--brass); flex: none; }
+.lu-callout span { flex: 1; font-size: var(--fs-md); }
+.lu-modal { max-width: 640px; display: grid; gap: 12px; }
+.lu-modal .ho-kicker small { font: italic var(--fs-xs) var(--body); letter-spacing: 0; margin-left: 6px; }
+.lu-lead { margin: 0; font-size: var(--fs-md); }
+.lu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; }
+.lu-card { position: relative; display: grid; gap: 4px; align-content: start; text-align: left; padding: 12px 12px 10px 52px; min-height: 86px; border: 2px solid var(--line); border-radius: var(--radius); background: var(--surface); color: var(--ink); cursor: pointer; font: inherit; }
+.lu-card b { font: var(--fs-lg)/1.1 var(--display); letter-spacing: .06em; }
+.lu-card small { font-size: var(--fs-sm); color: var(--ink-soft); }
+.lu-card em { font-size: var(--fs-xs); color: var(--danger); font-style: italic; }
+.lu-card:hover:not(:disabled) { border-color: var(--accent); background: var(--accent-tint); }
+.lu-card:disabled { opacity: .5; cursor: not-allowed; }
+.lu-cost { position: absolute; left: 10px; top: 12px; width: 32px; height: 32px; border-radius: 50%; display: grid; place-items: center; background: var(--ink); color: var(--gold); font: var(--fs-lg)/1 var(--display); }
+.lu-opts { display: grid; gap: 6px; max-height: 50vh; overflow-y: auto; }
+.lu-opt { display: flex; justify-content: space-between; align-items: center; gap: 12px; text-align: left; padding: 10px 12px 8px; border: 1.5px solid var(--line); border-radius: var(--radius); background: var(--surface); color: var(--ink); cursor: pointer; font: inherit; }
+.lu-opt b { font: var(--fs-md) var(--display); letter-spacing: .06em; flex: none; }
+.lu-opt span { font-size: var(--fs-sm); color: var(--ink-soft); text-align: right; }
+.lu-opt.lu-ab { display: grid; }
+.lu-opt.lu-ab span { text-align: left; }
+.lu-opt.on { border: 2px solid var(--accent); background: var(--accent-tint); box-shadow: inset 4px 0 0 var(--accent); }
+.lu-opt:disabled { opacity: .45; cursor: not-allowed; }
+.lu-confirm { position: relative; padding: 4px 0 0 52px; min-height: 44px; }
+.lu-confirm .lu-cost { top: 4px; left: 0; }
+.lu-confirm p { margin: 4px 0 0; font-size: var(--fs-sm); color: var(--ink-soft); }
+
+/* ---------- printing a character sheet (Print on the sheet bar) ---------- */
+@media print {
+  @page { margin: 12mm; }
+  body { background: #fff !important; }
+  .sitenav, .masthead, .sheet-bar, .fab-row, .hud-strip, .log-drawer, .dice-drawer, .tour-back, .conn-banner, [data-dyn="levelup"], .pc-list, .toast, .sh-face-btns, .rm-btn, .spend, .roll-mini, button:not(.sh-face) { display: none !important; }
+  #sheet-view, .sheet, .sbox { box-shadow: none !important; }
+  .sbox { break-inside: avoid; border-color: #000 !important; }
+  input, select, textarea { border: 0 !important; background: none !important; -webkit-appearance: none; appearance: none; color: #000 !important; }
+  a { color: #000 !important; text-decoration: none !important; }
+}

@@ -228,6 +228,14 @@
 - **Problems:** common.js reports uncaught errors and rejections from our own scripts (not extensions; at most 8 a page; repeats within a minute are skipped) to `/api/problems` `report`. lib/routes/problems.js keeps the last 80, counting repeats of the same message on the same page within a day. The Warden reads them (GET), `seen` and `clear`.
   - UI: the Problems card on Tools (desk.js `renderProblems`), with new ones counted on the Tools nav badge `#rn-tools`.
 
+## Guided level-up & printing sheets
+- **Level up:** posse.js `renderLevelUp` shows a brass `.lu-callout` above the sheet head, for the Warden or the sheet's own player, when a finished sheet has 2+ unclaimed Prestige. It opens `public/js/levelup.js` `openLevelUp({pc, meta, act})`:
+  1. what to buy (cards from `SPEND`, disabled if unaffordable or maxed)
+  2. which one (Skill with before → after dice, Talent with what it rerolls, Ability with its text)
+  3. confirm
+  - Spend uses the same pc op `spend` as the Prestige box, then loops back while 2+ remain. Its button is `[data-lu-spend]`, because the sheet's Prestige box already owns `[data-spend]`.
+- **Print:** a Print button on the sheet bar (`window.print()`). posse.css `@media print` hides the nav, bars, buttons and pickers, flattens inputs to plain text and keeps boxes from splitting across pages.
+
 ## Settings & installable app
 - common.js `prefs()` / `applyPrefs()` / `setPref()` store per-device settings in `wiw.prefs`, applied at import on `<html>`: `data-text`, `.less-motion` and `.cb-ranges`. `openSettings()` is opened from the nav cog (`.nav-settings`, and "Settings" in the phone menu) and covers sound on/off plus volume, text size, motion, and range colours.
 - The Battle Map band colours come from `--band-*` in style.css.
