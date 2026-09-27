@@ -184,3 +184,14 @@ body.warden-mode .rn-quick button { background: transparent; color: var(--on-dar
 /* End Session on the (dark) Warden nav: outlined in pale teal like the other nav buttons */
 body.warden-mode .run-nav .btn.secondary.rn-end { background: transparent; color: var(--w-teal-pale); border-color: rgba(169,220,217,.55); box-shadow: none; }
 body.warden-mode .run-nav .btn.secondary.rn-end:hover { background: rgba(95,179,179,.15); color: #fff; }
+
+/* Book Tables: the expansion books' roll tables */
+.bt-intro { margin: 6px 0; font-size: var(--fs-sm); }
+.bt-table { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); margin: 6px 0 8px; }
+.bt-table th { text-align: left; white-space: nowrap; padding: 5px 8px 5px 0; font-family: var(--display); font-weight: 400; letter-spacing: var(--track); vertical-align: top; color: var(--ink-soft); }
+.bt-table td { padding: 5px 0; border-bottom: 1px solid var(--line-soft); }
+.bt-table tr.bt-on td, .bt-table tr.bt-on th { background: var(--now); }
+.bt-table tr { cursor: default; }
+.bt-result { margin-top: 8px; padding: 8px 10px; border-left: 3px solid var(--brass); background: var(--wash); }
+.bt-result p { margin: 2px 0 8px; }
+.bt-result small { color: var(--ink-faint); }
