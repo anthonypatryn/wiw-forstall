@@ -115,3 +115,13 @@
 .spots summary { cursor: pointer; font-weight: 700; }
 .spots .src { font-size: var(--fs-xs); color: var(--ink-faint); }
 .town-map .stage, .town-map .stage img { width: 1200px; height: 1800px; }
+
+/* Find a place (crowded pins) and the East Portal index */
+.place-find { margin-bottom: 10px; }
+.place-find input { width: 100%; }
+#place-hits { display: flex; flex-direction: column; gap: 2px; margin-top: 4px; }
+#place-hits button, .ep-index button { text-align: left; font: inherit; font-size: var(--fs-sm); background: var(--surface); border: 1px solid var(--line-soft); border-radius: var(--r-sm); padding: 5px 8px; cursor: pointer; color: var(--ink); }
+#place-hits button:hover, .ep-index button:hover { border-color: var(--accent); }
+#place-hits b, .ep-index b { display: inline-block; min-width: 2em; font-family: var(--display); color: var(--accent); }
+.ep-index { display: grid; grid-template-columns: 1fr; gap: 2px; margin: 8px 0 10px; max-height: 46vh; overflow: auto; }
+.ep-index b.ex .gl { width: 1em; height: 1em; }

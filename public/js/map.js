@@ -46,7 +46,7 @@ const fitScale = () => { const r = vp.getBoundingClientRect(); return Math.min(r
 function zoomAt(factor, cx, cy) {
   const r = vp.getBoundingClientRect();
   const px = cx ?? r.width / 2, py = cy ?? r.height / 2;
-  const s = Math.max(fitScale() * 0.9, Math.min(1.6, view.s * factor));
+  const s = Math.max(fitScale() * 0.9, Math.min(5, view.s * factor)); // deep zoom pulls crowded pins (East Portal, the canyon) apart
   view.x = px - ((px - view.x) / view.s) * s;
   view.y = py - ((py - view.y) / view.s) * s;
   view.s = s;
@@ -136,7 +136,7 @@ function showMap(id, focus = null) {
   document.querySelectorAll('[data-map]').forEach((b) => b.classList.toggle('on', b.dataset.map === mapId));
   $('#warden-box').hidden = !warden || town; // Warden pins go on the West map
   stopPlacing();
-  selected = null;
+  selected = null; findBox.value = ''; hits.innerHTML = '';
   fit(); renderPlaces(); renderTokens(); renderPanel();
   const f = focus && placeById(focus);
   if (f) { select(f.id); centerOn(f.x, f.y); }
@@ -163,6 +163,19 @@ function nearestPlace(t) {
   return bd < NEAR ? best : null;
 }
 
+// Find a place by name (or East Portal letter): crowded spots are hard to tap, so this picks from a list instead.
+const findBox = $('#place-q'), hits = $('#place-hits');
+const goTo = (id) => { const p = placeById(id); if (!p) return; select(id); centerOn(p.x, p.y, Math.max(view.s, onTown() ? 1.1 : 2.4)); findBox.value = ''; hits.innerHTML = ''; };
+function renderHits() {
+  const q = findBox.value.trim().toLowerCase();
+  if (!q) { hits.innerHTML = ''; return; }
+  const list = allPlaces().filter((p) => p.name.toLowerCase().includes(q) || (p.letter || '').toLowerCase() === q).slice(0, 8);
+  hits.innerHTML = list.length ? list.map((p) => `<button type="button" data-goto="${esc(p.id)}">${p.letter ? `<b>${esc(p.letter)}</b> ` : ''}${esc(p.name)}</button>`).join('') : '<p class="muted">No place by that name on this map.</p>';
+}
+findBox.addEventListener('input', renderHits);
+findBox.addEventListener('keydown', (e) => { if (e.key === 'Enter') { const b = hits.querySelector('[data-goto]'); if (b) goTo(b.dataset.goto); } });
+hits.addEventListener('click', (e) => { const b = e.target.closest('[data-goto]'); if (b) goTo(b.dataset.goto); });
+
 function select(id) {
   selected = id;
   renderPlaces();
@@ -176,9 +189,11 @@ function renderPanel() {
   if (!p && onTown()) {
     body.innerHTML = `<div class="intro"><h2>East Portal</h2>
       <p>The Heart of the Black Canyon: about 50 folk plus ten visitors at any time, built up the cliff walls around the Gunnison.</p>
-      <p class="muted">Tap a lettered building to read about it and who you’ll find there. (East Portal Setting Guide.)</p>
+      <p class="muted">Tap a lettered building, or pick it here, to read about it and who you’ll find there. (East Portal Setting Guide.)</p>
+      <div class="ep-index">${allPlaces().map((x) => `<button type="button" data-goto="${esc(x.id)}">${x.letter ? `<b>${esc(x.letter)}</b>` : `<b class="ex">${gl('pin')}</b>`} ${esc(x.name)}</button>`).join('')}</div>
       <button type="button" class="btn small secondary" data-map-go="west">‹ Back to the West</button></div>`;
     body.querySelector('[data-map-go]').addEventListener('click', () => showMap('west', 'east-portal'));
+    body.querySelector('.ep-index').addEventListener('click', (e) => { const b = e.target.closest('[data-goto]'); if (b) goTo(b.dataset.goto); });
     return;
   }
   if (!p) {
