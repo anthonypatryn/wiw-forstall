@@ -230,6 +230,8 @@ $('#warden-btn').addEventListener('click', async () => {
 (async () => {
   const c = await api('GET', null, '?view=catalog', EP);
   catalog = c.catalog; categories = c.categories;
+  const deep = decodeURIComponent((location.hash.match(/^#shop=(.+)$/) || [])[1] || '');
+  if (deep && catalog.some((i) => i.shop === deep)) { cat = 'Book Shops'; setTimeout(() => { $('#sub').value = deep; renderItems(); }, 0); }
   buildCreate();
   const pin = savedPin();
   if (pin) warden = await tryWarden(pin, EP);

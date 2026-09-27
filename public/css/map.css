@@ -97,3 +97,21 @@
 
 .far .token .nm { display: none; }
 .far .place.settlement, .far .place.region { display: none; }
+
+/* which map: the West or the East Portal town map */
+.map-switch { position: absolute; top: 10px; left: 10px; z-index: 3; display: flex; border-radius: var(--r-pill); overflow: hidden; box-shadow: var(--shadow-stamp); }
+.map-switch button { font: inherit; font-family: var(--display); letter-spacing: var(--track); font-size: var(--fs-sm); padding: 5px 12px; border: 0; background: var(--surface); color: var(--ink); cursor: pointer; }
+.map-switch button.on { background: var(--ink); color: var(--on-dark-bright); }
+/* town map pins carry the book's letters */
+.place.spot .dot, .place.exit .dot { width: 26px; height: 26px; display: grid; place-items: center; font-family: var(--display); font-size: 13px; color: #fff; background: var(--rust); border: 2px solid var(--surface); }
+.place.exit .dot { background: var(--ink); }
+.town-map .place .tag { display: none; }
+.town-map.show-labels .place .tag, .town-map .place.sel .tag { display: block; }
+.place.poi .dot { background: var(--brass); }
+.rumors .rumor { border-left: 3px solid var(--brass); padding: 4px 8px; margin: 6px 0; background: var(--wash); }
+.rumors .rumor p { margin: 0 0 6px; font-style: italic; }
+.rumors h3 small, .spots h3 small { font-family: var(--body); text-transform: none; letter-spacing: 0; color: var(--ink-faint); font-size: var(--fs-xs); }
+.spots details { margin: 4px 0; }
+.spots summary { cursor: pointer; font-weight: 700; }
+.spots .src { font-size: var(--fs-xs); color: var(--ink-faint); }
+.town-map .stage, .town-map .stage img { width: 1200px; height: 1800px; }

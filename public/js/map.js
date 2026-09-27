@@ -1,5 +1,6 @@
 import { $, esc, api, startPolling, toast, mountNav, tryWarden, forgetWarden, savedPin, wardenModal , ask, askText } from './common.js';
 import { mountTableLog } from './tablelog.js';
+import { store } from './common.js';
 import { gl } from './glyphs.js';
 
 const EP = '/api/map';
@@ -17,6 +18,10 @@ let selected = null;      // place id
 let wanted = [];          // Wanted posters up around the West (for the "N wanted" line)
 const loadWanted = () => api('GET', null, `?view=${warden ? 'warden' : 'player'}`, '/api/wanted').then((d) => { wanted = d.posters || []; if (selected) renderPanel(); }).catch(() => {});
 let placing = false;      // Warden "add a place" mode
+// Which map: the West (Guidebook) or the East Portal town map (East Portal Setting Guide). The posse's tokens live on the West map.
+let mapId = store.get('wiw.mapView', 'west');
+const onTown = () => mapId === 'ep' && !!meta?.town;
+const mapSize = () => (onTown() ? meta.town.size : meta.size);
 const view = { s: 1, x: 0, y: 0 };
 
 const vp = $('#viewport');
@@ -33,11 +38,11 @@ function apply() {
 }
 function clamp() {
   const r = vp.getBoundingClientRect();
-  const w = meta.size.w * view.s, h = meta.size.h * view.s;
+  const w = mapSize().w * view.s, h = mapSize().h * view.s;
   view.x = w < r.width ? (r.width - w) / 2 : Math.min(0, Math.max(r.width - w, view.x));
   view.y = h < r.height ? (r.height - h) / 2 : Math.min(0, Math.max(r.height - h, view.y));
 }
-const fitScale = () => { const r = vp.getBoundingClientRect(); return Math.min(r.width / meta.size.w, r.height / meta.size.h); };
+const fitScale = () => { const r = vp.getBoundingClientRect(); return Math.min(r.width / mapSize().w, r.height / mapSize().h); };
 function zoomAt(factor, cx, cy) {
   const r = vp.getBoundingClientRect();
   const px = cx ?? r.width / 2, py = cy ?? r.height / 2;
@@ -116,16 +121,33 @@ vp.addEventListener('pointercancel', endPointer);
 window.addEventListener('resize', () => { clamp(); apply(); });
 
 // ---------- places ----------
-const allPlaces = () => [
+const allPlaces = () => (onTown() ? meta.town.places : [
   ...meta.places,
   ...(data?.pins || []).map((p) => ({ ...p, kind: 'pin', text: '', page: null })),
-];
+]);
+function showMap(id, focus = null) {
+  mapId = id === 'ep' ? 'ep' : 'west';
+  store.set('wiw.mapView', mapId);
+  const img = stage.querySelector('img'), town = onTown();
+  img.src = town ? meta.town.img : '/img/map.webp';
+  img.width = mapSize().w; img.height = mapSize().h;
+  img.alt = town ? 'Map of East Portal, the Heart of the Black Canyon' : 'Map of the United States of America and the Uncivilized West';
+  vp.classList.toggle('town-map', town);
+  document.querySelectorAll('[data-map]').forEach((b) => b.classList.toggle('on', b.dataset.map === mapId));
+  $('#warden-box').hidden = !warden || town; // Warden pins go on the West map
+  stopPlacing();
+  selected = null;
+  fit(); renderPlaces(); renderTokens(); renderPanel();
+  const f = focus && placeById(focus);
+  if (f) { select(f.id); centerOn(f.x, f.y); }
+}
+document.querySelectorAll('[data-map]').forEach((b) => b.addEventListener('click', () => { if (b.dataset.map !== mapId) showMap(b.dataset.map); }));
 const placeById = (id) => allPlaces().find((p) => p.id === id);
-const KIND_LABEL = { town: 'NOTABLE TOWN', rail: 'RAILROAD TOWN', settlement: 'SETTLEMENT', region: 'REGION', pin: 'MARKED BY THE WARDEN' };
+const KIND_LABEL = { town: 'NOTABLE TOWN', rail: 'RAILROAD TOWN', settlement: 'SETTLEMENT', region: 'REGION', pin: 'MARKED BY THE WARDEN', poi: 'POINT OF INTEREST', spot: 'EAST PORTAL', exit: 'LEAVING TOWN' };
 
 function renderPlaces() {
   $('#places').innerHTML = allPlaces().map((p) => `<button type="button" class="place ${p.kind}${p.kind === 'pin' && !p.shared ? ' secret' : ''}${data?.notes?.[p.id] ? ' has-note' : ''}${selected === p.id ? ' sel' : ''}"
-      data-id="${p.id}" style="left:${p.x}px;top:${p.y}px" aria-label="${esc(p.name)}"><span class="dot"></span><span class="tag">${esc(p.name)}</span></button>`).join('');
+      data-id="${p.id}" style="left:${p.x}px;top:${p.y}px" aria-label="${esc(p.name)}"><span class="dot">${p.letter ? esc(p.letter) : ''}</span><span class="tag">${esc(p.name)}</span></button>`).join('');
 }
 
 function tokensAt(place) {
@@ -136,7 +158,8 @@ function tokensAt(place) {
 }
 function nearestPlace(t) {
   let best = null, bd = Infinity;
-  allPlaces().forEach((p) => { const d = Math.hypot(t.x - p.x, t.y - p.y); if (d < bd) { bd = d; best = p; } });
+  // tokens live on the West map, so measure against its places even while the town map is showing
+  [...meta.places, ...(data?.pins || [])].forEach((p) => { const d = Math.hypot(t.x - p.x, t.y - p.y); if (d < bd) { bd = d; best = p; } });
   return bd < NEAR ? best : null;
 }
 
@@ -150,6 +173,14 @@ function select(id) {
 function renderPanel() {
   const body = $('#panel-body');
   const p = selected && placeById(selected);
+  if (!p && onTown()) {
+    body.innerHTML = `<div class="intro"><h2>East Portal</h2>
+      <p>The Heart of the Black Canyon: about 50 folk plus ten visitors at any time, built up the cliff walls around the Gunnison.</p>
+      <p class="muted">Tap a lettered building to read about it and who you’ll find there. (East Portal Setting Guide.)</p>
+      <button type="button" class="btn small secondary" data-map-go="west">‹ Back to the West</button></div>`;
+    body.querySelector('[data-map-go]').addEventListener('click', () => showMap('west', 'east-portal'));
+    return;
+  }
   if (!p) {
     body.innerHTML = `<div class="intro"><h2>The Uncivilized West</h2>
       <p>The American West begins at the Mississippi River and ends at the balmy, deadly shores of Isla California.</p>
@@ -161,10 +192,17 @@ function renderPanel() {
   const paras = (p.text || '').split('\n\n').filter(Boolean);
   body.innerHTML = `
     <div><div class="kind">${KIND_LABEL[p.kind] || ''}</div><h2>${esc(p.name)}</h2></div>
-    ${(() => { const n = wanted.filter((w) => w.town === p.id && w.status === 'wanted' && !w.hidden).length; return n || (warden && p.kind !== 'region') ? `<a class="btn small secondary wanted-link" href="/wanted#${encodeURIComponent(p.id)}">${gl('pin')} ${n ? `${n} wanted in ${esc(p.name)}` : 'Wanted posters'}</a>` : ''; })()}
+    ${onTown() ? '' : (() => { const n = wanted.filter((w) => w.town === p.id && w.status === 'wanted' && !w.hidden).length; return n || (warden && p.kind !== 'region') ? `<a class="btn small secondary wanted-link" href="/wanted#${encodeURIComponent(p.id)}">${gl('pin')} ${n ? `${n} wanted in ${esc(p.name)}` : 'Wanted posters'}</a>` : ''; })()}
     ${here.length ? `<div><h3>WHO’S HERE</h3><div class="here">${here.map((c) => `<span style="background:${TRADE_COLOR[c.trade] || '#555'}">${esc(c.name)}</span>`).join('')}</div></div>` : ''}
-    ${paras.length ? `<div class="book-text"><h3>FROM THE GUIDEBOOK</h3>${paras.map((t) => `<p>${esc(t)}</p>`).join('')}${p.page ? `<div class="src">Official Guidebook, p. ${p.page}</div>` : ''}</div>`
+    ${p.id === 'east-portal' ? '<button type="button" class="btn small" data-map-go="ep">' + gl('pin') + ' Open the East Portal town map</button>' : ''}
+    ${p.kind === 'exit' ? `<button type="button" class="btn small" data-map-go="west" data-focus="${esc(p.goes)}">‹ Out to ${esc(p.name.replace(/^To /, ''))} on the West map</button>` : ''}
+    ${paras.length ? `<div class="book-text"><h3>FROM ${esc((p.book || 'the Guidebook').toUpperCase())}</h3>${paras.map((t) => `<p>${esc(t)}</p>`).join('')}${p.page ? `<div class="src">${p.book ? `${esc(p.book)}` : 'Official Guidebook'}, p. ${p.page}</div>` : ''}</div>`
       : (p.kind !== 'pin' ? '<p class="muted">The Guidebook marks this on the map but doesn’t say more. Make it yours.</p>' : '')}
+    ${p.people?.length ? `<div><h3>WHO YOU’LL FIND HERE</h3><p>${p.people.map(esc).join(', ')}</p></div>` : ''}
+    ${p.shop ? `<a class="btn small secondary" href="/store#shop=${encodeURIComponent(p.shop)}">${gl('satchel')} Prices at ${esc(p.shop.replace(/^.*· /, ''))}</a>` : ''}
+    ${warden && p.rumors?.length ? `<div class="rumors"><h3>RUMORS <small>tell one and it goes in the posse’s Journal</small></h3>${p.rumors.map((r, i) => `<div class="rumor"><p>${esc(r)}</p><button type="button" class="btn small secondary" data-rumor="${i}">Tell the posse</button></div>`).join('')}</div>` : ''}
+    ${warden && p.tables?.length ? `<p class="muted">Book Tables on Run the Game has rolls for this place.</p>` : ''}
+    ${warden && p.spots?.length ? `<div class="spots"><h3>PLACES HERE <small>for the Warden, from the expansion books</small></h3>${p.spots.map((s) => `<details><summary>${esc(s.name)}</summary><p>${esc(s.text)}</p><div class="src">${esc(s.book)} p. ${s.page}</div></details>`).join('')}</div>` : ''}
     ${warden ? `<div class="note-box"><div class="who">WARDEN’S NOTES</div>
         <textarea id="note-text" placeholder="Anything you like — NPCs, rumors, bounties, secrets…">${esc(note?.text || '')}</textarea>
         <div class="note-actions">
@@ -177,13 +215,20 @@ function renderPanel() {
           <button class="btn small secondary danger" id="pin-remove" type="button">Delete pin</button></div>` : ''}
       </div>`
       : note ? `<div class="note-box"><div class="who">FROM THE WARDEN</div><p>${esc(note.text)}</p></div>` : ''}
-    <div class="note-actions"><button class="btn small secondary" id="send-posse" type="button">Move the whole posse here</button></div>`;
+    ${onTown() ? '' : '<div class="note-actions"><button class="btn small secondary" id="send-posse" type="button">Move the whole posse here</button></div>'}`;
 
+  body.querySelectorAll('[data-map-go]').forEach((b) => b.addEventListener('click', () => showMap(b.dataset.mapGo, b.dataset.focus || null)));
+  body.querySelectorAll('[data-rumor]').forEach((b) => b.addEventListener('click', async () => {
+    try {
+      await api('POST', { action: 'saveClue', title: `A rumor at ${p.name}`, text: p.rumors[Number(b.dataset.rumor)], revealed: true }, '', '/api/journal');
+      b.disabled = true; b.textContent = 'Told'; toast('It’s in the posse’s Journal.');
+    } catch (e) { toast(e.message, true); }
+  }));
   $('#note-save')?.addEventListener('click', () => act({ action: 'note', place: p.id, text: $('#note-text').value, shared: $('#note-shared').checked }, 'Notes saved.'));
   $('#pin-shared')?.addEventListener('change', (e) => act({ action: 'pinEdit', id: p.id, shared: e.target.checked }));
   $('#pin-remove')?.addEventListener('click', async () => { if (await ask(`Delete ${p.name}?`)) { selected = null; act({ action: 'pinRemove', id: p.id }); } });
   $('#pin-move')?.addEventListener('click', () => startPlacing(p.id));
-  $('#send-posse').addEventListener('click', async () => {
+  $('#send-posse')?.addEventListener('click', async () => {
     const alive = (data?.posse || []).filter((c) => !c.dead);
     if (!alive.length) return toast('No characters yet — make some on Posse Sheets.', true);
     // fan them out around the spot so they don't stack
@@ -199,7 +244,7 @@ function renderPanel() {
 const initials = (n) => n.split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase();
 function renderTokens() {
   const layer = $('#tokens');
-  layer.innerHTML = (data?.posse || []).filter((c) => data.tokens[c.id]).map((c) => {
+  layer.innerHTML = (onTown() ? [] : (data?.posse || []).filter((c) => data?.tokens?.[c.id])).map((c) => {
     const t = data.tokens[c.id];
     return `<div class="token${c.dead ? ' dead' : ''}" data-id="${c.id}" style="left:${t.x}px;top:${t.y}px" title="${esc(c.name)} — drag to move">
       <span class="nm">${esc(c.name)}</span><span class="disc" style="background:${TRADE_COLOR[c.trade] || '#555'}">${esc(initials(c.name))}</span><span class="stem"></span></div>`;
@@ -303,7 +348,7 @@ function connect() {
 }
 function setWarden() {
   $('#warden-btn').innerHTML = `${gl('star')} ${warden ? 'Warden mode · lock' : 'Warden'}`;
-  $('#warden-box').hidden = !warden;
+  $('#warden-box').hidden = !warden || onTown();
   if (!warden) stopPlacing();
 }
 $('#warden-btn').addEventListener('click', async () => {
@@ -315,7 +360,7 @@ $('#warden-btn').addEventListener('click', async () => {
 
 (async () => {
   meta = await api('GET', null, '?view=meta', EP);
-  fit();
+  if (onTown()) showMap('ep'); else { document.querySelector('[data-map="west"]')?.classList.add('on'); fit(); }
   const pin = savedPin();
   if (pin) warden = await tryWarden(pin, EP);
   setWarden();
