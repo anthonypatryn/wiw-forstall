@@ -1,7 +1,7 @@
 import { $, esc, api, startPolling, toast, mountNav, tryWarden, forgetWarden, savedPin, wardenModal, rollPopup, abilityOptions, abilityTargetsHTML, abilityBody, ask, pickFighters, isPool } from './common.js';
 import { gl } from './glyphs.js';
 import { play, weaponSound, preload } from './sound.js';
-preload('steps', 'bow', 'shotgun', 'boomSmall', 'boomMedium', 'boomLarge');
+preload('steps', 'bow', 'shotgun', 'boomSmall', 'boomMedium', 'boomLarge', 'fsBurst', 'fsReadout', 'fsSweep', 'fsScan');
 let meta = null;
 // the Ability button depends on this, so redraw the turn panel once it arrives
 api('GET', null, '?view=meta', '/api/combat').then((m) => { meta = m; renderTurnBar(); }).catch(() => {});
@@ -1123,10 +1123,11 @@ function wireScan(box) {
     const f = fsOf(b.dataset.fsScan), pc = f && scanOperator(f);
     if (!pc) return;
     b.disabled = true;
-    play('forstall');
+    play('fsScan');
     const r = await scanAct({ action: 'combatScan', pc: pc.id, key: f.key, monster: b.dataset.mon });
     if (!r) { b.disabled = false; return; }
     await rollPopup(r, `${pc.name} · ${r.label} · ${r.pool}`);
+    if (r.newDigits?.length) play('fsReadout');
     toast(r.newDigits?.length ? `Picked up ${r.newDigits.length} digit${r.newDigits.length === 1 ? '' : 's'}: ${r.newDigits.join(', ')}. Now make your guess.` : 'No new digits this time. You still get your guess.');
     await loadKz(); combatPoller?.now?.(); poller?.now?.(); renderTurnBar(); renderPanel();
   }));
@@ -1138,6 +1139,7 @@ function wireScan(box) {
     const pc = scanPending && combat.posse.find((p) => p.id === scanPending.pc);
     ev.currentTarget.disabled = true;
     const r = await scanAct({ action: 'combatGuess', pc: pc?.id, digits: digits.map(Number) });
+    if (r) play('fsReadout'); // the lights come up on the scanner screen
     if (!r) { ev.currentTarget.disabled = false; return; }
     const n = (k) => r.result.filter((x) => x === k).length;
     if (r.solved) { play('success'); toast(`Decoded! The ${r.name}’s frequency can go in a memory slot now.`); }
@@ -1241,7 +1243,7 @@ function wireFs(box) {
   wireScan(box);
   box.querySelectorAll('[data-fs-sweep]').forEach((b) => b.addEventListener('click', async () => {
     const eff = box.querySelector(`[data-fs-eff="${CSS.escape(b.dataset.fsSweep)}"]`)?.checked;
-    play('forstall');
+    play('fsSweep');
     const r = await fsAct({ action: 'forstall', op: 'sweep', key: b.dataset.fsSweep, efficiency: !!eff, pc: opFor(b.dataset.fsSweep) });
     if (r?.melted) play('zap');
     if (r?.dice) { await rollPopup(r, `${r.label} · ${r.pool}`); toast(`Sweep ${r.hits} — monsters in Range lose ${r.hits} Grit at their turn (+1 if programmed).`); }
@@ -1271,7 +1273,7 @@ function wireFs(box) {
     const tgt = f?.burst.find((x) => x.ref === sel?.value);
     if (!tgt || !await ask(`Burst ${f.name} on the ${tgt.name}’s frequency?\n\nThe crystal shatters and the monster flees for at least two hours.`, { ok: 'Burst', danger: true })) return;
     const r = await fsAct({ action: 'forstall', op: 'burst', key: f.key, enemy: tgt.ref, pc: opFor(f.key) });
-    if (r?.fled) play('explosion', 'large');
+    if (r?.fled) play('fsBurst');
     if (r?.fled) toast(`${r.fled} flees!`);
   }));
 }

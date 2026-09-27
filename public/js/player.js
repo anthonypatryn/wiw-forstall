@@ -4,6 +4,8 @@ import {
   mountNav, savedPin,
 } from './common.js';
 import { renderNotebook } from './notebook.js';
+import { play, preload } from './sound.js';
+preload('fsScan', 'fsReadout'); // the Scanner's own sounds, ready before the first scan
 import { mountTableLog } from './tablelog.js';
 import { gl } from './glyphs.js';
 
@@ -85,6 +87,7 @@ window.addEventListener('focus', loadPosse);
 $('#roll-btn').addEventListener('click', async () => {
   if (busy) return;
   busy = true; renderPool();
+  play('fsScan');
   try {
     const res = await api('POST', { action: 'roll', black: pool.B, gold: pool.G, spurTalent: spur.checked, who: scanner()?.name || '', whoId: scanner()?.id || '' });
     shownRollAt = res.result.at;
@@ -98,6 +101,7 @@ async function showRoll(roll, animate) {
   const tray = $('#tray');
   $('#tally').innerHTML = '';
   if (animate) await animateRoll(tray, roll.dice); else staticDice(tray, roll.dice);
+  if (animate && roll.newDigits.length) play('fsReadout'); // the digits come up on the screen
   const pool = `${roll.pool.black ? roll.pool.black + 'B' : ''}${roll.pool.gold ? roll.pool.gold + 'G' : ''}`;
   $('#tally').innerHTML = `
     <span class="muted">Rolled ${pool}${roll.halved ? ' (halved)' : ''}</span>
@@ -171,6 +175,7 @@ async function submitGuess() {
   busy = true;
   try {
     const res = await api('POST', { action: 'guess', digits: guess });
+    play('fsReadout');
     input = Array(6).fill(null);
     poller.push(res.state);
     if (res.result.solved) toast('Frequency locked! It’s in the notebook.');
