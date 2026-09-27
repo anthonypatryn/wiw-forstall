@@ -228,6 +228,13 @@
 - **Problems:** common.js reports uncaught errors and rejections from our own scripts (not extensions; at most 8 a page; repeats within a minute are skipped) to `/api/problems` `report`. lib/routes/problems.js keeps the last 80, counting repeats of the same message on the same page within a day. The Warden reads them (GET), `seen` and `clear`.
   - UI: the Problems card on Tools (desk.js `renderProblems`), with new ones counted on the Tools nav badge `#rn-tools`.
 
+## Undo & the Reconnecting strip
+- **Undo (anything, not just fights):** `transaction(fn, { undo })` in lib/store.js remembers the raw value of every document a request loaded (`ctx.before`). After a successful commit, `recordUndo` stores the before-values in rotating `undo:<slot>` keys (last 12), indexed in `undo-idx`, each with the after-hash of each written document.
+  - api/[area].js passes `undoLabel(area, req, held)`: only successful POSTs, skipping pulse, problems, backup, image and undo, and the actions ping, report, auth and seen. Labels are like "Sheet · wallet" or "Store: approve or deny a request"; who is "Warden" or "a player".
+  - `undoList()` marks each entry `canUndo` only while every document it touched still hashes to its after-value. `undoApply(id)` writes the before-values with those hashes as the CAS expectation, so a later change can never be clobbered.
+  - UI: a Warden-only **↶** in the nav opens `.undo-list` (recent changes, newest first, with an Undo button each).
+- **Connection:** `api()` turns a network failure into "Can’t reach the game right now…" (`e.offline`). `connection(ok)` in common.js shows `#conn-banner` ("Reconnecting…") after two missed pulses or a browser `offline` event, and says "Back online." when it recovers.
+
 ## Run the Game v2 (side nav of views)
 - `public/run.html` `#desk.run-desk` is a grid: a sticky `.run-nav` on the left, and `#run-main` holding the bands. The cards are grouped by job:
   - **Now** `#grp-now`: what you watch (Needs You, Open Rolls, The Posse, The Fight, Enemies).

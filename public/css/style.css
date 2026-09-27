@@ -1116,3 +1116,18 @@ body.scan-in-fight #roll-btn { opacity: .45; pointer-events: none; }
 .fs-dias { display: flex; gap: 2px; background: var(--iron, #2b2724); padding: 4px 6px; border-radius: var(--r-sm); width: max-content; max-width: 100%; }
 .fs-dig-row { display: flex; gap: 6px; }
 .fs-dig { width: 38px; height: 44px; text-align: center; font: var(--fs-xl) var(--display); border: 2px solid var(--ink); border-radius: var(--r-sm); background: var(--surface); }
+
+/* the Reconnecting strip */
+.conn-banner { position: fixed; left: 50%; top: calc(var(--nav-h, 50px) + 10px); transform: translateX(-50%); z-index: var(--z-dialog); display: flex; align-items: center; gap: 10px; max-width: calc(100vw - 32px); padding: 9px 16px 7px; background: var(--ink); color: var(--on-dark); border: 2px solid var(--gold); border-radius: var(--r-pill); box-shadow: 0 8px 22px var(--shade-4); font-size: var(--fs-sm); }
+.conn-dot { width: 10px; height: 10px; border-radius: 50%; background: var(--gold); animation: connPulse 1s ease-in-out infinite alternate; flex: none; }
+@keyframes connPulse { from { opacity: .3; } }
+@media (prefers-reduced-motion: reduce) { .conn-dot { animation: none; } }
+/* the Warden's Undo (nav) */
+.nav-undo { flex: none; width: 40px; justify-content: center; background: none; border: 0; color: var(--on-dark-dim); font: var(--fs-xl)/1 var(--body); font-weight: 700; cursor: pointer; padding: 0; }
+.nav-undo:hover, .nav-undo[aria-expanded="true"] { color: #fff; }
+.undo-list .undo-h { font: var(--fs-sm) var(--display); letter-spacing: .14em; color: var(--ink-soft); padding: 2px 4px 6px; }
+.undo-list .undo-h small { font: italic var(--fs-xs) var(--body); letter-spacing: 0; }
+.undo-t { flex: 1; min-width: 0; display: grid; }
+.undo-t small { font-size: var(--fs-xs); color: var(--ink-soft); }
+.undo-list .needs-row.stale { opacity: .6; }
+@media (max-width: 760px) { .nav-undo { display: none; } }

@@ -19,8 +19,9 @@ import session from '../lib/routes/session.js';
 import shop from '../lib/routes/shop.js';
 import wanted from '../lib/routes/wanted.js';
 import whispers from '../lib/routes/whispers.js';
+import undo from '../lib/routes/undo.js';
 
-const ROUTES = { backup, battle, combat, handouts, image, journal, lockpick, map, npcs, papers, problems, pulse, saloon, scan, scenes, session, shop, wanted, whispers };
+const ROUTES = { backup, battle, combat, handouts, image, journal, lockpick, map, npcs, papers, problems, pulse, saloon, scan, scenes, session, shop, undo, wanted, whispers };
 
 import { transaction, counter, bump } from '../lib/store.js';
 import { pinOk } from '../lib/http.js';
@@ -35,6 +36,23 @@ async function guardPin(req) {
   const who = `badpin:${String(req.headers['x-forwarded-for'] || req.socket?.remoteAddress || 'unknown').split(',')[0].trim()}`;
   if (await counter(who) >= BAD_PIN_LIMIT) { delete req.headers['x-warden-pin']; return; }
   if (!pinOk(pin)) await bump(who, BAD_PIN_WINDOW);
+}
+
+// What a change was, for the Warden's Undo list ("Sheet: wallet", "Store: decide"…). Only successful POSTs that
+// change something count; noise (pings, error reports, backups, photos, the undo itself) never does.
+const NO_UNDO_AREAS = new Set(['pulse', 'problems', 'backup', 'image', 'undo']);
+const NO_UNDO_ACTIONS = new Set(['ping', 'report', 'auth', 'seen', 'here']);
+const AREA_NAME = { combat: '', battle: 'Battle Map', shop: 'Store', journal: 'Journal', npcs: 'NPCs', wanted: 'Wanted', handouts: 'Handouts', whispers: 'Whisper', lockpick: 'Lock pick', saloon: 'Saloon', scan: 'Scanner', scenes: 'Prep', session: 'Session notes', map: 'Map', papers: 'Newspaper' };
+const words = (s) => String(s || '').replace(/([a-z])([A-Z])/g, '$1 $2').replace(/[._-]+/g, ' ').trim().toLowerCase();
+function undoLabel(area, req, held) {
+  if (req.method !== 'POST' || held.statusCode >= 400 || NO_UNDO_AREAS.has(area)) return null;
+  let b = {};
+  try { b = JSON.parse(req.body || '{}'); } catch {}
+  if (NO_UNDO_ACTIONS.has(b.action)) return null;
+  const ACT = { next: 'next turn', pc: '', sheet: 'sheet', addPc: 'new character', addEnemy: 'add enemy', end: 'end combat', start: 'start combat', decide: 'approve or deny a request', give: 'give an item' };
+  const what = [Object.hasOwn(ACT, b.action) ? ACT[b.action] : words(b.action), b.op ? words(b.op) : '', b.path ? words(b.path) : ''].filter(Boolean).join(' · ');
+  const label = `${AREA_NAME[area] ?? words(area)}${AREA_NAME[area] === '' ? '' : ': '}${what || 'change'}`.replace(/^: /, '');
+  return { label: label.charAt(0).toUpperCase() + label.slice(1), who: pinOk(req.headers['x-warden-pin']) ? 'Warden' : 'a player' };
 }
 
 // A stand-in response: the route writes here, and it only reaches the real response once its saves are committed.
@@ -58,7 +76,7 @@ export default async function handler(req, res) {
   for (let attempt = 0; attempt < 5; attempt++) {
     const held = heldResponse();
     try {
-      await transaction(() => route(req, held));
+      await transaction(() => route(req, held), { undo: () => undoLabel(area, req, held) });
     } catch (err) {
       if (!err.conflict) throw err;
       await new Promise((r) => setTimeout(r, 20 + Math.random() * 60 * (attempt + 1)));

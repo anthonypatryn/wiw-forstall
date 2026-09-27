@@ -14,7 +14,9 @@ export function setPin(p) { wardenPin = p; }
 export async function api(method, body, query = '', endpoint = '/api/scan') {
   const headers = { 'Content-Type': 'application/json' };
   if (wardenPin) headers['x-warden-pin'] = wardenPin;
-  const r = await fetch(endpoint + query, { method, headers, body: body ? JSON.stringify(body) : undefined });
+  let r;
+  try { r = await fetch(endpoint + query, { method, headers, body: body ? JSON.stringify(body) : undefined }); }
+  catch { connection(false); const e = new Error('Can’t reach the game right now. Check your connection, then try again.'); e.offline = true; throw e; }
   const data = await r.json().catch(() => ({ error: 'Bad response from server.' }));
   if (!r.ok) { const e = new Error(data.error || r.statusText); e.status = r.status; throw e; }
   return data;
@@ -34,6 +36,20 @@ const DEPS = {
 const PULSE_MS = 2500, PULSE_HIDDEN_MS = 15000, PULSE_RETRY_MS = 5000;
 const pulse = { subs: new Set(), timer: null, running: false, hereAt: 0 };
 const HERE_MS = 20000;
+// "Reconnecting…": shown after two misses in a row (or when the browser says it's offline), gone as soon as it's back
+let connMisses = 0;
+function connection(ok) {
+  connMisses = ok ? 0 : connMisses + 1;
+  let el = document.getElementById('conn-banner');
+  const show = !ok && (connMisses >= 2 || navigator.onLine === false);
+  if (!show) { if (el && !el.hidden) { el.hidden = true; if (el.dataset.was) toast('Back online.'); el.dataset.was = ''; } return; }
+  if (!el) { el = document.createElement('div'); el.id = 'conn-banner'; el.className = 'conn-banner'; el.setAttribute('role', 'status'); document.body.append(el); }
+  el.innerHTML = '<span class="conn-dot" aria-hidden="true"></span> Reconnecting… nothing can be saved until the game is back.';
+  el.hidden = false; el.dataset.was = '1';
+}
+addEventListener('offline', () => { connMisses = 2; connection(false); });
+addEventListener('online', () => { if (pulse.running) pulseTick(); });
+
 async function pulseTick() {
   clearTimeout(pulse.timer);
   if (!pulse.subs.size) { pulse.running = false; return; }
@@ -41,6 +57,7 @@ async function pulseTick() {
   try {
     const who = !savedPin() && me() && Date.now() - pulse.hereAt > HERE_MS ? me() : '';
     const { v } = await api('GET', null, who ? `?here=${encodeURIComponent(who)}` : '', '/api/pulse');
+    connection(true);
     if (who) pulse.hereAt = Date.now();
     for (const sub of [...pulse.subs]) {
       const sig = sub.deps.map((k) => v[k] ?? 0).join('.');
@@ -48,6 +65,7 @@ async function pulseTick() {
     }
   } catch (e) {
     pulse.subs.forEach((sub) => sub.onConn?.(false, e));
+    connection(false);
     wait = PULSE_RETRY_MS;
   }
   pulse.timer = setTimeout(pulseTick, wait);
@@ -307,7 +325,8 @@ export function mountNav(active) {
       <div class="nav-side">
         <button type="button" class="nav-sound" title="Sound effects" aria-pressed="${!isMuted()}">${gl(isMuted() ? 'mute' : 'sound')}</button>
         <button type="button" class="nav-help" data-rule="" title="Look up a rule" aria-label="Look up a rule">?</button>
-        ${on ? `<button type="button" class="nav-needs" aria-expanded="false" title="What's waiting on you"><span class="nn">Needs you</span> <b>·</b></button>
+        ${on ? `<button type="button" class="nav-undo" aria-expanded="false" title="Undo a recent change" aria-label="Undo a recent change">↶</button>
+          <button type="button" class="nav-needs" aria-expanded="false" title="What's waiting on you"><span class="nn">Needs you</span> <b>·</b></button>
           <div class="nav-group nav-warden"><button type="button" class="nav-drop" aria-expanded="false">${gl('star')} Warden <i>▾</i></button>
             <div class="nav-menu right" hidden><a href="/run">Run the Game</a><a href="/battle">Battle Map</a><a href="/run#grp-tools">Backup &amp; homebrew</a><button type="button" data-player>Switch to player view</button></div></div>`
           : `<button type="button" class="nav-unlock" title="Warden PIN">${gl('star')} <span>Warden</span></button>`}
@@ -315,6 +334,7 @@ export function mountNav(active) {
       </div>
     </div>
     <div class="needs-list" hidden></div>
+    <div class="needs-list undo-list" hidden></div>
     <div class="nav-sheet" hidden><nav aria-label="All pages">${all.map(([h, l]) => (h && h.startsWith('<b>') ? `<div class="nav-sheet-h">${h}</div>` : link(h, esc(l)))).join('')}<button type="button" data-rule="">Look up a rule</button>${link('/howto', 'How to Play')}<div class="nav-sheet-h">Sound</div><div class="nav-sheet-sound"><button type="button" class="nav-sound-sheet">${isMuted() ? 'Sound is off — turn on' : 'Sound is on — mute'}</button><input type="range" min="0" max="1" step="0.05" value="${volume()}" aria-label="Volume" class="nav-vol"></div>${on ? '<div class="nav-sheet-h">Warden</div><a href="/run#grp-tools">Backup &amp; homebrew</a><button type="button" data-player>Switch to player view</button>' : ''}</nav></div>`;
   wireNav(el, on);
   // other sticky bars (sheet toolbar, contents bars) sit just under the nav
@@ -361,6 +381,24 @@ function wireNav(el, on) {
   el.querySelector('.nav-sound')?.addEventListener('click', toggleSound);
   el.querySelector('.nav-sound-sheet')?.addEventListener('click', (e) => { e.stopPropagation(); toggleSound(); });
   el.querySelector('.nav-vol')?.addEventListener('change', (e) => { setVolume(e.target.value); play('chime'); });
+  const undoBtn = el.querySelector('.nav-undo'), undoList = el.querySelector('.undo-list');
+  if (undoBtn) {
+    const drawUndo = async () => {
+      undoList.innerHTML = '<span class="muted">Loading…</span>';
+      let list = [];
+      try { list = (await api('GET', null, '', '/api/undo')).list; } catch (e) { undoList.innerHTML = `<span class="muted">${esc(e.message)}</span>`; return; }
+      undoList.innerHTML = `<div class="undo-h">RECENT CHANGES <small>newest first · a fight has its own Undo</small></div>${list.length ? list.map((x) => `<div class="needs-row${x.canUndo ? '' : ' stale'}"><span class="undo-t"><b>${esc(x.label)}</b><small>${esc(x.who)} · ${esc(timeAgo(x.at))}${x.canUndo ? '' : ' · changed again since'}</small></span>
+        <button type="button" class="btn small" data-undo-id="${esc(x.id)}"${x.canUndo ? '' : ' disabled'}>Undo</button></div>`).join('') : '<span class="muted">Nothing to undo yet.</span>'}`;
+      undoList.querySelectorAll('[data-undo-id]').forEach((b) => b.addEventListener('click', async (e) => {
+        e.stopPropagation(); b.disabled = true;
+        try { const r = await api('POST', { action: 'undo', id: b.dataset.undoId }, '', '/api/undo'); toast(`↶ Undone: ${r.result.label}`); } catch (err) { toast(err.message, true); }
+        drawUndo();
+      }));
+    };
+    undoBtn.addEventListener('click', (e) => { e.stopPropagation(); closeAll(); el.querySelector('.needs-list:not(.undo-list)').hidden = true; undoList.hidden = !undoList.hidden; undoBtn.setAttribute('aria-expanded', String(!undoList.hidden)); if (!undoList.hidden) drawUndo(); });
+    undoList.addEventListener('click', (e) => e.stopPropagation());
+    document.addEventListener('click', () => { undoList.hidden = true; undoBtn.setAttribute('aria-expanded', 'false'); });
+  }
   const needs = el.querySelector('.nav-needs');
   if (needs) {
     const list = el.querySelector('.needs-list');
