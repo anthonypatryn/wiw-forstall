@@ -1,7 +1,7 @@
 // Lock picking — the player's scene (old brass padlock + High/Low cards) and the Warden's "Lock Pick" card.
 import { esc, api, toast, startPolling, savedPin, store, rollPopup, ask, onChange, me } from './common.js';
 import { gl } from './glyphs.js';
-import { play } from './sound.js';
+import { play, preload } from './sound.js';
 
 const EP = '/api/lockpick';
 const RANK = { 1: 'A', 11: 'J', 12: 'Q', 13: 'K', 14: 'A' };
@@ -105,9 +105,9 @@ async function onClick(e) {
     else if (k === 'higher' || k === 'lower') {
       const r = await act('guess', { dir: k });
       play('card');
-      if (!r.ok) { play('lockSnap'); setTimeout(() => play('fail'), 250); render('fresh'); }
-      else if (r.status === 'picked') { play('lockClick'); setTimeout(() => { play('lockOpen'); play(cur.sprung ? 'fail' : 'success'); if (cur.sprung) setTimeout(() => play('explosion', 'small'), 250); }, 200); render('fresh'); }
-      else { play('lockClick'); render('fresh'); }
+      if (!r.ok) { play('lockMiss'); setTimeout(() => play('fail'), 600); render('fresh'); }
+      else if (r.status === 'picked') { play('pickWork'); setTimeout(() => { play('lockUnlock'); play(cur.sprung ? 'fail' : 'success'); if (cur.sprung) setTimeout(() => play('explosion', 'small'), 250); }, 200); render('fresh'); }
+      else { play('pickWork'); render('fresh'); }
     } else if (k === 'how') { busy = false; showHowTo(); return;
     } else if (k === 'retry') {
       if (!await ask(`Try again?\n\nThe Warden set the cost: ${cur.retryCost || 'nothing'}. Pay it at the table.`, { ok: 'Pay and try again', danger: false })) { busy = false; return; }
@@ -135,6 +135,7 @@ async function leave() { const id = cur?.id; if (id) gone.add(id); try { await a
 
 // a lock sent to this device's character opens the scene on any page
 export function watchLocks() {
+  preload('pickWork', 'lockMiss', 'lockUnlock'); // the lock scene's sounds, ready before the first call
   if (!me() || savedPin()) return;
   startPolling(`player&pc=${encodeURIComponent(me())}`, (d) => {
     const a = (d.list || []).find((x) => !gone.has(x.id));

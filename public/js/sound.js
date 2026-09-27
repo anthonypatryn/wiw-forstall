@@ -6,7 +6,7 @@
 
 const NAMES = ['dice', 'card', 'shuffle', 'chips', 'drink', 'gun', 'shotgun', 'bow', 'swing', 'explosion', 'forstall', 'zap', 'lockClick', 'lockSnap', 'lockOpen', 'success', 'fail', 'chime',
   'successBig', 'failClunk', 'failComic', 'boomSmall', 'boomMedium', 'boomLarge', 'boomHuge', 'bowGame', 'arrowHit', 'striker', 'strikerMiss', 'oink', 'squeal', 'steps', 'trainArrive', 'trainPass', 'fsBurst', 'fsReadout', 'fsSweep', 'fsScan',
-  'monRoar', 'monLowRoar', 'monGrowl', 'monClick', 'monGiantInsect', 'monSmallInsect', 'shoeRing', 'shoeDirt', 'hooves', 'horseWalk'];
+  'monRoar', 'monLowRoar', 'monGrowl', 'monClick', 'monGiantInsect', 'monSmallInsect', 'shoeRing', 'shoeDirt', 'hooves', 'horseWalk', 'pickWork', 'lockMiss', 'lockUnlock'];
 // play('explosion', size): how big a bang (small = a firecracker, huge = the ground caves in)
 const BOOM = { small: 'boomSmall', medium: 'boomMedium', large: 'boomLarge', huge: 'boomHuge' };
 // name → clips of [file, start s, length s, gain (1 if left out)] — the user's picks, trimmed to where the sound is
@@ -52,6 +52,9 @@ const CLIPS = {
   shoeDirt: [['shoe-dirt', 0, 0.85]],                  // a horseshoe thudding into the dirt
   hooves: [['horse-walk', 0.3, 1.6, 1.5], ['horse-walk', 4.2, 1.6, 1.5]], // a mounted character moving on the Battle Map
   horseWalk: [['horse-walk', 0, 12, 1.5]],             // a horse walking by (Soundboard)
+  pickWork: [['lockpick', 1.35, 0.5], ['lockpick', 2.0, 0.35], ['lockpick', 3.5, 0.35], ['lockpick', 4.2, 0.5], ['lockpick', 4.85, 0.55], ['lockpick', 6.65, 0.3], ['lockpick', 7.3, 0.35], ['lockpick', 7.85, 0.4], ['lockpick', 8.35, 0.35]], // working the pins (a right call)
+  lockMiss: [['lock-miss', 2.8, 0.9]],                 // the pick snaps: a metal clang (a wrong call)
+  lockUnlock: [['lock-unlock', 1.62, 0.42], ['lock-unlock', 2.82, 0.3], ['lock-unlock', 3.9, 0.5]], // the lock gives (picked)
 };
 const buffers = {}; // file → AudioBuffer (or a Promise while loading)
 // The everyday sounds load on the first tap; the rest (explosions, carnival, footsteps…) load the first time they're
@@ -229,6 +232,6 @@ export function play(name, arg) {
 }
 // recorded sounds with no synth of their own use a close one until the file loads
 const FALLBACK = { shuffle: 'card', chips: 'lockClick', shotgun: 'gun', drink: 'swing', successBig: 'success', failClunk: 'lockClick', failComic: 'fail',
-  boomSmall: 'explosion', boomMedium: 'explosion', boomLarge: 'explosion', boomHuge: 'explosion', bowGame: 'bow', arrowHit: 'lockClick', striker: 'chime', strikerMiss: 'lockSnap', oink: 'zap', squeal: 'zap', steps: 'swing', trainArrive: 'forstall', trainPass: 'forstall', fsBurst: 'zap', fsReadout: 'lockClick', fsSweep: 'forstall', fsScan: 'forstall', monRoar: 'explosion', monLowRoar: 'explosion', monGrowl: 'swing', monClick: 'lockClick', monGiantInsect: 'zap', monSmallInsect: 'zap', shoeRing: 'lockOpen', shoeDirt: 'lockClick', hooves: 'swing', horseWalk: 'swing' };
+  boomSmall: 'explosion', boomMedium: 'explosion', boomLarge: 'explosion', boomHuge: 'explosion', bowGame: 'bow', arrowHit: 'lockClick', striker: 'chime', strikerMiss: 'lockSnap', oink: 'zap', squeal: 'zap', steps: 'swing', trainArrive: 'forstall', trainPass: 'forstall', fsBurst: 'zap', fsReadout: 'lockClick', fsSweep: 'forstall', fsScan: 'forstall', monRoar: 'explosion', monLowRoar: 'explosion', monGrowl: 'swing', monClick: 'lockClick', monGiantInsect: 'zap', monSmallInsect: 'zap', shoeRing: 'lockOpen', shoeDirt: 'lockClick', hooves: 'swing', horseWalk: 'swing', pickWork: 'lockClick', lockMiss: 'lockSnap', lockUnlock: 'lockOpen' };
 // which attack sound fits a weapon
 export const weaponSound = (w) => (/shotgun|scattergun/i.test(`${w?.type} ${w?.model}`) ? 'shotgun' : /bow/i.test(`${w?.type} ${w?.model}`) ? 'bow' : /melee|knife|axe|sword|club|fist|hatchet|machete/i.test(`${w?.type} ${w?.model}`) ? 'swing' : 'gun');

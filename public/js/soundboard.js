@@ -14,7 +14,7 @@ export const BOARD = [
   ['Good & bad', [['success', 'Success'], ['successBig', 'Big win'], ['fail', 'Fail'], ['failClunk', 'Clunk'], ['failComic', 'Comic fail'], ['chime', 'Cowbell']]],
   ['Carnival', [['shoeRing', 'Horseshoe ringer'], ['shoeDirt', 'Horseshoe in the dirt'], ['striker', 'Mallet & bell'], ['strikerMiss', 'Mallet, no bell'], ['oink', 'Pig oink'], ['squeal', 'Pig squeal']]],
   ['Travel', [['horseWalk', 'Horse walking'], ['trainArrive', 'Train pulls in'], ['trainPass', 'Train rolls past']]],
-  ['Forstalls & locks', [['fsSweep', 'Sweep'], ['fsScan', 'Scan'], ['fsReadout', 'Scanner readout'], ['fsBurst', 'Crystal Burst'], ['forstall', 'Forstall hum'], ['zap', 'Zap'], ['lockClick', 'Lock click'], ['lockSnap', 'Pick snaps'], ['lockOpen', 'Lock opens']]],
+  ['Forstalls & locks', [['fsSweep', 'Sweep'], ['fsScan', 'Scan'], ['fsReadout', 'Scanner readout'], ['fsBurst', 'Crystal Burst'], ['forstall', 'Forstall hum'], ['zap', 'Zap'], ['pickWork', 'Picking a lock'], ['lockMiss', 'Pick snaps'], ['lockUnlock', 'Lock clicks open']]],
 ];
 const fire = (key) => { const [name, arg] = key.split(':'); if (name === 'stop') stopSounds(); else play(name, arg); };
 
