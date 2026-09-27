@@ -1126,3 +1126,19 @@ test('expansion monsters (East Portal pp. 88–95, Iron Road pp. 181–183) reac
   assert.equal(new Set(MONSTERS.map((m) => m.kz)).size, MONSTERS.length, 'every Kurtz frequency is unique');
   assert.deepEqual(MONSTERS.map((m) => m.name), [...MONSTERS.map((m) => m.name)].sort((a, b) => a.localeCompare(b)));
 });
+
+test('expansion NPCs fight from their stat blocks; the posse’s standing with a faction is Warden-set and public', async () => {
+  const { profileFor } = await import('../lib/combat.js');
+  const { freshNpcs, npcAction, npcView } = await import('../lib/npcs.js');
+  assert.equal(profileFor('npc:Linus Kelly')?.health, 10);
+  assert.equal(profileFor('npc:Linus Kelly').book, 'Iron Road');
+  assert.ok(profileFor('npc:Tulos Enforcer')?.attacks.some((a) => /Poisoned/.test(a.effect)));
+  const s = freshNpcs();
+  assert.throws(() => npcAction(s, { action: 'standing', faction: 'The Iron Sights', level: 'Helpful' }, { warden: false }), /PIN/);
+  const r = npcAction(s, { action: 'standing', faction: 'The Iron Sights', level: 'Helpful', note: 'helped Job' }, { warden: true });
+  assert.deepEqual([r.level, r.was], ['Helpful', 'Neutral']);
+  assert.equal(npcView(s, { warden: false }).standing['The Iron Sights'].level, 'Helpful');
+  npcAction(s, { action: 'standing', faction: 'The Iron Sights', level: 'Neutral' }, { warden: true });
+  assert.equal(npcView(s, { warden: false }).standing['The Iron Sights'], undefined, 'back to Neutral with no note clears it');
+  assert.throws(() => npcAction(s, { action: 'standing', faction: 'Nobody', level: 'Hostile' }, { warden: true }), /Unknown faction/);
+});

@@ -187,3 +187,20 @@ details.fac[open] > summary { margin-bottom: 8px; }
 .npc-extra input { padding: 7px 9px; border: 1px solid var(--ink-faint); border-radius: var(--r-sm); background: var(--surface); font: var(--fs-md) var(--body); color: var(--ink); }
 @media (max-width: 600px) { .npc-extra { grid-template-columns: 1fr; } }
 
+
+/* Posse Standing: the whole posse's reputation with each faction */
+.stand-row { display: grid; grid-template-columns: minmax(150px, 1fr) auto; gap: 6px 12px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line-soft); }
+.stand-row:last-child { border-bottom: 0; }
+.stand-row .chip-row { justify-content: flex-end; }
+.stand-note { grid-column: 1 / -1; width: 100%; }
+.stand-why { grid-column: 1 / -1; margin: 0; font-size: var(--fs-sm); color: var(--ink-soft); }
+.pill.stand-revered, .chip-btn.stand-revered.on { background: var(--success); color: #fff; }
+.pill.stand-helpful, .chip-btn.stand-helpful.on { background: var(--teal); color: #fff; }
+.pill.stand-suspicious, .chip-btn.stand-suspicious.on { background: var(--sunset); color: #fff; }
+.pill.stand-hostile, .chip-btn.stand-hostile.on { background: var(--danger); color: #fff; }
+@media (max-width: 600px) { .stand-row { grid-template-columns: 1fr; } .stand-row .chip-row { justify-content: flex-start; } }
+/* what the expansion books add to a faction, and where to find their people */
+.fac-note { margin: 8px 0; padding: 8px 10px; background: var(--wash); border-left: 3px solid var(--brass); font-size: var(--fs-sm); }
+.fac-note b { font-family: var(--display); letter-spacing: var(--track); font-weight: 400; }
+.fac-note p { margin: 4px 0 0; }
+.bnpc .bn-where { font-size: var(--fs-sm); color: var(--ink-soft); margin: 4px 0; }

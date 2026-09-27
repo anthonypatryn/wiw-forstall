@@ -164,7 +164,7 @@ function showResult() {
 
 // ---------- shared NPC ledger ----------
 const EP = '/api/npcs';
-let npcs = [], factions = [], warden = false, poller = null, pendingLedger = false;
+let npcs = [], factions = [], standing = {}, warden = false, poller = null, pendingLedger = false;
 
 async function npcAct(body, el) {
   try {
@@ -176,6 +176,29 @@ async function npcAct(body, el) {
 }
 
 const factionOptions = (cur) => `<option value="">— none —</option>${factions.map((f) => `<option value="${esc(f.name)}"${f.name === cur ? ' selected' : ''}>${esc(f.name)}${f.known ? '' : ' (secret)'}</option>`).join('')}`;
+
+// ---------- the posse's standing with each faction (everyone sees it; the Warden sets it) ----------
+const STANDING = [['Revered', '+2B'], ['Helpful', '+1B'], ['Neutral', '+0B'], ['Suspicious', '−1B'], ['Hostile', '−2B']];
+function renderStanding() {
+  const box = $('#standing');
+  if (box.contains(document.activeElement) && document.activeElement.tagName === 'INPUT') return;
+  const rows = factions.filter((f) => warden || standing[f.name]);
+  box.innerHTML = rows.length ? rows.map((f) => {
+    const s = standing[f.name] || { level: 'Neutral', note: '' };
+    const mod = STANDING.find(([l]) => l === s.level)?.[1] || '+0B';
+    return `<div class="stand-row" data-sf="${esc(f.name)}"><div class="stand-name"><b>${esc(f.name)}</b>${f.known ? '' : ' <i class="muted">(secret)</i>'}</div>
+      ${warden ? `<div class="chip-row">${STANDING.map(([l, m]) => `<button type="button" class="chip-btn stand-${l.toLowerCase()}${l === s.level ? ' on' : ''}" data-level="${l}" title="${m} Charm with them">${l}</button>`).join('')}</div>
+        <input class="stand-note" data-snote maxlength="300" placeholder="Why? (optional, everyone sees it)" value="${esc(s.note || '')}">`
+        : `<span class="pill stand-${s.level.toLowerCase()}">${esc(s.level)} · ${mod} Charm</span>${s.note ? `<p class="stand-why">${esc(s.note)}</p>` : ''}`}
+    </div>`;
+  }).join('') : '<p class="empty-note">Neutral with everyone so far. The Warden marks it here when the posse makes friends or enemies.</p>';
+  box.querySelectorAll('.stand-row').forEach((row) => {
+    const faction = row.dataset.sf, note = row.querySelector('[data-snote]');
+    row.querySelectorAll('[data-level]').forEach((b) => b.addEventListener('click', () => npcAct({ action: 'standing', faction, level: b.dataset.level, note: note?.value || '' })));
+    if (note) { let sent = note.value; note.addEventListener('change', () => { if (note.value !== sent) { sent = note.value; npcAct({ action: 'standing', faction, level: standing[faction]?.level || 'Neutral', note: note.value }); } }); }
+  });
+}
+$('#standing').addEventListener('focusout', () => setTimeout(renderStanding, 60));
 
 // ---------- Warden: factions ----------
 const openFac = new Set();
@@ -189,6 +212,8 @@ function renderFactions() {
     return `<details class="fac" data-fid="${esc(f.id)}"${openFac.has(f.id) ? ' open' : ''}><summary><h3>${esc(f.name)}<small>${f.book ? `GUIDEBOOK P. ${f.page}` : f.known ? 'YOUR FACTION · POSSE KNOWS' : 'YOUR FACTION · SECRET'} · ${members.length} IN LEDGER</small></h3></summary>
       ${f.book ? '' : `<label class="f">DESCRIPTION<textarea data-fdesc maxlength="1000" placeholder="Who they are, what they want">${esc(f.desc || '')}</textarea></label>`}
       ${bookPeople.length ? `<p class="muted fac-book">Guidebook members: ${bookPeople.map((pp) => esc(pp.name)).join(', ')}</p>` : ''}
+      ${(book?.factionNotes?.[f.name] || []).map((n) => `<div class="fac-note"><b>${esc(n.book)} p. ${n.page}</b><p>${esc(n.text)}</p></div>`).join('')}
+      ${(book?.expansions || []).some((pp) => pp.faction === f.name) ? `<p class="muted fac-book">In the expansion books: ${book.expansions.filter((pp) => pp.faction === f.name).map((pp) => esc(pp.name)).join(', ')}</p>` : ''}
       <div class="fac-members">${members.length ? members.map((n) => `<span class="mem">${esc(n.name)}${n.known ? '' : ' <i>(hidden)</i>'}<button type="button" data-unfac="${n.id}" aria-label="Take ${esc(n.name)} out of ${esc(f.name)}">×</button></span>`).join('') : '<span class="muted">No NPCs in the ledger yet. Deal a stranger on the NPCs page.</span>'}</div>
       <div class="fac-add"><select data-addmem aria-label="Add an NPC to ${esc(f.name)}"><option value="">+ add an NPC from the ledger…</option>${loose.map((n) => `<option value="${n.id}">${esc(n.name)}${n.faction ? ` (now: ${esc(n.faction)})` : ''}</option>`).join('')}</select></div>
       ${f.book ? '' : `<div class="npc-tools"><label class="check"><input type="checkbox" data-fknown${f.known ? ' checked' : ''}> Posse knows about them</label><button class="btn small secondary danger" type="button" data-fremove>Delete faction</button></div>`}
@@ -285,7 +310,7 @@ $('#copy').addEventListener('click', async () => {
 
 function connect() {
   poller?.stop();
-  poller = startPolling(warden ? 'warden' : 'player', (d) => { npcs = d.npcs; factions = d.factions || []; renderLedger(); renderFactions(); }, (ok, e) => {
+  poller = startPolling(warden ? 'warden' : 'player', (d) => { npcs = d.npcs; factions = d.factions || []; standing = d.standing || {}; renderLedger(); renderFactions(); renderStanding(); }, (ok, e) => {
     if (e?.status === 401) { warden = false; forgetWarden(); setWarden(); connect(); }
   }, EP);
 }
@@ -370,11 +395,24 @@ function renderBook() {
       <div class="acts"><button class="btn small secondary" data-ledger type="button">+ NPC ledger</button>${prof ? '<button class="btn small" data-fight type="button">' + gl('revolver') + ' Add to Combat</button>' : ''}</div>
     </article>`;
   const openAttr = (k) => (openFactions.has(k) ? ' open' : '');
+  // the expansion books' people, one fold per book section (East Portal townsfolk, Port Kansas, Rackline Roost…)
+  const xs = book.expansions || [], groups = [];
+  xs.forEach((pp, i) => { const k = `${pp.book} · ${pp.group}`; let g = groups.find((x) => x.k === k); if (!g) groups.push(g = { k, book: pp.book, group: pp.group, list: [] }); g.list.push([pp, i]); });
+  const xperson = (pp, i) => `<article class="bnpc" data-x="${i}" data-name="${esc(pp.name)}" data-faction="${esc(pp.faction || '')}">
+      <div class="hd"><div><div class="nm">${esc(pp.name)}</div><div class="tag">${esc(pp.role.toUpperCase())}${pp.faction ? ` · ${esc(pp.faction.toUpperCase())}` : ''} · ${esc(pp.book.toUpperCase())} P. ${pp.page}</div></div></div>
+      <p>${esc(pp.desc)}</p>${pp.where ? `<p class="bn-where"><b>Where:</b> ${esc(pp.where)}</p>` : ''}
+      ${pp.hooks ? `<details><summary>Expedition hooks</summary><p>${esc(pp.hooks)}</p></details>` : ''}
+      ${pp.profile ? statBlock(pp.profile) : ''}
+      <div class="acts"><button class="btn small secondary" data-ledger type="button">+ NPC ledger</button>${pp.profile ? '<button class="btn small" data-fight type="button">' + gl('revolver') + ' Add to Combat</button>' : ''}</div>
+    </article>`;
+  const generic = [...book.generic, ...(book.xGeneric || [])];
   $('#book').innerHTML = `<div class="acc-all"><button class="btn small secondary" type="button" data-acc-all="1">Open all</button><button class="btn small secondary" type="button" data-acc-all="0">Close all</button></div>`
     + book.factions.map((f) => `<details class="faction" data-k="${esc(f.faction)}"${openAttr(f.faction)}><summary><h3>${esc(f.faction)}<small>P. ${f.page} · ${f.people.length} ${f.people.length === 1 ? 'PERSON' : 'PEOPLE'}</small></h3></summary><div class="book-grid">
       ${f.people.map((pp) => person(pp, f.faction, pp.name === f.profile.name ? f.profile : null)).join('')}</div></details>`).join('')
-    + `<details class="faction" data-k="generic"${openAttr('generic')}><summary><h3>Ready-Made Enemies<small>P. 191 · JUST ADD A NAME</small></h3></summary><div class="book-grid">${book.generic.map((g) => `<article class="bnpc" data-generic="${esc(g.name)}">
-      <div class="hd"><div><div class="nm">${esc(g.name.replace('Human - ', ''))}</div><div class="tag">HUMAN ENEMY PROFILE</div></div></div>
+    + groups.map((g) => `<details class="faction" data-k="${esc(g.k)}"${openAttr(g.k)}><summary><h3>${esc(g.group)}<small>${esc(g.book.toUpperCase())} · ${g.list.length} ${g.list.length === 1 ? 'PERSON' : 'PEOPLE'}</small></h3></summary><div class="book-grid">
+      ${g.list.map(([pp, i]) => xperson(pp, i)).join('')}</div></details>`).join('')
+    + `<details class="faction" data-k="generic"${openAttr('generic')}><summary><h3>Ready-Made Enemies<small>GUIDEBOOK P. 191 &amp; IRON ROAD · JUST ADD A NAME</small></h3></summary><div class="book-grid">${generic.map((g) => `<article class="bnpc" data-generic="${esc(g.name)}">
+      <div class="hd"><div><div class="nm">${esc(g.name.replace('Human - ', ''))}</div><div class="tag">HUMAN ENEMY PROFILE${g.book ? ` · ${esc(g.book.toUpperCase())} P. ${g.page}` : ''}</div></div></div>
       ${statBlock(g)}
       <div class="acts"><input placeholder="Name them…" maxlength="40" data-gname><button class="btn small secondary" data-roll type="button" title="Random name from the card table">${gl('die')}</button>
         <button class="btn small secondary" data-ledger type="button">+ Ledger</button><button class="btn small" data-fight type="button">${gl('revolver')} Combat</button></div></article>`).join('')}</div></details>`;
@@ -387,17 +425,21 @@ function renderBook() {
 
   $('#book').querySelectorAll('.bnpc').forEach((card) => {
     const generic = card.dataset.generic;
-    const g = generic && book.generic.find((x) => x.name === generic);
+    const g = generic && [...book.generic, ...(book.xGeneric || [])].find((x) => x.name === generic);
+    const xp = card.dataset.x != null ? (book.expansions || [])[Number(card.dataset.x)] : null;
     const nameOf = () => (generic ? (card.querySelector('[data-gname]').value.trim() || randomName()) : card.dataset.name);
     card.querySelector('[data-roll]')?.addEventListener('click', () => { card.querySelector('[data-gname]').value = randomName(); });
     card.querySelector('[data-ledger]').addEventListener('click', async () => {
       const name = nameOf();
       const f = book.factions.find((x) => x.faction === card.dataset.faction);
       const pp = f?.people.find((x) => x.name === name);
-      const r = await npcAct({
+      const r = await npcAct(xp ? {
+        action: 'add', name, faction: xp.faction || '', known: false, personality: xp.role, physical: '', where: xp.where || '',
+        wardenNotes: `${xp.desc}${xp.hooks ? `\n\nHooks: ${xp.hooks}` : ''}\n\n(${xp.book} p. ${xp.page})`,
+      } : {
         action: 'add', name, faction: card.dataset.faction || '', known: false,
         personality: '', physical: '',
-        wardenNotes: pp ? `${pp.quote} ${pp.desc}`.trim() : (g ? `Uses the ${g.name} profile (p. 191).` : ''),
+        wardenNotes: pp ? `${pp.quote} ${pp.desc}`.trim() : (g ? `Uses the ${g.name} profile (${g.book ? `${g.book} ` : ''}p. ${g.page}).` : ''),
         img: f && f.profile.name === name ? `npc-${f.profile.img}` : '',
       });
       if (r) toast(`${name} added to the ledger (hidden from the posse until you tick “met”).`);
