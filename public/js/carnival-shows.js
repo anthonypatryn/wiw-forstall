@@ -1,12 +1,24 @@
 // The carnival booths, animated (like the saloon games): after the server rolls, the booth plays out what happened —
 // the wheel spins to its slice, the puck climbs the High Striker, horseshoes arc at the spike, arrows thunk into the
 // target, the crystal ball swirls, pies go down, the greased pig squirts away. Sounds come from sound.js.
-import { esc } from './common.js';
+import { esc, animateRoll } from './common.js';
 import { play } from './sound.js';
 
 const wait = (ms) => new Promise((r) => setTimeout(r, ms));
 const motionOff = () => document.documentElement.classList.contains('less-motion') || matchMedia('(prefers-reduced-motion: reduce)').matches;
 const T = (ms) => (motionOff() ? Math.min(ms, 120) : ms);
+
+// The dice behind each moment, rolled for real (the server's rolls, in order) in a tray under the booth, so it's clear
+// the character's own Skill is doing the work: "Bo · Horseshoe Toss 1 · Finesse 2B1G → 3 Hits".
+let panel = null, queue = [];
+async function rollDice(n = 1) {
+  const list = queue.splice(0, n);
+  if (!panel || !list.length) return;
+  panel.innerHTML = list.map((r) => `<div class="cv-roll"><span class="cv-who">${esc(r.who)} <small>${esc(r.label.replace(/^Carnival · /, ''))} · ${esc(r.pool)}</small></span><div class="tray cv-tray"></div><b class="cv-hits"></b></div>`).join('');
+  const rows = [...panel.querySelectorAll('.cv-roll')];
+  await Promise.all(list.map((r, i) => animateRoll(rows[i].querySelector('.cv-tray'), r.dice).then(() => { rows[i].querySelector('.cv-hits').textContent = `${r.hits} Hit${r.hits === 1 ? '' : 's'}`; })));
+  await wait(T(350));
+}
 
 // ---------- Wheel of Fortune: most of the wheel loses, the prizes are thin slices (p. 64) ----------
 const SLICES = [['lose', 42], ['x2', 25], ['lose', 42], ['x3', 15], ['lose', 42], ['x2', 25], ['lose', 42], ['x4', 7], ['lose', 41], ['x2', 25], ['lose', 39], ['x3', 15]];
@@ -27,6 +39,7 @@ function wheelSVG() {
 }
 async function wheel(el, r) {
   el.innerHTML = `<div class="cv-wheel"><div class="cv-pointer"></div>${wheelSVG()}</div>`;
+  await rollDice();
   const want = r.mult ? `x${r.mult}` : 'lose';
   const spots = []; let a = 0;
   SLICES.forEach(([k, w]) => { if (k === want) spots.push(a + w / 2 + (Math.random() - 0.5) * w * 0.6); a += w; });
@@ -49,7 +62,7 @@ async function striker(el, r) {
   el.innerHTML = `<div class="cv-striker"><div class="cv-bell">DING</div><div class="cv-tower">${[5, 4, 3, 2, 1].map((n) => `<span>${n}</span>`).join('')}<div class="cv-puck"></div></div>
     <div class="cv-base"></div><div class="cv-mallet"></div></div>`;
   const puck = el.querySelector('.cv-puck'), mallet = el.querySelector('.cv-mallet'), bell = el.querySelector('.cv-bell');
-  await wait(T(300));
+  await rollDice();
   mallet.classList.add('swing'); play('swing');
   await wait(T(380));
   play('lockSnap');
@@ -65,6 +78,7 @@ async function horseshoe(el, r) {
   el.innerHTML = `<div class="cv-pitch"><div class="cv-spike"></div>${r.tosses.map((t, i) => `<div class="cv-shoe-x" data-i="${i}"><div class="cv-shoe-y"><div class="cv-shoe"></div></div></div>`).join('')}
     <div class="cv-toss-notes">${r.tosses.map((t, i) => `<span data-note="${i}">Toss ${i + 1}: needs ${t.target}</span>`).join('')}</div></div>`;
   for (const [i, t] of r.tosses.entries()) {
+    await rollDice();
     const ringer = t.hits >= t.target;
     const x = el.querySelector(`[data-i="${i}"]`);
     x.style.setProperty('--land', ringer ? '0px' : `${(i % 2 ? 1 : -1) * (30 + Math.random() * 40)}px`);
@@ -97,6 +111,7 @@ async function archery(el, r) {
     a.classList.add('hit'); play('lockClick');
   };
   for (const s of r.shots) {
+    await rollDice(2);
     await shoot(s.me, true); me += s.me; el.querySelector('[data-me]').textContent = me;
     await wait(T(260));
     await shoot(s.carnie, false); them += s.carnie; el.querySelector('[data-them]').textContent = them;
@@ -111,7 +126,8 @@ async function fortune(el, r) {
     <div class="cv-ball"><div class="mist m1"></div><div class="mist m2"></div><div class="mist m3"></div><div class="shine"></div></div><div class="cv-stand"></div>
     <p class="cv-words"></p></div>`;
   play('forstall');
-  await wait(T(1600));
+  await rollDice();
+  await rollDice();
   el.querySelector('.cv-fortune').classList.add('lit');
   play('chime');
   const words = el.querySelector('.cv-words');
@@ -130,7 +146,7 @@ async function pie(el, r) {
   const bites = {};
   for (const [ri, round] of r.rounds.entries()) {
     el.querySelector('.cv-round').textContent = `Round ${ri + 1}: needs ${round.target} Hits`;
-    await wait(T(500));
+    await rollDice(Object.keys(round.hits).length);
     for (const [who, hits] of Object.entries(round.hits)) {
       const e = el.querySelector(`[data-e="${CSS.escape(who)}"]`);
       e.querySelector('small').textContent = `${hits} Hit${hits === 1 ? '' : 's'}`;
@@ -156,6 +172,7 @@ async function pig(el, r) {
   const spots = [[12, 30], [70, 18], [30, 62], [78, 60], [48, 40]];
   for (const [i, hits] of r.grabs.entries()) {
     for (let k = 0; k < 2; k += 1) { const [x, y] = spots[(i * 2 + k) % spots.length]; p.style.left = `${x}%`; p.style.top = `${y}%`; p.classList.toggle('flip', k % 2 === 0); play('swing'); await wait(T(520)); }
+    await rollDice();
     hands.style.left = p.style.left; hands.style.top = p.style.top;
     hands.classList.remove('lunge'); void hands.offsetWidth; hands.classList.add('lunge');
     await wait(T(420));
@@ -170,12 +187,13 @@ async function pig(el, r) {
 const SHOWS = { wheel, striker, horseshoe, archery, fortune, pie, pig };
 export const hasShow = (game) => !!SHOWS[game];
 // play one booth's show in `el`, then show the outcome with a button back to the midway
-export async function runShow(el, game, result) {
+export async function runShow(el, game, result, rolls = []) {
   el.hidden = false;
   el.innerHTML = '';
   const stage = document.createElement('div'); stage.className = 'cv-stage';
+  panel = document.createElement('div'); panel.className = 'cv-dice'; queue = rolls.slice();
   const cap = document.createElement('div'); cap.className = 'cv-cap';
-  el.append(stage, cap);
+  el.append(stage, panel, cap);
   try { await SHOWS[game](stage, result); } catch { /* never let an animation block the game */ }
   cap.innerHTML = `<p>${esc(result.text)}</p><button type="button" class="btn" data-cv-back>Back to the midway</button>`;
   await new Promise((res) => cap.querySelector('[data-cv-back]').addEventListener('click', res, { once: true }));

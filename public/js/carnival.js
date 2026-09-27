@@ -12,7 +12,7 @@ let view = null, scene = null, busy = false, lastRolls = [];
 
 export function carnivalStyles() {
   if (document.getElementById('carnival-css')) return;
-  document.head.insertAdjacentHTML('beforeend', '<link id="carnival-css" rel="stylesheet" href="/css/carnival.css?v=2">');
+  document.head.insertAdjacentHTML('beforeend', '<link id="carnival-css" rel="stylesheet" href="/css/carnival.css?v=4">');
 }
 
 const BOOTHS = [
@@ -80,7 +80,7 @@ export function openCarnival() {
     busy = true; render();
     try {
       const r = await act(body);
-      if (hasShow(body.action) && r.result) await runShow(scene.querySelector('.cv-showbox'), body.action, r.result); // the booth plays out
+      if (hasShow(body.action) && r.result) await runShow(scene.querySelector('.cv-showbox'), body.action, r.result, r.rolls || []); // the booth plays out
       else { play('chips'); if (/Inventory/.test(r.result?.text || '')) play('success'); }
     } catch (err) { toast(err.message, true); }
     busy = false; render();
