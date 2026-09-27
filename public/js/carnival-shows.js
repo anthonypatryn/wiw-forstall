@@ -85,7 +85,7 @@ async function horseshoe(el, r) {
     x.classList.add('go', ringer ? 'ringer' : 'miss');
     play('swing');
     await wait(T(900));
-    play(ringer ? 'lockOpen' : 'failClunk');
+    play(ringer ? 'shoeRing' : 'shoeDirt');
     const n = el.querySelector(`[data-note="${i}"]`);
     n.textContent = `Toss ${i + 1}: ${t.hits} Hit${t.hits === 1 ? '' : 's'} ${ringer ? '· RINGER' : '· miss'}`;
     n.classList.add(ringer ? 'ok' : 'no');

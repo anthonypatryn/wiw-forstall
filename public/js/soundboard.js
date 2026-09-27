@@ -12,8 +12,8 @@ export const BOARD = [
   ['Explosions', [['explosion:small', 'Small'], ['explosion:medium', 'Medium'], ['explosion:large', 'Large'], ['explosion:huge', 'Huge']]],
   ['Saloon & games', [['dice', 'Dice'], ['card', 'Card deal'], ['shuffle', 'Shuffle'], ['chips', 'Chips'], ['drink', 'Pour a drink']]],
   ['Good & bad', [['success', 'Success'], ['successBig', 'Big win'], ['fail', 'Fail'], ['failClunk', 'Clunk'], ['failComic', 'Comic fail'], ['chime', 'Cowbell']]],
-  ['Carnival', [['striker', 'Mallet & bell'], ['strikerMiss', 'Mallet, no bell'], ['oink', 'Pig oink'], ['squeal', 'Pig squeal']]],
-  ['Trains', [['trainArrive', 'Train pulls in'], ['trainPass', 'Train rolls past']]],
+  ['Carnival', [['shoeRing', 'Horseshoe ringer'], ['shoeDirt', 'Horseshoe in the dirt'], ['striker', 'Mallet & bell'], ['strikerMiss', 'Mallet, no bell'], ['oink', 'Pig oink'], ['squeal', 'Pig squeal']]],
+  ['Travel', [['horseWalk', 'Horse walking'], ['trainArrive', 'Train pulls in'], ['trainPass', 'Train rolls past']]],
   ['Forstalls & locks', [['fsSweep', 'Sweep'], ['fsScan', 'Scan'], ['fsReadout', 'Scanner readout'], ['fsBurst', 'Crystal Burst'], ['forstall', 'Forstall hum'], ['zap', 'Zap'], ['lockClick', 'Lock click'], ['lockSnap', 'Pick snaps'], ['lockOpen', 'Lock opens']]],
 ];
 const fire = (key) => { const [name, arg] = key.split(':'); play(name, arg); };

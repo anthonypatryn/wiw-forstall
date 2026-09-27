@@ -1,7 +1,7 @@
 import { $, esc, api, startPolling, toast, mountNav, tryWarden, forgetWarden, savedPin, wardenModal, rollPopup, abilityOptions, abilityTargetsHTML, abilityBody, ask, pickFighters, isPool } from './common.js';
 import { gl } from './glyphs.js';
 import { play, weaponSound, preload } from './sound.js';
-preload('steps', 'bow', 'shotgun', 'boomSmall', 'boomMedium', 'boomLarge', 'fsBurst', 'fsReadout', 'fsSweep', 'fsScan');
+preload('steps', 'hooves', 'bow', 'shotgun', 'boomSmall', 'boomMedium', 'boomLarge', 'fsBurst', 'fsReadout', 'fsSweep', 'fsScan');
 let meta = null;
 // the Ability button depends on this, so redraw the turn panel once it arrives
 api('GET', null, '?view=meta', '/api/combat').then((m) => { meta = m; renderTurnBar(); }).catch(() => {});
@@ -979,7 +979,7 @@ function wireToken(el) {
     selected = t.id;
     render();
     const ok = await act({ action: 'move', id: t.id, ...drag.hex, rough: tp.rough, pc: myId() });
-    if (ok) play('steps');
+    if (ok) play(combat?.posse?.find((p) => p.id === t.ref)?.mounted === 'horse' ? 'hooves' : 'steps'); // riding: hoofbeats
     if (ok === null) { t.col = was.col; t.row = was.row; render(); } // not allowed: snap back
     else if (ok?.cost) { toast(`${t.name} moved — ${ok.cost} Grit.`); combatPoller?.now?.(); }
   };

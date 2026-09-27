@@ -60,7 +60,7 @@ function render() { if (scene) scene.querySelector('.cv-scene').innerHTML = scen
 export function openCarnival() {
   carnivalStyles();
   ambience('game', 'carnival'); // the midway crowd plays under the booths
-  preload('successBig', 'failClunk', 'failComic', 'bowGame', 'arrowHit', 'striker', 'strikerMiss', 'oink', 'squeal');
+  preload('successBig', 'failClunk', 'failComic', 'bowGame', 'arrowHit', 'striker', 'strikerMiss', 'oink', 'squeal', 'shoeRing', 'shoeDirt');
   if (scene) return;
   scene = document.createElement('div');
   scene.className = 'cv-back';
