@@ -61,7 +61,7 @@ function lootHTML(e, p, data) {
       <div class="loot-row">${who('data-loot-pc')}<select data-loot-cond aria-label="Condition">${data.loot.conditions.map((c) => `<option${c === sel.cond ? ' selected' : ''}>${c}</option>`).join('')}</select>
         <button class="btn small" type="button" data-loot>Give trophy</button></div>
       <p class="loot-guide">${data.loot.guide.map((g) => `<span><b>${g.range}</b>: ${g.with}</span>`).join('')}</p>` : ''}
-    <div class="loot-row">${t ? '' : who('data-loot-pc')}<button class="btn small secondary" type="button" data-search>${gl('die')} Search the body (Intuition)</button><span class="muted">you decide what they find</span></div></div>`;
+    <div class="loot-row">${t ? '' : who('data-loot-pc')}<button class="btn small secondary" type="button" data-search>${gl('die')} Search the body (Intuition)</button><span class="muted">the loot table suggests a find; you OK it</span></div></div>`;
 }
 export function enemyCardHTML(e, { data, meta }) {
   const now = data.combat.current === e.id;
@@ -155,7 +155,7 @@ export function wireFighters(box, ctx) {
     card.querySelector('[data-search]')?.addEventListener('click', async () => {
       if (!ls.pc) return toast('Pick who searches.', true);
       const r = await act({ action: 'search', enemy: eid, pc: ls.pc });
-      if (r?.dice) rollPopup(r, `${r.who} searches ${card.querySelector('.f-name').firstChild.textContent.trim()} · ${r.pool}`);
+      if (r?.dice) { rollPopup(r, 'Search · Intuition'); toast(r.hits ? 'The find is waiting under Needs you.' : 'Nothing worth taking.'); }
     });
   });
 }

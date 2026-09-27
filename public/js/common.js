@@ -446,6 +446,12 @@ function pollNeeds(btn, list) {
   if (!list.dataset.wired) { // "Close it" on a finished roll, right from the list
     list.dataset.wired = '1';
     list.addEventListener('click', async (e) => {
+      const g = e.target.closest('[data-needs-give], [data-needs-deny]');
+      if (g) { // a player's search find: OK it or not, right from the list
+        e.stopPropagation(); g.disabled = true;
+        try { await api('POST', { action: 'searchAnswer', id: g.dataset.needsGive || g.dataset.needsDeny, accept: !!g.dataset.needsGive }, '', '/api/combat'); toast(g.dataset.needsGive ? 'Given: it’s in their Inventory.' : 'They come up empty.'); } catch (err) { toast(err.message, true); }
+        tick(); return;
+      }
       const b = e.target.closest('[data-needs-close]');
       if (!b) return;
       e.stopPropagation(); b.disabled = true;
@@ -460,6 +466,7 @@ function pollNeeds(btn, list) {
       btn.innerHTML = `<span class="nn">Needs you</span> <b class="${n.count ? 'hot' : ''}">${n.count}</b>`;
       list.innerHTML = `${n.items.length ? n.items.map((x) => (x.closeCheck
         ? `<div class="needs-row${x.urgent ? ' urgent' : ''}"><a href="${esc(x.href)}">${esc(x.text)}</a><button type="button" class="btn small" data-needs-close="${esc(x.closeCheck)}">Close it</button></div>`
+        : x.search ? `<div class="needs-row urgent"><a href="${esc(x.href)}">${esc(x.text)}</a><button type="button" class="btn small" data-needs-give="${esc(x.search)}">Give it</button><button type="button" class="btn small secondary" data-needs-deny="${esc(x.search)}">Nothing</button></div>`
         : `<a class="${x.urgent ? 'urgent' : ''}" href="${esc(x.href)}">${esc(x.text)}</a>`)).join('') : '<span class="muted">All quiet — nothing waiting on you.</span>'}
         <div class="needs-links"><a href="/run"><b>Open Run the Game ›</b></a></div>`;
     } catch { /* offline for a moment */ }

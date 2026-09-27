@@ -14,6 +14,7 @@ import { mountSaloonDesk, saloonStyles } from './saloon.js';
 import { mountDuelStart } from './duel-start.js';
 import { mountBookTables } from './tables-desk.js';
 import { mountDowntime } from './downtime.js';
+import { mountSalvage } from './search.js';
 import { mountCarnivalDesk } from './carnival.js';
 import { mountSoundboard } from './soundboard.js';
 
@@ -25,6 +26,7 @@ const handout = mountHandout($('#handout'), () => combat);
 const wwhisper = mountWardenWhisper($('#wwhisper'), () => combat);
 const locks = mountLockSend($('#lockpick'), () => combat);
 const downtime = mountDowntime($('#downtime'), () => combat);
+const salvage = mountSalvage($('#salvage'), () => combat);
 const caller = mountRollCaller($('#rollcall'), () => combat, () => { poller?.now?.(); refreshNeeds(); });
 
 async function act(body, msg) {
@@ -45,9 +47,16 @@ async function refreshNeeds() {
     $('#needs').innerHTML = n.items.length ? n.items.map((x, i) => `<div class="notice${x.urgent ? ' urgent' : ''}">
         <a href="${esc(x.href)}">${esc(x.text)}</a>
         ${x.closeCheck ? `<span class="notice-btns"><button type="button" class="btn small" data-ck-close-n="${esc(x.closeCheck)}">Close it</button></span>` : ''}
+        ${x.search ? `<span class="notice-btns"><button type="button" class="btn small" data-sr-yes="${esc(x.search)}">Give it</button><button type="button" class="btn small secondary" data-sr-no="${esc(x.search)}">They find nothing</button></span>` : ''}
         ${x.store ? `<span class="notice-btns"><button type="button" class="btn small" data-yes="${esc(x.store)}">Approve</button><button type="button" class="btn small secondary" data-no="${esc(x.store)}">Deny</button></span>` : ''}
       </div>`).join('') : '<p class="muted">All quiet — nothing is waiting on you.</p>';
     $('#needs').querySelectorAll('[data-ck-close-n]').forEach((b) => b.addEventListener('click', async () => { b.disabled = true; await act({ action: 'checkClose', id: b.dataset.ckCloseN }); refreshNeeds(); }));
+    $('#needs').querySelectorAll('[data-sr-yes], [data-sr-no]').forEach((b) => b.addEventListener('click', async () => {
+      b.disabled = true;
+      const r = await act({ action: 'searchAnswer', id: b.dataset.srYes || b.dataset.srNo, accept: !!b.dataset.srYes });
+      if (r) toast(b.dataset.srYes ? `Given: ${(r.got || []).join(', ')}.` : 'They come up empty.');
+      refreshNeeds();
+    }));
     $('#needs').querySelectorAll('[data-yes], [data-no]').forEach((b) => b.addEventListener('click', async () => {
       try {
         const res = await api('POST', { action: 'decide', id: b.dataset.yes || b.dataset.no, approve: !!b.dataset.yes }, '', '/api/shop');
@@ -137,7 +146,7 @@ function renderPosse() {
 }
 function render() {
   if (!combat) return;
-  renderFight(); renderEnemies(); renderPosse(); caller.draw(); renderChecks(); renderRecent(); renderRewards(); handout.draw(); wwhisper.draw(); locks.draw(); downtime.draw();
+  renderFight(); renderEnemies(); renderPosse(); caller.draw(); renderChecks(); renderRecent(); renderRewards(); handout.draw(); wwhisper.draw(); locks.draw(); downtime.draw(); salvage.draw();
 }
 
 // ---------- Rewards: award the posse, Jackpot, Town Rest (moved here from the Posse page) ----------

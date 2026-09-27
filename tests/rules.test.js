@@ -1236,3 +1236,40 @@ test('carnival: the greased pig (house rule) and the details each booth animatio
   const p = carnivalAction(s, { action: 'pie', pc: 'p1' }, ctx);
   assert.ok(p.rounds[0].hits && p.eaters.length === 3 && Array.isArray(p.left));
 });
+
+test('search: the house loot table by Hits, the Warden OKs the find; salvage (p. 93) adds Scrap', async () => {
+  const { rollFind, tierOf } = await import('../lib/loot.js');
+  const seq = (v) => () => v;
+  assert.equal(rollFind('human', 0).text, 'Nothing worth taking.');
+  const low = rollFind('rubble', 2, { rand: seq(0.1) }); assert.ok(low.scrap >= 1 && !low.item);
+  const basic = rollFind('wagon', 3, { rand: seq(0.3) }); assert.equal(tierOf(CATALOG.find((x) => x.id === basic.item.itemId)), 'Basic');
+  const prem = rollFind('lair', 6, { rand: seq(0.5) }); assert.equal(prem.item.tier, 'Premium');
+  assert.equal(rollFind('lair', 7, { rand: seq(0.1) }).item.tier, 'Elite');
+  assert.equal(rollFind('lair', 7, { rand: seq(0.9) }).item.tier, 'Premium');
+  const parts = rollFind('monster', 5, { rand: Math.random, monster: { name: 'Golden Bear', size: 'Large' } });
+  assert.equal(parts.parts.length, 3); assert.match(parts.parts[0].name, /^Golden Bear /);
+
+  const state = freshCombat();
+  const pc = publicAction(state, { action: 'addPc', trade: 'Mechanic', name: 'Gears' }, { warden: true });
+  pc.skills.intuition = '6G'; pc.wallet = '1';
+  publicAction(state, { action: 'addEnemy', profile: 'Golden Bear' }, { warden: true });
+  const e = state.enemies[0];
+  assert.throws(() => publicAction(state, { action: 'pc', id: pc.id, op: 'search', enemy: e.id }, { warden: false }), /isn’t down yet/);
+  e.defeated = true;
+  const r = publicAction(state, { action: 'pc', id: pc.id, op: 'search', enemy: e.id }, { warden: false });
+  assert.throws(() => publicAction(state, { action: 'pc', id: pc.id, op: 'search', enemy: e.id }, { warden: false }), /already searched/);
+  const s = state.searches[0]; assert.equal(s.kind, 'monster');
+  if (r.hits) {
+    assert.throws(() => publicAction(state, { action: 'searchAnswer', id: s.id, accept: true }, { warden: false }), /PIN/);
+    publicAction(state, { action: 'searchAnswer', id: s.id, accept: true }, { warden: true });
+    assert.match(pc.inventory, /Found: Golden Bear/);
+  }
+  publicAction(state, { action: 'pc', id: pc.id, op: 'search', kind: 'wagon', what: 'the busted stagecoach' }, { warden: false });
+  const w = state.searches[0];
+  if (w.status === 'pending') { publicAction(state, { action: 'searchAnswer', id: w.id, accept: false }, { warden: true }); assert.equal(w.status, 'denied'); }
+  const before = Number(pc.scrap) || 0;
+  pc.abilities.push('Perpetual Salvager');
+  const sv = publicAction(state, { action: 'salvage', pc: pc.id, dice: 6, target: 1, what: 'the wagon' }, { warden: true });
+  if (sv.ok) assert.equal(Number(pc.scrap), before + sv.scrap);
+  assert.ok(state.log.some((l) => l.label === 'Perpetual Salvager') || !sv.ok);
+});

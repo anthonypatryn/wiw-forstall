@@ -3,6 +3,7 @@ import { esc, api, startPolling, staticDice, timeAgo, injectDefs, savedPin, toas
 import { gl } from './glyphs.js';
 import { duelHud } from './duel-hud.js';
 import { tradeHud, openTrade } from './trade.js';
+import { searchHud, openSearch } from './search.js';
 import { attention } from './attention.js';
 
 function logHTML(log) {
@@ -65,6 +66,11 @@ export function mountTableLog() {
       tb.innerHTML = `${gl('satchel')} <span>Trade</span>`;
       tb.addEventListener('click', () => openTrade());
       row.prepend(tb);
+      const sb = document.createElement('button');
+      sb.type = 'button'; sb.className = 'log-fab whisper-fab'; sb.title = 'Search a body, a wagon, rubble or a lair';
+      sb.innerHTML = `${gl('lasso')} <span>Search</span>`;
+      sb.addEventListener('click', () => openSearch());
+      row.prepend(sb);
     }
     m.watchWhispers();
   }).catch(() => {});
@@ -134,6 +140,7 @@ export function renderHud(h) {
   lastHud = h;
   duelHud(h);
   tradeHud(h);
+  searchHud(h);
   // the tab title / icon / buzz for this device's player: their combat turn, or a roll the Warden asked them for
   if (!savedPin() && me()) {
     const mine = me(), cur = h.active && h.current === mine ? h.order.find((o) => o.key === mine) : null;
