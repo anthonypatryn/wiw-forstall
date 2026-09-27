@@ -6,7 +6,7 @@
 
 const NAMES = ['dice', 'card', 'shuffle', 'chips', 'drink', 'gun', 'shotgun', 'bow', 'swing', 'explosion', 'forstall', 'zap', 'lockClick', 'lockSnap', 'lockOpen', 'success', 'fail', 'chime',
   'successBig', 'failClunk', 'failComic', 'boomSmall', 'boomMedium', 'boomLarge', 'boomHuge', 'bowGame', 'arrowHit', 'striker', 'strikerMiss', 'oink', 'squeal', 'steps', 'trainArrive', 'trainPass', 'fsBurst', 'fsReadout', 'fsSweep', 'fsScan',
-  'monRoar', 'monLowRoar', 'monGrowl', 'monClick', 'monGiantInsect', 'monSmallInsect', 'shoeRing', 'shoeDirt', 'hooves', 'horseWalk', 'pickWork', 'lockMiss', 'lockUnlock', 'melee'];
+  'monRoar', 'monLowRoar', 'monGrowl', 'monClick', 'monGiantInsect', 'monSmallInsect', 'shoeRing', 'shoeDirt', 'hooves', 'horseWalk', 'pickWork', 'lockMiss', 'lockUnlock', 'melee', 'bellToll', 'gunReload', 'gunSpin', 'monHiss', 'monRattle', 'monSpider'];
 // play('explosion', size): how big a bang (small = a firecracker, huge = the ground caves in)
 const BOOM = { small: 'boomSmall', medium: 'boomMedium', large: 'boomLarge', huge: 'boomHuge' };
 // name → clips of [file, start s, length s, gain (1 if left out)] — the user's picks, trimmed to where the sound is
@@ -55,6 +55,12 @@ const CLIPS = {
   pickWork: [['lockpick', 1.35, 0.5], ['lockpick', 2.0, 0.35], ['lockpick', 3.5, 0.35], ['lockpick', 4.2, 0.5], ['lockpick', 4.85, 0.55], ['lockpick', 6.65, 0.3], ['lockpick', 7.3, 0.35], ['lockpick', 7.85, 0.4], ['lockpick', 8.35, 0.35]], // working the pins (a right call)
   lockMiss: [['lock-miss', 2.8, 0.9]],                 // the pick snaps: a metal clang (a wrong call)
   lockUnlock: [['lock-unlock', 1.62, 0.42], ['lock-unlock', 2.82, 0.3], ['lock-unlock', 3.9, 0.5]], // the lock gives (picked)
+  bellToll: [['bell-toll', 0.15, 4.15]],              // a death, and High Noon
+  gunReload: [['gun-reload', 0.25, 3.1]],              // loading a revolver (Special Ammo)
+  gunSpin: [['gun-spin', 0.1, 2.5, 1.6]],              // a revolver's cylinder spun (a Duel begins)
+  monHiss: [['mon-hiss', 0.9, 1.2, 8]],                // a snake's hiss (a very quiet recording, turned up)
+  monRattle: [['mon-rattle', 0.05, 1.85, 0.8]],        // a rattlesnake
+  monSpider: [['mon-spider-1', 0.05, 1.7], ['mon-spider-4', 0.05, 1.05], ['mon-spider-8', 0.25, 2.7]], // a giant spider attacks
   melee: [['melee', 1.0, 0.45], ['melee', 2.5, 0.55], ['melee', 4.03, 0.45], ['melee', 5.68, 0.42, 1.6], ['melee', 7.28, 0.38, 1.6]], // a melee hit (knives, clubs, fists, a monster's bite)
 };
 const buffers = {}; // file → AudioBuffer (or a Promise while loading)
@@ -233,6 +239,6 @@ export function play(name, arg) {
 }
 // recorded sounds with no synth of their own use a close one until the file loads
 const FALLBACK = { shuffle: 'card', chips: 'lockClick', shotgun: 'gun', drink: 'swing', successBig: 'success', failClunk: 'lockClick', failComic: 'fail',
-  boomSmall: 'explosion', boomMedium: 'explosion', boomLarge: 'explosion', boomHuge: 'explosion', bowGame: 'bow', arrowHit: 'lockClick', striker: 'chime', strikerMiss: 'lockSnap', oink: 'zap', squeal: 'zap', steps: 'swing', trainArrive: 'forstall', trainPass: 'forstall', fsBurst: 'zap', fsReadout: 'lockClick', fsSweep: 'forstall', fsScan: 'forstall', monRoar: 'explosion', monLowRoar: 'explosion', monGrowl: 'swing', monClick: 'lockClick', monGiantInsect: 'zap', monSmallInsect: 'zap', shoeRing: 'lockOpen', shoeDirt: 'lockClick', hooves: 'swing', horseWalk: 'swing', pickWork: 'lockClick', lockMiss: 'lockSnap', lockUnlock: 'lockOpen', melee: 'swing' };
+  boomSmall: 'explosion', boomMedium: 'explosion', boomLarge: 'explosion', boomHuge: 'explosion', bowGame: 'bow', arrowHit: 'lockClick', striker: 'chime', strikerMiss: 'lockSnap', oink: 'zap', squeal: 'zap', steps: 'swing', trainArrive: 'forstall', trainPass: 'forstall', fsBurst: 'zap', fsReadout: 'lockClick', fsSweep: 'forstall', fsScan: 'forstall', monRoar: 'explosion', monLowRoar: 'explosion', monGrowl: 'swing', monClick: 'lockClick', monGiantInsect: 'zap', monSmallInsect: 'zap', shoeRing: 'lockOpen', shoeDirt: 'lockClick', hooves: 'swing', horseWalk: 'swing', pickWork: 'lockClick', lockMiss: 'lockSnap', lockUnlock: 'lockOpen', melee: 'swing', bellToll: 'chime', gunReload: 'lockClick', gunSpin: 'lockClick', monHiss: 'zap', monRattle: 'zap', monSpider: 'zap' };
 // which attack sound fits a weapon
 export const weaponSound = (w) => (/shotgun|scattergun/i.test(`${w?.type} ${w?.model}`) ? 'shotgun' : /bow/i.test(`${w?.type} ${w?.model}`) ? 'bow' : /melee|knife|axe|sword|club|fist|hatchet|machete/i.test(`${w?.type} ${w?.model}`) ? 'melee' : 'gun');

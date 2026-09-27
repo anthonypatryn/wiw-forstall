@@ -518,6 +518,7 @@ function wireSheet(p) {
     } else if (rds) {
       const [i, a] = rds.dataset.rds.split('.');
       rds.blur();
+      if (Number(rds.dataset.d) > 0) import('./sound.js').then((m) => m.play('gunReload')).catch(() => {}); // loading rounds
       act({ action: 'pc', id: p.id, op: 'ammo', index: i, slot: a, delta: rds.dataset.d });
     }
   });

@@ -7,11 +7,11 @@ import { play, ambience, LOOPS, stopSounds, preload } from './sound.js';
 
 const EP = '/api/sound';
 export const BOARD = [
-  ['Fights', [['gun', 'Gunshot'], ['shotgun', 'Shotgun'], ['bow', 'Bow shot'], ['arrowHit', 'Arrow thunk'], ['melee', 'Melee hit'], ['swing', 'Swoosh'], ['steps', 'Footsteps']]],
-  ['Monsters', [['monRoar', 'Roar'], ['monLowRoar', 'Low roar'], ['monGrowl', 'Growl'], ['monClick', 'Insect clicking'], ['monGiantInsect', 'Giant insect'], ['monSmallInsect', 'Small insect']]],
+  ['Fights', [['gun', 'Gunshot'], ['shotgun', 'Shotgun'], ['gunReload', 'Reload revolver'], ['gunSpin', 'Spin the cylinder'], ['bow', 'Bow shot'], ['arrowHit', 'Arrow thunk'], ['melee', 'Melee hit'], ['swing', 'Swoosh'], ['steps', 'Footsteps']]],
+  ['Monsters', [['monRoar', 'Roar'], ['monLowRoar', 'Low roar'], ['monGrowl', 'Growl'], ['monClick', 'Insect clicking'], ['monGiantInsect', 'Giant insect'], ['monSmallInsect', 'Small insect'], ['monSpider', 'Giant spider'], ['monRattle', 'Rattlesnake'], ['monHiss', 'Snake hiss']]],
   ['Explosions', [['explosion:small', 'Small'], ['explosion:medium', 'Medium'], ['explosion:large', 'Large'], ['explosion:huge', 'Huge']]],
   ['Saloon & games', [['dice', 'Dice'], ['card', 'Card deal'], ['shuffle', 'Shuffle'], ['chips', 'Chips'], ['drink', 'Pour a drink']]],
-  ['Good & bad', [['success', 'Success'], ['successBig', 'Big win'], ['fail', 'Fail'], ['failClunk', 'Clunk'], ['failComic', 'Comic fail'], ['chime', 'Cowbell']]],
+  ['Good & bad', [['success', 'Success'], ['successBig', 'Big win'], ['fail', 'Fail'], ['failClunk', 'Clunk'], ['failComic', 'Comic fail'], ['chime', 'Cowbell'], ['bellToll', 'Bell toll']]],
   ['Carnival', [['shoeRing', 'Horseshoe ringer'], ['shoeDirt', 'Horseshoe in the dirt'], ['striker', 'Mallet & bell'], ['strikerMiss', 'Mallet, no bell'], ['oink', 'Pig oink'], ['squeal', 'Pig squeal']]],
   ['Travel', [['horseWalk', 'Horse walking'], ['trainArrive', 'Train pulls in'], ['trainPass', 'Train rolls past']]],
   ['Forstalls & locks', [['fsSweep', 'Sweep'], ['fsScan', 'Scan'], ['fsReadout', 'Scanner readout'], ['fsBurst', 'Crystal Burst'], ['forstall', 'Forstall hum'], ['zap', 'Zap'], ['pickWork', 'Picking a lock'], ['lockMiss', 'Pick snaps'], ['lockUnlock', 'Lock clicks open']]],

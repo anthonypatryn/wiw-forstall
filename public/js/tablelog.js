@@ -104,6 +104,7 @@ export function mountTableLog() {
     if (seenTop !== null && topId !== seenTop) {
       const idx = latest.findIndex((l) => l.id === seenTop);
       unread += idx === -1 ? latest.length : idx;
+      if (latest.slice(0, idx === -1 ? 3 : idx).some((l) => /(is down!|has died)/.test(l.text || ''))) play('bellToll'); // someone fell
       if (panel.hidden && unread) { badge.textContent = unread > 9 ? '9+' : unread; badge.hidden = false; btn.classList.remove('ping'); void btn.offsetWidth; btn.classList.add('ping'); }
     }
     seenTop = topId;

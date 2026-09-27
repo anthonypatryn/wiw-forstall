@@ -79,7 +79,7 @@ function watch(d, warden) {
     box.className = 'modal-back duel-back';
     document.body.append(box);
     box.addEventListener('click', onClick);
-    if (shownAt !== d.at) { shownAt = d.at; seenRounds = d.rounds.length; play('chime'); }
+    if (shownAt !== d.at) { shownAt = d.at; seenRounds = d.rounds.length; play('bellToll'); setTimeout(() => play('gunSpin'), 2200); } // High Noon
     setTimeout(() => { if (!box.contains(document.activeElement)) box.querySelector('button')?.focus({ preventScroll: true }); }, 0); // keyboard users land inside the scene
   }
   box.dataset.warden = warden ? '1' : '';
