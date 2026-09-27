@@ -79,3 +79,6 @@ button.jq-tick { cursor: pointer; }
 .jn-form .ho-photo { margin: var(--sp-2) 0; }
 .jn-form .check { margin: var(--sp-2) 0; }
 @media (max-width: 480px) { .jc-board { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 10px; padding: 16px 10px; } .jc-note b { font-size: 22px; } }
+.jn-books { margin: 0 0 10px; font-size: var(--fs-sm); }
+.jn-books summary { cursor: pointer; color: var(--accent); font-weight: 700; }
+.jn-books .chip-row { margin-top: 6px; }

@@ -1,6 +1,7 @@
 // The Journal: quests (step checklists), clues (a corkboard of pinned notes) and the newspapers.
 // Players read what the Warden has revealed and keep the posse's own notes; the Warden writes, reveals and ticks things off here.
 import { $, esc, api, startPolling, toast, mountNav, tryWarden, savedPin, ask, store, paras } from './common.js';
+import { BOOK_JOBS } from './bookjobs.js';
 import { mountTableLog } from './tablelog.js';
 import { gl } from './glyphs.js';
 import { paperHTML, openPaper } from './paper.js';
@@ -109,6 +110,7 @@ function editQuest(q = null) {
   const back = modal('');
   const draw = () => {
     back.querySelector('.modal').innerHTML = `<h2>${q ? 'Edit the quest' : 'A new quest'}</h2>
+      ${q ? '' : `<details class="jn-books"><summary>From the job boards in the books…</summary><div class="chip-row">${BOOK_JOBS.map((b, i) => `<button type="button" class="chip-btn" data-bookj="${i}" title="${esc(b.src)}">${esc(b.label)}</button>`).join('')}</div></details>`}
       <div class="field-step"><span>QUEST</span><input data-f="title" maxlength="90" value="${esc(st.title)}" placeholder="e.g. The Missing Kurtz Crystal"></div>
       <div class="field-step"><span>WHO GAVE IT · WHERE</span><select aria-label="Who gave the quest" data-f="giver">${pick(J.npcs, st.giver, 'Nobody in particular')}</select><select aria-label="Where" data-f="where">${pick(J.towns, st.where, 'Anywhere')}</select></div>
       <div class="field-step"><span>THE JOB</span><textarea data-f="text" rows="3" maxlength="3000" placeholder="What they were asked to do, in a sentence or two">${esc(st.text)}</textarea></div>
@@ -126,6 +128,11 @@ function editQuest(q = null) {
     const b = e.target.closest('button'); if (!b) return;
     const d = b.dataset;
     if (d.no !== undefined) return back.remove();
+    if (d.bookj) { // a job from a book's job board fills the form in
+      const bj = BOOK_JOBS[Number(d.bookj)];
+      Object.assign(st, { title: bj.title, text: `${bj.text} (${bj.src})`, reward: bj.reward, steps: bj.steps.map((x) => ({ ...x })), where: (J.towns || []).some((t) => t.id === bj.where) ? bj.where : st.where });
+      draw(); return;
+    }
     if (d.addstep !== undefined) { st.steps.push({ text: '', hidden: false, done: false }); draw(); back.querySelector(`[data-step="${st.steps.length - 1}"]`)?.focus(); return; }
     if (d.hide) { const s = st.steps[Number(d.hide)]; s.hidden = !s.hidden; draw(); return; }
     if (d.rm) { st.steps.splice(Number(d.rm), 1); draw(); return; }

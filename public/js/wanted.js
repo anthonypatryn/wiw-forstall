@@ -1,5 +1,6 @@
 // Wanted posters, town by town. Everyone reads the board; the Warden puts posters up, edits, hides and pays them out.
 import { $, esc, api, startPolling, toast, mountNav, tryWarden, savedPin, ask, askText, store, me } from './common.js';
+import { BOOK_POSTERS } from './bookjobs.js';
 import { mountTableLog } from './tablelog.js';
 import { gl } from './glyphs.js';
 import { shrink, showImage, loadImg } from './portrait.js';
@@ -108,6 +109,7 @@ function editPoster(p = null) {
   const opt = (list, cur, none) => `<option value="">${none}</option>${list.map((x) => `<option value="${esc(x.id)}"${x.id === cur ? ' selected' : ''}>${esc(x.name)}</option>`).join('')}`;
   back.innerHTML = `<div class="modal ask wt-form" role="dialog" aria-modal="true" aria-label="${p ? 'Edit poster' : 'New poster'}">
     <h2>${p ? 'Edit the poster' : 'Put up a poster'}</h2>
+    ${p ? '' : `<div class="field-step"><span>FROM THE BOOKS (fills the form in)</span><div class="chip-row">${BOOK_POSTERS.map((b, i) => `<button type="button" class="chip-btn" data-bookp="${i}" title="${esc(b.src)}">${esc(b.label)}</button>`).join('')}</div></div>`}
     <div class="field-step"><span>WHO’S WANTED</span><input data-f="name" maxlength="60" value="${esc(st.name)}" placeholder="e.g. Black Bart"></div>
     <div class="field-step"><span>ALIAS (optional)</span><input data-f="alias" maxlength="60" value="${esc(st.alias)}" placeholder="e.g. The Gentleman Bandit"></div>
     <div class="field-step"><span>WANTED FOR</span><textarea data-f="crime" rows="2" maxlength="300" placeholder="e.g. Robbing the Wells Fargo stage and 28 other crimes">${esc(st.crime)}</textarea></div>
@@ -129,6 +131,15 @@ function editPoster(p = null) {
   back.addEventListener('change', (e) => { const k = e.target.dataset.f; if (k) st[k] = e.target.value; if (e.target.dataset.hidden !== undefined) st.hidden = e.target.checked; });
   back.addEventListener('click', async (e) => {
     const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.bookp) { // a bounty from the expansion books
+      const bp = BOOK_POSTERS[Number(b.dataset.bookp)];
+      Object.assign(st, { name: bp.name, alias: bp.alias, crime: bp.crime, reward: bp.reward, terms: bp.terms, wardenNote: `${bp.note ? `${bp.note} ` : ''}(${bp.src})` });
+      if (data.towns.some((t) => t.id === bp.town)) st.town = bp.town;
+      ['name', 'alias', 'crime', 'reward', 'town', 'wardenNote'].forEach((k) => { const el = back.querySelector(`[data-f="${k}"]`); if (el) el.value = st[k]; });
+      back.querySelectorAll('[data-terms]').forEach((x) => x.classList.toggle('on', x.dataset.terms === st.terms));
+      back.querySelectorAll('[data-bookp]').forEach((x) => x.classList.toggle('on', x === b));
+      return;
+    }
     if (b.dataset.terms) { st.terms = b.dataset.terms; back.querySelectorAll('[data-terms]').forEach((x) => x.classList.toggle('on', x === b)); return; }
     if (b.dataset.no !== undefined) return back.remove();
     if (b.dataset.pick !== undefined) {
