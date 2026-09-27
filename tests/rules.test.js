@@ -1142,3 +1142,14 @@ test('expansion NPCs fight from their stat blocks; the posse’s standing with a
   assert.equal(npcView(s, { warden: false }).standing['The Iron Sights'], undefined, 'back to Neutral with no note clears it');
   assert.throws(() => npcAction(s, { action: 'standing', faction: 'Nobody', level: 'Hostile' }, { warden: true }), /Unknown faction/);
 });
+
+test('the Sheriff’s Badge reaches the Warden anonymously; Iron Road titles are Trade-only', async () => {
+  const { freshWhispers, whisperAction, whisperView } = await import('../lib/whispers.js');
+  const { ACHIEVEMENTS } = await import('../lib/sheets.js');
+  const s = freshWhispers();
+  whisperAction(s, { action: 'badge' }, { warden: false, names: {} });
+  const w = whisperView(s, { warden: true }).list[0];
+  assert.ok(w.badge && !w.pc && w.name === 'Someone');
+  assert.equal(whisperView(s, { warden: false, pc: 'x' }).list.length, 0);
+  assert.equal(ACHIEVEMENTS.find((a) => a.name === 'Badlands Ranger').trade, 'Hunter');
+});

@@ -67,7 +67,7 @@ export function openEndSession({ getCombat, refresh = () => {} }) {
       const list = w.meta?.achievements || [];
       return `<p class="es-lead">Did anyone earn an Achievement tonight? Tap to grant it — it’s announced in the Table Log. Prestige titles (Cowpoke, Trailblazer…) update on their own.</p>
         ${alive().map((p) => { const got = new Set(p.achievements || []);
-          return `<div class="es-ach"><b>${esc(p.name)}</b><div class="es-chips">${list.map((a) => `<button type="button" class="chip-btn${got.has(a.name) ? ' on' : ''}" data-es-ach="${esc(p.id)}" data-name="${esc(a.name)}" title="${esc(a.req)}">${esc(a.name)}</button>`).join('')}</div></div>`; }).join('') || '<p class="muted">No characters yet.</p>'}`;
+          return `<div class="es-ach"><b>${esc(p.name)}</b><div class="es-chips">${list.filter((a) => !a.trade || a.trade === p.trade || got.has(a.name)).map((a) => `<button type="button" class="chip-btn${got.has(a.name) ? ' on' : ''}" data-es-ach="${esc(p.id)}" data-name="${esc(a.name)}" title="${esc(a.req)}">${esc(a.name)}</button>`).join('')}</div></div>`; }).join('') || '<p class="muted">No characters yet.</p>'}`;
     },
     rest() {
       return `<p class="es-lead">Where does the posse bed down tonight?</p>

@@ -5,7 +5,7 @@ import { play } from './sound.js';
 
 
 // a small styled box with a text area (dialog, not a browser prompt)
-function writeBox({ title, sub = '', placeholder = '', max = 500, ok = 'Send', quote = '' }) {
+function writeBox({ title, sub = '', placeholder = '', max = 500, ok = 'Send', quote = '', extra = null }) {
   return new Promise((resolve) => {
     const back = document.createElement('div');
     back.className = 'modal-back ask-back';
@@ -13,12 +13,13 @@ function writeBox({ title, sub = '', placeholder = '', max = 500, ok = 'Send', q
       <h2>${gl('scroll')} ${esc(title)}</h2>${sub ? `<p class="ask-body">${esc(sub)}</p>` : ''}
       ${quote ? `<blockquote class="whisper-quote">${esc(quote)}</blockquote>` : ''}
       <textarea aria-label="Your message" maxlength="${max}" rows="${max > 250 ? 4 : 2}" placeholder="${esc(placeholder)}"></textarea>
-      <div class="ask-btns"><button type="button" class="btn secondary" data-no>Cancel</button><button type="button" class="btn" data-go>${esc(ok)}</button></div></div>`;
+      <div class="ask-btns">${extra ? `<button type="button" class="btn secondary" data-extra title="${esc(extra.title || '')}">${extra.label}</button>` : ''}<button type="button" class="btn secondary" data-no>Cancel</button><button type="button" class="btn" data-go>${esc(ok)}</button></div></div>`;
     document.body.append(back);
     const ta = back.querySelector('textarea');
     setTimeout(() => ta.focus(), 30);
     const close = (v) => { back.remove(); resolve(v); };
     back.querySelector('[data-no]').addEventListener('click', () => close(null));
+    back.querySelector('[data-extra]')?.addEventListener('click', () => close(extra.value));
     back.addEventListener('click', (e) => { if (e.target === back) close(null); });
     back.querySelector('[data-go]').addEventListener('click', () => close(ta.value.trim() || null));
     ta.addEventListener('keydown', (e) => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) close(ta.value.trim() || null); if (e.key === 'Escape') close(null); });
@@ -66,9 +67,18 @@ export function mountWardenWhisper(el, getCombat) {
 // ---------- player: the Whisper button + replies ----------
 export async function whisper() {
   if (!me()) { toast('Pick who you’re playing first — the “This is me” star on your sheet.', true); return; }
-  const text = await writeBox({ title: 'Whisper to the Warden', sub: 'Only the Warden sees this. Keep it short.', placeholder: 'e.g. I pocket the letter before anyone notices.', ok: 'Whisper it' });
+  const text = await writeBox({ title: 'Whisper to the Warden', sub: 'Only the Warden sees this. Keep it short.', placeholder: 'e.g. I pocket the letter before anyone notices.', ok: 'Whisper it',
+    extra: { label: `${gl('star')} Sheriff’s Badge`, value: BADGE, title: 'Something at the table crossed a line? The Warden cuts away from the scene. Nobody is told it was you.' } });
   if (!text) return;
+  if (text === BADGE) return holdBadge();
   try { await api('POST', { action: 'send', pc: me(), text }, '', '/api/whispers'); toast('Whispered. Only the Warden sees it.'); }
+  catch (e) { toast(e.message, true); }
+}
+
+const BADGE = '\u0000badge';
+// The Sheriff's Badge (Judgment on the Iron Road p. 13): anonymous, no explanation needed.
+export async function holdBadge() {
+  try { await api('POST', { action: 'badge' }, '', '/api/whispers'); toast('The Warden will cut away from this scene. Nobody is told it was you.'); }
   catch (e) { toast(e.message, true); }
 }
 
@@ -81,7 +91,8 @@ export function watchWhispers() {
       if (!w) return;
       busy = true;
       play('chime');
-      const pick = await card({ kicker: 'A WHISPER', from: `${w.name} whispers…`, text: w.text, buttons: [
+      const pick = w.badge ? await card({ kicker: 'THE SHERIFF’S BADGE', text: w.text, sub: 'A safety tool: respect it and move the story along. No need to ask who or why.', buttons: [{ label: 'Cutting away', value: 'done' }] })
+        : await card({ kicker: 'A WHISPER', from: `${w.name} whispers…`, text: w.text, buttons: [
         { label: 'Later', cls: 'secondary', value: 'later' }, { label: 'Got it', cls: 'secondary', value: 'done' }, { label: `${gl('scroll')} Reply`, value: 'reply' }] });
       try {
         if (pick === 'reply') {

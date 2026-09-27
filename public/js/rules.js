@@ -5,6 +5,23 @@ import { esc } from './common.js';
 import { gl } from './glyphs.js';
 
 export const RULES = [
+  // ---- from the expansion books and the Guidebook's Warden chapter ----
+  { term: 'Travel speeds', aliases: 'travel journey miles per day foot horse wagon mech train steamboat handcart', page: '138',
+    text: 'Per day: on foot 10–15 miles, on a mech 15–25, on horseback with a wagon 15–25, on horseback 20–40, by train 50–150. A handcart goes at walking pace; a steamboat on the river is up to the Warden. Ask the posse what they do on the road; a week of practice on the trail can earn a Talent (Downtime).' },
+  { term: 'Downtime', aliases: 'some time to kill practice talent job week study train teach', page: '14', book: 'East Portal',
+    text: 'Between adventures, a week of dedicated practice or study (with a teacher, at a library or on the road) can earn enough Prestige to unlock a Talent or practice a Skill. East Portal examples: shadow Gregory at the Mule Depot (Finesse, one Black die to Gold), volunteer with Ivan (the Forstalls Talent), learn tracking from Job (the Traps Talent). Or take a job to save for property, or play cards at the saloon.' },
+  { term: 'Crimes & punishments', aliases: 'law crime jail fine bribe sheriff burnside arrest execution theft murder', page: '12', book: 'East Portal',
+    text: 'Petty crimes (pickpocketing, littering, brawling, disturbing the peace, careless handling of a weapon that hurts no one): a harsh warning or a slap on the wrist the first time. Minor crimes (stealing a horse, repeat petty crimes, looting): a night or a week in jail, a fine, or maybe a bribe to a deputy. Never try to bribe the Sheriff. Major crimes (robbery, murder, sorcery, fraud): armed arrest, jail time, heavy fines, or even execution.' },
+  { term: 'Smuggling', aliases: 'contraband banned items black market east portal', page: '13', book: 'East Portal',
+    text: 'Get caught smuggling in East Portal and it’s jail and a hefty fine. Banned there: imitation Forstall crystals, poisoned blades, implosion rounds, weighted dice, marked cards, rosewood, fake currency and the like.' },
+  { term: 'Safety tools', aliases: 'sheriffs badge campfire code saloon doors comfort lines veils x card', page: '13', book: 'Iron Road',
+    text: 'The Campfire Code: talk as a group beforehand about where the lines are, and anyone can remind the table when one is crossed. The Sheriff’s Badge: hold it up (the Whisper button has one) and the Warden cuts away from the scene, no explanation needed. Saloon Double Doors: anyone can step away from the table any time; welcome them back, no questions asked.' },
+  { term: 'Session zero', aliases: 'first session expectations tone house rules', page: '12', book: 'Iron Road',
+    text: 'Before the first game, agree on: how often and how long you play, in person or online, what happens when someone misses a session, the tone (serious or casual) and pace, how much the players get to shape the story, any house rules, and any topics or language to avoid.' },
+  { term: 'Forstalls in caves & water', aliases: 'tunnel cave mine underground submerged water sweep', page: '158', book: 'Iron Road',
+    text: 'Edison’s rule: waves bouncing off cave walls weaken each other, so subtract 1 die from Sweeping rolls in tunnels and small caves. Forstall waves don’t go through water: a submerged monster is untouched.' },
+  { term: 'Known frequency', aliases: 'kurtz frequency sweep bonus decoded', page: '178', book: 'Iron Road',
+    text: 'If the posse has a monster’s Kurtz frequency, add +1 to Sweeping results against it. A Burst can drive a monster off, but it may come back angrier.' },
   // ---- dice and Skills ----
   { term: 'Dice', aliases: 'black gold hit ace blank spur pool 1b 2g', page: '11',
     text: 'Black dice (B) have 2 Hits, 1 Ace, 1 Spur and 2 Blanks. Gold dice (G) are better: 3 Hits, 1 Ace, 1 Spur, 1 Blank. An Ace counts as 2 Hits. A pool like 2B1G means two Black and one Gold.' },
@@ -109,7 +126,7 @@ export function findRules(q) {
 const card = (r) => `<article class="rule-card">
     <h3>${esc(r.term)}${r.skill ? ` <small class="rule-skill">relieve with ${esc(r.skill)}</small>` : ''}</h3>
     <p>${esc(r.text)}</p>
-    <small class="rule-page">${gl('scroll')} Guidebook p. ${esc(r.page)}</small>
+    <small class="rule-page">${gl('scroll')} ${esc(r.book || 'Guidebook')} p. ${esc(r.page)}</small>
   </article>`;
 
 export function openRules(query = '') {

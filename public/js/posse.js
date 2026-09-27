@@ -764,8 +764,8 @@ function renderAch(view, p) {
   const got = new Set(p.achievements || []), titles = earnedTitles(p);
   box.innerHTML = `<div class="ach-tiers">${meta.tiers.map((t) => { const ok = (p.prestige.total || 0) >= t.prestige;
       return `<span class="ach-tier${ok ? ' ok' : ''}" title="Reach ${t.prestige} total Prestige">${ok ? '✓ ' : ''}${t.name} <small>${t.prestige}</small></span>`; }).join('')}</div>
-    <ul class="ach-list">${meta.achievements.map((a) => `<li class="${got.has(a.name) ? 'ok' : ''}">
-      <label><input type="checkbox" data-ach="${esc(a.name)}"${got.has(a.name) ? ' checked' : ''}${warden ? '' : ' disabled'}><b>${esc(a.name)}</b></label><small>${esc(a.req)}</small></li>`).join('')}</ul>
+    <ul class="ach-list">${meta.achievements.filter((a) => !a.trade || a.trade === p.trade || got.has(a.name)).map((a) => `<li class="${got.has(a.name) ? 'ok' : ''}">
+      <label><input type="checkbox" data-ach="${esc(a.name)}"${got.has(a.name) ? ' checked' : ''}${warden ? '' : ' disabled'}><b>${esc(a.name)}</b></label><small>${esc(a.req)}${a.book ? ` <i>(${esc(a.book)}${a.trade ? `, ${esc(a.trade)} only` : ''})</i>` : ''}</small></li>`).join('')}</ul>
     <p class="muted ach-note">${warden ? 'Warden: tick an Achievement when they earn it — it’s announced in the Table Log.' : 'The Warden ticks these off when you earn them.'}</p>
     <label class="ach-show">SHOW TITLE UNDER NAME <select data-ach-title><option value="">— none —</option>${titles.map((t) => `<option${t === p.title ? ' selected' : ''}>${esc(t)}</option>`).join('')}</select></label>`;
 }
