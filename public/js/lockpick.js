@@ -106,7 +106,7 @@ async function onClick(e) {
       const r = await act('guess', { dir: k });
       play('card');
       if (!r.ok) { play('lockSnap'); setTimeout(() => play('fail'), 250); render('fresh'); }
-      else if (r.status === 'picked') { play('lockClick'); setTimeout(() => { play('lockOpen'); play(cur.sprung ? 'fail' : 'success'); if (cur.sprung) setTimeout(() => play('explosion'), 250); }, 200); render('fresh'); }
+      else if (r.status === 'picked') { play('lockClick'); setTimeout(() => { play('lockOpen'); play(cur.sprung ? 'fail' : 'success'); if (cur.sprung) setTimeout(() => play('explosion', 'small'), 250); }, 200); render('fresh'); }
       else { play('lockClick'); render('fresh'); }
     } else if (k === 'how') { busy = false; showHowTo(); return;
     } else if (k === 'retry') {

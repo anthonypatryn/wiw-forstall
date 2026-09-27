@@ -4,8 +4,11 @@
 // (Older route, still works: public/sfx/<name>.mp3 listed in public/sfx/manifest.json replaces that sound whole.)
 // Muted/volume are per device: localStorage wiw.muted / wiw.volume.
 
-const NAMES = ['dice', 'card', 'shuffle', 'chips', 'drink', 'gun', 'shotgun', 'bow', 'swing', 'explosion', 'forstall', 'zap', 'lockClick', 'lockSnap', 'lockOpen', 'success', 'fail', 'chime'];
-// name → clips of [file, start s, length s]
+const NAMES = ['dice', 'card', 'shuffle', 'chips', 'drink', 'gun', 'shotgun', 'bow', 'swing', 'explosion', 'forstall', 'zap', 'lockClick', 'lockSnap', 'lockOpen', 'success', 'fail', 'chime',
+  'successBig', 'failClunk', 'failComic', 'boomSmall', 'boomMedium', 'boomLarge', 'boomHuge', 'bowGame', 'arrowHit', 'striker', 'strikerMiss', 'oink', 'squeal', 'steps'];
+// play('explosion', size): how big a bang (small = a firecracker, huge = the ground caves in)
+const BOOM = { small: 'boomSmall', medium: 'boomMedium', large: 'boomLarge', huge: 'boomHuge' };
+// name → clips of [file, start s, length s, gain (1 if left out)] — the user's picks, trimmed to where the sound is
 const CLIPS = {
   dice: [['dice', 0, 1.2]],
   shuffle: [['shuffle', 0.2, 1.05], ['shuffle', 2.2, 1.9], ['shuffle', 5.25, 1.3], ['shuffle', 7.6, 2.5]],
@@ -14,23 +17,49 @@ const CLIPS = {
   drink: [['drink', 1.2, 4.8]],
   gun: [['pistol', 0, 0.89], ['pistol2', 0, 1.6], ['rifle', 0, 1.6]],
   shotgun: [['shotgun', 0.25, 2.6], ['shotgun2', 0, 2.8]],
+  success: [['success', 0, 1.75]],                     // a spaghetti-western guitar twang
+  successBig: [['success-big', 0, 2.6]],               // the big win (carnival prizes)
+  fail: [['fail', 0, 2]],                              // guitar fail
+  failClunk: [['fail-clunk', 0, 0.95]],                // a small miss (a horseshoe in the dirt, the puck dropping)
+  failComic: [['fail-spaghetti', 0, 2.6]],             // losing at the carnival
+  chime: [['cowbell', 0.15, 1.15, 5]],                 // notifications: a cowbell (a quiet recording, turned up)
+  boomSmall: [['boom-loud', 0, 1.1]],
+  boomMedium: [['boom-loud', 0, 2.5], ['boom-fx', 0.1, 3.3]],
+  boomLarge: [['boom-epic', 0, 3]],
+  boomHuge: [['boom-deep', 0.1, 5.6]],
+  bow: [['bow', 0.05, 0.8], ['bow-release', 0.15, 0.4], ['bow-release', 1.55, 0.4], ['bow-release', 2.85, 0.4], ['bow-release', 4.4, 0.45], ['bow-release', 5.6, 0.35], ['bow-release', 7.2, 0.3], ['bow-release', 8.55, 0.45]],
+  bowGame: [['bow-game', 1.55, 0.8]],                  // the carnie's bow at the archery booth
+  arrowHit: [['arrow-hit', 0.08, 0.7], ['arrow-impact', 0, 0.55]],
+  striker: [['striker', 0, 2.3]],                      // mallet + DING
+  strikerMiss: [['striker', 0, 0.45]],                 // mallet, no bell
+  oink: [['pig', 0, 0.5], ['pig', 1.3, 0.45], ['pig', 3.7, 0.55]],
+  squeal: [['pig', 2.7, 0.9], ['pig', 4.5, 0.68]],
+  steps: [['footsteps', 0.05, 0.95, 2.5], ['footsteps', 1.25, 0.9, 2.5]],
 };
 const buffers = {}; // file → AudioBuffer (or a Promise while loading)
-function loadClips() {
-  for (const f of new Set(Object.values(CLIPS).flat().map((c) => c[0]))) {
-    if (buffers[f]) continue;
-    buffers[f] = fetch(`/sfx/${f}.mp3`).then((r) => r.arrayBuffer()).then((b) => ctx.decodeAudioData(b)).then((buf) => { buffers[f] = buf; }).catch(() => { delete buffers[f]; });
-  }
+// The everyday sounds load on the first tap; the rest (explosions, carnival, footsteps…) load the first time they're
+// asked for (that first time plays the synth stand-in), so a phone doesn't download every recording up front.
+const EVERYDAY = ['dice', 'card', 'shuffle', 'chips', 'gun', 'success', 'fail', 'chime'];
+function loadFile(f) {
+  if (buffers[f] || !ctx) return;
+  buffers[f] = fetch(`/sfx/${f}.mp3`).then((r) => r.arrayBuffer()).then((b) => ctx.decodeAudioData(b)).then((buf) => { buffers[f] = buf; }).catch(() => { delete buffers[f]; });
 }
+const loadName = (name) => (CLIPS[name] || []).forEach((c) => loadFile(c[0]));
+const wanted = new Set(EVERYDAY);
+function loadClips() { wanted.forEach(loadName); }
+// a page asks for its own sounds ahead of time (the carnival, the Battle Map); they load now, or on the first tap
+export function preload(...names) { names.forEach((n) => { wanted.add(n); if (ctx) loadName(n); }); }
 function playClip(name) {
   const list = CLIPS[name];
   if (!list || !ctx || ctx.state !== 'running') return false;
-  const [f, start, len] = list[Math.floor(Math.random() * list.length)];
+  const pick = list[Math.floor(Math.random() * list.length)];
+  const [f, start, len] = pick;
   const buf = buffers[f];
-  if (!(buf instanceof AudioBuffer)) return false;
+  if (!(buf instanceof AudioBuffer)) { loadName(name); return false; }
   const src = ctx.createBufferSource(), g = ctx.createGain(), t = ctx.currentTime + 0.01;
   src.buffer = buf; src.connect(g); g.connect(master);
-  g.gain.setValueAtTime(1, t); g.gain.setValueAtTime(1, t + Math.max(0, len - 0.08)); g.gain.linearRampToValueAtTime(0.0001, t + len); // no click at the cut
+  const [, , , gain = 1] = pick;
+  g.gain.setValueAtTime(gain, t); g.gain.setValueAtTime(gain, t + Math.max(0, len - 0.08)); g.gain.linearRampToValueAtTime(0.0001, t + len); // no click at the cut
   src.start(t, start, len);
   return true;
 }
@@ -108,6 +137,7 @@ const SYNTH = {
 
 // play('dice', 4) — safe to call anywhere; silent when muted or before the first tap.
 export function play(name, arg) {
+  if (name === 'explosion') name = BOOM[arg] || 'boomMedium';
   if (isMuted() || !NAMES.includes(name)) return;
   if (files?.has(name)) { const a = new Audio(`/sfx/${name}.mp3`); a.volume = volume(); a.play().catch(() => {}); return; }
   const c = audio();
@@ -116,6 +146,7 @@ export function play(name, arg) {
   try { (SYNTH[name] || SYNTH[FALLBACK[name]])?.(c.currentTime + 0.01, arg); } catch { /* never let a sound break the page */ }
 }
 // recorded sounds with no synth of their own use a close one until the file loads
-const FALLBACK = { shuffle: 'card', chips: 'lockClick', shotgun: 'gun', drink: 'swing' };
+const FALLBACK = { shuffle: 'card', chips: 'lockClick', shotgun: 'gun', drink: 'swing', successBig: 'success', failClunk: 'lockClick', failComic: 'fail',
+  boomSmall: 'explosion', boomMedium: 'explosion', boomLarge: 'explosion', boomHuge: 'explosion', bowGame: 'bow', arrowHit: 'lockClick', striker: 'chime', strikerMiss: 'lockSnap', oink: 'zap', squeal: 'zap', steps: 'swing' };
 // which attack sound fits a weapon
 export const weaponSound = (w) => (/shotgun|scattergun/i.test(`${w?.type} ${w?.model}`) ? 'shotgun' : /bow/i.test(`${w?.type} ${w?.model}`) ? 'bow' : /melee|knife|axe|sword|club|fist|hatchet|machete/i.test(`${w?.type} ${w?.model}`) ? 'swing' : 'gun');

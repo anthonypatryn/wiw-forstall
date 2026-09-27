@@ -1,6 +1,7 @@
 import { $, esc, api, startPolling, toast, mountNav, tryWarden, forgetWarden, savedPin, wardenModal, rollPopup, abilityOptions, abilityTargetsHTML, abilityBody, ask, pickFighters, isPool } from './common.js';
 import { gl } from './glyphs.js';
-import { play, weaponSound } from './sound.js';
+import { play, weaponSound, preload } from './sound.js';
+preload('steps', 'bow', 'shotgun', 'boomSmall', 'boomMedium', 'boomLarge');
 let meta = null;
 // the Ability button depends on this, so redraw the turn panel once it arrives
 api('GET', null, '?view=meta', '/api/combat').then((m) => { meta = m; renderTurnBar(); }).catch(() => {});
@@ -817,7 +818,7 @@ function wireTurnBar(bar, cur, tok) {
   });
   bar.querySelector('[data-tp-item]')?.addEventListener('click', async () => {
     const r = await tpAct({ ...base, op: 'useItem', gear: tp.gear });
-    if (r && /explos|dynamite|bomb|grenade/i.test(`${r.label || ''} ${r.used || ''} ${a.gear?.[tp.gear]?.type || ''}`)) play('explosion');
+    if (r && /explos|dynamite|bomb|grenade/i.test(`${r.label || ''} ${r.used || ''} ${a.gear?.[tp.gear]?.type || ''}`)) { const n = (String(r.pool || '').match(/\d+/g) || []).reduce((x, y) => x + Number(y), 0); play('explosion', n >= 7 ? 'huge' : n >= 5 ? 'large' : n >= 3 ? 'medium' : 'small'); }
     if (r?.dice) rollPopup(r, `${a.name} · ${r.label} · ${r.pool}`); else if (r) toast(`Used ${r.used}.`);
   });
   bar.querySelector('[data-tp-imp]')?.addEventListener('click', async () => {
@@ -978,6 +979,7 @@ function wireToken(el) {
     selected = t.id;
     render();
     const ok = await act({ action: 'move', id: t.id, ...drag.hex, rough: tp.rough, pc: myId() });
+    if (ok) play('steps');
     if (ok === null) { t.col = was.col; t.row = was.row; render(); } // not allowed: snap back
     else if (ok?.cost) { toast(`${t.name} moved — ${ok.cost} Grit.`); combatPoller?.now?.(); }
   };
@@ -1269,7 +1271,7 @@ function wireFs(box) {
     const tgt = f?.burst.find((x) => x.ref === sel?.value);
     if (!tgt || !await ask(`Burst ${f.name} on the ${tgt.name}’s frequency?\n\nThe crystal shatters and the monster flees for at least two hours.`, { ok: 'Burst', danger: true })) return;
     const r = await fsAct({ action: 'forstall', op: 'burst', key: f.key, enemy: tgt.ref, pc: opFor(f.key) });
-    if (r?.fled) play('explosion');
+    if (r?.fled) play('explosion', 'large');
     if (r?.fled) toast(`${r.fled} flees!`);
   }));
 }

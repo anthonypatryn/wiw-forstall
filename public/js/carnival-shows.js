@@ -53,7 +53,7 @@ async function wheel(el, r) {
   let t = 0, gap = 45;
   while (t < dur - 150) { play('lockClick'); await wait(gap); t += gap; gap *= 1.07; }
   await wait(Math.max(0, dur - t));
-  play(r.mult ? 'success' : 'fail');
+  play(r.mult >= 3 ? 'successBig' : r.mult ? 'success' : 'failComic');
 }
 
 // ---------- High Striker: the puck climbs by Hits, 5 rings the bell ----------
@@ -65,12 +65,12 @@ async function striker(el, r) {
   await rollDice();
   mallet.classList.add('swing'); play('swing');
   await wait(T(380));
-  play('lockSnap');
+  play(r.hits >= 5 ? 'striker' : 'strikerMiss');
   puck.style.transition = `bottom ${T(700)}ms cubic-bezier(.2,.9,.3,1)`;
   puck.style.bottom = `${top * 88}%`;
   await wait(T(760));
-  if (r.hits >= 5) { bell.classList.add('ring'); play('chime'); await wait(T(500)); play('success'); }
-  else { puck.style.transition = `bottom ${T(600)}ms cubic-bezier(.6,0,.9,.4)`; puck.style.bottom = '0%'; await wait(T(620)); play('fail'); }
+  if (r.hits >= 5) { bell.classList.add('ring'); await wait(T(1400)); play('successBig'); }
+  else { puck.style.transition = `bottom ${T(600)}ms cubic-bezier(.6,0,.9,.4)`; puck.style.bottom = '0%'; await wait(T(620)); play('failClunk'); }
 }
 
 // ---------- Horseshoe Toss: three arcs at the spike; a ringer lands on it ----------
@@ -85,13 +85,13 @@ async function horseshoe(el, r) {
     x.classList.add('go', ringer ? 'ringer' : 'miss');
     play('swing');
     await wait(T(900));
-    play(ringer ? 'lockOpen' : 'lockClick');
+    play(ringer ? 'lockOpen' : 'failClunk');
     const n = el.querySelector(`[data-note="${i}"]`);
     n.textContent = `Toss ${i + 1}: ${t.hits} Hit${t.hits === 1 ? '' : 's'} ${ringer ? '· RINGER' : '· miss'}`;
     n.classList.add(ringer ? 'ok' : 'no');
     await wait(T(350));
   }
-  play(r.tosses.every((t) => t.hits >= t.target) ? 'success' : 'fail');
+  play(r.tosses.every((t) => t.hits >= t.target) ? 'successBig' : 'failComic');
 }
 
 // ---------- Archery: every shot lands closer to the bullseye the more Hits it has (3B: up to 6) ----------
@@ -106,9 +106,9 @@ async function archery(el, r) {
     a.className = `cv-arrow${mine ? ' mine' : ''}`;
     a.style.left = `${50 + rad * Math.cos(ang)}%`; a.style.top = `${50 + rad * Math.sin(ang)}%`;
     target.append(a);
-    play('bow');
+    play('bowGame');
     await wait(T(260));
-    a.classList.add('hit'); play('lockClick');
+    a.classList.add('hit'); play('arrowHit');
   };
   for (const s of r.shots) {
     await rollDice(2);
@@ -117,7 +117,7 @@ async function archery(el, r) {
     await shoot(s.carnie, false); them += s.carnie; el.querySelector('[data-them]').textContent = them;
     await wait(T(300));
   }
-  play(r.me > r.carnie ? 'success' : 'fail');
+  play(r.me > r.carnie ? 'successBig' : 'failComic');
 }
 
 // ---------- Fortune Teller: a crystal ball clouds over, glows, and speaks ----------
@@ -151,13 +151,13 @@ async function pie(el, r) {
       const e = el.querySelector(`[data-e="${CSS.escape(who)}"]`);
       e.querySelector('small').textContent = `${hits} Hit${hits === 1 ? '' : 's'}`;
       if (round.ok.includes(who)) { bites[who] = (bites[who] || 0) + 1; e.querySelector('.cv-pie i').style.setProperty('--eaten', `${Math.min(92, bites[who] * 22)}%`); play('lockClick'); }
-      else { e.classList.add('out'); play('fail'); }
+      else { e.classList.add('out'); play('failClunk'); }
       await wait(T(380));
     }
     await wait(T(300));
   }
   r.left.forEach((who) => el.querySelector(`[data-e="${CSS.escape(who)}"]`)?.classList.add('won'));
-  play(r.left.includes(r.eaters[0]) ? 'success' : 'fail');
+  play(r.left.includes(r.eaters[0]) ? 'successBig' : 'failComic');
 }
 
 // ---------- Greased Pig Chase: the pig zigzags, you lunge; 3 Hits and you hold on ----------
@@ -171,17 +171,17 @@ async function pig(el, r) {
   const p = el.querySelector('.cv-pig'), hands = el.querySelector('.cv-hands'), note = el.querySelector('.cv-grab-note');
   const spots = [[12, 30], [70, 18], [30, 62], [78, 60], [48, 40]];
   for (const [i, hits] of r.grabs.entries()) {
-    for (let k = 0; k < 2; k += 1) { const [x, y] = spots[(i * 2 + k) % spots.length]; p.style.left = `${x}%`; p.style.top = `${y}%`; p.classList.toggle('flip', k % 2 === 0); play('swing'); await wait(T(520)); }
+    for (let k = 0; k < 2; k += 1) { const [x, y] = spots[(i * 2 + k) % spots.length]; p.style.left = `${x}%`; p.style.top = `${y}%`; p.classList.toggle('flip', k % 2 === 0); play('oink'); await wait(T(520)); }
     await rollDice();
     hands.style.left = p.style.left; hands.style.top = p.style.top;
     hands.classList.remove('lunge'); void hands.offsetWidth; hands.classList.add('lunge');
     await wait(T(420));
     const caught = hits >= 3;
     note.textContent = `Grab ${i + 1}: ${hits} Hit${hits === 1 ? '' : 's'} ${caught ? '· GOT IT' : '· it squirts free'}`;
-    if (caught) { p.classList.add('caught'); play('success'); break; }
-    p.classList.add('slip'); play('zap'); await wait(T(400)); p.classList.remove('slip');
+    if (caught) { p.classList.add('caught'); play('squeal'); await wait(T(700)); play('successBig'); break; }
+    p.classList.add('slip'); play('squeal'); await wait(T(400)); p.classList.remove('slip');
   }
-  if (!r.caught) play('fail');
+  if (!r.caught) play('failComic');
 }
 
 const SHOWS = { wheel, striker, horseshoe, archery, fortune, pie, pig };

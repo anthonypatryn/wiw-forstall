@@ -3,7 +3,7 @@
 // The Warden: a card on Run the Game (Start Something) to open or pack up the carnival and see who's won what.
 import { esc, api, toast, store, me, savedPin, startPolling, ask, onChange, dollars as $$ } from './common.js';
 import { gl } from './glyphs.js';
-import { play } from './sound.js';
+import { play, preload } from './sound.js';
 import { runShow, hasShow } from './carnival-shows.js';
 
 const EP = '/api/carnival';
@@ -59,6 +59,7 @@ async function act(body) {
 function render() { if (scene) scene.querySelector('.cv-scene').innerHTML = sceneHTML(); }
 export function openCarnival() {
   carnivalStyles();
+  preload('successBig', 'failClunk', 'failComic', 'bowGame', 'arrowHit', 'striker', 'strikerMiss', 'oink', 'squeal');
   if (scene) return;
   scene = document.createElement('div');
   scene.className = 'cv-back';
