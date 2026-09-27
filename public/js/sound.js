@@ -5,7 +5,8 @@
 // Muted/volume are per device: localStorage wiw.muted / wiw.volume.
 
 const NAMES = ['dice', 'card', 'shuffle', 'chips', 'drink', 'gun', 'shotgun', 'bow', 'swing', 'explosion', 'forstall', 'zap', 'lockClick', 'lockSnap', 'lockOpen', 'success', 'fail', 'chime',
-  'successBig', 'failClunk', 'failComic', 'boomSmall', 'boomMedium', 'boomLarge', 'boomHuge', 'bowGame', 'arrowHit', 'striker', 'strikerMiss', 'oink', 'squeal', 'steps', 'trainArrive', 'trainPass', 'fsBurst', 'fsReadout', 'fsSweep', 'fsScan'];
+  'successBig', 'failClunk', 'failComic', 'boomSmall', 'boomMedium', 'boomLarge', 'boomHuge', 'bowGame', 'arrowHit', 'striker', 'strikerMiss', 'oink', 'squeal', 'steps', 'trainArrive', 'trainPass', 'fsBurst', 'fsReadout', 'fsSweep', 'fsScan',
+  'monRoar', 'monLowRoar', 'monGrowl', 'monClick', 'monGiantInsect', 'monSmallInsect'];
 // play('explosion', size): how big a bang (small = a firecracker, huge = the ground caves in)
 const BOOM = { small: 'boomSmall', medium: 'boomMedium', large: 'boomLarge', huge: 'boomHuge' };
 // name → clips of [file, start s, length s, gain (1 if left out)] — the user's picks, trimmed to where the sound is
@@ -41,6 +42,12 @@ const CLIPS = {
   fsReadout: [['fs-readout', 0, 2.4]],                 // the scanner screen showing digits
   fsSweep: [['fs-sweep', 0.4, 3.2, 1.3]],              // a Forstall spinning up to Sweep (low engine hum)
   fsScan: [['fs-scan', 0, 2.2, 0.6]],                  // Scanning a monster (energy hum)
+  monRoar: [['mon-roar', 0.3, 4.5, 0.6]],              // monsters (the Warden's Soundboard)
+  monLowRoar: [['mon-low-roar', 0.05, 4.4, 0.8]],
+  monGrowl: [['mon-growl', 0.05, 4.4]],
+  monClick: [['mon-clicking', 0.25, 4.3, 1.8]],
+  monGiantInsect: [['mon-giant-insect', 0, 1.03]],
+  monSmallInsect: [['mon-small-insect', 0, 0.6]],
 };
 const buffers = {}; // file → AudioBuffer (or a Promise while loading)
 // The everyday sounds load on the first tap; the rest (explosions, carnival, footsteps…) load the first time they're
@@ -208,6 +215,6 @@ export function play(name, arg) {
 }
 // recorded sounds with no synth of their own use a close one until the file loads
 const FALLBACK = { shuffle: 'card', chips: 'lockClick', shotgun: 'gun', drink: 'swing', successBig: 'success', failClunk: 'lockClick', failComic: 'fail',
-  boomSmall: 'explosion', boomMedium: 'explosion', boomLarge: 'explosion', boomHuge: 'explosion', bowGame: 'bow', arrowHit: 'lockClick', striker: 'chime', strikerMiss: 'lockSnap', oink: 'zap', squeal: 'zap', steps: 'swing', trainArrive: 'forstall', trainPass: 'forstall', fsBurst: 'zap', fsReadout: 'lockClick', fsSweep: 'forstall', fsScan: 'forstall' };
+  boomSmall: 'explosion', boomMedium: 'explosion', boomLarge: 'explosion', boomHuge: 'explosion', bowGame: 'bow', arrowHit: 'lockClick', striker: 'chime', strikerMiss: 'lockSnap', oink: 'zap', squeal: 'zap', steps: 'swing', trainArrive: 'forstall', trainPass: 'forstall', fsBurst: 'zap', fsReadout: 'lockClick', fsSweep: 'forstall', fsScan: 'forstall', monRoar: 'explosion', monLowRoar: 'explosion', monGrowl: 'swing', monClick: 'lockClick', monGiantInsect: 'zap', monSmallInsect: 'zap' };
 // which attack sound fits a weapon
 export const weaponSound = (w) => (/shotgun|scattergun/i.test(`${w?.type} ${w?.model}`) ? 'shotgun' : /bow/i.test(`${w?.type} ${w?.model}`) ? 'bow' : /melee|knife|axe|sword|club|fist|hatchet|machete/i.test(`${w?.type} ${w?.model}`) ? 'swing' : 'gun');
