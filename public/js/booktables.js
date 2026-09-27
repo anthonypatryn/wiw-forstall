@@ -1,10 +1,42 @@
 // Roll tables from the expansion books, for the Warden's Book Tables card (Run the Game).
 // kind: '1B' / '1G' = one row per face (rows in Blank, Spur, Hit, Ace order); '2B' = rows keyed by the two faces;
 // 'cols' = one 1B roll read across columns (season); 'hits' = rows by a Skill roll's Hits; 'list' = monsters to pick from.
-const EP = 'East Portal', IR = 'Iron Road';
+const EP = 'East Portal', IR = 'Iron Road', GB = 'Guidebook';
 const four = (blank, spur, hit, ace) => [blank, spur, hit, ace];
 
 export const TABLE_GROUPS = [
+  { group: 'Guidebook: Towns & Outposts', tables: [
+    { id: 'gb-town', name: 'Generate a place (all the rolls)', book: GB, page: 200, kind: 'town', intro: 'Rolls the size, then a homestead’s or outpost’s situation, or a town’s Faction buildings, all at once. You can pin it on the Map.' },
+    { id: 'gb-size', name: 'Establishment size', book: GB, page: 200, kind: '1B', intro: 'Roll 1B for the size of the place the posse comes to.', rows: four('Homestead', 'Outpost', 'Small Town', 'Large Town') },
+    { id: 'gb-homestead', name: 'Homestead situation', book: GB, page: 200, kind: '1B', intro: 'A homestead belongs to a family: a farm, a ranch or similar.',
+      rows: four('The family is very defensive towards you.', 'The homestead has been abandoned.', 'The family is cautious but welcoming.', 'The family is very welcoming and helpful to you.') },
+    { id: 'gb-outpost', name: 'Outpost situation', book: GB, page: 200, kind: '2B', intro: 'Any outpost belongs to a Faction or may be abandoned.',
+      rows: { 'blank,blank': 'Abandoned', 'blank,spur': 'Tulos Gang Hideout', 'blank,hit': 'Rosewood Surveillance', 'ace,blank': 'Hogwild Gang Hideout', 'hit,spur': 'Prospectors Guild Site', 'hit,hit': 'Frontier Conservation Society Research Site', 'ace,hit': 'Iron Sights Campsite', 'spur,spur': 'A merchant’s campsite', 'ace,ace': 'A generous traveler’s campsite' } },
+    { id: 'gb-building', name: 'Town building (a Faction’s)', book: GB, page: 201, kind: '2B', intro: 'A small town has an inn, saloon, general store, church and one of these; a large town has three.',
+      rows: { 'blank,blank': 'Railroad Station', 'blank,spur': 'Frontier Conservation Society Meetinghouse', 'blank,hit': 'Rosewood Office & Jailhouse', 'ace,blank': 'Iron Sights Den', 'hit,spur': 'Tulos Gang Estate', 'hit,hit': 'Local Gang Hangout', 'ace,hit': 'Hogwild Gang Clubhouse', 'spur,spur': 'Prospectors Guild Meetinghouse', 'ace,ace': 'U.S. Government Office' } },
+  ] },
+  { group: 'Guidebook: Seasons & Weather', tables: [
+    { id: 'gb-w-desert', name: 'Desert weather', book: GB, page: 198, kind: 'cols', die: '1G', cols: ['Summer', 'Winter'], intro: 'Seasons & Weather: roll 1G for the current weather.',
+      rows: four(['Dry Lightning', 'Chilly Windstorm'], ['Hot, Cloudy, and Still', 'Overcast and Cold Rain'], ['Scorching Heat', 'Cold and Clear'], ['Flash Flood Storm', 'Frozen Silence']) },
+    { id: 'gb-w-forest', name: 'Forest weather', book: GB, page: 198, kind: 'cols', die: '1B', cols: ['Summer', 'Winter'], intro: 'Seasons & Weather: roll 1B for the current weather.',
+      rows: four(['Hot and Still', 'Cold and Still'], ['Sudden Downpour', 'Light Snowfall'], ['Warm and Dappled', 'Gray and Damp'], ['Misty Fog', 'Freezing Fog']) },
+    { id: 'gb-w-glaciers', name: 'Glaciers weather', book: GB, page: 198, kind: 'cols', die: '1G', cols: ['Summer', 'Winter'], intro: 'Seasons & Weather: roll 1G for the current weather.',
+      rows: four(['Low Clouds and Whiteout', 'Intense Blizzard'], ['Cool Winds and Overcast', 'Freezing Winds and Snowdrifts'], ['Bright and Blinding', 'Clear and Frigid'], ['Sunny and Snowmelt', 'Heavy Snowfall']) },
+    { id: 'gb-w-bayou', name: 'Bayou weather', book: GB, page: 198, kind: 'cols', die: '1G', cols: ['Summer', 'Winter'], intro: 'Seasons & Weather: roll 1G for the current weather.',
+      rows: four(['Rolling Thunderstorm', 'Cold Rainfall'], ['Misty Haze', 'Thick Fog'], ['Hot and Humid', 'Cool and Humid'], ['Still and Sweltering', 'Still and Overcast']) },
+    { id: 'gb-w-lakeside', name: 'Lakeside weather', book: GB, page: 199, kind: 'cols', die: '1B', cols: ['Summer', 'Winter'], intro: 'Seasons & Weather: roll 1B for the current weather.',
+      rows: four(['Bright and Cloudless', 'Bitter Wind Gusts'], ['Still and Muggy', 'Gray and Bone-Chilling'], ['Warm and Breezy', 'Frozen and Still'], ['Distant Thunderstorm', 'Snowfall and Ice']) },
+    { id: 'gb-w-pacific', name: 'Pacific Coast weather', book: GB, page: 199, kind: 'cols', die: '1G', cols: ['Summer', 'Winter'], intro: 'Seasons & Weather: roll 1G for the current weather.',
+      rows: four(['Cool and Foggy', 'Heavy Surf and Wind'], ['Breezy and Overcast', 'Dense Fog'], ['Sunny and Windy', 'Gray and Drizzly'], ['Hot and Calm', 'Chilly but Clear']) },
+    { id: 'gb-w-mountains', name: 'Mountains weather', book: GB, page: 199, kind: 'cols', die: '1B', cols: ['Summer', 'Winter'], intro: 'Seasons & Weather: roll 1B for the current weather.',
+      rows: four(['Sudden Thunderstorm', 'Gray and Overcast'], ['Foggy and Damp', 'Icy Winds and Snow'], ['Clear and Breezy', 'Clear and Bitter Cold'], ['Hot and Hazy', 'Heavy Snowfall']) },
+    { id: 'gb-w-plains', name: 'Plains weather', book: GB, page: 199, kind: 'cols', die: '1B', cols: ['Summer', 'Winter'], intro: 'Seasons & Weather: roll 1B for the current weather.',
+      rows: four(['Thunderstorms Brewing', 'Frigid and Windy'], ['Violent Thunderstorm', 'Freezing Drizzle'], ['Sunny and Hot', 'Clear but Ice-Cold'], ['Clear and Breezy', 'Blizzard Conditions']) },
+    { id: 'gb-w-subterranean', name: 'Subterranean weather', book: GB, page: 199, kind: 'cols', die: '1G', cols: ['Summer', 'Winter'], intro: 'Seasons & Weather: roll 1G for the current weather.',
+      rows: four(['Sulfuric and Lacking Oxygen', 'Sulfuric and Lacking Oxygen'], ['Dusty and Stale', 'Dusty and Stale'], ['Cool and Damp', 'Cool and Damp'], ['Wet and Dripping', 'Wet and Dripping']) },
+    { id: 'gb-w-volcanoes', name: 'Volcanoes weather', book: GB, page: 199, kind: 'cols', die: '1G', cols: ['Summer', 'Winter'], intro: 'Seasons & Weather: roll 1G for the current weather.',
+      rows: four(['Poisonous Acidic Rain', 'Sulfuric Steam and Fog'], ['Thick Ashy Haze and Smoke', 'Frozen Ashfall and Wind'], ['Hot and Dry', 'Icy Wind and Thin Air'], ['Scorching Heat and High Winds', 'Heavy Snowfall']) },
+  ] },
   { group: 'East Portal: in town', tables: [
     { id: 'ep-sheriff', name: 'To the Sheriff’s Aid', book: EP, page: 76, kind: '1B',
       intro: 'The posse spots Sheriff Burnside dealing with trouble firsthand. If the characters lend a hand, he’ll remember it.',
