@@ -148,7 +148,7 @@ export function watchLocks() {
 export function mountLockSend(el, getCombat) {
   const st = { who: null, need: 3, retries: 1, cost: 'one lockpick', what: '', loot: '', amount: '', itemId: '', name: '', desc: '', trap: false, damage: 2, status: '', sev: 1 };
   let catalog = [];
-  api('GET', null, '?view=catalog', '/api/shop').then((c) => { catalog = (c.catalog || []).slice().sort((x, y) => x.name.localeCompare(y.name)); if (st.loot === 'item') draw(); }).catch(() => {});
+  api('GET', null, '?view=catalog', '/api/shop').then((c) => { catalog = (c.catalog || []).filter((x) => !x.base).sort((x, y) => x.name.localeCompare(y.name)); if (st.loot === 'item') draw(); }).catch(() => {});
   let recent = [];
   const refresh = () => api('GET', null, '?view=warden', EP).then((d) => { recent = d.list || []; draw(true); }).catch(() => {});
   onChange(['locks'], refresh); refresh();

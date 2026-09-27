@@ -21,7 +21,7 @@ export async function openStash() {
   };
   try {
     await load();
-    if (warden) catalog = (await api('GET', null, '?view=catalog', '/api/shop')).catalog || [];
+    if (warden) catalog = ((await api('GET', null, '?view=catalog', '/api/shop')).catalog || []).filter((x) => !x.base);
   } catch (err) { toast(err.message, true); return; }
   if (!warden && !mine) { toast('Your character isn’t in the posse any more.', true); return; }
   const st = { take: {}, takeMoney: 0, put: {}, putMoney: 0, lootMoney: 0, lootItem: '', lootQty: 1 };

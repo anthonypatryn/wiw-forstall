@@ -1168,3 +1168,25 @@ test('downtime earns the Prestige and spends it on the Talent; a refused one cha
   assert.equal(s.log.length, logLen);
   assert.throws(() => publicAction(s, { action: 'downtime', id: pc.id, what: 'talent', talent: 'Traps' }, { warden: false }), /PIN/);
 });
+
+test('book shops: buying Scrap goes on the sheet, a paid bed is a Town Rest, Scrap sells to the Scrapyard', async () => {
+  const { freshShop, shopAction, shopView } = await import('../lib/shop.js');
+  const shop = freshShop(), s = freshCombat();
+  publicAction(s, { action: 'addPc', trade: 'Hunter', name: 'Bo' }, { warden: true });
+  const pc = s.posse[0]; pc.wallet = '20'; pc.scrap = '2'; pc.health = 1;
+  const scrapItem = CATALOG.find((i) => i.shop === 'East Portal · Scrapyard');
+  const bed = CATALOG.find((i) => i.rest === 'town');
+  const buy = (itemId, qty = 1) => { const r = shopAction(shop, s, { action: 'request', kind: 'buy', pc: pc.id, itemId, qty }, { warden: false }); shopAction(shop, s, { action: 'decide', id: shop.requests.find((x) => x.status === 'pending').id, approve: true }, { warden: true }); return r; };
+  buy(scrapItem.id, 3);
+  assert.equal(Number(pc.scrap), 5);
+  assert.ok(!(pc.items || []).some((i) => i.itemId === scrapItem.id), 'no inventory row for Scrap');
+  buy(bed.id);
+  assert.equal(pc.health, pc.maxHealth, 'a night in a real bed is a Town Rest');
+  const mule = CATALOG.find((i) => i.shop && i.base === 'classes-mule-mech');
+  assert.ok(mule && typeof mule.scrap === 'string', 'a mech copy keeps its kitbash note');
+  const row = shopView(shop, { warden: true, combat: s }).posse[0].sell.find((x) => x.key === 'scrap');
+  assert.equal(row.qty, 5); assert.equal(row.unit, 1.5);
+  shopAction(shop, s, { action: 'request', kind: 'sell', pc: pc.id, key: 'scrap', qty: 2 }, { warden: false });
+  shopAction(shop, s, { action: 'decide', id: shop.requests.find((x) => x.status === 'pending').id, approve: true }, { warden: true });
+  assert.equal(Number(pc.scrap), 3);
+});

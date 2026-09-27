@@ -34,17 +34,22 @@ ${r.warning}`);
 }
 
 // ---------- catalog browsing ----------
+// The expansion books' vendors live on their own tab ("Book Shops"), sectioned by shop, not in the Guidebook's tabs.
+const SHOPS = 'Book Shops';
+const tabOf = (i) => (i.shop ? SHOPS : i.cat);
+const sectionOf = (i) => (i.shop || i.sub);
+const inTab = (i) => cat === 'All' || tabOf(i) === cat;
 function renderTabs() {
   const counts = {};
-  items().forEach((i) => { counts[i.cat] = (counts[i.cat] || 0) + 1; });
-  const tabs = [...categories.filter((c) => counts[c]), 'All'];
+  items().forEach((i) => { counts[tabOf(i)] = (counts[tabOf(i)] || 0) + 1; });
+  const tabs = [...categories.filter((c) => counts[c]), ...(counts[SHOPS] ? [SHOPS] : []), 'All'];
   $('#cat-tabs').innerHTML = tabs.map((c) => `<button type="button" role="tab" aria-selected="${c === cat}" data-cat="${esc(c)}">${esc(c)}<small>${c === 'All' ? items().length : counts[c]}</small></button>`).join('');
   $('#cat-tabs').querySelectorAll('[data-cat]').forEach((b) => b.addEventListener('click', () => {
     cat = b.dataset.cat; store.set('wiw.storeCat', cat); $('#sub').value = ''; renderTabs(); renderSubs(); renderItems();
   }));
 }
 function renderSubs() {
-  const subs = [...new Set(items().filter((i) => cat === 'All' || i.cat === cat).map((i) => i.sub))].sort((a, b) => a.localeCompare(b));
+  const subs = [...new Set(items().filter(inTab).map(sectionOf))].sort((a, b) => a.localeCompare(b));
   const cur = $('#sub').value;
   $('#sub').innerHTML = `<option value="">All sections</option>${subs.map((s) => `<option>${esc(s)}</option>`).join('')}`;
   $('#sub').value = subs.includes(cur) ? cur : '';
@@ -58,15 +63,15 @@ const STAT_LABELS = [['quality', null], ['grit', 'GRIT'], ['slots', 'SLOTS'], ['
 function itemCard(i) {
   const stats = STAT_LABELS.filter(([k]) => k !== 'quality' && i[k] != null && i[k] !== '')
     .map(([k, l]) => `<div><span>${l}</span><b>${k === 'grit' && i.grit2 ? `${esc(i.grit)} · ${esc(i.grit2)} (2 ops)` : show(i[k])}</b></div>`).join('');
-  const text = [i.benefit, i.effect, i.bond && `Revered bond: ${i.bond}`, i.desc, i.note, i.scrap && `Kitbash: ${i.scrap}`].filter(Boolean);
+  const text = [i.benefit, i.effect, i.bond && `Revered bond: ${i.bond}`, i.desc, i.note, typeof i.scrap === 'string' && `Kitbash: ${i.scrap}`, i.rest && 'Includes a Town Rest for the night.'].filter(Boolean);
   const shopper = $('#shopper').value;
   return `<article class="item${i.custom ? ' custom' : ''}" data-id="${esc(i.id)}">
     ${i.img ? `<div class="pic"><img src="/img/store/${esc(i.img)}.webp" alt="" loading="lazy"></div>` : ''}
-    <div class="top"><div><div class="sub">${esc(i.sub)}${i.quality ? ` · <span class="q ${esc(i.quality)}">${esc(i.quality.toUpperCase())}</span>` : ''}</div><div class="nm">${esc(i.name)}</div></div>
+    <div class="top"><div><div class="sub">${esc(sectionOf(i))}${i.quality ? ` · <span class="q ${esc(i.quality)}">${esc(i.quality.toUpperCase())}</span>` : ''}</div><div class="nm">${esc(i.name)}</div></div>
       <div class="price${i.cost == null ? ' none' : ''}">${i.cost == null ? 'not for sale' : money(i.cost)}</div></div>
     ${stats ? `<div class="stats">${stats}</div>` : ''}
     ${text.map((t) => `<p>${esc(t)}</p>`).join('')}
-    <div class="src">${i.custom ? 'Warden-made' : i.house ? 'House item' : `Guidebook p. ${i.page}`}</div>
+    <div class="src">${i.custom ? 'Warden-made' : i.house ? `House item${i.book ? ` · ${esc(i.book)} p. ${i.page}` : ''}` : `${esc(i.book || 'Guidebook')} p. ${i.page}`}</div>
     <div class="actions">
       ${i.cost != null ? `<input type="number" min="1" max="99" value="1" aria-label="Quantity" data-qty><button class="btn small" data-buy type="button"${shopper ? '' : ' disabled'}>Ask to buy</button>` : ''}
       ${warden ? `<button class="btn small secondary" data-give type="button"${shopper ? '' : ' disabled'} title="Hand it over free — loot, rewards">Give</button>` : ''}
@@ -77,8 +82,8 @@ function itemCard(i) {
 function renderItems() {
   const q = $('#q').value.trim().toLowerCase();
   const sub = $('#sub').value;
-  let list = items().filter((i) => (cat === 'All' || i.cat === cat) && (!sub || i.sub === sub)
-    && (!q || [i.name, i.sub, i.benefit, i.effect, i.desc, i.note].join(' ').toLowerCase().includes(q)));
+  let list = items().filter((i) => inTab(i) && (!sub || sectionOf(i) === sub)
+    && (!q || [i.name, i.sub, i.shop, i.benefit, i.effect, i.desc, i.note].join(' ').toLowerCase().includes(q)));
   const s = $('#sort').value;
   if (s === 'cheap') list = [...list].sort((a, b) => (a.cost ?? 1e9) - (b.cost ?? 1e9));
   if (s === 'dear') list = [...list].sort((a, b) => (b.cost ?? -1) - (a.cost ?? -1));

@@ -1103,7 +1103,7 @@ $('#sheet-view').addEventListener('focusout', () => setTimeout(() => { if (vital
   meta = await api('GET', null, '?view=meta', EP);
   try {
     const [c, shop] = await Promise.all([api('GET', null, '?view=catalog', '/api/shop'), api('GET', null, '?view=player', '/api/shop')]);
-    catalog = [...c.catalog, ...(shop.custom || [])];
+    catalog = [...c.catalog.filter((x) => !x.base), ...(shop.custom || [])]; // book-shop copies of Guidebook items would double up the pickers
   } catch { catalog = []; }
   try { factions = (await api('GET', null, '?view=factions', '/api/npcs')).factions || []; } catch {}
   // Decoded frequencies from the Forstall notebook are what a Forstall's memory slots can be programmed with.
