@@ -1,5 +1,5 @@
 // The shared Table Log: every roll from any page (combat, sheets, Forstall scans) in one place.
-import { esc, api, startPolling, staticDice, timeAgo, injectDefs, savedPin, toast, store, rollPopup, animateRoll, ask, play, me } from './common.js';
+import { esc, api, startPolling, staticDice, timeAgo, injectDefs, savedPin, toast, store, rollPopup, animateRoll, ask, play, me, onChange } from './common.js';
 import { gl } from './glyphs.js';
 import { duelHud } from './duel-hud.js';
 import { tradeHud, openTrade } from './trade.js';
@@ -68,7 +68,11 @@ export function mountTableLog() {
   }).catch(() => {});
   askWhoIAm();
   // "Previously on…" once per written-up session (players only; waits for other pop-ups)
-  if (!savedPin()) setTimeout(() => import('./previously.js').then((m) => m.showPreviously()).catch(() => {}), 2500);
+  if (!savedPin()) {
+    const prev = () => import('./previously.js').then((m) => m.showPreviously()).catch(() => {});
+    setTimeout(prev, 2500);
+    onChange(['session'], prev); // the Warden's Start Session can put last time's recap on every screen
+  }
   // any [data-trade] button (e.g. on a sheet's Inventory) opens a trade with that character
   document.addEventListener('click', (e) => { const b = e.target.closest('[data-trade]'); if (b) openTrade(b.dataset.trade || null); });
   // any [data-stash] button opens the posse stash

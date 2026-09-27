@@ -228,6 +228,16 @@
 - **Problems:** common.js reports uncaught errors and rejections from our own scripts (not extensions; at most 8 a page; repeats within a minute are skipped) to `/api/problems` `report`. lib/routes/problems.js keeps the last 80, counting repeats of the same message on the same page within a day. The Warden reads them (GET), `seen` and `clear`.
   - UI: the Problems card on Tools (desk.js `renderProblems`), with new ones counted on the Tools nav badge `#rn-tools`.
 
+## Start Session & keyboard shortcuts
+- **Start Session** (Run the Game nav, `public/js/startsession.js` `openStartSession`) is one window:
+  - tonight's title (`Session N`) and date
+  - who's here (pulse `?who=` dots, refreshed every 5 s)
+  - last time's recap, with "Show it on everyone’s screen"
+  - tonight's scene (chips from Prep)
+  - Start calls session `begin {title, date, pushRecap}`: adds the session, sets `pushRecap {id, at}`, and logs "<title> begins." It then sets scenes `current` if changed, and opens the Scene or Now view.
+  - The recap view returns `pushedAt`. previously.js shows a pushed recap again even if seen (`wiw.prevPush`). tablelog.js re-checks on every `session` change (`onChange`), so it reaches players already on the site.
+- **Shortcuts** (common.js, ignored while typing or when a dialog is up; `?` shows the list, Warden rows only for the Warden): N next turn (Warden), R dice drawer, L Table Log, / rules lookup, B Battle Map, G Run the Game (Warden), U the Undo list (Warden).
+
 ## Undo & the Reconnecting strip
 - **Undo (anything, not just fights):** `transaction(fn, { undo })` in lib/store.js remembers the raw value of every document a request loaded (`ctx.before`). After a successful commit, `recordUndo` stores the before-values in rotating `undo:<slot>` keys (last 12), indexed in `undo-idx`, each with the after-hash of each written document.
   - api/[area].js passes `undoLabel(area, req, held)`: only successful POSTs, skipping pulse, problems, backup, image and undo, and the actions ping, report, auth and seen. Labels are like "Sheet · wallet" or "Store: approve or deny a request"; who is "Warden" or "a player".

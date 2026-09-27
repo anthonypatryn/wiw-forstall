@@ -10,12 +10,14 @@ export async function showPreviously() {
   if (savedPin() || !me()) return;
   let r;
   try { r = await api('GET', null, '?view=recap', '/api/session'); } catch { return; }
-  if (!r?.id || store.get('wiw.prevSeen', '') === r.id) return;
+  const pushed = r?.pushedAt && store.get('wiw.prevPush', 0) !== r.pushedAt; // the Warden put it on everyone's screen
+  if (!r?.id || (!pushed && store.get('wiw.prevSeen', '') === r.id)) return;
   // not while something else is on screen (the tour, a dialog, a card table…): try again shortly
   if (busyScreen()) { setTimeout(showPreviously, 4000); return; }
   let quests = [];
   try { quests = ((await api('GET', null, '?view=player', '/api/journal')).quests || []).filter((q) => q.status === 'open'); } catch {}
   store.set('wiw.prevSeen', r.id);
+  if (r.pushedAt) store.set('wiw.prevPush', r.pushedAt);
   const back = document.createElement('div');
   back.className = 'modal-back ask-back';
   back.innerHTML = `<div class="modal ask prev-modal" role="dialog" aria-modal="true" aria-label="Previously on Wild Imaginary West">

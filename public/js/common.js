@@ -634,3 +634,53 @@ export function abilityBody(pc, sel) {
     report(String(r?.message || r || 'Something went wrong'), (st.split('\n')[1] || '').trim().replace(location.origin, '').replace(/\?v=\d+/, '').slice(0, 150));
   });
 })();
+
+// ---------- keyboard shortcuts (desktop): letters only when you're not typing; ? shows the list ----------
+const KEYS = [
+  ['N', 'Next turn', 'Warden, in a fight'],
+  ['R', 'Roll dice', ''],
+  ['L', 'Table Log', ''],
+  ['/', 'Look up a rule', ''],
+  ['B', 'Battle Map', ''],
+  ['G', 'Run the Game', 'Warden'],
+  ['U', 'Undo a recent change', 'Warden'],
+  ['Esc', 'Close or back out', ''],
+  ['?', 'This list', ''],
+];
+function shortcutsHelp() {
+  if (document.querySelector('.keys-back')) return;
+  const back = document.createElement('div');
+  back.className = 'modal-back ask-back keys-back';
+  back.innerHTML = `<div class="modal ask keys-modal" role="dialog" aria-modal="true" aria-label="Keyboard shortcuts">
+    <div class="ho-kicker">KEYBOARD SHORTCUTS</div>
+    <dl class="keys-list">${KEYS.filter(([, , who]) => !/Warden/.test(who) || savedPin()).map(([k, what, who]) => `<dt><kbd>${esc(k)}</kbd></dt><dd>${esc(what)}${who ? ` <small>${esc(who)}</small>` : ''}</dd>`).join('')}</dl>
+    <p class="muted">They don’t fire while you’re typing in a box.</p>
+    <div class="ask-btns"><button type="button" class="btn" data-x>Got it</button></div></div>`;
+  document.body.append(back);
+  back.addEventListener('click', (e) => { if (e.target === back || e.target.closest('[data-x]')) back.remove(); });
+}
+document.addEventListener('keydown', async (e) => {
+  if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey) return;
+  const t = e.target;
+  if (t.closest?.('input, textarea, select, [contenteditable="true"]')) return;
+  if (document.querySelector('.ask-back:not(.keys-back), .modal-back:not([hidden]):not(.keys-back):not(#setup)')) return; // a dialog is up
+  const k = e.key;
+  const go = (href) => { if (location.pathname !== href) location.href = href; };
+  const warden = !!savedPin();
+  if (k === '?') { e.preventDefault(); shortcutsHelp(); return; }
+  if (k === '/') { e.preventDefault(); openRule(''); return; }
+  const key = k.toLowerCase();
+  if (key === 'r') { document.querySelector('.dice-fab')?.click(); return; }
+  if (key === 'l') { document.querySelector('.log-fab:not(.whisper-fab)')?.click(); return; }
+  if (key === 'b') { go('/battle'); return; }
+  if (key === 'g' && warden) { go('/run'); return; }
+  if (key === 'u' && warden) { document.querySelector('.nav-undo')?.click(); return; }
+  if (key === 'n' && warden) {
+    try {
+      const r = await api('POST', { action: 'next' }, '', '/api/combat');
+      const c = r.state?.combat, cur = c?.current;
+      const name = (r.state?.posse || []).find((p) => p.id === cur)?.name || (r.state?.enemies || []).find((x) => x.id === cur)?.name;
+      toast(name ? `Next up: ${name}` : 'Next turn.');
+    } catch (err) { toast(err.message, true); }
+  }
+});

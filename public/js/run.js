@@ -183,6 +183,7 @@ document.addEventListener('click', async (e) => {
     if (r) { toast(`Jackpot for ${r.name}!`); aw.jp = ''; $('#jp-why').value = ''; renderRewards(); }
   }
 });
+$('#start-session').addEventListener('click', () => import('./startsession.js').then((m) => m.openStartSession({ getCombat: () => combat, onDone: ({ scene }) => { poller?.now?.(); showView(scene ? 'grp-scene' : 'grp-now'); } })));
 $('#end-session').addEventListener('click', () => openEndSession({ getCombat: () => combat, refresh: () => { poller?.now?.(); refreshNeeds(); } }));
 $('#town-all').addEventListener('click', async () => {
   if (!await ask('Town Rest for the whole posse?')) return;

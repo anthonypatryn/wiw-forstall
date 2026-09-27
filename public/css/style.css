@@ -1131,3 +1131,9 @@ body.scan-in-fight #roll-btn { opacity: .45; pointer-events: none; }
 .undo-t small { font-size: var(--fs-xs); color: var(--ink-soft); }
 .undo-list .needs-row.stale { opacity: .6; }
 @media (max-width: 760px) { .nav-undo { display: none; } }
+/* keyboard shortcuts list */
+.keys-modal { max-width: 420px; }
+.keys-list { display: grid; grid-template-columns: auto 1fr; gap: 8px 14px; margin: 8px 0; align-items: center; }
+.keys-list dt, .keys-list dd { margin: 0; }
+.keys-list dd small { color: var(--ink-soft); font-size: var(--fs-xs); }
+kbd { display: inline-block; min-width: 28px; padding: 3px 8px 1px; border: 2px solid var(--ink); border-bottom-width: 3px; border-radius: var(--r-sm); background: var(--surface); font: var(--fs-md) var(--display); letter-spacing: .06em; text-align: center; }
