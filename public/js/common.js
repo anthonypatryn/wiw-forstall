@@ -44,7 +44,7 @@ const DEPS = {
   '/api/scan': ['state', 'battle', 'combat'], '/api/combat': ['combat', 'battle', 'shop', 'whispers'], '/api/battle': ['battle', 'combat'],
   '/api/handouts': ['handouts', 'combat'], '/api/journal': ['journal', 'map', 'npcs', 'wanted'], '/api/lockpick': ['locks', 'combat', 'shop'],
   '/api/map': ['map', 'combat'], '/api/npcs': ['npcs'], '/api/papers': ['papers', 'combat', 'map', 'session', 'wanted'],
-  '/api/saloon': ['saloon', 'combat'], '/api/scenes': ['scenes'], '/api/session': ['session', 'combat'], '/api/shop': ['shop', 'combat'],
+  '/api/saloon': ['saloon', 'combat'], '/api/carnival': ['carnival', 'combat'], '/api/scenes': ['scenes'], '/api/session': ['session', 'combat'], '/api/shop': ['shop', 'combat'],
   '/api/wanted': ['wanted', 'combat', 'journal', 'map', 'npcs'], '/api/whispers': ['whispers', 'combat'],
 };
 const PULSE_MS = 2500, PULSE_HIDDEN_MS = 15000, PULSE_RETRY_MS = 5000;

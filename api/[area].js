@@ -2,6 +2,7 @@
 // Static imports so Vercel bundles every route; add new areas here.
 import backup from '../lib/routes/backup.js';
 import battle from '../lib/routes/battle.js';
+import carnival from '../lib/routes/carnival.js';
 import combat from '../lib/routes/combat.js';
 import handouts from '../lib/routes/handouts.js';
 import image from '../lib/routes/image.js';
@@ -21,7 +22,7 @@ import wanted from '../lib/routes/wanted.js';
 import whispers from '../lib/routes/whispers.js';
 import undo from '../lib/routes/undo.js';
 
-const ROUTES = { backup, battle, combat, handouts, image, journal, lockpick, map, npcs, papers, problems, pulse, saloon, scan, scenes, session, shop, undo, wanted, whispers };
+const ROUTES = { backup, battle, carnival, combat, handouts, image, journal, lockpick, map, npcs, papers, problems, pulse, saloon, scan, scenes, session, shop, undo, wanted, whispers };
 
 import { transaction, counter, bump } from '../lib/store.js';
 import { pinOk } from '../lib/http.js';

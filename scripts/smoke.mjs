@@ -119,6 +119,7 @@ async function main() {
   await check('Run the Game: nav and Now view', '/run', `return ${has('#run-nav')} && !document.querySelector('#grp-now').hidden && ${has('#fight .btn, #fight')};`, 3000);
   await check('Run the Game: Start Session opens', '/run', `document.querySelector('#start-session').click(); await new Promise(r=>setTimeout(r,1200)); return ${has('.start-modal')};`, 3000);
   await check('Map: the East Portal town map', '/map', `document.querySelector('[data-map="ep"]').click(); await new Promise(r=>setTimeout(r,500)); return document.querySelectorAll('#places .place.spot').length > 30 && document.querySelector('#stage img').src.includes('east-portal');`, 3000);
+  await check('Run the Game: the Carnival card', '/run#grp-start', `return ${has('#carnival [data-cv-open], #carnival [data-cv-close]')};`, 3000);
   await check('Run the Game: Downtime card', '/run#grp-rewards', `return ${has('#downtime [data-dt-act]')} && ${has('#downtime [data-dt-go]')};`, 3000);
   await check('Run the Game: Book Tables rolls a row', '/run#grp-start', `document.querySelector('#book-tables [data-bt-roll]').click(); await new Promise(r=>setTimeout(r,1200)); return ${has('#book-tables .bt-on')} && ${has('#book-tables [data-bt-say]')};`, 3000);
   await check('Battle Map: fight bar and the current fighter’s card', '/battle', `return ${has('.fightbar .fb-next')} && !document.querySelector('#fcard').hidden && ${has('#fcard [data-open=attack]')};`, 3500);

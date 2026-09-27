@@ -1190,3 +1190,32 @@ test('book shops: buying Scrap goes on the sheet, a paid bed is a Town Rest, Scr
   shopAction(shop, s, { action: 'decide', id: shop.requests.find((x) => x.status === 'pending').id, approve: true }, { warden: true });
   assert.equal(Number(pc.scrap), 3);
 });
+
+test('carnival: tickets, horseshoes, the wheel, the high striker and the prize booth (Iron Road pp. 63–67)', async () => {
+  const { freshCarnival, carnivalAction, wheelPayout } = await import('../lib/carnival.js');
+  const pc = { id: 'p1', name: 'Bo', wallet: '1.00', items: [] };
+  let hits = 5, faces = ['ace', 'ace'];
+  const logs = [];
+  const ctx = { warden: false, pc: (id) => (id === 'p1' ? pc : null), pay: (p, a) => { p.wallet = (Number(p.wallet) + a).toFixed(2); }, log: (t) => logs.push(t),
+    roll: () => ({ hits, dice: faces.map((f) => ({ face: f })) }), give: (p, name) => p.items.push({ name }) };
+  const s = freshCarnival();
+  assert.throws(() => carnivalAction(s, { action: 'open' }, ctx), /PIN/);
+  carnivalAction(s, { action: 'open', where: 'Omaha' }, { ...ctx, warden: true });
+  assert.throws(() => carnivalAction(s, { action: 'horseshoe', pc: 'p1' }, ctx), /ticket/);
+  carnivalAction(s, { action: 'ticket', pc: 'p1' }, ctx);
+  assert.equal(pc.wallet, '0.75');
+  carnivalAction(s, { action: 'horseshoe', pc: 'p1' }, ctx);
+  assert.equal(s.vouchers.p1.small, 1);
+  carnivalAction(s, { action: 'wheel', pc: 'p1', stake: 0.25 }, ctx);
+  assert.equal(pc.wallet, '1.50', 'Ace, Ace quadruples the stake');
+  assert.equal(wheelPayout(['hit', 'blank']), 0); assert.equal(wheelPayout(['spur', 'blank']), 2); assert.equal(wheelPayout(['ace', 'spur']), 3);
+  carnivalAction(s, { action: 'striker', pc: 'p1' }, ctx);
+  assert.equal(s.vouchers.p1.large, 1); assert.equal(pc.wallet, '1.50', 'the first swing comes with the ticket');
+  hits = 1; carnivalAction(s, { action: 'striker', pc: 'p1' }, ctx);
+  assert.equal(pc.wallet, '1.25');
+  carnivalAction(s, { action: 'swap', pc: 'p1', from: 'large', to: 'medium' }, ctx);
+  assert.deepEqual(s.vouchers.p1, { small: 1, medium: 2, large: 0 });
+  carnivalAction(s, { action: 'prize', pc: 'p1', prize: 'Pocket Compass' }, ctx);
+  assert.equal(pc.items[0].name, 'Pocket Compass'); assert.equal(s.vouchers.p1.medium, 1);
+  assert.throws(() => carnivalAction(s, { action: 'prize', pc: 'p1', prize: 'Two-Pound Turkey Leg' }, ctx), /large voucher/);
+});
