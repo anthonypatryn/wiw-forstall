@@ -1,7 +1,7 @@
 import { $, esc, api, startPolling, toast, mountNav, tryWarden, forgetWarden, savedPin, wardenModal, rollPopup, abilityOptions, abilityTargetsHTML, abilityBody, ask, pickFighters, isPool } from './common.js';
 import { gl } from './glyphs.js';
 import { play, weaponSound, preload } from './sound.js';
-preload('steps', 'hooves', 'bow', 'shotgun', 'boomSmall', 'boomMedium', 'boomLarge', 'fsBurst', 'fsReadout', 'fsSweep', 'fsScan');
+preload('steps', 'hooves', 'melee', 'bow', 'shotgun', 'boomSmall', 'boomMedium', 'boomLarge', 'fsBurst', 'fsReadout', 'fsSweep', 'fsScan');
 let meta = null;
 // the Ability button depends on this, so redraw the turn panel once it arrives
 api('GET', null, '?view=meta', '/api/combat').then((m) => { meta = m; renderTurnBar(); }).catch(() => {});
@@ -755,7 +755,7 @@ function wireQuick(bar, cur, tok) {
         if (!await ask(`${err.message.slice(14)}\n\nRoll it anyway?`)) { b.disabled = false; return; }
         r = await combatAct({ action: 'enemyAttack', enemy: cur.a.id, attack: Number(d.a), pc: d.target, cover: 0, force: true });
       }
-      if (r?.atk?.dice) { play(/range|shoot|spit|throw/i.test(r.atk.label) ? 'gun' : 'swing'); rollPopup(r.atk, `${r.atk.label} · ${r.atk.pool}`); }
+      if (r?.atk?.dice) { play(/range|shoot|spit|throw/i.test(r.atk.label) ? 'gun' : 'melee'); rollPopup(r.atk, `${r.atk.label} · ${r.atk.pool}`); }
       if (r) toast(`${r.dmg ? `${r.dmg} damage` : 'No damage'}${r.notes?.length ? ` · ${r.notes.join(', ')}` : ''}`);
     }
     renderTurnBar(); poller?.now?.();
@@ -894,7 +894,7 @@ function wireAttack(box, sel) {
       if (!await ask(`${err.message.slice(14)}\n\nRoll it anyway?`)) return;
       r = await combatAct({ action: 'enemyAttack', enemy: sel.ref, attack: s.a, pc: tgt.ref, cover: s.cover || 0, force: true });
     }
-    if (r?.atk?.dice) { play(/range|shoot|spit|throw/i.test(r.atk.label) ? 'gun' : 'swing'); rollPopup(r.atk, `${r.atk.label} · ${r.atk.pool}`); }
+    if (r?.atk?.dice) { play(/range|shoot|spit|throw/i.test(r.atk.label) ? 'gun' : 'melee'); rollPopup(r.atk, `${r.atk.label} · ${r.atk.pool}`); }
     if (r) { toast(`${r.dmg ? `${r.dmg} damage` : 'No damage'}${r.notes?.length ? ` · ${r.notes.join(', ')}` : ''}`); poller?.now?.(); }
   });
 }

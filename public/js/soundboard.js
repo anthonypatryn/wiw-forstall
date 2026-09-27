@@ -7,7 +7,7 @@ import { play, ambience, LOOPS, stopSounds, preload } from './sound.js';
 
 const EP = '/api/sound';
 export const BOARD = [
-  ['Fights', [['gun', 'Gunshot'], ['shotgun', 'Shotgun'], ['bow', 'Bow shot'], ['arrowHit', 'Arrow thunk'], ['swing', 'Swing'], ['steps', 'Footsteps']]],
+  ['Fights', [['gun', 'Gunshot'], ['shotgun', 'Shotgun'], ['bow', 'Bow shot'], ['arrowHit', 'Arrow thunk'], ['melee', 'Melee hit'], ['swing', 'Swoosh'], ['steps', 'Footsteps']]],
   ['Monsters', [['monRoar', 'Roar'], ['monLowRoar', 'Low roar'], ['monGrowl', 'Growl'], ['monClick', 'Insect clicking'], ['monGiantInsect', 'Giant insect'], ['monSmallInsect', 'Small insect']]],
   ['Explosions', [['explosion:small', 'Small'], ['explosion:medium', 'Medium'], ['explosion:large', 'Large'], ['explosion:huge', 'Huge']]],
   ['Saloon & games', [['dice', 'Dice'], ['card', 'Card deal'], ['shuffle', 'Shuffle'], ['chips', 'Chips'], ['drink', 'Pour a drink']]],
