@@ -1,0 +1,43 @@
+/* Contests (public/js/contests.js): the horse race and the trick-shot contest. Built on carnival.css's scene. */
+.ct-chip { bottom: 116px; }
+.ct-body { padding: 12px 16px 0; display: grid; gap: 14px; }
+.ct-cols { display: grid; grid-template-columns: 1.2fr 1fr; gap: 16px; }
+.ct-cols h3 { margin: 0 0 6px; font: var(--fs-md) var(--display); letter-spacing: var(--track); }
+.ct-cols h3 .gl { width: 1em; height: 1em; vertical-align: -2px; }
+.ct-field { margin: 0; padding-left: 20px; display: grid; gap: 6px; }
+.ct-entrant small { display: block; color: var(--ink-soft); font-size: var(--fs-xs); }
+.ct-won b { color: var(--rust-dark); }
+.ct-won b::after { content: ' — the winner'; font-weight: 400; }
+.ct-me { border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 12px; background: var(--surface); display: grid; gap: 8px; align-content: start; }
+.ct-me p { margin: 0; }
+.ct-rules { border: 1px solid var(--line); border-radius: var(--radius); padding: 8px 12px; background: var(--surface); }
+.ct-rules summary { cursor: pointer; font: var(--fs-sm) var(--display); letter-spacing: var(--track); }
+.ct-rules summary .gl { width: 1em; height: 1em; vertical-align: -2px; }
+.ct-rules ol { margin: 8px 0; padding-left: 20px; display: grid; gap: 4px; font-size: var(--fs-sm); }
+.ct-rules p { font-size: var(--fs-xs); margin: 4px 0 0; }
+.ct-desk-row { display: flex; gap: 12px; flex-wrap: wrap; }
+.ct-desk-row input { width: 90px; }
+.ct-npc { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 6px; }
+.ct-npc input { flex: 1 1 140px; min-width: 0; }
+
+/* the show */
+.ct-stage { width: min(720px, calc(100vw - 32px)); box-sizing: border-box; background: var(--paper); color: var(--ink); border-radius: var(--radius); box-shadow: var(--shadow-pop); padding: 16px; display: grid; gap: 12px; }
+.ct-leg { font: var(--fs-lg) var(--western); text-align: center; min-height: 1.4em; }
+.ct-track { position: relative; display: grid; gap: 6px; padding: 8px 10px; border-radius: var(--radius); background: repeating-linear-gradient(90deg, #b48a57 0 60px, #a67d4c 60px 120px); }
+.ct-lane { position: relative; height: 40px; border-bottom: 2px dashed rgba(255, 255, 255, .35); }
+.ct-lname { position: absolute; left: 0; top: -2px; font-size: var(--fs-xs); color: #fff8ec; text-shadow: 0 1px 2px #000; white-space: nowrap; }
+.ct-gone { position: absolute; right: 0; top: -2px; font-size: var(--fs-xs); color: #fff8ec; text-shadow: 0 1px 2px #000; }
+.ct-horse { position: absolute; left: 0; bottom: 2px; width: 30px; height: 26px; display: grid; place-items: center; border-radius: 50%; color: #fff;
+  background: hsl(calc(var(--c) * 67 + 10) 45% 35%); box-shadow: 0 2px 4px rgba(0, 0, 0, .45); transition: left 1.5s cubic-bezier(.3, .1, .3, 1); animation: ct-gallop .3s infinite alternate; }
+.ct-horse .gl { width: 18px; height: 18px; }
+.ct-horse.ct-first { outline: 3px solid var(--gold); animation: none; }
+.ct-post { position: absolute; top: 0; bottom: 0; right: 8%; width: 4px; background: repeating-linear-gradient(#fff 0 8px, #222 8px 16px); }
+@keyframes ct-gallop { to { transform: translateY(-4px); } }
+.ct-shots .ct-round { display: grid; gap: 6px; }
+.ct-shot { display: grid; grid-template-columns: 9em 1fr; gap: 8px; padding: 6px 10px; border-radius: var(--radius); background: var(--surface); }
+.ct-shot.ct-first { outline: 2px solid var(--brass); background: var(--accent-tint); }
+.ct-round p { margin: 0; }
+.ct-tally { font: var(--fs-sm) var(--display); letter-spacing: var(--track); text-align: center; }
+.ct-stage .btn { justify-self: center; }
+@media (max-width: 700px) { .ct-cols { grid-template-columns: 1fr; } .ct-shot { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: reduce) { .ct-horse { transition: none; animation: none; } }

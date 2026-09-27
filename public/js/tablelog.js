@@ -35,6 +35,7 @@ export function mountTableLog() {
   import('./paper.js').then((m) => m.watchPapers()).catch(() => {}); // a new issue of the paper: “Extra! Extra!”
   import('./saloon.js').then((m) => m.watchSaloon()).catch(() => {}); // a card game: the invite, and the table on your move
   import('./carnival.js').then((m) => m.watchCarnival()).catch(() => {}); // the traveling carnival: the invite and its booths
+  import('./contests.js').then((m) => m.watchContest()).catch(() => {}); // the horse race and the trick-shot contest
   import('./soundboard.js').then((m) => m.watchSoundcast()).catch(() => {}); // the Warden's soundboard: effects and background loops
   import('./journal-watch.js').then((m) => m.watchJournal()).catch(() => {}); // a new quest or clue the Warden reveals
   const btn = document.createElement('button');

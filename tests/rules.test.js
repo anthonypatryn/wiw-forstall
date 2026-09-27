@@ -1291,3 +1291,47 @@ test('records: wallet changes at a game book to that game; net = won − lost; c
   tally(combat, snapWallets(combat.posse), 'not-a-game');
   assert.equal(Object.keys(combat.records.a).length, 1);
 });
+
+test('contests: horse race legs, breed/Bond dice, rental, pot and side bets; trick shot Aim and rounds (Iron Road p. 109)', async () => {
+  const { freshContest, contestAction, horseDice, contestView } = await import('../lib/contests.js');
+  const posse = [
+    { id: 'a', name: 'Bo', wallet: '10', skills: { finesse: '2B', nerve: '2B' }, talents: [], horse: { breed: 'Thoroughbred', bond: 'Revered', health: '12' } },
+    { id: 'b', name: 'Tess', wallet: '10', skills: { finesse: '2B', nerve: '2B' }, talents: [], horse: {} },
+  ];
+  const rolled = [];
+  const ctx = { warden: true, pc: (id) => posse.find((p) => p.id === id), pay: (p, n) => { p.wallet = (Number(p.wallet) + n).toFixed(2); }, log: () => {},
+    npcPool: () => ({ black: 1, gold: 0 }),
+    roll: (e, pool, label, spur, aim) => { rolled.push({ who: e.name, pool, label, aim }); return { hits: e.name === 'Bo' ? 3 : 1, dice: [] }; } };
+  assert.deepEqual(horseDice({ breed: 'Thoroughbred', bond: 'Revered' }, 0), { black: 0, gold: 2 });
+  assert.deepEqual(horseDice({ breed: 'American Quarter Horse', bond: 'Hostile' }, 1), { black: -2, gold: 0 });
+  assert.deepEqual(horseDice({ rented: true, breed: '', bond: 'Neutral' }, 0), { black: 0, gold: 0 });
+  const s = freshContest();
+  contestAction(s, { action: 'open', kind: 'race', fee: 1, rent: 0.5, npcs: [{ name: 'Slim', tough: 'Weak' }] }, ctx);
+  contestAction(s, { action: 'enter', pc: 'a', finish: 'nerve' }, ctx);
+  contestAction(s, { action: 'enter', pc: 'b' }, ctx);
+  assert.equal(posse[0].wallet, '9.00'); assert.equal(posse[1].wallet, '8.50'); // Tess rents a horse
+  assert.throws(() => contestAction(s, { action: 'enter', pc: 'a' }, ctx), /already in/);
+  contestAction(s, { action: 'bet', pc: 'b', on: 'pc:a', amount: 2 }, ctx);
+  assert.throws(() => contestAction({ ...s }, { action: 'run' }, { ...ctx, warden: false }), /PIN/);
+  const r = contestAction(s, { action: 'run' }, ctx);
+  assert.deepEqual(r.winners, ['pc:a']); assert.equal(r.total['pc:a'], 9);
+  assert.equal(r.legs[2].rolls['pc:a'].skill, 'nerve');
+  assert.ok(rolled.some((x) => x.who === 'Bo' && x.pool.gold === 2)); // +1G Thoroughbred, +1G Revered
+  assert.equal(r.pot, 3); assert.equal(posse[0].wallet, '12.00'); // the pot of three $1 fees
+  assert.equal(posse[1].wallet, '8.50'); // Tess's $2 bet on Bo: the whole pool comes back to her
+  assert.ok(contestView(s, { pc: 'b' }).bets[0].mine);
+  // trick shot: Finesse vs the trick earns an Aim on the 3G pistol
+  const t = freshContest(); rolled.length = 0;
+  contestAction(t, { action: 'open', kind: 'trickshot', fee: 0, rounds: 4 }, ctx);
+  contestAction(t, { action: 'enter', pc: 'a' }, ctx); contestAction(t, { action: 'enter', pc: 'b' }, ctx);
+  const tr = contestAction(t, { action: 'run' }, ctx);
+  assert.equal(tr.rounds.length, 4); assert.deepEqual(tr.rounds.map((x) => x.target), [2, 3, 4, 5]);
+  assert.equal(tr.wins['pc:a'], 4); assert.deepEqual(tr.winners, ['pc:a']);
+  assert.ok(rolled.some((x) => x.who === 'Bo' && x.aim && x.pool.gold === 3));
+  assert.ok(rolled.some((x) => x.who === 'Tess' && !x.aim && /Finncaster/.test(x.label)));
+  // closing one that never ran gives the money back
+  const c = freshContest();
+  contestAction(c, { action: 'open', kind: 'race', fee: 2 }, ctx); contestAction(c, { action: 'enter', pc: 'a' }, ctx);
+  const w = posse[0].wallet; contestAction(c, { action: 'close' }, ctx);
+  assert.equal(Number(posse[0].wallet), Number(w) + 2);
+});
