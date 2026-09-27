@@ -13,8 +13,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Rye&family=Special+Elite&family=Reenie+Beanie&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=85">
-  <link rel="stylesheet" href="/css/warden.css?v=18">
+  <link rel="stylesheet" href="/css/style.css?v=87">
+  <link rel="stylesheet" href="/css/warden.css?v=19">
 </head>
 <body class="warden">
   <header class="masthead">
@@ -56,7 +56,7 @@
 
         <section class="card corner">
           <h2 class="section-title"><span class="step">LIVE</span> Scan feed</h2>
-          <div id="feed" class="feed"></div>
+          <div id="feed" class="feed"><p class="loading" role="status">Loading…</p></div>
         </section>
       </div>
 
@@ -88,20 +88,20 @@
             </fieldset>
             <button class="btn small" type="submit">Add monster</button>
           </form>
-          <div id="custom-list"></div>
+          <div id="custom-list"><p class="loading" role="status">Loading…</p></div>
           <p class="tip">“Make Your Own Monster” (p. 193): a Kurtz Value is a random six-digit number and may repeat digits. Traits marked <b>AUTO</b> change the Scan for you; <b>JAM</b> traits give you a switch to cut the posse’s signal.</p>
         </section>
 
         <section class="card notebook">
           <h2 class="section-title">Posse Notebook</h2>
           <input class="search" id="nb-search" type="search" placeholder="Search monsters…" aria-label="Search notebook">
-          <div id="nb-body"></div>
+          <div id="nb-body"><p class="loading" role="status">Loading…</p></div>
         </section>
       </aside>
     </div>
     <div class="footer"><span class="conn" id="conn">Connected</span> · <span id="store-kind"></span></div>
   </main>
 
-  <script type="module" src="/js/warden.js?v=82"></script>
+  <script type="module" src="/js/warden.js?v=84"></script>
 </body>
 </html>

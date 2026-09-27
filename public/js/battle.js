@@ -273,7 +273,7 @@ function renderPanel() {
     const fcHTML = !fc ? '' : sel.kind === 'pc' ? pcCardHTML(fc, { data: combat, meta }) : enemyCardHTML(fc, { data: combat, meta });
     const detail = `
       ${!fcHTML && sel.maxHealth != null ? `<div class="d-hp"><span class="bar"><i style="width:${hpPct}%"></i></span><b>${sel.health}/${sel.maxHealth}</b></div>` : ''}
-      <div class="d-tags">${sel.ref && sel.ref === data.current ? '<span class="tag turn">THEIR TURN</span>' : ''}${sel.frenzied ? '<span class="tag red">FRENZIED</span>' : ''}${sel.bleeding ? '<span class="tag red">BLEEDING OUT</span>' : ''}${sel.down ? '<span class="tag">DOWN</span>' : ''}</div>
+      <div class="d-tags">${sel.ref && sel.ref === data.current && !actor ? '<span class="tag turn">THEIR TURN</span>' : ''}${sel.frenzied ? '<span class="tag red">FRENZIED</span>' : ''}${sel.bleeding ? '<span class="tag red">BLEEDING OUT</span>' : ''}${sel.down ? '<span class="tag">DOWN</span>' : ''}</div>
       ${!fcHTML && st.length ? `<div class="d-st">${st.map(([k, v]) => `<span class="st">${esc(k)} <b>${v}</b></span>`).join('')}</div>` : ''}
       ${fcHTML ? "" : `<div class="d-row">${sel.grit != null ? `<span><b>GRIT</b> ${sel.grit}</span>` : ''}${sel.defense ? `<span><b>DEFENSE</b> ${esc(sel.defense)}</span>` : ''}${sel.speed ? `<span><b>SPEED</b> ${esc(sel.speed)}</span>` : ''}${sel.finesse ? `<span><b>FINESSE</b> ${esc(sel.finesse)}</span>` : ''}${sel.aces ? `<span><b>ACES</b> ${sel.aces}/6</span>` : ''}${sel.size ? `<span><b>SIZE</b> ${esc(sel.size)}</span>` : ''}</div>`}
       ${sel.frenzyText?.length ? `<div class="d-note">${sel.frenzyText.map(esc).join('<br>')}</div>` : ''}
@@ -284,7 +284,7 @@ function renderPanel() {
       ${!fcHTML && sel.attacks?.length ? `<details class="d-atk"><summary>Attacks</summary>${sel.attacks.map((a) => `<p>${esc(a)}</p>`).join('')}</details>` : ''}`;
     const kindLabel = sel.kind === 'pc' ? `POSSE${sel.trade ? ` · THE ${esc(sel.trade.toUpperCase())}` : ''}` : sel.kind === 'enemy' ? 'ENEMY' : 'NPC';
     const art = sel.photo || sel.img ? `<span class="av" style="background:${color(sel)} url('${esc(sel.photo || `/img/tokens/${sel.img}.webp`)}') center / cover"></span>` : `<span class="av" style="background:${color(sel)}">${esc(initials(sel.name))}</span>`;
-    head.innerHTML = cardHead(art, sel.name, `${kindLabel}${sel.hidden ? ' · HIDDEN' : ''}`, actor ? '<span class="tag turn">THEIR TURN</span>' : '');
+    head.innerHTML = cardHead(art, sel.name, `${kindLabel}${sel.hidden ? ' · HIDDEN' : ''}`, actor ? `<span class="tag turn">${!warden && sel.ref === myId() ? 'YOUR TURN' : 'THEIR TURN'}</span>` : '');
     box.innerHTML = `<div class="sel-card">
       ${actor ? `${actor.actionsHTML}${actor.extrasHTML}` : ''}
       ${fcHTML}${detail}
@@ -428,7 +428,10 @@ function positionCard() {
   let x = sx + off;
   if (x + w > vr.width - 34) x = sx - off - w;
   card.style.left = `${clamp(x, 8, vr.width - w - 34)}px`;
-  card.style.top = `${clamp(sy - 90, 8, Math.max(8, vr.height - h - 8))}px`;
+  const fab = document.querySelector('.fab-row')?.getBoundingClientRect();
+  const floor = fab && fab.top < vr.bottom ? Math.max(120, fab.top - vr.top - 10) : vr.height - 8; // don't slide under them
+  card.style.maxHeight = `${Math.max(160, floor - 8)}px`;
+  card.style.top = `${clamp(sy - 90, 8, Math.max(8, floor - Math.min(h, floor - 8)))}px`;
 }
 (() => {
   const card = $('#fcard'), head = $('#fcard-h');

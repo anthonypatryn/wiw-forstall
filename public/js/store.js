@@ -111,7 +111,7 @@ function renderSide() {
     <div class="muted fine">${esc(r.pcName)} · ${money(r.price)}${r.note ? ` · ${esc(r.note)}` : ''}</div>${controls || ''}</div>`;
   const mine = data.requests.filter((r) => !pc || r.pc === pc.id);
   $('#my-requests').innerHTML = mine.length ? mine.slice(0, 20).map((r) => reqRow(r, r.status === 'pending' ? '<div class="ctrl"><button class="btn small secondary" data-cancel type="button">Cancel</button></div>' : '')).join('')
-    : '<p class="empty-note">No requests yet.</p>';
+    : '<p class="empty-note">No requests yet. When a player asks to buy or sell, it waits here for your nod.</p>';
   $('#my-requests').querySelectorAll('[data-cancel]').forEach((b) => b.addEventListener('click', () => act({ action: 'cancel', id: b.closest('.req').dataset.id })));
 
   $('#queue-card').hidden = !warden;

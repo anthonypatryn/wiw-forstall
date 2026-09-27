@@ -10,6 +10,9 @@ import { fileURLToPath } from 'node:url';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
 const PORT = 5199, DEBUG = 9333, BASE = `http://localhost:${PORT}`, PIN = '1234';
+// `npm run smoke -- --shots <folder>` also saves a full-page screenshot of every check (for looking the pages over)
+const SHOTS = process.argv.includes('--shots') ? (process.argv[process.argv.indexOf('--shots') + 1] || path.join(os.tmpdir(), 'wiw-shots')) : null;
+if (SHOTS) fs.mkdirSync(SHOTS, { recursive: true });
 const CHROMES = [process.env.CHROME, 'C:/Program Files/Google/Chrome/Application/chrome.exe', 'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',
   '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', '/usr/bin/google-chrome', '/usr/bin/chromium'].filter(Boolean);
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -93,7 +96,18 @@ async function main() {
     await goto(p, wait);
     let ok = false, why = '';
     try { ok = await js(expr); } catch (e) { why = e.message; }
+    const stuck = await js("return [...document.querySelectorAll('.loading')].filter((e) => e.offsetParent).map((e) => e.parentElement.id || 'a list').join(', ')");
+    if (stuck) errors.push(`Still loading: ${stuck}`);
     const errs = errors.filter((e) => !/Failed to load resource/.test(e));
+    if (SHOTS) {
+      const m = await c.send('Page.getLayoutMetrics');
+      const h = Math.min(4000, Math.ceil(m.result.cssContentSize?.height || 900));
+      await c.send('Emulation.setDeviceMetricsOverride', { width: 1400, height: h, deviceScaleFactor: 1, mobile: false });
+      await sleep(300);
+      const shot = await c.send('Page.captureScreenshot', { format: 'jpeg', quality: 70 });
+      fs.writeFileSync(path.join(SHOTS, `${String(results.length + 1).padStart(2, '0')}-${name.replace(/[^a-z0-9]+/gi, '-').toLowerCase().slice(0, 50)}.jpg`), Buffer.from(shot.result.data, 'base64'));
+      await c.send('Emulation.clearDeviceMetricsOverride');
+    }
     const pass = ok === true && !errs.length;
     results.push({ name, pass, why: pass ? '' : (errs[0] || why || (typeof ok === 'string' ? ok : 'check failed')) });
     process.stdout.write(`${pass ? '  ok  ' : '  FAIL'} ${name}${pass ? '' : `  — ${results.at(-1).why}`}\n`);

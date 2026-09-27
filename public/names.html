@@ -13,8 +13,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Rye&family=Special+Elite&family=Reenie+Beanie&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=85">
-  <link rel="stylesheet" href="/css/names.css?v=24">
+  <link rel="stylesheet" href="/css/style.css?v=87">
+  <link rel="stylesheet" href="/css/names.css?v=25">
 </head>
 <body>
   <header class="masthead">
@@ -89,22 +89,22 @@
         <div class="manual-go"><label class="check"><input type="checkbox" name="known" checked> Posse knows about them</label>
           <button class="btn small" type="submit">Create faction</button></div>
       </form>
-      <div id="factions"></div>
+      <div id="factions"><p class="loading" role="status">Loading…</p></div>
     </section>
 
     <section class="card corner warden-only" id="book-card" data-acc="book" hidden>
       <h2 class="section-title">Book NPCs</h2>
       <p class="muted" style="margin-top:0">Faction figures from the Guidebook (pp. 120–133) and ready-made human enemies (p. 191). Warden eyes only.</p>
-      <div id="book"></div>
+      <div id="book"><p class="loading" role="status">Loading…</p></div>
     </section>
 
     <section class="card corner" data-acc="ledger">
       <div class="head-row"><h2 class="section-title">NPC Ledger</h2><input class="search" id="npc-search" type="search" placeholder="Search names, notes, places…" aria-label="Search NPCs"></div>
       <p class="muted" id="ledger-blurb" style="margin-top:6px">Everyone the posse has met. Jot down what you learn about them — the whole posse sees your notes.</p>
-      <div class="ledger" id="ledger"></div>
+      <div class="ledger" id="ledger"><p class="loading" role="status">Loading…</p></div>
     </section>
   </main>
 
-  <script type="module" src="/js/names.js?v=91"></script>
+  <script type="module" src="/js/names.js?v=93"></script>
 </body>
 </html>

@@ -180,3 +180,7 @@ body.warden-mode .rn-quick button { background: transparent; color: var(--on-dar
 .start-recap { max-height: 180px; overflow-y: auto; padding: 8px 12px; border-left: 4px solid var(--accent); background: var(--accent-tint); border-radius: 0 var(--r-sm) var(--r-sm) 0; font-size: var(--fs-sm); }
 .start-recap p { margin: 4px 0; }
 @media (max-width: 600px) { .start-grid { grid-template-columns: 1fr; } }
+
+/* End Session on the (dark) Warden nav: outlined in pale teal like the other nav buttons */
+body.warden-mode .run-nav .btn.secondary.rn-end { background: transparent; color: var(--w-teal-pale); border-color: rgba(169,220,217,.55); box-shadow: none; }
+body.warden-mode .run-nav .btn.secondary.rn-end:hover { background: rgba(95,179,179,.15); color: #fff; }

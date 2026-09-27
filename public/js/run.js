@@ -118,7 +118,7 @@ function renderPosse() {
       <div class="item-nums">${hpBar(p.health, p.maxHealth)}<span class="hp-num">${p.health}/${p.maxHealth}</span>
         <button type="button" class="pm-btn" data-p="${esc(p.id)}" data-d="-1" aria-label="${esc(p.name)} loses 1 Health">−</button><button type="button" class="pm-btn" data-p="${esc(p.id)}" data-d="1" aria-label="${esc(p.name)} gains 1 Health">+</button>
         ${combat.combat?.active ? `<span class="stat" title="Grit">${p.grit ?? 0} Grit</span>` : `<span class="stat" title="Wallet">$${esc(String(p.wallet || 0))}</span>`}</div></div>`;
-  }).join('') : '<p class="muted">No characters yet.</p>')
+  }).join('') : '<p class="muted">No characters yet. <a href="/posse">Make one on Posse Sheets</a>.</p>')
     // the fallen stay listed so the Warden can bring one back if the story allows it
     + fallen.map((p) => `<div class="item-row fallen"><div class="item-who"><img class="row-face" src="${esc(faceUrl(p))}" alt=""><a href="/posse#${esc(p.id)}"><b>${esc(p.name)}</b></a><small>${esc(p.trade)}${p.player ? ` · ${esc(p.player)}` : ''}</small><span class="pill">${gl('skull')} FALLEN</span></div>
       <div class="item-nums"><button type="button" class="btn small secondary" data-revive="${esc(p.id)}">${gl('heart')} Revive</button></div></div>`).join('');

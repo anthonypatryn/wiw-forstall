@@ -236,6 +236,8 @@
 - `scripts/smoke.mjs`: starts dev-server.mjs on port 5199 with `WIW_DATA_DIR` set to a temp folder (lib/store.js honours it; `.data` is never touched) and seeds a Hunter with a Backpack Forstall, a Chupacabra, a running fight, a placed Town Forstall and a session. It then drives headless Chrome or Edge over the DevTools protocol (Node's built-in WebSocket, no packages).
 - It opens every page as the Warden and as a player and fails on any script error, console error or missing key element. It also clicks an attack through on the Battle Map, opens Start Session and Map setup, and presses `/`. Exit code 1 means a check failed.
 - Run it before pushing anything that touches the UI, alongside `npm test`. Add a `check(...)` line for new pages or flows.
+- `node scripts/smoke.mjs --shots <folder>` also saves a full-page JPEG of each check. Use it to look pages over when the preview pane can't. The check also fails if any visible `.loading` placeholder is still showing.
+- **Loading placeholders:** the data containers in the page HTML start with `<p class="loading">Loading…</p>`, which each page's render replaces on its first draw.
 
 ## Guided level-up & printing sheets
 - **Level up:** posse.js `renderLevelUp` shows a brass `.lu-callout` above the sheet head, for the Warden or the sheet's own player, when a finished sheet has 2+ unclaimed Prestige. It opens `public/js/levelup.js` `openLevelUp({pc, meta, act})`:

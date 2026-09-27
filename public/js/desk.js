@@ -110,7 +110,7 @@ export function renderChecks() {
         return `<span class="pill${r ? (tot >= ck.target ? ' ok' : ' no') : ' wait'}">${esc(nm(pid))} ${r ? `${tot >= ck.target ? '✓' : '✗'} ${tot}/${ck.target}` : '…'}</span>`; }).join('')}
       ${Object.values(ck.helps || {}).map((h) => `<span class="pill">${esc(h.name)} helped +${h.hits}</span>`).join('')}</div>${helpNote}</div>${done}</div>`;
   }).join('');
-  $('#check-list').innerHTML = rows || '<p class="muted">No rolls open. Call one above.</p>';
+  $('#check-list').innerHTML = rows || '<p class="muted">No rolls open. Call one from <a href="#grp-start">Start Something</a>.</p>';
   $('#check-list').querySelectorAll('[data-ck-close]').forEach((b) => b.addEventListener('click', () => combatAct({ action: 'checkClose', id: b.dataset.ckClose })));
 }
 
@@ -133,11 +133,11 @@ async function loadHomebrew() {
   const row = (label, sub, attrs) => `<li><span><b>${esc(label)}</b>${sub ? `<small>${esc(sub)}</small>` : ''}</span><button type="button" class="btn small secondary danger" ${attrs}>Delete</button></li>`;
   box.innerHTML = `
     <h4 class="hb-h">MONSTERS <small>${mons.length} · made on the Warden’s Station</small></h4>
-    ${mons.length ? `<ul class="hb-list">${mons.map((m) => row(m.name, `${m.size} · Kz ${m.kz}`, `data-hb="monster" data-key="${esc(m.name)}"`)).join('')}</ul>` : '<p class="muted">None yet.</p>'}
+    ${mons.length ? `<ul class="hb-list">${mons.map((m) => row(m.name, `${m.size} · Kz ${m.kz}`, `data-hb="monster" data-key="${esc(m.name)}"`)).join('')}</ul>` : '<p class="muted">None yet. Make one on the Store, NPCs or Forstall Scanner page and it shows up here.</p>'}
     <h4 class="hb-h">NPC LEDGER <small>${people.length} · dealt, written or from the book</small></h4>
-    ${people.length ? `<ul class="hb-list">${people.map((n) => row(n.name, [n.faction, n.personality].filter(Boolean).join(' · '), `data-hb="npc" data-key="${esc(n.id)}"`)).join('')}</ul>` : '<p class="muted">None yet.</p>'}
+    ${people.length ? `<ul class="hb-list">${people.map((n) => row(n.name, [n.faction, n.personality].filter(Boolean).join(' · '), `data-hb="npc" data-key="${esc(n.id)}"`)).join('')}</ul>` : '<p class="muted">None yet. Make one on the Store, NPCs or Forstall Scanner page and it shows up here.</p>'}
     <h4 class="hb-h">STORE ITEMS <small>${items.length} · made in the Store</small></h4>
-    ${items.length ? `<ul class="hb-list">${items.map((i) => row(i.name, [i.cat, i.cost != null ? `$${i.cost}` : ''].filter(Boolean).join(' · '), `data-hb="item" data-key="${esc(i.id)}"`)).join('')}</ul>` : '<p class="muted">None yet.</p>'}`;
+    ${items.length ? `<ul class="hb-list">${items.map((i) => row(i.name, [i.cat, i.cost != null ? `$${i.cost}` : ''].filter(Boolean).join(' · '), `data-hb="item" data-key="${esc(i.id)}"`)).join('')}</ul>` : '<p class="muted">None yet. Make one on the Store, NPCs or Forstall Scanner page and it shows up here.</p>'}`;
   box.querySelectorAll('[data-hb]').forEach((b) => b.addEventListener('click', async () => {
     const name = b.closest('li').querySelector('b').textContent;
     if (!await ask(`Delete ${name} for good?`)) return;

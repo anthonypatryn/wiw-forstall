@@ -1168,3 +1168,9 @@ body .dp .num-wrap { width: 60px; }
 body .field-inline .num-wrap { width: 84px; }
 body .fs-dig-row .num-wrap { width: 54px; }
 body .fs-dig-row .num-wrap .fs-dig { width: 100%; }
+.fight-banner a { color: var(--accent); font-weight: 700; text-decoration: underline; text-underline-offset: 2px; }
+
+/* first paint, before a list's data arrives (the page's render replaces it) */
+.loading { margin: 6px 0; color: var(--ink-soft); font-style: italic; font-size: var(--fs-sm); display: flex; align-items: center; gap: 8px; }
+.loading::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: currentColor; opacity: .6; animation: loadPulse .9s ease-in-out infinite alternate; }
+@keyframes loadPulse { from { opacity: .15; } }

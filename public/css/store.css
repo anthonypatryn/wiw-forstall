@@ -74,3 +74,8 @@
 .store-grid > * { min-width: 0; }
 .store-grid select, .create input, .create select { min-width: 0; max-width: 100%; }
 .create > label { min-width: 0; }
+
+/* Make an item: dice boxes (with their ▲ ▼) fit the card */
+.create .dp { gap: 3px; }
+body .create .dp .num-wrap { width: 50px; }
+.create .dp .dp-chip { width: 18px; }

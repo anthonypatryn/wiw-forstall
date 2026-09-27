@@ -13,8 +13,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Rye&family=Special+Elite&family=Reenie+Beanie&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=85">
-  <link rel="stylesheet" href="/css/store.css?v=16">
+  <link rel="stylesheet" href="/css/style.css?v=87">
+  <link rel="stylesheet" href="/css/store.css?v=17">
 </head>
 <body>
   <header class="masthead">
@@ -42,7 +42,7 @@
           </select>
         </div>
         <p class="muted count" id="count"></p>
-        <div class="items" id="items"></div>
+        <div class="items" id="items"><p class="loading" role="status">Loading…</p></div>
       </div>
 
       <aside class="side">
@@ -55,15 +55,15 @@
         <section class="card corner warden-only" id="queue-card" hidden>
           <div class="head-row"><h2 class="section-title">Warden’s Counter</h2><button class="btn small secondary" id="clear-history" type="button">Clear history</button></div>
           <p class="muted small-note"><button class="btn small" id="equip-all" type="button">Put everything on the sheets</button> Fills every item sitting in an inventory into its spot on the sheet (weapons, gear, Forstall, horse, mech, upgrades, ammo).</p>
-          <div id="queue"></div>
+          <div id="queue"><p class="loading" role="status">Loading…</p></div>
         </section>
         <section class="card corner">
           <h2 class="section-title">Requests</h2>
-          <div id="my-requests"></div>
+          <div id="my-requests"><p class="loading" role="status">Loading…</p></div>
         </section>
         <section class="card corner">
           <h2 class="section-title">Their Inventory</h2>
-          <div id="inventory"></div>
+          <div id="inventory"><p class="loading" role="status">Loading…</p></div>
         </section>
         <section class="card corner warden-only" id="create-card" hidden>
           <h2 class="section-title">Make an Item</h2>
@@ -73,6 +73,6 @@
     </div>
   </main>
 
-  <script type="module" src="/js/store.js?v=82"></script>
+  <script type="module" src="/js/store.js?v=84"></script>
 </body>
 </html>

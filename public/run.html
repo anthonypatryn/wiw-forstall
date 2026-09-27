@@ -13,10 +13,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Rye&family=Special+Elite&family=Reenie+Beanie&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=85">
-  <link rel="stylesheet" href="/css/rollcall.css?v=13">
-  <link rel="stylesheet" href="/css/desk.css?v=16">
-  <link rel="stylesheet" href="/css/run.css?v=29">
+  <link rel="stylesheet" href="/css/style.css?v=87">
+  <link rel="stylesheet" href="/css/rollcall.css?v=14">
+  <link rel="stylesheet" href="/css/desk.css?v=17">
+  <link rel="stylesheet" href="/css/run.css?v=30">
 </head>
 <body>
   <header class="masthead">
@@ -70,29 +70,29 @@
           <div class="stack-col">
             <section class="card corner" id="card-needs">
           <div class="head-row"><h2 class="section-title">Needs You</h2><span class="muted" id="conn"></span></div>
-          <div id="needs"></div>
+          <div id="needs"><p class="loading" role="status">Loading…</p></div>
         </section><section class="card corner" id="card-checks">
           <h2 class="section-title">Open Rolls</h2>
-          <div id="check-list"></div>
+          <div id="check-list"><p class="loading" role="status">Loading…</p></div>
         </section><section class="card corner" id="card-posse">
           <div class="head-row"><h2 class="section-title">The Posse</h2><a class="btn small secondary" href="/posse"><span data-gl="scroll"></span> Sheets</a></div>
-          <div id="posse"></div>
+          <div id="posse"><p class="loading" role="status">Loading…</p></div>
         </section>
           </div>
           <div class="stack-col">
             <section class="card corner" id="card-fight">
           <div class="head-row"><h2 class="section-title">The Fight</h2><a class="btn small secondary" href="/battle"><span data-gl="pin"></span> Battle Map</a></div>
-          <div id="fight"></div>
+          <div id="fight"><p class="loading" role="status">Loading…</p></div>
         </section><section class="card corner" id="card-enemies">
           <div class="head-row"><h2 class="section-title">Enemies</h2><a class="btn small secondary" href="/battle"><span data-gl="claws"></span> Add or loot</a></div>
-          <div id="enemies"></div>
+          <div id="enemies"><p class="loading" role="status">Loading…</p></div>
         </section>
           </div>
         </div>
       </section>
       <section class="band" id="grp-scene">
         <h2 class="band-h">Tonight’s Scene</h2>
-        <section class="card corner" id="card-scene"><div id="scene-run"></div></section>
+        <section class="card corner" id="card-scene"><div id="scene-run"><p class="loading" role="status">Loading…</p></div></section>
       </section>
       <section class="band" id="grp-start">
         <h2 class="band-h">Start Something</h2>
@@ -159,7 +159,7 @@
           <div class="stack-col">
             <section class="card corner" id="card-log">
           <div class="head-row"><h2 class="section-title">Recent at the Table</h2><button class="btn small secondary danger" id="clear-log" type="button">Clear log</button></div>
-          <div class="log glance-log" id="glance-log"></div>
+          <div class="log glance-log" id="glance-log"><p class="loading" role="status">Loading…</p></div>
         </section>
           </div>
         </div>
@@ -183,19 +183,19 @@
           <p class="muted sess-note">Saves everything — sheets, NPCs, factions, maps, store, notes and the Table Log — to one file on this device. <span id="backup-note"></span></p>
           <h3 class="sub-h">NIGHTLY BACKUPS</h3>
           <p class="muted sess-note">Taken automatically every night; the last 7 are kept here. Restoring one replaces everything with how it was then (a copy of right now is kept first, so a restore can be undone).</p>
-          <div id="snaps"></div>
+          <div id="snaps"><p class="loading" role="status">Loading…</p></div>
           <div class="btn-row"><button class="btn small secondary" id="snap-now" type="button">Back up now</button><label class="btn small secondary upload-btn">Restore from a file<input type="file" id="restore-file" accept="application/json,.json" hidden></label></div>
         </section><section class="card corner" id="card-problems">
           <div class="head-row"><h2 class="section-title">Problems</h2><button class="btn small secondary" id="problems-clear" type="button">Clear</button></div>
           <p class="muted sess-note">Errors from anyone’s screen, so you hear about bugs from the app itself. Mention them to whoever’s fixing things.</p>
-          <div id="problems"></div>
+          <div id="problems"><p class="loading" role="status">Loading…</p></div>
         </section>
           </div>
           <div class="stack-col">
             <section class="card corner" id="card-homebrew">
           <div class="head-row"><h2 class="section-title">Your Homebrew</h2><button class="btn small secondary" id="hb-refresh" type="button"><span data-gl="die"></span> Refresh</button></div>
           <p class="muted sess-note">Everything you’ve made up, in one place. Deleting can’t be undone.</p>
-          <div id="homebrew"></div>
+          <div id="homebrew"><p class="loading" role="status">Loading…</p></div>
         </section>
           </div>
         </div>
@@ -205,6 +205,6 @@
     </div>
   </main>
 
-  <script type="module" src="/js/run.js?v=68"></script>
+  <script type="module" src="/js/run.js?v=70"></script>
 </body>
 </html>
