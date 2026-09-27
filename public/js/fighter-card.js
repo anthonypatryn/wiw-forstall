@@ -72,7 +72,7 @@ export function enemyCardHTML(e, { data, meta }) {
   return `<article class="fighter${now ? ' now' : ''}${e.defeated ? ' down lootable' : ''}${frenzied ? ' frenzied' : ''}" data-fc-enemy="${e.id}">
     ${e.defeated ? `<div class="loot-flag">${gl('skull')} ${e.fled ? 'Fled' : 'Down'} — ${e.looted ? 'looted' : 'ready to loot'}</div>` : ''}
     <div class="f-head"><div><div class="f-name">${esc(e.name)} <button type="button" class="rename" data-rename title="Rename" aria-label="Rename ${esc(e.name)}">✎</button></div>
-      <div class="f-sub">${esc(e.size)}${p ? ` · p. ${p.page}${p.name !== e.name ? ` · ${esc(p.name.replace('Human - ', ''))}` : ''}` : ' · custom'}</div></div>
+      <div class="f-sub">${esc(e.size)}${p ? ` · ${p.book ? `${esc(p.book)} ` : ''}p. ${p.page}${p.name !== e.name ? ` · ${esc(p.name.replace('Human - ', ''))}` : ''}` : ' · custom'}</div></div>
       <div>${now ? '<span class="f-tag now">ITS TURN</span>' : ''}${frenzied ? '<span class="f-tag red">FRENZIED</span>' : ''}</div></div>
     ${e.defeated ? lootHTML(e, p, data) : ''}
     <div class="f-body">

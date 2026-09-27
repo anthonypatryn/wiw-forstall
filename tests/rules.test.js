@@ -1111,3 +1111,18 @@ test('a placed Forstall: anyone within Arm’s Reach can program its memory slot
   const seen = battleView(s, { warden: false, combat: { posse: [], enemies: [] } }).forstalls.find((f) => f.key === 'fs1').slots;
   assert.equal(seen[2], 'Chupacabra · (programmed)');
 });
+
+test('expansion monsters (East Portal pp. 88–95, Iron Road pp. 181–183) reach the Scanner, fights and loot', async () => {
+  const { MONSTERS } = await import('../lib/monsters.js');
+  const { PROFILES } = await import('../lib/profiles.js');
+  const { TROPHIES } = await import('../lib/trophies.js');
+  for (const [name, kz, book] of [['Antlion', '9-8-0337', 'East Portal'], ['Vasthorn Ram', '2-8-2071', 'East Portal'], ['Range Troll', '9-1-3659', 'Iron Road']]) {
+    const m = MONSTERS.find((x) => x.name === name);
+    assert.equal(m?.kz, kz);
+    assert.equal(m.book, book);
+    assert.ok(PROFILES.find((p) => p.name === name)?.attacks.length >= 2, `${name} has attacks`);
+    assert.ok(TROPHIES[name], `${name} has a trophy`);
+  }
+  assert.equal(new Set(MONSTERS.map((m) => m.kz)).size, MONSTERS.length, 'every Kurtz frequency is unique');
+  assert.deepEqual(MONSTERS.map((m) => m.name), [...MONSTERS.map((m) => m.name)].sort((a, b) => a.localeCompare(b)));
+});

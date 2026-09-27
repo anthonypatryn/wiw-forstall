@@ -100,7 +100,7 @@ function renderTarget() {
     <div>
       <div class="label">TARGET LOCKED</div>
       <div class="name">${esc(a.name)}</div>
-      <div class="meta">${esc(a.size)}${m.page ? ` · Guidebook p. ${m.page}` : ' · Homebrew'} ${a.solved ? '<span class="badge green">DECODED</span>' : ''}
+      <div class="meta">${esc(a.size)}${m.page ? ` · ${esc(m.book || 'Guidebook')} p. ${m.page}` : ' · Homebrew'} ${a.solved ? '<span class="badge green">DECODED</span>' : ''}
         ${a.scanHalf ? '<span class="badge">SPINAL DEFLECTORS — HALF POOL</span>' : ''}</div>
       <div class="w-kz">${slot(0)}<span class="dash">-</span>${slot(1)}<span class="dash">-</span>${slot(2)}${slot(3)}${slot(4)}${slot(5)}</div>
       <div class="w-legend"><b class="lg-scan">■</b> given by Scan · <b class="lg-guess">■</b> found by guessing · <b>■</b> still hidden — click to give</div>

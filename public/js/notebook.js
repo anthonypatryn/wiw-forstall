@@ -15,7 +15,7 @@ export function renderNotebook(root, entries, { active, filter = '', onNote, war
     const lastGuesses = e.guesses.slice(-3);
     return `<details class="entry${e.name === active ? ' active-entry' : ''}" data-name="${esc(e.name)}"${open ? ' open' : ''}>
       <summary>
-        <span class="ename">${esc(e.name)}<small>${esc(e.size || '')}${e.page ? ` · p. ${e.page}` : ' · custom'}${e.solved ? '' : ` · ${e.known.length}/6 digits · ${e.guesses.length} guess${e.guesses.length === 1 ? '' : 'es'}`}</small></span>
+        <span class="ename">${esc(e.name)}<small>${esc(e.size || '')}${e.page ? ` · ${e.book ? `${esc(e.book)} ` : ''}p. ${e.page}` : ' · custom'}${e.solved ? '' : ` · ${e.known.length}/6 digits · ${e.guesses.length} guess${e.guesses.length === 1 ? '' : 'es'}`}</small></span>
         ${e.solved ? `<span class="kz">${esc(e.kz)}</span>` : readoutHTML(e.positional, 'small light')}
       </summary>
       <div class="body">

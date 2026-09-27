@@ -233,7 +233,7 @@ function renderTarget() {
     <div>
       <div class="label">TARGET IN LINE OF SIGHT</div>
       <div class="name">${esc(a.name)}</div>
-      <div class="meta">${esc(a.size)}${a.page ? ` · Guidebook p. ${a.page}` : ''}
+      <div class="meta">${esc(a.size)}${a.page ? ` · ${esc(a.book || 'Guidebook')} p. ${a.page}` : ''}
         ${a.solved ? ' <span class="badge green">DECODED</span>' : ''}
         ${data.jammed ? ' <span class="badge">' + gl('flash') + ' JAMMED</span>' : ''}
         ${data.settings.easyMode ? ' <span class="badge teal">WARDEN’S AID: POSITIONS SHOWN</span>' : ''}</div>
