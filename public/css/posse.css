@@ -519,3 +519,28 @@ body.warden-mode .sheet-bar .save-state { color: #9fb0b7; }
   input, select, textarea { border: 0 !important; background: none !important; -webkit-appearance: none; appearance: none; color: #000 !important; }
   a { color: #000 !important; text-decoration: none !important; }
 }
+
+/* At a glance (public/js/quickref.js): abilities & Aces, Statuses, weapons */
+.quickref { margin: 0 0 14px; scroll-margin-top: calc(var(--nav-h, 46px) + 120px); }
+.qr-h { margin: 0 0 8px; font: var(--fs-md) var(--display); letter-spacing: .12em; color: var(--rust); font-weight: 400; }
+.qr-h small { font: var(--fs-xs) var(--body, inherit); letter-spacing: 0; color: var(--ink-soft); margin-left: 6px; }
+.qr-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; align-items: start; }
+.qr-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 8px 10px; display: grid; gap: 8px; }
+.qr-card h3 { margin: 0; font: var(--fs-sm) var(--display); letter-spacing: .1em; }
+.qr-card h3 .gl, .qr-top .gl, .qr-line .gl { width: 1em; height: 1em; vertical-align: -2px; }
+.qr-card > p { margin: 0; font-size: var(--fs-sm); }
+.qr-ab, .qr-st, .qr-w { border-top: 1px dotted var(--line); padding-top: 6px; display: grid; gap: 4px; }
+.qr-top { display: flex; flex-wrap: wrap; gap: 2px 8px; align-items: baseline; }
+.qr-top small { color: var(--ink-soft); font-size: var(--fs-xs); }
+.qr-ab p, .qr-st p { margin: 0; font-size: var(--fs-xs); line-height: 1.4; }
+.qr-ab.locked, .qr-ab.out { opacity: .6; }
+.qr-ab.ace .qr-top b { color: var(--rust-dark); }
+.qr-use { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.qr-use select { min-width: 0; max-width: 100%; padding: 4px 6px; border: 1px solid var(--ink-faint); border-radius: var(--r-sm); background: var(--surface); font-size: var(--fs-sm); }
+.qr-ranges { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
+.qr-ranges span { display: grid; gap: 2px; font-size: var(--fs-sm); }
+.qr-ranges small { font-size: var(--fs-xs); color: var(--ink-soft); }
+.qr-ranges .none { color: var(--ink-faint); }
+.qr-line { font-size: var(--fs-xs); }
+@media (max-width: 900px) { .qr-grid { grid-template-columns: 1fr; } }
+@media print { .quickref { display: none !important; } }

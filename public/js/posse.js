@@ -5,6 +5,7 @@ import { NPC } from './npc-data.js';
 import { gl } from './glyphs.js';
 import { stashSummary } from './stash.js';
 import { runTour, SHEET_TOUR } from './tour.js';
+import { renderQuickRef, wireQuickRef } from './quickref.js';
 import { faceUrl, portraitUrl, pickPortrait, clearPortrait, showImage } from './portrait.js';
 
 const EP = '/api/combat';
@@ -244,7 +245,7 @@ function buildSheet(p) {
       <button class="btn small secondary" type="button" data-tableview hidden></button>
       <button class="btn small secondary" type="button" data-print title="Print this sheet (or save it as a PDF)">Print</button>
       <button class="btn small secondary danger" id="delete-pc" type="button">Delete</button>
-      <nav class="sheet-toc" aria-label="Jump to">${[['starter', 'Checklist'], ['fight', 'Fight'], ['skills', 'Skills'], ['health', 'Health'], ['statuses', 'Statuses'], ['weapons', 'Weapons'], ['abilities', 'Abilities'], ['prestige', 'Prestige'], ['talents', 'Talents'], ['achievements', 'Titles'], ['disposition', 'Story'], ['reputation', 'Reputation'], ['gear', 'Gear'], ['inventory', 'Inventory'], ['forstall', 'Forstall'], ['horse', 'Horse'], ['mech', 'Mech']].map(([id, label]) => `<a href="#${p.id}" data-jump="${id}">${label}</a>`).join('')}</nav>
+      <nav class="sheet-toc" aria-label="Jump to">${[['starter', 'Checklist'], ['fight', 'Fight'], ['quickref', 'At a glance'], ['skills', 'Skills'], ['health', 'Health'], ['statuses', 'Statuses'], ['weapons', 'Weapons'], ['abilities', 'Abilities'], ['prestige', 'Prestige'], ['talents', 'Talents'], ['achievements', 'Titles'], ['disposition', 'Story'], ['reputation', 'Reputation'], ['gear', 'Gear'], ['inventory', 'Inventory'], ['forstall', 'Forstall'], ['horse', 'Horse'], ['mech', 'Mech']].map(([id, label]) => `<a href="#${p.id}" data-jump="${id}">${label}</a>`).join('')}</nav>
     </div>
     <div data-dyn="levelup"></div>
     <div class="sheet-head">
@@ -256,6 +257,7 @@ function buildSheet(p) {
     </div>
 
     <section class="fight-panel" data-dyn="fight" id="sec-fight" hidden></section>
+    <section class="quickref" data-dyn="quickref" id="sec-quickref" hidden></section>
     <details class="starter" data-starter id="sec-starter"><summary><b>NEW CHARACTER CHECKLIST</b><small>Guidebook pp. 6–8</small><span class="st-prog" data-dyn="starter-prog"></span></summary>
       <div class="starter-in" data-dyn="starter"></div>
       <div class="st-finish"><button type="button" class="btn" data-mode="finish">Save character</button><span class="muted">Checks that nothing is missing, then locks the sheet for play.</span><ul class="st-errs" data-st-errs></ul></div></details>
@@ -474,6 +476,7 @@ function wireSheet(p) {
   });
 
   $('#delete-pc').addEventListener('click', () => deletePc(p.id));
+  wireQuickRef(view.querySelector('[data-dyn="quickref"]'), () => pcById(p.id), act, () => !!data.combat?.active);
   view.querySelector('[data-print]')?.addEventListener('click', () => window.print());
   view.querySelector('[data-me-bar]').addEventListener('click', () => setMe(myId() === p.id ? null : p.id));
   on('click', async (e) => {
@@ -788,6 +791,7 @@ function applyMode(view, p) {
   view.querySelector('[data-starter]').hidden = !creating;
   view.querySelector('[data-jump="starter"]').hidden = !creating;
   view.querySelector('[data-jump="fight"]').hidden = view.querySelector('[data-dyn="fight"]').hidden;
+  view.querySelector('[data-jump="quickref"]').hidden = view.querySelector('[data-dyn="quickref"]').hidden;
   view.querySelectorAll('[data-mode="finish"]').forEach((b) => { b.hidden = !creating; });
   view.querySelector('.sheet-bar [data-mode="edit"]').hidden = !locked;
   view.querySelector('.sheet-bar [data-mode="view"]').hidden = creating || locked;
@@ -944,6 +948,7 @@ function hydrate(p) {
   renderUpgrades(view, p);
   renderRides(view, p);
   renderFight(view, p);
+  renderQuickRef(view.querySelector('[data-dyn="quickref"]'), p, { meta, combat: data.combat || {}, posse: data.posse || [], enemies: data.enemies || [] });
   applyMode(view, p);
   view.querySelectorAll('[data-toggle]').forEach((el) => { el.checked = p[el.dataset.toggle].includes(el.value); });
   view.querySelectorAll('[data-ab]').forEach((el) => el.classList.toggle('locked', !p.abilities.includes(el.dataset.ab)));
