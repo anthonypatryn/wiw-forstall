@@ -18,11 +18,12 @@ import scan from '../lib/routes/scan.js';
 import scenes from '../lib/routes/scenes.js';
 import session from '../lib/routes/session.js';
 import shop from '../lib/routes/shop.js';
+import sound from '../lib/routes/sound.js';
 import wanted from '../lib/routes/wanted.js';
 import whispers from '../lib/routes/whispers.js';
 import undo from '../lib/routes/undo.js';
 
-const ROUTES = { backup, battle, carnival, combat, handouts, image, journal, lockpick, map, npcs, papers, problems, pulse, saloon, scan, scenes, session, shop, undo, wanted, whispers };
+const ROUTES = { backup, battle, carnival, combat, handouts, image, journal, lockpick, map, npcs, papers, problems, pulse, saloon, scan, scenes, session, shop, sound, undo, wanted, whispers };
 
 import { transaction, counter, bump } from '../lib/store.js';
 import { pinOk } from '../lib/http.js';
@@ -41,7 +42,7 @@ async function guardPin(req) {
 
 // What a change was, for the Warden's Undo list ("Sheet: wallet", "Store: decide"…). Only successful POSTs that
 // change something count; noise (pings, error reports, backups, photos, the undo itself) never does.
-const NO_UNDO_AREAS = new Set(['pulse', 'problems', 'backup', 'image', 'undo']);
+const NO_UNDO_AREAS = new Set(['pulse', 'problems', 'backup', 'image', 'undo', 'sound']);
 const NO_UNDO_ACTIONS = new Set(['ping', 'report', 'auth', 'seen', 'here']);
 const AREA_NAME = { combat: '', battle: 'Battle Map', shop: 'Store', journal: 'Journal', npcs: 'NPCs', wanted: 'Wanted', handouts: 'Handouts', whispers: 'Whisper', lockpick: 'Lock pick', saloon: 'Saloon', scan: 'Scanner', scenes: 'Prep', session: 'Session notes', map: 'Map', papers: 'Newspaper' };
 const words = (s) => String(s || '').replace(/([a-z])([A-Z])/g, '$1 $2').replace(/[._-]+/g, ' ').trim().toLowerCase();

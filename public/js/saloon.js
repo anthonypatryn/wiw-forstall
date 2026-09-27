@@ -1,7 +1,7 @@
 // The saloon card table: the Warden's Saloon card (Run the Game), the players' invite, and the full-screen poker table.
 import { esc, api, toast, startPolling, savedPin, store, rollPopup, ask, onChange, me, dollars as $$ } from './common.js';
 import { gl } from './glyphs.js';
-import { play } from './sound.js';
+import { play, ambience } from './sound.js';
 import { attention } from './attention.js';
 
 const EP = '/api/saloon';
@@ -609,6 +609,7 @@ const turnOf = (t) => t?.hand?.turn || t?.bj?.turn || t?.liars?.turn || glassFul
 function openTable(warden = false) {
   saloonStyles();
   asWarden = warden;
+  ambience('game', 'saloon'); // the rowdy saloon plays under the table
   if (!scene) {
     scene = document.createElement('div');
     scene.className = 'modal-back saloon-back';
@@ -621,8 +622,8 @@ function openTable(warden = false) {
   }
   render();
 }
-function hideTable() { scene?.remove(); scene = null; document.body.classList.remove('nav-open'); store.set('wiw.saloonHidden', view?.table?.id || ''); showChip(); }
-function closeTable() { scene?.remove(); scene = null; document.body.classList.remove('nav-open'); showChip(); }
+function hideTable() { ambience('game', null); scene?.remove(); scene = null; document.body.classList.remove('nav-open'); store.set('wiw.saloonHidden', view?.table?.id || ''); showChip(); }
+function closeTable() { ambience('game', null); scene?.remove(); scene = null; document.body.classList.remove('nav-open'); showChip(); }
 // a small "Back to the table" chip while you're seated but stepped away
 let chip = null;
 function showChip() {

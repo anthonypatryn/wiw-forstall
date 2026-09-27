@@ -3,7 +3,7 @@
 // The Warden: a card on Run the Game (Start Something) to open or pack up the carnival and see who's won what.
 import { esc, api, toast, store, me, savedPin, startPolling, ask, onChange, dollars as $$ } from './common.js';
 import { gl } from './glyphs.js';
-import { play, preload } from './sound.js';
+import { play, preload, ambience } from './sound.js';
 import { runShow, hasShow } from './carnival-shows.js';
 
 const EP = '/api/carnival';
@@ -59,6 +59,7 @@ async function act(body) {
 function render() { if (scene) scene.querySelector('.cv-scene').innerHTML = sceneHTML(); }
 export function openCarnival() {
   carnivalStyles();
+  ambience('game', 'carnival'); // the midway crowd plays under the booths
   preload('successBig', 'failClunk', 'failComic', 'bowGame', 'arrowHit', 'striker', 'strikerMiss', 'oink', 'squeal');
   if (scene) return;
   scene = document.createElement('div');
@@ -68,7 +69,7 @@ export function openCarnival() {
   render();
   scene.addEventListener('click', async (e) => {
     if (e.target.closest('.cv-showbox')) return; // the booth's show has its own button
-    if (e.target.closest('[data-cv-x]') || e.target === scene) { scene.remove(); scene = null; showChip(); return; }
+    if (e.target.closest('[data-cv-x]') || e.target === scene) { ambience('game', null); scene.remove(); scene = null; showChip(); return; }
     const b = e.target.closest('button'); if (!b || busy) return;
     const d = b.dataset;
     let body = null;
@@ -106,7 +107,7 @@ export function watchCarnival() {
   if (savedPin() || !me()) return;
   startPolling(`player&pc=${encodeURIComponent(me())}`, async (d) => {
     view = d;
-    if (!d.open) { if (scene) { scene.remove(); scene = null; toast('The carnival has packed up its tents.'); } showChip(); return; }
+    if (!d.open) { if (scene) { ambience('game', null); scene.remove(); scene = null; toast('The carnival has packed up its tents.'); } showChip(); return; }
     if (store.get('wiw.carnivalAsked', 0) !== d.at && !scene && !document.querySelector('.ask-back')) {
       store.set('wiw.carnivalAsked', d.at);
       play('chime');

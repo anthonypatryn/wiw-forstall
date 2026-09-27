@@ -5,7 +5,7 @@
 // Muted/volume are per device: localStorage wiw.muted / wiw.volume.
 
 const NAMES = ['dice', 'card', 'shuffle', 'chips', 'drink', 'gun', 'shotgun', 'bow', 'swing', 'explosion', 'forstall', 'zap', 'lockClick', 'lockSnap', 'lockOpen', 'success', 'fail', 'chime',
-  'successBig', 'failClunk', 'failComic', 'boomSmall', 'boomMedium', 'boomLarge', 'boomHuge', 'bowGame', 'arrowHit', 'striker', 'strikerMiss', 'oink', 'squeal', 'steps'];
+  'successBig', 'failClunk', 'failComic', 'boomSmall', 'boomMedium', 'boomLarge', 'boomHuge', 'bowGame', 'arrowHit', 'striker', 'strikerMiss', 'oink', 'squeal', 'steps', 'trainArrive', 'trainPass'];
 // play('explosion', size): how big a bang (small = a firecracker, huge = the ground caves in)
 const BOOM = { small: 'boomSmall', medium: 'boomMedium', large: 'boomLarge', huge: 'boomHuge' };
 // name → clips of [file, start s, length s, gain (1 if left out)] — the user's picks, trimmed to where the sound is
@@ -35,6 +35,8 @@ const CLIPS = {
   oink: [['pig', 0, 0.5], ['pig', 1.3, 0.45], ['pig', 3.7, 0.55]],
   squeal: [['pig', 2.7, 0.9], ['pig', 4.5, 0.68]],
   steps: [['footsteps', 0.05, 0.95, 2.5], ['footsteps', 1.25, 0.9, 2.5]],
+  trainArrive: [['train-arrive', 0, 16.6]],            // a steam train pulling into the station
+  trainPass: [['train-pass', 0, 24]],                  // a train rolling past, whistle and all
 };
 const buffers = {}; // file → AudioBuffer (or a Promise while loading)
 // The everyday sounds load on the first tap; the rest (explosions, carnival, footsteps…) load the first time they're
@@ -67,7 +69,7 @@ let ctx = null, master = null, files = null;
 const store = { get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} } };
 export const isMuted = () => store.get('wiw.muted', false);
 export const volume = () => Math.max(0, Math.min(1, Number(store.get('wiw.volume', 0.7))));
-export function setMuted(v) { store.set('wiw.muted', !!v); document.dispatchEvent(new CustomEvent('wiw:sound')); }
+export function setMuted(v) { store.set('wiw.muted', !!v); if (!v) audio(); applyLoops(); document.dispatchEvent(new CustomEvent('wiw:sound')); }
 export function setVolume(v) { store.set('wiw.volume', Math.max(0, Math.min(1, Number(v)))); if (master) master.gain.value = volume(); document.dispatchEvent(new CustomEvent('wiw:sound')); }
 
 function audio() {
@@ -81,8 +83,63 @@ function audio() {
   if (ctx.state === 'suspended') ctx.resume().catch(() => {});
   return ctx;
 }
-// browsers only allow sound after a tap/click — wake the engine on the first one
-['pointerdown', 'keydown'].forEach((ev) => document.addEventListener(ev, () => { if (!isMuted()) audio(); }, { once: true, capture: true }));
+// browsers only allow sound after a tap/click — wake the engine on the first one (and start any background loop waiting)
+['pointerdown', 'keydown'].forEach((ev) => document.addEventListener(ev, () => { if (!isMuted()) { audio(); applyLoops(); } }, { once: true, capture: true }));
+
+// ---------- background loops (ambience) ----------
+// name → [file, loop start s, loop end s, gain]. Each pass crossfades into the next so the seam never clicks.
+export const LOOPS = {
+  saloon: ['amb-saloon', 0.3, 47.5, 0.5, 'Saloon crowd & piano'],
+  piano: ['amb-piano', 0, 20.8, 0.6, 'Honky-tonk piano'],
+  carnival: ['amb-carnival', 0.3, 47.5, 5, 'Carnival crowd'],
+  river: ['amb-river', 0.2, 31.5, 6, 'River'],
+  train: ['amb-train', 1.5, 29.3, 0.35, 'Steam train running'],
+};
+const AMB_LEVEL = 0.45; // loops sit under the effects
+export const ambienceOn = () => store.get('wiw.ambience', true);
+export function setAmbienceOn(v) { store.set('wiw.ambience', !!v); applyLoops(); }
+const desired = {}, running = {}; // who asked for a loop (a game scene, the Warden's soundboard) → loop name
+// ambience('game', 'saloon') starts it; ambience('game', null) fades it out
+export function ambience(key, name) { desired[key] = LOOPS[name] ? name : null; applyLoops(); }
+function applyLoops() {
+  const ok = ctx && ctx.state !== 'closed' && !isMuted() && ambienceOn();
+  for (const key of new Set([...Object.keys(desired), ...Object.keys(running)])) {
+    const want = ok ? desired[key] : null;
+    if (!want) stopLoop(key);
+    else if (running[key]?.name !== want) { stopLoop(key); startLoop(key, want); }
+  }
+}
+function startLoop(key, name) {
+  const [file, a, b, gain] = LOOPS[name];
+  const XF = 2, seg = b - a;
+  const bus = ctx.createGain(), t0 = ctx.currentTime;
+  bus.gain.setValueAtTime(0.0001, t0); bus.gain.linearRampToValueAtTime(gain * AMB_LEVEL, t0 + 2.5); bus.connect(master);
+  const rec = running[key] = { name, bus, next: 0, timer: null };
+  const schedule = () => {
+    const buf = buffers[file];
+    if (!(buf instanceof AudioBuffer)) { loadFile(file); return; }
+    while (rec.next < ctx.currentTime + 4) {
+      const t = Math.max(rec.next, ctx.currentTime + 0.05);
+      const src = ctx.createBufferSource(), g = ctx.createGain();
+      src.buffer = buf; src.connect(g); g.connect(bus);
+      g.gain.setValueAtTime(0.0001, t); g.gain.linearRampToValueAtTime(1, t + XF);
+      g.gain.setValueAtTime(1, t + seg - XF); g.gain.linearRampToValueAtTime(0.0001, t + seg);
+      src.start(t, a, seg);
+      rec.next = t + seg - XF;
+    }
+  };
+  rec.timer = setInterval(schedule, 1000);
+  schedule();
+}
+function stopLoop(key) {
+  const r = running[key];
+  if (!r) return;
+  clearInterval(r.timer);
+  const t = ctx.currentTime;
+  r.bus.gain.cancelScheduledValues(t); r.bus.gain.setValueAtTime(r.bus.gain.value, t); r.bus.gain.linearRampToValueAtTime(0.0001, t + 1.5);
+  setTimeout(() => { try { r.bus.disconnect(); } catch {} }, 1800);
+  delete running[key];
+}
 fetch('/sfx/manifest.json').then((r) => (r.ok ? r.json() : [])).then((l) => { files = new Set(Array.isArray(l) ? l : []); }).catch(() => { files = new Set(); });
 
 // ---------- building blocks ----------
@@ -147,6 +204,6 @@ export function play(name, arg) {
 }
 // recorded sounds with no synth of their own use a close one until the file loads
 const FALLBACK = { shuffle: 'card', chips: 'lockClick', shotgun: 'gun', drink: 'swing', successBig: 'success', failClunk: 'lockClick', failComic: 'fail',
-  boomSmall: 'explosion', boomMedium: 'explosion', boomLarge: 'explosion', boomHuge: 'explosion', bowGame: 'bow', arrowHit: 'lockClick', striker: 'chime', strikerMiss: 'lockSnap', oink: 'zap', squeal: 'zap', steps: 'swing' };
+  boomSmall: 'explosion', boomMedium: 'explosion', boomLarge: 'explosion', boomHuge: 'explosion', bowGame: 'bow', arrowHit: 'lockClick', striker: 'chime', strikerMiss: 'lockSnap', oink: 'zap', squeal: 'zap', steps: 'swing', trainArrive: 'forstall', trainPass: 'forstall' };
 // which attack sound fits a weapon
 export const weaponSound = (w) => (/shotgun|scattergun/i.test(`${w?.type} ${w?.model}`) ? 'shotgun' : /bow/i.test(`${w?.type} ${w?.model}`) ? 'bow' : /melee|knife|axe|sword|club|fist|hatchet|machete/i.test(`${w?.type} ${w?.model}`) ? 'swing' : 'gun');

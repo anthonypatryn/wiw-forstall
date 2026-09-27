@@ -1,7 +1,7 @@
 import { ICONS } from './icons.js';
 import { gl } from './glyphs.js';
 import './controls.js';
-import { play, isMuted, setMuted, volume, setVolume } from './sound.js';
+import { play, isMuted, setMuted, volume, setVolume, ambienceOn, setAmbienceOn } from './sound.js';
 
 // ---------- this device's settings (applied before anything draws) ----------
 const PREFS_KEY = 'wiw.prefs';
@@ -44,7 +44,7 @@ const DEPS = {
   '/api/scan': ['state', 'battle', 'combat'], '/api/combat': ['combat', 'battle', 'shop', 'whispers'], '/api/battle': ['battle', 'combat'],
   '/api/handouts': ['handouts', 'combat'], '/api/journal': ['journal', 'map', 'npcs', 'wanted'], '/api/lockpick': ['locks', 'combat', 'shop'],
   '/api/map': ['map', 'combat'], '/api/npcs': ['npcs'], '/api/papers': ['papers', 'combat', 'map', 'session', 'wanted'],
-  '/api/saloon': ['saloon', 'combat'], '/api/carnival': ['carnival', 'combat'], '/api/scenes': ['scenes'], '/api/session': ['session', 'combat'], '/api/shop': ['shop', 'combat'],
+  '/api/saloon': ['saloon', 'combat'], '/api/carnival': ['carnival', 'combat'], '/api/sound': ['sound'], '/api/scenes': ['scenes'], '/api/session': ['session', 'combat'], '/api/shop': ['shop', 'combat'],
   '/api/wanted': ['wanted', 'combat', 'journal', 'map', 'npcs'], '/api/whispers': ['whispers', 'combat'],
 };
 const PULSE_MS = 2500, PULSE_HIDDEN_MS = 15000, PULSE_RETRY_MS = 5000;
@@ -711,6 +711,7 @@ export function openSettings() {
   back.innerHTML = `<div class="modal ask settings-modal" role="dialog" aria-modal="true" aria-label="Settings">
     <div class="ho-kicker">SETTINGS <small>on this device only</small></div>
     <div class="field-step"><span>SOUND</span><div class="chip-row"><button type="button" class="chip-btn${isMuted() ? '' : ' on'}" data-sound="on">On</button><button type="button" class="chip-btn${isMuted() ? ' on' : ''}" data-sound="off">Off</button></div>
+    <div class="field-step"><span>BACKGROUND SOUNDS <small>the saloon, the carnival, the Warden’s trains and rivers</small></span><div class="chip-row"><button type="button" class="chip-btn${ambienceOn() ? ' on' : ''}" data-amb="on">On</button><button type="button" class="chip-btn${ambienceOn() ? '' : ' on'}" data-amb="off">Off</button></div></div>
       <label class="set-vol">Volume <input type="range" min="0" max="1" step="0.05" value="${volume()}" data-vol aria-label="Volume"></label></div>
     <div class="field-step"><span>TEXT SIZE</span><div class="chip-row">${chips('text', [['normal', 'Normal'], ['large', 'Large'], ['larger', 'Larger']])}</div></div>
     <div class="field-step"><span>MOTION</span><div class="chip-row">${chips('motion', [['', 'Normal'], ['less', 'Less motion']])}</div><small class="muted">Less motion turns off dice tumbling, pulsing rings and slides.</small></div>
@@ -721,6 +722,8 @@ export function openSettings() {
     if (e.target === back || e.target.closest('[data-x]')) { back.remove(); return; }
     const b = e.target.closest('[data-pref]');
     if (b) { const v = b.dataset.v === 'true' ? true : b.dataset.v === 'false' ? false : b.dataset.v; setPref(b.dataset.pref, v); b.parentElement.querySelectorAll('.chip-btn').forEach((x) => x.classList.toggle('on', x === b)); return; }
+    const amb = e.target.closest('[data-amb]');
+    if (amb) { setAmbienceOn(amb.dataset.amb === 'on'); amb.parentElement.querySelectorAll('.chip-btn').forEach((x) => x.classList.toggle('on', x === amb)); }
     const snd = e.target.closest('[data-sound]');
     if (snd) { setMuted(snd.dataset.sound === 'off'); snd.parentElement.querySelectorAll('.chip-btn').forEach((x) => x.classList.toggle('on', x === snd)); if (snd.dataset.sound === 'on') play('chime'); mountNav(); }
   });

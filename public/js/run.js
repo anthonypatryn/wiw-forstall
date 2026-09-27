@@ -15,6 +15,7 @@ import { mountDuelStart } from './duel-start.js';
 import { mountBookTables } from './tables-desk.js';
 import { mountDowntime } from './downtime.js';
 import { mountCarnivalDesk } from './carnival.js';
+import { mountSoundboard } from './soundboard.js';
 
 mountTableLog();
 mountNav('/run');
@@ -229,7 +230,7 @@ function open() {
   $('#gate').hidden = true; $('#desk').hidden = false;
   tocTop(); setTimeout(tocTop, 800);
   mountDesk({ getCombat: () => combat, combatAct: (body) => act(body) });
-  if (!saloonDesk) { saloonStyles(); saloonDesk = mountSaloonDesk($('#saloon'), () => combat); mountDuelStart($('#duel-start'), () => combat); mountBookTables($('#book-tables')); mountCarnivalDesk($('#carnival'), () => combat); }
+  if (!saloonDesk) { saloonStyles(); saloonDesk = mountSaloonDesk($('#saloon'), () => combat); mountDuelStart($('#duel-start'), () => combat); mountBookTables($('#book-tables')); mountCarnivalDesk($('#carnival'), () => combat); mountSoundboard($('#soundboard')); }
   if (!sceneRun) sceneRun = mountSceneRun($('#scene-run'), () => combat, () => { poller?.now?.(); refreshNeeds(); });
   poller?.stop();
   poller = startPolling('warden', (d) => { combat = d; render(); refreshNeeds(); }, (ok) => { $('#conn').textContent = ok ? '● live' : 'reconnecting…'; }, '/api/combat');
