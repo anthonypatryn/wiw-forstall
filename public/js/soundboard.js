@@ -3,7 +3,7 @@
 // watchSoundcast() runs on every page (mountTableLog) and plays what the Warden sends.
 import { esc, api, toast, startPolling } from './common.js';
 import { gl } from './glyphs.js';
-import { play, ambience, LOOPS } from './sound.js';
+import { play, ambience, LOOPS, stopSounds, preload } from './sound.js';
 
 const EP = '/api/sound';
 export const BOARD = [
@@ -16,7 +16,7 @@ export const BOARD = [
   ['Travel', [['horseWalk', 'Horse walking'], ['trainArrive', 'Train pulls in'], ['trainPass', 'Train rolls past']]],
   ['Forstalls & locks', [['fsSweep', 'Sweep'], ['fsScan', 'Scan'], ['fsReadout', 'Scanner readout'], ['fsBurst', 'Crystal Burst'], ['forstall', 'Forstall hum'], ['zap', 'Zap'], ['lockClick', 'Lock click'], ['lockSnap', 'Pick snaps'], ['lockOpen', 'Lock opens']]],
 ];
-const fire = (key) => { const [name, arg] = key.split(':'); play(name, arg); };
+const fire = (key) => { const [name, arg] = key.split(':'); if (name === 'stop') stopSounds(); else play(name, arg); };
 
 // ---------- every screen: play the Warden's cues, and the table's background loop ----------
 const seen = new Set();
@@ -40,29 +40,53 @@ export function watchSoundcast() {
 
 // ---------- the Warden's card ----------
 export function mountSoundboard(el) {
-  let everyone = true;
+  let everyone = true, preview = null; // preview = a loop only the Warden is hearing
+  preload(...BOARD.flatMap(([, list]) => list.map(([k]) => (k.startsWith('explosion:') ? { small: 'boomSmall', medium: 'boomMedium', large: 'boomLarge', huge: 'boomHuge' }[k.slice(10)] : k)))); // every button ready to go
   const draw = () => {
-    el.innerHTML = `<div class="sb-who chip-row" role="group" aria-label="Who hears it"><button type="button" class="chip-btn${everyone ? ' on' : ''}" data-sb-who="all">${gl('hat')} Everyone</button><button type="button" class="chip-btn${everyone ? '' : ' on'}" data-sb-who="me">Just me (preview)</button></div>
+    const anyLoop = current || preview;
+    el.innerHTML = `<div class="sb-top">
+        <div class="sb-mode" role="group" aria-label="Who hears it">
+          <button type="button" data-sb-who="all" aria-pressed="${everyone}">Everyone</button><button type="button" data-sb-who="me" aria-pressed="${!everyone}">Just me <small>(preview)</small></button>
+        </div>
+        <button type="button" class="sb-stop-all" data-sb-stopall title="Cut every sound effect and the background, for everyone">&#9632; Stop all sounds</button>
+      </div>
+      <p class="sb-hint">${everyone ? 'Buttons play on everyone’s screen (players hear it within a couple of seconds).' : 'Buttons play only on this screen, to try them out.'}</p>
       <h3 class="sub-h">BACKGROUND <small>keeps playing until you stop it</small></h3>
-      <div class="sb-grid">${Object.entries(LOOPS).map(([k, l]) => `<button type="button" class="sb-btn loop${current === k ? ' on' : ''}" data-sb-loop="${k}">${esc(l[4])}${current === k ? ' <small>playing</small>' : ''}</button>`).join('')}
-        <button type="button" class="sb-btn stop" data-sb-loop=""${current ? '' : ' disabled'}>Stop the background</button></div>
+      <div class="sb-grid">${Object.entries(LOOPS).map(([k, l]) => { const on = current === k || preview === k; return `<button type="button" class="sb-btn loop${on ? ' on' : ''}" data-sb-loop="${k}" aria-pressed="${on}">${esc(l[4])}${on ? `<small>${preview === k ? 'previewing' : 'playing for everyone'}</small>` : ''}</button>`; }).join('')}
+        ${anyLoop ? '<button type="button" class="sb-btn stop" data-sb-loop="">Stop the background</button>' : ''}</div>
       ${BOARD.map(([title, list]) => `<h3 class="sub-h">${esc(title.toUpperCase())}</h3><div class="sb-grid">${list.map(([k, label]) => `<button type="button" class="sb-btn" data-sb="${k}">${esc(label)}</button>`).join('')}</div>`).join('')}
-      <p class="muted sess-note">Players hear it within a couple of seconds (and only if their sound is on). Saloon and carnival background plays on its own while a game is open.</p>`;
+      <p class="muted sess-note">Players only hear it if their sound is on. The saloon and carnival play their own background while a game is open.</p>`;
   };
+  const send = (body) => api('POST', body, '', EP).catch((err) => { toast(err.message, true); return null; });
   el.addEventListener('click', async (e) => {
     const b = e.target.closest('button'); if (!b) return;
     const d = b.dataset;
     if (d.sbWho) { everyone = d.sbWho === 'all'; draw(); return; }
+    if (d.sbStopall !== undefined) { // cut everything: effects here and on every screen, and the background
+      stopSounds(); preview = null; ambience('preview', null);
+      const id = Math.random().toString(36).slice(2, 10); seen.add(id);
+      await send({ action: 'cue', name: 'stop', id });
+      if (current) { await send({ action: 'loop', name: '' }); current = null; ambience('warden', null); }
+      draw(); toast('All sounds stopped.'); return;
+    }
     if (d.sb) {
       fire(d.sb); // the Warden hears it right away
       if (!everyone) return;
       const [name, arg] = d.sb.split(':');
-      try { const r = await api('POST', { action: 'cue', name, arg: arg || '' }, '', EP); if (r.result?.id) seen.add(r.result.id); } catch (err) { toast(err.message, true); }
+      const id = Math.random().toString(36).slice(2, 10); seen.add(id);
+      await send({ action: 'cue', name, arg: arg || '', id });
       return;
     }
     if (d.sbLoop !== undefined) {
-      if (!everyone) { ambience('preview', d.sbLoop && d.sbLoop !== current ? d.sbLoop : null); toast(d.sbLoop ? `Previewing ${LOOPS[d.sbLoop][4]} (tap Stop to end it).` : 'Preview stopped.'); if (!d.sbLoop) ambience('preview', null); return; }
-      try { await api('POST', { action: 'loop', name: d.sbLoop }, '', EP); current = d.sbLoop || null; ambience('warden', current); draw(); } catch (err) { toast(err.message, true); }
+      const k = d.sbLoop;
+      if (!k) { // stop whatever background is on
+        if (preview) { preview = null; ambience('preview', null); }
+        if (current) { await send({ action: 'loop', name: '' }); current = null; ambience('warden', null); }
+        draw(); return;
+      }
+      if (!everyone) { preview = preview === k ? null : k; ambience('preview', preview); draw(); return; }
+      const next = current === k ? '' : k; // tapping the playing loop again stops it
+      if (await send({ action: 'loop', name: next })) { current = next || null; ambience('warden', current); draw(); }
     }
   });
   document.addEventListener('wiw:soundboard', draw);

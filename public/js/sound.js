@@ -72,14 +72,18 @@ function playClip(name) {
   const pick = list[Math.floor(Math.random() * list.length)];
   const [f, start, len] = pick;
   const buf = buffers[f];
-  if (!(buf instanceof AudioBuffer)) { loadName(name); return false; }
+  if (!(buf instanceof AudioBuffer)) { loadName(name); return 'loading'; }
   const src = ctx.createBufferSource(), g = ctx.createGain(), t = ctx.currentTime + 0.01;
   src.buffer = buf; src.connect(g); g.connect(master);
   const [, , , gain = 1] = pick;
   g.gain.setValueAtTime(gain, t); g.gain.setValueAtTime(gain, t + Math.max(0, len - 0.08)); g.gain.linearRampToValueAtTime(0.0001, t + len); // no click at the cut
   src.start(t, start, len);
+  live.add(src); src.onended = () => live.delete(src);
   return true;
 }
+// every recorded one-shot still playing (a 24 s train, a 12 s horse…) so the Soundboard can cut them off
+const live = new Set();
+export function stopSounds() { for (const s of live) { try { s.stop(); } catch {} } live.clear(); }
 let ctx = null, master = null, files = null;
 const store = { get(k, d) { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch { return d; } }, set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} } };
 export const isMuted = () => store.get('wiw.muted', false);
@@ -214,7 +218,13 @@ export function play(name, arg) {
   if (files?.has(name)) { const a = new Audio(`/sfx/${name}.mp3`); a.volume = volume(); a.play().catch(() => {}); return; }
   const c = audio();
   if (!c || c.state !== 'running') return;
-  if (playClip(name)) return;
+  const got = playClip(name);
+  if (got === true) return;
+  if (got === 'loading') { // a recording that hasn't downloaded yet: play it the moment it arrives (never a synth stand-in)
+    const t0 = Date.now();
+    Promise.all([...new Set(CLIPS[name].map((x) => x[0]))].map((f) => buffers[f])).then(() => { if (Date.now() - t0 < 4000) playClip(name); }).catch(() => {});
+    return;
+  }
   try { (SYNTH[name] || SYNTH[FALLBACK[name]])?.(c.currentTime + 0.01, arg); } catch { /* never let a sound break the page */ }
 }
 // recorded sounds with no synth of their own use a close one until the file loads
