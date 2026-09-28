@@ -1372,3 +1372,30 @@ test('Edison’s Rule 1 melts the batteries: no Sweeping (a Town Rest won’t fi
   assert.equal(pc.forstall.melted, false); assert.equal(pc.forstall.charges, 2); assert.ok(!state.meltedMap['fs-1']);
   assert.equal(ctx().list.every((f) => !f.melted), true);
 });
+
+test('Poker: a palmed card goes up your sleeve and counts at the showdown (best five of six)', async () => {
+  const { bestFive, freshSaloon, saloonAction, saloonView } = await import('../lib/saloon.js');
+  const C = (x) => ({ r: { A: 14, K: 13, Q: 12, J: 11, T: 10 }[x[0]] || Number(x[0]), s: x[1] });
+  // six cards: the palmed K♦ makes a pair of Kings out of junk
+  const b = bestFive(['K♣', '7♦', '4♠', '9♣', '2♥', 'K♦'].map(C));
+  assert.equal(b.cards.length, 5); assert.match(b.r.name, /Pair of Kings/);
+  const deck = () => ['2♠', 'A♠', '7♦', 'A♦', '9♣', '3♣', 'J♥', '5♥', '4♠', '8♠', 'K♣', 'K♦', 'Q♠', 'Q♥', '6♦', '6♣'].map(C).reverse();
+  const st = freshSaloon();
+  const posse = [{ id: 'a', name: 'Lila', wallet: '20.00', skills: {} }];
+  const ctx = { posse, rand: () => 0.99, deck, npcSkills: () => ({}), roll: (seat) => ({ hits: seat.kind === 'npc' ? 1 : 4 }), log: () => {}, caught: () => {} };
+  saloonAction(st, { action: 'open', npcs: [{ name: 'Doc', style: 'loose' }] }, { ...ctx, warden: true });
+  saloonAction(st, { action: 'join', pc: 'a' }, ctx);
+  saloonAction(st, { action: 'deal' }, { ...ctx, warden: true });
+  saloonAction(st, { action: 'move', pc: 'a', move: 'check' }, ctx);
+  const h = st.table.hand;
+  if (h.phase === 'draw' && h.turn === 'pc:a') {
+    const before = h.cards['pc:a'][2];
+    const p = saloonAction(st, { action: 'palm', pc: 'a', card: 2 }, ctx);
+    assert.equal(p.won, true);
+    assert.equal(h.sleeve['pc:a'], before);
+    assert.equal(h.cards['pc:a'].length, 5); assert.notEqual(h.cards['pc:a'][2], before);
+    const v = saloonView(st, { pc: 'a' }).table.hand;
+    assert.ok(v.sleeve); assert.equal(saloonView(st, { pc: '' }).table.hand.sleeve, null); // only Lila sees it
+    assert.throws(() => saloonAction(st, { action: 'palm', pc: 'a', card: 1 }, ctx), /Once a hand/);
+  }
+});

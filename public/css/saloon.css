@@ -215,3 +215,7 @@
 .sl-power-h .gl { width: 1.1em; height: 1.1em; align-self: center; }
 .sl-power-h small { font: italic var(--fs-xs) var(--body); letter-spacing: 0; text-transform: none; color: var(--on-dark); }
 .sl-power-targets { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }
+
+/* the palmed card, kept aside from the hand */
+.sl-sleeve { display: inline-grid; justify-items: center; gap: 2px; margin-left: 12px; padding-left: 12px; border-left: 2px dashed var(--felt-ink); opacity: .9; }
+.sl-sleeve small { font: var(--fs-xs) var(--display); letter-spacing: var(--track); color: var(--felt-ink); }

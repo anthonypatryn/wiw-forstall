@@ -34,7 +34,7 @@ const MOVES = {
   poker: [
     { key: 'tell', name: 'Read a tell', mine: 'intuition', theirs: 'charm', who: 'whoever you pick (posse or NPC)', when: 'Any time during a hand you’re still in. Once a hand.', win: 'You see one of their cards (it’s outlined in gold).', lose: 'Nothing, but you’ve used it for this hand.' },
     { key: 'bluff', name: 'Bluff', mine: 'charm', theirs: 'intuition', who: 'everyone still in the hand', when: 'On your turn to bet, before you bet. Once a hand.', win: 'Each NPC you beat plays scared for the rest of the hand: folds to bets and stops betting (two pair or better isn’t fooled). Each player you beat is told you look mighty confident; what they do about it is up to them.', lose: 'Nothing. They just don’t buy it.' },
-    { key: 'palm', name: 'Palm a card', mine: 'finesse', theirs: 'intuition', who: 'the sharpest eye at the table (posse or NPC)', when: 'On your draw, with exactly one card picked. Once a hand.', win: 'That card is swapped for the better of two cards off the deck.', lose: 'You’re caught cheating. Your hand is thrown in (you lose what you bet) and the whole table hears about it.' },
+    { key: 'palm', name: 'Palm a card', mine: 'finesse', theirs: 'intuition', who: 'the sharpest eye at the table (posse or NPC)', when: 'On your draw, with exactly one card picked. Once a hand.', win: 'That card goes up your sleeve (still yours) and a fresh card is dealt in its place. At the showdown you play the best five of all six.', lose: 'You’re caught cheating. Your hand is thrown in (you lose what you bet) and the whole table hears about it.' },
   ],
   drinking: [
     { key: 'spittoon', name: 'Spittoon trick', mine: 'finesse', theirs: 'intuition', who: 'the sharpest eye still upright (posse or NPC)', when: 'While your glass is full. Once a contest.', win: 'Your shot goes in the spittoon: you pass the round without rolling.', lose: 'You’re caught. You drink a double this round: two rolls, and both have to make it.' },
@@ -180,7 +180,7 @@ function render() {
     <div class="sl-felt">
       <div class="sl-seats">${[...npcs, ...pcs].map((s) => seatHTML(t, s)).join('')}</div>
       <div class="sl-pot">${h ? `<span class="chips" aria-hidden="true">${'<i></i>'.repeat(Math.min(12, Math.ceil((h.pot || 0) / Math.max(1, t.stakes.bet))))}</span><b>POT ${$$(h.pot)}</b>` : ''}${h?.result ? `<p class="sl-result">${esc(h.result)}</p>` : ''}</div>
-      ${mine ? `<div class="sl-mine"><div class="sl-hand${h.phase === 'draw' && h.turn === key ? ' picking' : ''}">${mine.map((c, i) => `<button type="button" class="sl-card${sel.has(i) ? ' out' : ''}" data-card="${i}">${card(c)}</button>`).join('')}</div><div class="sl-rank">${esc(h.myRank)}</div></div>`
+      ${mine ? `<div class="sl-mine"><div class="sl-hand${h.phase === 'draw' && h.turn === key ? ' picking' : ''}">${mine.map((c, i) => `<button type="button" class="sl-card${sel.has(i) ? ' out' : ''}" data-card="${i}">${card(c)}</button>`).join('')}${h.sleeve ? `<span class="sl-sleeve" title="Palmed: only you can see it"><small>UP YOUR SLEEVE</small>${card(h.sleeve)}</span>` : ''}</div><div class="sl-rank">${esc(h.myRank)}</div></div>`
         : ''}
     </div>
     <div class="sl-controls">${controls(t)}</div>
@@ -587,11 +587,11 @@ async function onClick(e) {
       await showRoll('Charm'); play(r.rattled.length ? 'success' : 'fail');
       toast(r.rattled.length ? `${r.rattled.join(' and ')} look${r.rattled.length === 1 ? 's' : ''} rattled.` : 'Nobody buys it.', !r.rattled.length);
     } else if (d.sl === 'palm') {
-      if (!await ask('Palm a card?\n\nFinesse against the sharpest eye at the table. Get it right and you swap that card for a better one. Get caught and your hand is thrown in, and the Warden hears about it.', { ok: 'Palm it', danger: false })) return;
+      if (!await ask('Palm a card?\n\nFinesse against the sharpest eye at the table. Get it right and that card goes up your sleeve while a fresh one is dealt in its place; at the showdown you play the best five of all six. Get caught and your hand is thrown in, and the Warden hears about it.', { ok: 'Palm it', danger: false })) return;
       const r = await act({ action: 'palm', card: [...sel][0] });
       sel = new Set();
       await showRoll('Finesse');
-      if (r.won) { play('success'); toast(`Slick. You palm in the ${r.card}.`); }
+      if (r.won) { play('success'); toast(`Slick. The ${r.kept} goes up your sleeve, and you’re dealt the ${r.card}.`); }
       else { play('fail'); toast(`${r.by} catches you cheating! Your hand is thrown in.`, true); }
     }
   } catch (err) { toast(err.message, true); } finally { busy = false; render(); }
