@@ -15,6 +15,7 @@ import { mountDuelStart } from './duel-start.js';
 import { mountBookTables } from './tables-desk.js';
 import { mountDowntime } from './downtime.js';
 import { mountSalvage } from './search.js';
+import { mountEncounters } from './encounters.js';
 import { mountCarnivalDesk } from './carnival.js';
 import { mountContestDesk, contestStyles } from './contests.js';
 import { mountSoundboard } from './soundboard.js';
@@ -28,6 +29,7 @@ const wwhisper = mountWardenWhisper($('#wwhisper'), () => combat);
 const locks = mountLockSend($('#lockpick'), () => combat);
 const downtime = mountDowntime($('#downtime'), () => combat);
 const salvage = mountSalvage($('#salvage'), () => combat);
+const encounters = mountEncounters($('#encounter'), () => combat);
 const caller = mountRollCaller($('#rollcall'), () => combat, () => { poller?.now?.(); refreshNeeds(); });
 
 async function act(body, msg) {
@@ -164,7 +166,7 @@ function renderPosse() {
 }
 function render() {
   if (!combat) return;
-  renderFight(); renderEnemies(); renderPosse(); caller.draw(); renderChecks(); renderRecent(); renderRewards(); handout.draw(); wwhisper.draw(); locks.draw(); downtime.draw(); salvage.draw();
+  renderFight(); renderEnemies(); renderPosse(); caller.draw(); renderChecks(); renderRecent(); renderRewards(); handout.draw(); wwhisper.draw(); locks.draw(); downtime.draw(); salvage.draw(); encounters.draw();
 }
 
 // ---------- Rewards: award the posse, Jackpot, Town Rest (moved here from the Posse page) ----------

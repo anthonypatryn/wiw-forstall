@@ -214,3 +214,7 @@ body.warden-mode .run-nav .btn.secondary.rn-end:hover { background: rgba(95,179,
 .sb-btn small { display: block; margin-top: 2px; font-size: var(--fs-xs); opacity: .9; }
 .sb-btn.stop { background: transparent; border: 1.5px dashed var(--danger); color: var(--danger); box-shadow: none; }
 .sub-h small { font-family: var(--body); text-transform: none; letter-spacing: 0; color: var(--ink-faint); font-size: var(--fs-xs); }
+
+/* Encounter builder: a scrolling list of picks */
+.en-list { max-height: 420px; overflow-y: auto; margin: 4px 0 10px; border-top: 1px solid var(--line-soft); }
+.en-list .item-who small { display: block; }
