@@ -1335,3 +1335,16 @@ test('contests: horse race legs, breed/Bond dice, rental, pot and side bets; tri
   const w = posse[0].wallet; contestAction(c, { action: 'close' }, ctx);
   assert.equal(Number(posse[0].wallet), Number(w) + 2);
 });
+
+test('swapping the gun in a weapon slot drops the old gun’s upgrades', () => {
+  const state = freshCombat();
+  const pc = publicAction(state, { action: 'addPc', trade: 'Gunslinger', name: 'Bo' }, { warden: true });
+  pc.scrap = '20';
+  const w0 = pc.weapons[0].itemId;
+  publicAction(state, { action: 'pc', id: pc.id, op: 'installUpgrade', target: 'weapon', index: 0, item: 'ranged-weapon-upgrades-ranged-weapon-accuracy-level-1', pay: 'scrap' }, { warden: true });
+  assert.ok(pc.weapons[0].upgrades.some(Boolean));
+  publicAction(state, { action: 'pc', id: pc.id, op: 'pick', kind: 'weapon', i: 0, item: item(w0) }, { warden: true }); // same gun again: kept
+  assert.ok(pc.weapons[0].upgrades.some(Boolean));
+  publicAction(state, { action: 'pc', id: pc.id, op: 'pick', kind: 'weapon', i: 0, item: item('shotguns-brig-jones-co-model-610') }, { warden: true });
+  assert.deepEqual(pc.weapons[0].upgrades, ['', '', '', '']);
+});

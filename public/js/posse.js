@@ -53,6 +53,8 @@ let kzOptions = [];
 let factions = [];          // known factions for the Reputation dropdowns
 
 let saving = 0;
+// skip a redraw only while someone is typing or picking in it (a focused button, e.g. the × after a confirm, doesn't count)
+const typingIn = (el) => el.contains(document.activeElement) && document.activeElement.matches('input, select, textarea');
 function saveState(text, err) {
   const el = document.querySelector('[data-save-state]');
   if (el) { el.textContent = text; el.classList.toggle('err', !!err); el.classList.toggle('busy', text.startsWith('Saving')); }
@@ -617,7 +619,7 @@ const SPEND = [
 ];
 function renderSpend(view, p) {
   const box = view.querySelector('[data-dyn="spend"]');
-  if (!box || box.contains(document.activeElement)) return;
+  if (!box || typingIn(box)) return;
   const t = meta.trades[p.trade], have = p.prestige.unclaimed || 0, pr = p.prestige;
   const skillSel = (k, needBlack) => `<select data-sp="${k}" aria-label="Skill">${meta.skills.map((sk) => {
     const pool = String(p.skills[sk.toLowerCase()] || '').toUpperCase();
@@ -674,7 +676,7 @@ function upgFits(it, target, wSub) {
 }
 function renderUpgrades(view, p) {
   view.querySelectorAll('[data-upg-box]').forEach((box) => {
-    if (box.contains(document.activeElement)) return;
+    if (typingIn(box)) return;
     const target = box.dataset.upgBox, i = Number(box.dataset.i);
     const tgt = target === 'weapon' ? p.weapons[i] : p[target];
     const wSub = target === 'weapon' ? (itemById(tgt.itemId)?.sub || (/melee/i.test(tgt.type) ? 'Melee' : tgt.type)) : null;
@@ -747,7 +749,7 @@ function renderFight(view, p) {
   checksPrimed = true;
   const show = ((statuses.length && !c.active) || checks.length) && !p.dead;
   box.hidden = !show;
-  if (!show || box.contains(document.activeElement)) return;
+  if (!show || typingIn(box)) return;
   const skillDice = (sk) => { const m = String(p.skills[sk.toLowerCase()] || '').toUpperCase(); return [...m.matchAll(/(\d+)[BG]/g)].reduce((n, x) => n + Number(x[1]), 0); };
   const skillPool = (sk) => String(p.skills[sk.toLowerCase()] || '—').toUpperCase();
   box.innerHTML = `
@@ -773,7 +775,7 @@ const earnedTitles = (p) => [...meta.tiers.filter((t) => (p.prestige.total || 0)
 function renderAch(view, p) {
   const box = view.querySelector('[data-dyn="ach"]');
   view.querySelector('[data-dyn="title"]').textContent = p.title ? `“${p.title}”` : '';
-  if (!box || box.contains(document.activeElement)) return;
+  if (!box || typingIn(box)) return;
   const got = new Set(p.achievements || []), titles = earnedTitles(p);
   box.innerHTML = `<div class="ach-tiers">${meta.tiers.map((t) => { const ok = (p.prestige.total || 0) >= t.prestige;
       return `<span class="ach-tier${ok ? ' ok' : ''}" title="Reach ${t.prestige} total Prestige">${ok ? '✓ ' : ''}${t.name} <small>${t.prestige}</small></span>`; }).join('')}</div>
@@ -835,7 +837,7 @@ async function unlockSheet(p) {
 // Character creation checklist (Guidebook pp. 6–8), with one-tap fills.
 function renderStarter(view, p) {
   const box = view.querySelector('[data-dyn="starter"]');
-  if (box.contains(document.activeElement)) return;
+  if (typingIn(box)) return;
   const t = meta.trades[p.trade];
   const dice = Object.values(p.skills).reduce((n, v) => n + diceCount(v), 0);
   const skillsOk = dice === 12 && Object.values(p.skills).every((v) => diceCount(v) >= 1 && diceCount(v) <= 6);
