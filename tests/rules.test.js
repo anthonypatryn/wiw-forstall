@@ -1348,3 +1348,27 @@ test('swapping the gun in a weapon slot drops the old gun’s upgrades', () => {
   publicAction(state, { action: 'pc', id: pc.id, op: 'pick', kind: 'weapon', i: 0, item: item('shotguns-brig-jones-co-model-610') }, { warden: true });
   assert.deepEqual(pc.weapons[0].upgrades, ['', '', '', '']);
 });
+
+test('Edison’s Rule 1 melts the batteries: no Sweeping (a Town Rest won’t fix it) until the Warden fits a new battery', async () => {
+  const { townRest } = await import('../lib/combat.js');
+  const state = freshCombat();
+  const pc = publicAction(state, { action: 'addPc', trade: 'Hunter', name: 'Tess' }, { warden: true });
+  Object.assign(pc.forstall, forstallFields(item('models-backpack-forstall'))); pc.forstall.charges = 2;
+  const tokens = [{ kind: 'pc', ref: pc.id, col: 0, row: 0, id: 'p' }];
+  const battle = { tokens, forstalls: [{ id: 'fs-1', kind: 'backpack', name: 'Post Forstall', col: 3, row: 0, slots: [] }] };
+  const ctx = () => ({ list: fields(battle, state), tokens, cave: false });
+  publicAction(state, { action: 'forstall', op: 'sweep', key: 'fs-1' }, { warden: true, ctx: ctx() });
+  assert.throws(() => publicAction(state, { action: 'forstall', op: 'sweep', key: `pc:${pc.id}` }, { warden: false, ctx: ctx() }), /EDISON/);
+  publicAction(state, { action: 'forstall', op: 'sweep', key: `pc:${pc.id}`, force: true }, { warden: false, ctx: ctx() }); // go ahead anyway: Rule 1
+  assert.equal(pc.forstall.melted, true); assert.equal(pc.forstall.charges, 0); assert.equal(state.meltedMap['fs-1'], true);
+  assert.equal(pc.statuses.Electrocuted, 6);
+  assert.throws(() => publicAction(state, { action: 'forstall', op: 'sweep', key: `pc:${pc.id}` }, { warden: false, ctx: ctx() }), /battery melted/);
+  assert.throws(() => publicAction(state, { action: 'forstall', op: 'sweep', key: 'fs-1' }, { warden: true, ctx: ctx() }), /battery melted/);
+  townRest(state, pc, true);
+  assert.equal(pc.forstall.charges, 0); // still melted
+  assert.throws(() => publicAction(state, { action: 'forstall', op: 'battery', key: `pc:${pc.id}` }, { warden: false, ctx: ctx() }), /PIN/);
+  publicAction(state, { action: 'forstall', op: 'battery', key: `pc:${pc.id}` }, { warden: true, ctx: ctx() });
+  publicAction(state, { action: 'forstall', op: 'battery', key: 'fs-1' }, { warden: true, ctx: ctx() });
+  assert.equal(pc.forstall.melted, false); assert.equal(pc.forstall.charges, 2); assert.ok(!state.meltedMap['fs-1']);
+  assert.equal(ctx().list.every((f) => !f.melted), true);
+});

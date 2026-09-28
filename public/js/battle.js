@@ -1207,11 +1207,12 @@ function forstallCard(f) {
     <div class="fs-head"><span class="fs-ic">${gl('forstall')}</span><div><b>${esc(f.name)}</b><small>${esc(f.range)} Range${f.rangeIn < 999 ? ` (${f.rangeIn}″)` : ''} · Sweep ${esc(f.pool)}${data.cave ? ' −1 (cave)' : ''}${f.charges != null ? ` · ${f.charges} charge${f.charges === 1 ? '' : 's'} left` : ''}${f.ownerName ? ` · ${esc(f.ownerName)}` : ''}</small></div></div>
     ${opNow ? `<p class="fs-state">${gl('hat')} Worked by <b>${esc(opNow.name)}</b> this round.</p>` : !f.owner && !warden ? '<p class="muted fs-note">Anyone within Arm’s Reach (1″) can work this one.</p>' : ''}
     <p class="fs-state">${f.sweep ? `<b>Sweeping · ${f.sweep.hits} Hit${f.sweep.hits === 1 ? '' : 's'}.</b> Monsters in Range lose that much Grit when their turn starts or they come into Range (+1 for programmed frequencies, minus their Sweep Tolerance).` : 'Switched off.'}</p>
+    ${f.melted ? `<p class="fs-warn">${gl('flash')} <b>Battery melted</b> (Edison’s Rule 1). It can’t Sweep until the Warden fits a new battery. Scanning and Bursting still work.${warden ? ` <button type="button" class="btn small secondary" data-fs-battery="${esc(f.key)}">New battery</button>` : ''}</p>` : ''}
     ${f.jammed ? `<p class="fs-warn">${gl('flash')} Scrambled by a Natural EMP — no Scan or Burst until the monster’s next turn.</p>` : ''}
     ${f.pulse ? `<p class="fs-state">${gl('heart')} <b>Heartbeat Sensor:</b> ${f.pulse.count ? `${f.pulse.count} monster${f.pulse.count === 1 ? '' : 's'} within ${f.rangeIn + 6}″ — the nearest is ${f.pulse.nearest}″ away.` : `quiet — nothing within ${f.rangeIn + 6}″.`}</p>` : ''}
     ${clashWith.length ? `<p class="fs-warn">${gl('flash')} Edison’s Rule 1: its waves cross ${esc(clashWith.join(' and '))}’s.</p>` : ''}
     ${scanHTML(f)}
-    ${may ? `<div class="fs-btns"><button type="button" class="btn small" data-fs-sweep="${esc(f.key)}"${f.owner && !f.charges ? ' disabled' : ''}>${gl('forstall')} ${f.sweep ? 'Readjust' : 'Sweep'} · ${cost}</button>
+    ${may ? `<div class="fs-btns"><button type="button" class="btn small" data-fs-sweep="${esc(f.key)}"${(f.owner && !f.charges) || f.melted ? ' disabled' : ''}>${gl('forstall')} ${f.sweep ? 'Readjust' : 'Sweep'} · ${cost}</button>
         ${f.sweep ? `<button type="button" class="btn small secondary" data-fs-off="${esc(f.key)}">Switch off</button>` : ''}</div>
       ${f.efficiency != null ? `<label class="check fs-eff"><input type="checkbox" data-fs-eff="${esc(f.key)}"${f.efficiency < 1 ? ' disabled' : ''}> Forstall Efficiency — turn one Hit into an Ace (${f.efficiency}/2 left today)</label>` : ''}
       <div class="fs-slots"><span>MEMORY SLOTS</span>${[0, 1, 2, 3].map((i) => `<select data-fs-slot="${esc(f.key)}" data-i="${i}" aria-label="Memory slot ${i + 1}">${slotOptions(f.slots[i] || '', f.owner || !warden ? kzPosse : kzAll)}</select>`).join('')}</div>
@@ -1250,6 +1251,7 @@ function wireFs(box) {
     else if (r?.melted) toast('The waves crossed — sparks, Electrocuted, batteries melted.', true);
   }));
   box.querySelectorAll('[data-fs-off]').forEach((b) => b.addEventListener('click', () => fsAct({ action: 'forstall', op: 'off', key: b.dataset.fsOff, pc: opFor(b.dataset.fsOff) })));
+  box.querySelectorAll('[data-fs-battery]').forEach((b) => b.addEventListener('click', () => fsAct({ action: 'forstall', op: 'battery', key: b.dataset.fsBattery })));
   box.querySelectorAll('[data-fs-pick]').forEach((b) => b.addEventListener('click', () => { tp.fs = b.dataset.fsPick; renderTurnBar(); }));
   box.querySelectorAll('[data-fs-slot]').forEach((el) => el.addEventListener('change', async () => {
     const f = fsOf(el.dataset.fsSlot), i = Number(el.dataset.i);
@@ -1290,9 +1292,11 @@ function renderFsWarden() {
       <div class="btn-row"><button type="button" class="btn small danger" data-edison="${esc(a.key)}|${esc(b.key)}">Apply Rule 1</button>
       <button type="button" class="btn small secondary" data-fs-stop="${esc(a.key)}">Switch off ${esc(a.name)}</button><button type="button" class="btn small secondary" data-fs-stop="${esc(b.key)}">Switch off ${esc(b.name)}</button></div></div>`).join('')}
     ${[...mine, ...carried].map((f) => `<div class="tok-row fs-row${selFs === f.key ? ' sel' : ''}" data-fs-pick="${esc(f.key)}"><span class="chip fs-chip${f.sweep ? ' on' : ''}">${gl('forstall')}</span>
-      <span class="n">${esc(f.name)}<small>${f.owner ? `carried by ${esc(f.ownerName)}` : esc(f.range)}${f.sweep ? ` · Sweep ${f.sweep.hits}` : ''}</small></span>
+      <span class="n">${esc(f.name)}<small>${f.owner ? `carried by ${esc(f.ownerName)}` : esc(f.range)}${f.sweep ? ` · Sweep ${f.sweep.hits}` : ''}${f.melted ? ' · <b>battery melted</b>' : ''}</small></span>
+      ${f.melted ? `<button type="button" class="btn small" data-fs-battery="${esc(f.key)}">New battery</button>` : ''}
       ${f.owner ? '' : `<button type="button" class="btn small secondary" data-fs-fuse="${esc(f.key)}" title="Crystal Burst Fuse: lets it Burst">${f.fuse ? 'Fuse on' : 'No fuse'}</button><button type="button" class="btn small secondary" data-fs-hide="${esc(f.key)}">${f.hidden ? 'Reveal' : 'Hide'}</button><button aria-label="Remove this Forstall" title="Remove this Forstall" type="button" class="rm-btn" data-fs-rm="${esc(f.key)}">×</button>`}</div>`).join('')
     || '<p class="muted">No Forstalls on the board. A character’s own Forstall appears on their token.</p>'}`;
+  list.querySelectorAll('[data-fs-battery]').forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); fsAct({ action: 'forstall', op: 'battery', key: b.dataset.fsBattery }); }));
   list.querySelectorAll('[data-fs-stop]').forEach((b) => b.addEventListener('click', () => fsAct({ action: 'forstall', op: 'off', key: b.dataset.fsStop, pc: opFor(b.dataset.fsStop) })));
   list.querySelectorAll('[data-edison]').forEach((b) => b.addEventListener('click', async () => {
     if (!await ask('Apply Edison’s Rule 1? Everyone within Short Range of either Forstall is Electrocuted [6], and both batteries melt.', { ok: 'Apply', danger: true })) return;

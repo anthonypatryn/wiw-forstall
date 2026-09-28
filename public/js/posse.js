@@ -1049,7 +1049,8 @@ function hydrate(p) {
     el.querySelectorAll('[data-guse]').forEach((b) => b.addEventListener('click', () => act({ action: 'sheet', id: p.id, path: `gear.${i}.uses`, value: nextVal(b, Number(b.dataset.guse)) })));
   });
   const ch = view.querySelector('[data-dyn="charges"]');
-  ch.innerHTML = `${pipRow('CHARGES', p.forstall.charges ?? 0, Math.max(2, p.forstall.charges ?? 0), 'chg')}<span class="muted pip-note sm">of 2</span>`;
+  ch.innerHTML = `${pipRow('CHARGES', p.forstall.charges ?? 0, Math.max(2, p.forstall.charges ?? 0), 'chg')}<span class="muted pip-note sm">of 2</span>${p.forstall.melted ? `<p class="fs-melted">${gl('flash')} <b>Battery melted</b> (Edison’s Rule 1): no Sweeping until the Warden fits a new battery. A Town Rest won’t fix it; Scanning and Bursting still work.${warden ? ' <button type="button" class="btn small secondary" data-fs-battery>New battery</button>' : ''}</p>` : ''}`;
+  ch.querySelector('[data-fs-battery]')?.addEventListener('click', () => act({ action: 'forstall', op: 'battery', key: `pc:${p.id}` }).then((r) => r && toast('New battery fitted: two charges.')));
   ch.querySelectorAll('[data-chg]').forEach((b) => b.addEventListener('click', () => act({ action: 'sheet', id: p.id, path: 'forstall.charges', value: nextVal(b, Number(b.dataset.chg)) })));
 
   // bought items (from the Store)

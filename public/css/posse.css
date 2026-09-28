@@ -602,3 +602,7 @@ body.on-sheet .sv-nav { display: grid; gap: 6px; position: sticky; top: calc(var
 
 .pip-note { font-size: var(--fs-sm); }
 .pip-note.sm { font-size: var(--fs-xs); }
+
+/* Edison's Rule 1 melted this Forstall's battery */
+.fs-melted { flex-basis: 100%; margin: 6px 0 0; padding: 6px 8px; border-left: 3px solid var(--danger); background: var(--danger-tint); font-size: var(--fs-sm); }
+.fs-melted .gl { width: 1em; height: 1em; vertical-align: -2px; color: var(--danger); }
