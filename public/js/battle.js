@@ -1282,12 +1282,18 @@ function renderFsWarden() {
   if (document.activeElement?.id !== 'fs-cave') $('#fs-cave').checked = !!data.cave;
   const mine = (data.forstalls || []).filter((f) => !f.owner), carried = (data.forstalls || []).filter((f) => f.owner);
   const pairs = (data.edison || []).map(([a, b]) => [fsOf(a), fsOf(b)]).filter(([a, b]) => a && b);
-  list.innerHTML = `${pairs.map(([a, b]) => `<div class="fs-warn">${gl('flash')} <b>${esc(a.name)}</b> and <b>${esc(b.name)}</b> are Sweeping in each other’s Range.
-      <button type="button" class="btn small danger" data-edison="${esc(a.key)}|${esc(b.key)}">Apply Rule 1</button></div>`).join('')}
+  // why they clash, in plain words: the distance, and how far each Forstall's waves reach
+  const reachTxt = (f, n) => (n >= 999 ? `${esc(f.name)} covers the whole map` : `${esc(f.name)} reaches ${n}`);
+  const why = (a, b) => { const w = data.edisonWhy?.[`${a.key}|${b.key}`]; if (!w) return '';
+    return ` They’re ${w.dist} hex${w.dist === 1 ? '' : 'es'} apart; ${reachTxt(a, w.reach[0])}, ${reachTxt(b, w.reach[1])}. It clears when either one stops Sweeping or they’re farther apart than the longer reach.`; };
+  list.innerHTML = `${pairs.map(([a, b]) => `<div class="fs-warn">${gl('flash')} <b>${esc(a.name)}</b> and <b>${esc(b.name)}</b> are Sweeping in each other’s Range (Edison’s Rule 1).${why(a, b)}
+      <div class="btn-row"><button type="button" class="btn small danger" data-edison="${esc(a.key)}|${esc(b.key)}">Apply Rule 1</button>
+      <button type="button" class="btn small secondary" data-fs-stop="${esc(a.key)}">Switch off ${esc(a.name)}</button><button type="button" class="btn small secondary" data-fs-stop="${esc(b.key)}">Switch off ${esc(b.name)}</button></div></div>`).join('')}
     ${[...mine, ...carried].map((f) => `<div class="tok-row fs-row${selFs === f.key ? ' sel' : ''}" data-fs-pick="${esc(f.key)}"><span class="chip fs-chip${f.sweep ? ' on' : ''}">${gl('forstall')}</span>
       <span class="n">${esc(f.name)}<small>${f.owner ? `carried by ${esc(f.ownerName)}` : esc(f.range)}${f.sweep ? ` · Sweep ${f.sweep.hits}` : ''}</small></span>
       ${f.owner ? '' : `<button type="button" class="btn small secondary" data-fs-fuse="${esc(f.key)}" title="Crystal Burst Fuse: lets it Burst">${f.fuse ? 'Fuse on' : 'No fuse'}</button><button type="button" class="btn small secondary" data-fs-hide="${esc(f.key)}">${f.hidden ? 'Reveal' : 'Hide'}</button><button aria-label="Remove this Forstall" title="Remove this Forstall" type="button" class="rm-btn" data-fs-rm="${esc(f.key)}">×</button>`}</div>`).join('')
     || '<p class="muted">No Forstalls on the board. A character’s own Forstall appears on their token.</p>'}`;
+  list.querySelectorAll('[data-fs-stop]').forEach((b) => b.addEventListener('click', () => fsAct({ action: 'forstall', op: 'off', key: b.dataset.fsStop, pc: opFor(b.dataset.fsStop) })));
   list.querySelectorAll('[data-edison]').forEach((b) => b.addEventListener('click', async () => {
     if (!await ask('Apply Edison’s Rule 1? Everyone within Short Range of either Forstall is Electrocuted [6], and both batteries melt.', { ok: 'Apply', danger: true })) return;
     fsAct({ action: 'forstall', op: 'edison', keys: b.dataset.edison.split('|') });
