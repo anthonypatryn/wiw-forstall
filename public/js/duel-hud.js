@@ -70,7 +70,10 @@ async function denied(r, seen) {
 // ---------- everyone: watch the Duel ----------
 function watch(d, warden) {
   if (!d) { if (box) { box.remove(); box = null; } sig = ''; shownAt = null; return; }
-  if (tabSeen(`wiw.duelHide.${d.at}`)) { if (box) { box.remove(); box = null; } return; }
+  // a finished duel pops up once, while it's news: Close keeps it closed on this device, and one that ended more
+  // than 10 minutes ago (or before doneAt was kept) never pops up by itself (the Warden's Close the Duel clears it for all)
+  const stale = d.done && (!d.doneAt || Date.now() - d.doneAt > 600000);
+  if (tabSeen(`wiw.duelHide.${d.at}`) || (d.done && (stale || store.get('wiw.duelClosed', 0) === d.at))) { if (box) { box.remove(); box = null; } return; }
   const s = JSON.stringify([d.at, d.step, d.done, warden]);
   if (s === sig && box) return;
   sig = s;
@@ -105,7 +108,7 @@ function watch(d, warden) {
 }
 async function onClick(e) {
   const b = e.target.closest('button'); if (!b || !box) return;
-  if (b.dataset.hide !== undefined) { setTabSeen(`wiw.duelHide.${box.dataset.at}`); box.remove(); box = null; return; }
+  if (b.dataset.hide !== undefined) { setTabSeen(`wiw.duelHide.${box.dataset.at}`); if (b.textContent.trim() === 'Close') store.set('wiw.duelClosed', Number(box.dataset.at)); box.remove(); box = null; return; }
   try {
     if (b.dataset.roll !== undefined) { b.disabled = true; await post({ action: 'duelRoll' }); }
     else if (b.dataset.end !== undefined) {
