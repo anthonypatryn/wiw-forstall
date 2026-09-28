@@ -76,7 +76,7 @@ vp.addEventListener('wheel', (e) => {
 const pointers = new Map();
 let panStart = null, pinch = null, moved = false, downPlace = null;
 vp.addEventListener('pointerdown', (e) => {
-  if (e.target.closest('.token, .map-ctrls, .map-banner')) return;
+  if (e.target.closest('.token, .map-ctrls, .map-banner, .map-switch')) return; // its own buttons, not a drag
   pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
   if (pointers.size === 1) downPlace = e.target.closest('.place'); // pointer capture changes e.target later
   try { vp.setPointerCapture(e.pointerId); } catch {}
