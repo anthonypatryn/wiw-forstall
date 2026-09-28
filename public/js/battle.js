@@ -327,7 +327,15 @@ function renderPanel() {
     const t = data.tokens.find((x) => x.id === b.dataset.recenter);
     if (t) { t.col = r.col; t.row = r.row; select(t.id); const c = center(r.col, r.row); pz.centerOn(c.x, c.y, Math.max(pz.view.s, 0.45)); toast(`${t.name} is back in the middle of the map.`); }
   }));
-  list.querySelectorAll('[data-rm]').forEach((b) => b.addEventListener('click', () => act({ action: 'removeToken', id: b.dataset.rm })));
+  list.querySelectorAll('[data-rm]').forEach((b) => b.addEventListener('click', async () => {
+    // an enemy's × takes it out of the fight entirely (Hide keeps one around unseen); other tokens just leave the map
+    const t = data.tokens.find((x) => x.id === b.dataset.rm), foe = t?.kind === 'enemy' && combat?.enemies?.find((e) => e.id === t.ref);
+    if (foe) {
+      if (!await ask(`Remove ${foe.name} from the fight?\n\nIt leaves the map and Run the Game. To keep it but out of sight, use Hide instead.`, { ok: 'Remove it' })) return;
+      await combatAct({ action: 'enemy', id: foe.id, op: 'remove' });
+    }
+    act({ action: 'removeToken', id: b.dataset.rm });
+  }));
 }
 
 // ---------- painted terrain: rough ground and fog of war ----------

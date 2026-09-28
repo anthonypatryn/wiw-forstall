@@ -98,16 +98,33 @@ function renderFight() {
   box.querySelector('[data-next]').addEventListener('click', () => act({ action: 'next' }));
   box.querySelector('[data-end]').addEventListener('click', async () => { if (await ask('End combat? Grit refills and Dodge/Aim clear. Health and Statuses stay as they are.')) act({ action: 'end' }, 'Combat is over.'); });
 }
+// take enemies out entirely: the fight record and their tokens on the Battle Map
+async function removeFoes(list) {
+  for (const e of list) await act({ action: 'enemy', id: e.id, op: 'remove' });
+  try {
+    const b = await api('GET', null, '?view=warden', '/api/battle');
+    for (const t of (b.tokens || []).filter((x) => x.kind === 'enemy' && list.some((e) => e.id === x.ref))) await api('POST', { action: 'removeToken', id: t.id }, '', '/api/battle');
+  } catch { /* the map can catch up */ }
+  toast(`${list.length === 1 ? list[0].name : `${list.length} enemies`} removed.`);
+}
 function renderEnemies() {
   const list = combat.enemies.filter((e) => !e.defeated && !(combat.combat?.active && e.out));
   const gone = combat.enemies.length - list.length;
   $('#enemies').innerHTML = list.length ? list.map((e) => `<div class="item-row${combat.combat?.current === e.id ? ' now' : ''}">
-      <div class="item-who"><b>${esc(e.name)}</b>${combat.combat?.active ? `<button type="button" class="run-out" data-leave="${esc(e.id)}" title="Take ${esc(e.name)} out of this fight">out</button>` : ''}${e.frenzied?.length ? '<span class="pill hot">FRENZIED</span>' : ''}${e.submerged ? '<span class="pill">submerged</span>' : ''}${statusTags(e.statuses)}</div>
+      <div class="item-who"><button type="button" class="rm-btn" data-rm-foe="${esc(e.id)}" title="Remove ${esc(e.name)}" aria-label="Remove ${esc(e.name)}">×</button><b>${esc(e.name)}</b>${combat.combat?.active ? `<button type="button" class="run-out" data-leave="${esc(e.id)}" title="Take ${esc(e.name)} out of this fight">out</button>` : ''}${e.frenzied?.length ? '<span class="pill hot">FRENZIED</span>' : ''}${e.submerged ? '<span class="pill">submerged</span>' : ''}${statusTags(e.statuses)}</div>
       <div class="item-nums">${hpBar(e.health, e.maxHealth)}<span class="hp-num">${e.health}/${e.maxHealth}</span>
         <button type="button" class="pm-btn" data-e="${esc(e.id)}" data-d="-1" aria-label="${esc(e.name)} loses 1 Health">−</button><button type="button" class="pm-btn" data-e="${esc(e.id)}" data-d="1" aria-label="${esc(e.name)} gains 1 Health">+</button>
         <span class="stat" title="Grit">${e.grit ?? '—'} Grit</span></div></div>`).join('')
-    + (gone ? `<p class="muted run-gone">${gone} down or fled — loot them on the <a href="/battle">Battle Map</a> (tap the token).</p>` : '')
-    : `<p class="muted">No enemies standing.${gone ? ` ${gone} down or fled — <a href="/battle">loot them</a>.` : ' Add some on the <a href="/battle">Battle Map</a>.'}</p>`;
+    + (gone ? `<p class="muted run-gone">${gone} down or fled — loot them on the <a href="/battle">Battle Map</a> (tap the token). <button type="button" class="btn small secondary" data-clear-downed>Clear the downed</button></p>` : '')
+    : `<p class="muted">No enemies standing.${gone ? ` ${gone} down or fled — <a href="/battle">loot them</a>. <button type="button" class="btn small secondary" data-clear-downed>Clear the downed</button>` : ' Add some on the <a href="/battle">Battle Map</a>.'}</p>`;
+  $('#enemies').querySelectorAll('[data-rm-foe]').forEach((b) => b.addEventListener('click', async () => {
+    const e = combat.enemies.find((x) => x.id === b.dataset.rmFoe);
+    if (e && await ask(`Remove ${e.name} from the fight?\n\nIt leaves Run the Game and the Battle Map.`, { ok: 'Remove it' })) await removeFoes([e]);
+  }));
+  $('#enemies').querySelector('[data-clear-downed]')?.addEventListener('click', async () => {
+    const down = combat.enemies.filter((e) => e.defeated || (combat.combat?.active && e.out));
+    if (down.length && await ask(`Clear ${down.length} downed or fled enem${down.length === 1 ? 'y' : 'ies'}?\n\nLoot them first: their trophies and searches go with them.`, { ok: 'Clear them' })) await removeFoes(down);
+  });
   $('#enemies').querySelectorAll('[data-leave]').forEach((b) => b.addEventListener('click', () => act({ action: 'leave', id: b.dataset.leave })));
   $('#enemies').querySelectorAll('[data-e]').forEach((b) => b.addEventListener('click', () => act({ action: 'enemy', id: b.dataset.e, op: 'health', delta: Number(b.dataset.d) })));
 }
