@@ -202,7 +202,7 @@ export function bleedPanel(p, skillsMeta) {
         : `<button type="button" class="btn small" data-bleed-roll="${s}">${gl('die')} ${s} <small>${pool}</small></button>`;
     }).join('')}</div>
     ${left.length ? `<p class="muted">${left.length} Skill${left.length > 1 ? 's' : ''} left.</p>` : '<p class="bp-last"><b>No Skills left.</b> Without First Aid, they die at the end of the next ally’s turn.</p>'}
-    <div class="bp-actions"><button type="button" class="btn small" data-op="stabilize">✚ Saved by First Aid</button><button type="button" class="btn small secondary danger" data-op="die">Didn’t make it</button></div></div>`;
+    <div class="bp-actions"><button type="button" class="btn small" data-op="stabilize">${gl('bandage')} Saved by First Aid</button><button type="button" class="btn small secondary danger" data-op="die">Didn’t make it</button></div></div>`;
 }
 
 export async function rollPopup(r, title = '') {

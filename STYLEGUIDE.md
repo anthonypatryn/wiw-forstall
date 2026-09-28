@@ -6,6 +6,7 @@ Everything below lives in `public/css/style.css`. Page stylesheets (`posse.css`,
 
 ## Rules
 - **Art is the exception:** gradient stops that *draw* something (keypad keys, lamps, the dice tray's wood, bullet dice, felt) may keep literal colors. Everything else uses tokens.
+- **Tints follow the theme.** Rust tints, ink rules and cream text are `--accent-tint`, `--line`, `--on-dark*`, never their rgba/hex values: Warden mode re-colours the tokens, not the raw numbers.
 - **Use tokens, never raw values.** Colors, font sizes, spacing, corners and shadows come from the `:root` variables. No new hex colors in page CSS; add a token if something is truly new.
 - **Use the shared components** (below) before writing new CSS. If two pages need the same thing, it belongs in `style.css`.
 - **No emoji** — use the line icons: `gl('name')` in JS, `<span data-gl="name"></span>` in HTML (`public/js/glyphs.js`).
@@ -26,7 +27,8 @@ Everything below lives in `public/css/style.css`. Page stylesheets (`posse.css`,
 | `--brass` | #c9a45c | highlights: kicker text, selected token glow, badges |
 | `--success` / `--success-tint` | #3d6b3a | passed rolls, done |
 | `--warning` / `--warning-tint` | #b88c14 | caution |
-| `--danger` / `--danger-tint` (bright: `--red`) | #8f1d17 (#c8372d) | delete, harm, failures, errors |
+| `--danger` / `--danger-tint` (bright: `--red`) | #8f1d17 (#c8372d) | delete, harm, failures, errors. A tint is a background, never text |
+| `--danger-deep` | #3a1210 | the deep red behind Bleeding Out (`.bleed`, shared in style.css), lettered in `--on-dark-warn` |
 | `--info` (`--teal`) / `--info-tint` | #2f6d73 | neutral information, posse turn |
 | `--now` | pale gold | "it's their turn" row highlight |
 | `--on-dark` / `--on-dark-dim` / `--on-dark-bright` / `--on-dark-warn` | creams / pink | text on ink or iron backgrounds (nav, masthead, dark panels) |
@@ -115,9 +117,9 @@ Small helpers: `.btn-row` (a row of buttons), `.fine` (12px note), `.small-text`
 - The site nav (z 25) sits above the sticky sheet bar and contents bars (20 / 18) so its drop-down menus cover them.
 
 ## Layers, shades and breakpoints
-- **Layers:** never write a raw `z-index` number; use the `--z-*` tokens in `:root` (style.css), listed low to high: sticky bars (`--z-contents-bar` 18 … `--z-turn-bar` 30), floating buttons and HUD (40–95), full-screen game scenes (`--z-scene` 210 … `--z-end-session` 250), the roll pop-up (300), the newspaper (400), dialogs (`--z-dialog` 450, Rules & key 460), lightbox 500, tour 510, toast 600, dropdown lists 700, tooltips 710. Small local values (1–5) inside a component are fine as numbers.
+- **Layers:** never write a raw `z-index` number; use the `--z-*` tokens in `:root` (style.css), listed low to high: sticky bars (`--z-contents-bar` 18 … `--z-turn-bar` 30), floating buttons and HUD (40–95), full-screen game scenes (`--z-scene` 210 … `--z-end-session` 250), the roll pop-up (300), the newspaper (400), dialogs (`--z-dialog` 450, Rules & key 460), lightbox 500, tour 510, toast 600, dropdown lists 700, tooltips 710. Small local values (1–7) inside a component are fine as numbers (the Battle Map's fighter card and paint bar use 6 and 7 above its tokens).
 - **Shades of black:** `--shade-1` (.06) … `--shade-5` (.8) for shadows and dimming; `--line` / `--line-soft` for ink-colored rules; `--gold` for the warm highlight on dark scenes.
-- **Breakpoints** (CSS variables can't be used in media queries, so these are the agreed numbers): **380** tiny phones, **480** phones, **600** small tablets / big phones, **900** two columns → one, **1080** wide. A few are tuned to their content and stay as they are: 700 / 1100 (the sheet's page grid), 760 / 1020 (when the nav collapses), 980 / 1000 (page grids).
+- **Breakpoints** (CSS variables can't be used in media queries, so these are the agreed numbers): **380** tiny phones, **480** phones, **600** small tablets / big phones, **900** two columns → one, **1080** wide. A few are tuned to their content and stay as they are: 760 / 1020 / 1160 (when the nav collapses; 1160 is the wider Warden nav), 980 / 1000 (page grids). The character sheet's page grid uses **container queries** on `#sheet-view` (1060 / 660, the sheet's own width), because the sheet's side nav takes part of the window.
 - `!important` only for: the global `[hidden]`, the Less-motion setting (`html.less-motion`), the restyled select arrow, `.lp-num input`, the print stylesheet, and overriding inline token styles (Battle Map stand-ins) or the Warden theme (the Forstall jam button).
 
 ## Round +/−/× controls

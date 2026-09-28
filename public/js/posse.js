@@ -509,7 +509,7 @@ function wireSheet(p) {
       if (r?.dice) {
         await rollPopup(r, `${pcById(p.id).name} · ${r.label}`);
         if (r.helping) toast(`You added ${r.hits} Hit${r.hits === 1 ? '' : 's'} of help.`);
-        else if (r.outcome) toast(r.outcome.ok ? `✓ Success — ${r.outcome.total}/${r.target} Hits!` : `✗ Short — ${r.outcome.total}/${r.target} Hits.`, !r.outcome.ok);
+        else if (r.outcome) toast(r.outcome.ok ? `Success: ${r.outcome.total}/${r.target} Hits!` : `Short: ${r.outcome.total}/${r.target} Hits.`, !r.outcome.ok);
         else toast(`${r.hits} Hit${r.hits === 1 ? '' : 's'} — see the Table Log for who won.`);
       }
     } else if (e.target.closest('[data-break]')) {
@@ -1025,7 +1025,7 @@ function hydrate(p) {
   stBox.querySelectorAll('[data-stc]').forEach((c) => c.addEventListener('change', () => send({ op: 'status', status: c.dataset.stc, value: c.checked ? 1 : 0 })));
 
   const aces = view.querySelector('[data-dyn="aces"]');
-  aces.innerHTML = `${pipRow('ACES', p.aces, 6, 'aces')}<span class="muted" style="font-size:14px">${p.aces >= 6 ? 'Ready! Play an Ace-in-the-Hole below.' : 'Roll 6 Aces in combat to unlock your Ace-in-the-Hole.'}</span>`;
+  aces.innerHTML = `${pipRow('ACES', p.aces, 6, 'aces')}<span class="muted pip-note">${p.aces >= 6 ? 'Ready! Play an Ace-in-the-Hole below.' : 'Roll 6 Aces in combat to unlock your Ace-in-the-Hole.'}</span>`;
   aces.querySelectorAll('[data-aces]').forEach((b) => b.addEventListener('click', () => act({ action: 'sheet', id: p.id, path: 'aces', value: nextVal(b, Number(b.dataset.aces)) })));
 
   view.querySelectorAll('[data-uses]').forEach((el) => {
@@ -1039,7 +1039,7 @@ function hydrate(p) {
     el.querySelectorAll('[data-guse]').forEach((b) => b.addEventListener('click', () => act({ action: 'sheet', id: p.id, path: `gear.${i}.uses`, value: nextVal(b, Number(b.dataset.guse)) })));
   });
   const ch = view.querySelector('[data-dyn="charges"]');
-  ch.innerHTML = `${pipRow('CHARGES', p.forstall.charges ?? 0, Math.max(2, p.forstall.charges ?? 0), 'chg')}<span class="muted" style="font-size:13px">of 2</span>`;
+  ch.innerHTML = `${pipRow('CHARGES', p.forstall.charges ?? 0, Math.max(2, p.forstall.charges ?? 0), 'chg')}<span class="muted pip-note sm">of 2</span>`;
   ch.querySelectorAll('[data-chg]').forEach((b) => b.addEventListener('click', () => act({ action: 'sheet', id: p.id, path: 'forstall.charges', value: nextVal(b, Number(b.dataset.chg)) })));
 
   // bought items (from the Store)

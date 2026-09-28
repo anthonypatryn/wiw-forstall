@@ -1,5 +1,5 @@
 /* Warden's Station extras */
-.btn.lock-btn { color: #f6ecd9; border-color: rgba(246,236,217,.6); margin-left: auto; }
+.btn.lock-btn { color: var(--on-dark-bright); border-color: rgba(246,236,217,.6); margin-left: auto; }
 .brand-title .sub a { color: var(--brass); }
 .gate { max-width: 420px; margin: 30px auto; }
 .gate form { display: flex; gap: 10px; }
@@ -49,17 +49,17 @@
 .custom-form .kz-in .btn { flex: none; font-size: var(--fs-lg); padding: 0 12px; }
 .custom-form .kz-msg { font-size: var(--fs-sm); min-height: 1.2em; margin: -2px 0 0; color: var(--ink-faint); }
 .custom-form .kz-msg.bad { color: var(--red); }
-.custom-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px dotted rgba(34,31,31,.35); }
+.custom-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px dotted var(--line); }
 .custom-row span { font: var(--fs-md) var(--type); }
 .nb-tools { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
 
 /* homebrew traits */
 .sweep-pick { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; font: var(--fs-md) var(--display); letter-spacing: .08em; }
 .sweep-pick select { width: auto; padding: 6px 10px; }
-.traits-pick { grid-column: 1 / -1; border: 1px solid rgba(34,31,31,.35); border-radius: var(--radius); padding: 6px 10px 8px; margin: 0; }
+.traits-pick { grid-column: 1 / -1; border: 1px solid var(--line); border-radius: var(--radius); padding: 6px 10px 8px; margin: 0; }
 .traits-pick legend { font: var(--fs-md) var(--display); letter-spacing: .08em; padding: 0 4px; }
 .traits-pick legend .muted { font: italic var(--fs-xs) var(--body); letter-spacing: 0; }
-.trait-opt { display: grid; grid-template-columns: auto 1fr; gap: 2px 8px; padding: 6px 0; border-bottom: 1px dotted rgba(34,31,31,.25); cursor: pointer; }
+.trait-opt { display: grid; grid-template-columns: auto 1fr; gap: 2px 8px; padding: 6px 0; border-bottom: 1px dotted var(--line); cursor: pointer; }
 .trait-opt:last-child { border-bottom: 0; }
 .custom-form .trait-opt input { padding: 0; margin-top: 3px; width: 16px; height: 16px; accent-color: var(--rust); }
 .trait-opt b { font: 700 var(--fs-sm) var(--body); }

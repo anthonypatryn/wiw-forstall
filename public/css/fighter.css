@@ -3,7 +3,7 @@
 /* ---------- combatant cards ---------- */
 .fighter {
   position: relative; background: var(--surface); border: 1.5px solid var(--ink); border-radius: var(--radius); padding: 12px 12px 10px;
-  box-shadow: 2px 2px 0 rgba(34,31,31,.18); display: flex; flex-direction: column; gap: 8px;
+  box-shadow: var(--shadow-stamp); display: flex; flex-direction: column; gap: 8px;
 }
 .fighter.now { outline: 3px solid var(--brass); outline-offset: 2px; }
 .fighter.down { opacity: .55; filter: grayscale(.7); }
@@ -38,17 +38,12 @@
   background: var(--ink); color: var(--paper); font: var(--fs-sm)/1.4 var(--display); letter-spacing: .06em;
 }
 .st b { font-weight: 400; background: var(--rust); border-radius: var(--radius); padding: 0 6px; }
-.st button { background: none; border: 0; color: #cbbda4; font: var(--fs-sm)/1 var(--display); padding: 0 3px; }
+.st button { background: none; border: 0; color: var(--on-dark-dim); font: var(--fs-sm)/1 var(--display); padding: 0 3px; }
 .st button:hover { color: #fff; }
 .st-add { padding: 3px 6px; border: 1px dashed var(--ink-faint); border-radius: var(--radius); background: transparent; font: var(--fs-xs) var(--body); color: var(--ink-soft); max-width: 128px; }
 
 .f-actions { display: flex; gap: 6px; flex-wrap: wrap; }
 .f-actions .btn { font-size: var(--fs-sm); padding: 6px 9px 4px; box-shadow: none; }
-.bleed { background: #3a1210; color: var(--danger-tint); border-radius: var(--r-sm); padding: 8px 10px; font-size: var(--fs-sm); }
-.bleed b { font: var(--fs-md) var(--display); letter-spacing: .1em; color: #ff8c73; }
-.bleed .skills { display: flex; gap: 4px; flex-wrap: wrap; margin: 6px 0; }
-.bleed .skills button { font: var(--fs-xs) var(--display); letter-spacing: .08em; padding: 4px 7px 2px; border-radius: var(--r-sm); border: 1px solid var(--danger-tint); background: transparent; color: var(--danger-tint); }
-.bleed .skills button.done { background: var(--danger-tint); color: #3a1210; text-decoration: line-through; }
 .ace-ready { background: linear-gradient(90deg, #f0d48a, var(--brass)); border-radius: var(--r-sm); padding: 8px 10px; font-size: var(--fs-sm); }
 .ace-ready b { font: var(--fs-md) var(--display); letter-spacing: .08em; }
 

@@ -232,7 +232,7 @@ export function renderHud(h) {
       if (r?.dice) {
         await rollPopup(r, `${who.name} · ${r.label}`);
         if (r.outcome) play(r.outcome.ok ? 'success' : 'fail');
-        if (r.outcome) toast(r.outcome.ok ? `✓ Success — ${r.outcome.total}/${r.target} Hits!` : `✗ Short — ${r.outcome.total}/${r.target} Hits.`, !r.outcome.ok);
+        if (r.outcome) toast(r.outcome.ok ? `Success: ${r.outcome.total}/${r.target} Hits!` : `Short: ${r.outcome.total}/${r.target} Hits.`, !r.outcome.ok);
         else toast(`${r.hits} Hit${r.hits === 1 ? '' : 's'} — see the Table Log for who won.`);
       }
     } catch (err) { toast(err.message, true); e.target.disabled = false; }

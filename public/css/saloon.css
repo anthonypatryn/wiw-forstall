@@ -174,14 +174,14 @@
 .sl-tell small { display: inline; }
 
 /* blackjack */
-.bj-felt { display: grid; gap: var(--s-3, 12px); justify-items: center; }
+.bj-felt { display: grid; gap: var(--sp-3); justify-items: center; }
 .bj-dealer { display: grid; justify-items: center; gap: 6px; }
-.bj-dealer small, .bj-rule { color: rgba(255, 244, 220, 0.8); letter-spacing: 0.08em; font-size: 0.72rem; }
-.bj-rule { margin: 0; padding: 2px 14px; border-top: 1px solid rgba(255, 244, 220, 0.35); border-bottom: 1px solid rgba(255, 244, 220, 0.35); font-family: var(--display, serif); text-transform: uppercase; }
+.bj-dealer small, .bj-rule { color: var(--on-dark-dim); letter-spacing: var(--track); font-size: var(--fs-xs); }
+.bj-rule { margin: 0; padding: 2px 14px; border-top: 1px solid rgba(255, 244, 220, 0.35); border-bottom: 1px solid rgba(255, 244, 220, 0.35); font-family: var(--display); text-transform: uppercase; }
 .bj-seats { width: 100%; }
 .bj-seat.me { outline: 2px solid rgba(255, 214, 120, 0.7); }
-.bj-total { font-weight: 700; color: #fff4dc; font-size: 0.95rem; }
-.bj-note { margin: 0; color: #ffe7a8; font-size: 0.85rem; text-align: center; }
+.bj-total { font-weight: 700; color: var(--on-dark-bright); font-size: var(--fs-md); }
+.bj-note { margin: 0; color: var(--gold); font-size: var(--fs-sm); text-align: center; }
 .bj-amt { margin: 0; }
 .bj-amt .pm-btn { color: var(--ink); }
 .bj-amt .pm-btn:hover { color: #fff; }

@@ -25,7 +25,7 @@
   /* roles */
   --accent: var(--rust); --accent-dark: var(--rust-dark); --accent-tint: rgba(164,64,31,.1);
   --success: #3d6b3a;
-  --danger: #8f1d17;  --danger-tint: rgba(143,29,23,.1);
+  --danger: #8f1d17;  --danger-tint: rgba(143,29,23,.1); --danger-deep: #3a1210; /* behind Bleeding Out */
   --info: var(--teal);
   --now: rgba(255,221,138,.3); /* whose turn it is */
   --on-dark: #e8dcc4; --on-dark-dim: #cbbda4; --on-dark-bright: #f6ecd9; --on-dark-warn: #ffb4a6; /* text on ink / iron backgrounds */
@@ -351,7 +351,7 @@ a.btn { text-decoration: none; }
 .notebook .section-title { font-family: var(--western); font-size: var(--fs-xl); letter-spacing: .02em; }
 .notebook h3 { font: var(--fs-lg) var(--display); letter-spacing: .16em; margin: 16px 0 6px; color: var(--rust); border-bottom: 1px solid var(--line); padding-bottom: 3px; }
 .search { width: 100%; padding: 7px 10px; border: 1px solid var(--ink-faint); border-radius: var(--radius); background: var(--surface); font-size: var(--fs-sm); }
-.entry { border-bottom: 1px dotted rgba(34,31,31,.35); padding: 8px 0; }
+.entry { border-bottom: 1px dotted var(--line); padding: 8px 0; }
 .entry summary { list-style: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .entry summary::-webkit-details-marker { display: none; }
 .entry .ename { font: 700 var(--fs-md)/1.2 var(--body); }
@@ -546,6 +546,12 @@ body.nav-open .fab-row, body.nav-open .hud-strip { display: none; }
 @media (prefers-reduced-motion: reduce) { .roll-pop { transition: none; } }
 
 /* Bleeding Out panel (sheet + combat) */
+/* Bleeding Out on a fighter card and on the sheet (pale warning ink on deep red) */
+.bleed { background: var(--danger-deep); color: var(--on-dark-warn); border-radius: var(--r-sm); padding: 8px 10px; font-size: var(--fs-sm); }
+.bleed b { font: var(--fs-md) var(--display); letter-spacing: var(--track-wide); color: var(--on-dark-warn); }
+.bleed .skills { display: flex; gap: 4px; flex-wrap: wrap; margin: 6px 0; }
+.bleed .skills button { font: var(--fs-xs) var(--display); letter-spacing: var(--track); padding: 4px 7px 2px; border-radius: var(--r-sm); border: 1px solid var(--on-dark-warn); background: transparent; color: var(--on-dark-warn); }
+.bleed .skills button.done { background: var(--on-dark-warn); color: var(--danger-deep); text-decoration: line-through; }
 .bleed-panel { margin: 10px 0; padding: 10px 12px; border: 2px solid var(--danger); border-radius: var(--radius); background: var(--danger-tint); color: #3a1411; }
 .bleed-panel .bp-title { font: var(--fs-lg) var(--display); letter-spacing: .12em; color: var(--danger); font-weight: 400; }
 .bleed-panel p { margin: 6px 0; font-size: var(--fs-sm); line-height: 1.35; }
@@ -725,7 +731,7 @@ body.nav-open .fab-row, body.nav-open .hud-strip { display: none; }
 .item-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 12px; padding: var(--sp-2) 4px; border-bottom: 1px dashed var(--shade-2); }
 .item-row:last-child { border-bottom: 0; }
 .item-row.now { background: var(--now); }
-.item-row.bleed { background: rgba(164,64,31,.08); }
+.item-row.bleed { background: var(--accent-tint); }
 .item-row.sitting { opacity: .6; }
 .item-who { display: flex; flex-wrap: wrap; align-items: center; gap: 4px var(--sp-2); min-width: 0; flex: 1 1 200px; }
 .item-who a { color: var(--ink); }

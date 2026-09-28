@@ -15,7 +15,7 @@ const poolText = (p) => [p.black > 0 && `+${p.black}B`, p.black < 0 && `−${-p.
 
 export function contestStyles() {
   carnivalStyles();
-  if (!document.getElementById('contest-css')) document.head.insertAdjacentHTML('beforeend', '<link id="contest-css" rel="stylesheet" href="/css/contests.css?v=1">');
+  if (!document.getElementById('contest-css')) document.head.insertAdjacentHTML('beforeend', '<link id="contest-css" rel="stylesheet" href="/css/contests.css?v=2">');
 }
 
 function rulesHTML(d) {
@@ -215,7 +215,7 @@ export function mountContestDesk(el) {
           <button type="button" class="btn small secondary danger" data-ct-close>${data.result ? 'Close it' : 'Call it off (refunds)'}</button></div>`;
       return;
     }
-    el.innerHTML = `<div class="chip-row">${[['race', 'Horse race'], ['trickshot', 'Trick-shot contest']].map(([k, l]) => `<button type="button" class="chip-btn${st.kind === k ? ' on' : ''}" data-ct-kind="${k}">${l}</button>`).join('')}</div>
+    el.innerHTML = `<div class="field-step"><span>WHICH CONTEST</span><div class="chip-row">${[['race', 'Horse race'], ['trickshot', 'Trick-shot contest']].map(([k, l]) => `<button type="button" class="chip-btn${st.kind === k ? ' on' : ''}" data-ct-kind="${k}">${l}</button>`).join('')}</div></div>
       <p class="muted sess-note">${st.kind === 'race' ? 'House rules: three legs (Finesse, Nerve, then Finesse or Nerve); horses add dice by breed and Bond; a rented horse adds none.' : 'Dobytown, Iron Road p. 109: Finesse for an Aim, then Adda’s 3G pistol; most Hits wins the round.'} Everyone gets an invite.</p>
       <label class="field-step"><span>WHERE</span><input maxlength="40" value="${esc(st.where)}" data-ct-f="where" placeholder="${st.kind === 'race' ? 'the fairground' : 'Dobytown'}"></label>
       <div class="ct-desk-row"><label class="field-step"><span>ENTRY $</span><input type="number" min="0" max="20" step="0.25" value="${st.fee}" data-ct-f="fee"></label>

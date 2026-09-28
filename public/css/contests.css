@@ -25,9 +25,9 @@
 .ct-leg { font: var(--fs-lg) var(--western); text-align: center; min-height: 1.4em; }
 .ct-track { position: relative; display: grid; gap: 6px; padding: 8px 10px; border-radius: var(--radius); background: repeating-linear-gradient(90deg, #b48a57 0 60px, #a67d4c 60px 120px); }
 .ct-lane { position: relative; height: 40px; border-bottom: 2px dashed rgba(255, 255, 255, .35); }
-.ct-lname { position: absolute; left: 0; top: -2px; font-size: var(--fs-xs); color: #fff8ec; text-shadow: 0 1px 2px #000; white-space: nowrap; }
-.ct-gone { position: absolute; right: 0; top: -2px; font-size: var(--fs-xs); color: #fff8ec; text-shadow: 0 1px 2px #000; }
-.ct-horse { position: absolute; left: 0; bottom: 2px; width: 30px; height: 26px; display: grid; place-items: center; border-radius: 50%; color: #fff;
+.ct-lname { position: absolute; left: 0; top: -2px; font-size: var(--fs-xs); color: var(--on-dark-bright); text-shadow: 0 1px 2px var(--shade-5); white-space: nowrap; }
+.ct-gone { position: absolute; right: 0; top: -2px; font-size: var(--fs-xs); color: var(--on-dark-bright); text-shadow: 0 1px 2px var(--shade-5); }
+.ct-horse { position: absolute; left: 0; bottom: 2px; width: 30px; height: 26px; display: grid; place-items: center; border-radius: 50%; color: var(--on-dark-bright);
   background: hsl(calc(var(--c) * 67 + 10) 45% 35%); box-shadow: 0 2px 4px rgba(0, 0, 0, .45); transition: left 1.5s cubic-bezier(.3, .1, .3, 1); animation: ct-gallop .3s infinite alternate; }
 .ct-horse .gl { width: 18px; height: 18px; }
 .ct-horse.ct-first { outline: 3px solid var(--gold); animation: none; }
