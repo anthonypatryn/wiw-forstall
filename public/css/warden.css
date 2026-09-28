@@ -34,7 +34,7 @@
 .feed .item.roll { border-left-color: var(--brass); }
 .feed .item.guess { border-left-color: var(--teal); background: rgba(23,20,19,.92); color: var(--screen-text); }
 .feed .when { font: var(--fs-xs) var(--type); color: var(--ink-faint); min-width: 64px; }
-.feed .what { font: var(--fs-lg)/1.2 var(--display); letter-spacing: .05em; }
+.feed .what { font: var(--fs-lg)/1.2 var(--display); letter-spacing: var(--track-tight); }
 .feed .dice-mini { display: flex; gap: 4px; flex-wrap: wrap; }
 .feed .dice-mini .die { width: 62px; filter: none; }
 .feed .dice-mini .die .rr { display: none; }
@@ -45,7 +45,7 @@
 .custom-form { display: grid; grid-template-columns: 112px minmax(0, 1fr); gap: 8px; }
 .custom-form #c-name, .custom-form > .btn, .custom-form .kz-msg { grid-column: 1 / -1; }
 .custom-form .kz-in { display: flex; gap: 6px; }
-.custom-form .kz-in input { flex: 1; min-width: 0; font: var(--fs-lg) var(--type); letter-spacing: .12em; text-align: center; }
+.custom-form .kz-in input { flex: 1; min-width: 0; font: var(--fs-lg) var(--type); letter-spacing: var(--track-label); text-align: center; }
 .custom-form .kz-in .btn { flex: none; font-size: var(--fs-lg); padding: 0 12px; }
 .custom-form .kz-msg { font-size: var(--fs-sm); min-height: 1.2em; margin: -2px 0 0; color: var(--ink-faint); }
 .custom-form .kz-msg.bad { color: var(--red); }
@@ -54,17 +54,17 @@
 .nb-tools { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
 
 /* homebrew traits */
-.sweep-pick { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; font: var(--fs-md) var(--display); letter-spacing: .08em; }
+.sweep-pick { grid-column: 1 / -1; display: flex; align-items: center; gap: 10px; font: var(--fs-md) var(--display); letter-spacing: var(--track); }
 .sweep-pick select { width: auto; padding: 6px 10px; }
 .traits-pick { grid-column: 1 / -1; border: 1px solid var(--line); border-radius: var(--radius); padding: 6px 10px 8px; margin: 0; }
-.traits-pick legend { font: var(--fs-md) var(--display); letter-spacing: .08em; padding: 0 4px; }
+.traits-pick legend { font: var(--fs-md) var(--display); letter-spacing: var(--track); padding: 0 4px; }
 .traits-pick legend .muted { font: italic var(--fs-xs) var(--body); letter-spacing: 0; }
 .trait-opt { display: grid; grid-template-columns: auto 1fr; gap: 2px 8px; padding: 6px 0; border-bottom: 1px dotted var(--line); cursor: pointer; }
 .trait-opt:last-child { border-bottom: 0; }
 .custom-form .trait-opt input { padding: 0; margin-top: 3px; width: 16px; height: 16px; accent-color: var(--rust); }
 .trait-opt b { font: 700 var(--fs-sm) var(--body); }
 .trait-opt small { grid-column: 2; font-size: var(--fs-xs); line-height: 1.35; color: var(--ink-soft); }
-.tag { display: inline-block; font: var(--fs-xs)/1 var(--display); letter-spacing: .1em; padding: 3px 5px 2px; border-radius: var(--r-sm); margin-left: 4px; vertical-align: 2px; background: var(--ink-faint); color: #fff; }
+.tag { display: inline-block; font: var(--fs-xs)/1 var(--display); letter-spacing: var(--track-open); padding: 3px 5px 2px; border-radius: var(--r-sm); margin-left: 4px; vertical-align: 2px; background: var(--ink-faint); color: var(--on-accent); }
 .tag.auto { background: var(--teal); }
 .tag.jam { background: var(--rust); }
 .custom-row .traits-line { display: block; font: var(--fs-xs) var(--body); color: var(--ink-faint); }
@@ -72,7 +72,7 @@
 /* target traits + jam */
 .w-traits { margin-top: 12px; display: flex; flex-direction: column; gap: 6px; max-width: 640px; }
 .w-trait { font: var(--fs-sm)/1.4 var(--body); color: var(--screen-text); background: var(--shade-4); border-left: 3px solid var(--brass); padding: 6px 10px; }
-.w-trait b { font: var(--fs-md) var(--display); letter-spacing: .08em; color: var(--surface-2); }
+.w-trait b { font: var(--fs-md) var(--display); letter-spacing: var(--track); color: var(--surface-2); }
 .w-trait.jam { border-left-color: var(--rust); }
 .w-trait.auto { border-left-color: #5fb3b9; }
 .btn.jam-on { background: var(--red) !important; border-color: var(--red) !important; animation: blink 1.4s infinite; }

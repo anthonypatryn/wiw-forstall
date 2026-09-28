@@ -13,9 +13,9 @@
 .f-name a { color: inherit; text-decoration: none; }
 .f-name a:hover { text-decoration: underline; }
 .f-sub { font: var(--fs-sm) var(--type); color: var(--ink-faint); }
-.f-tag { font: var(--fs-xs)/1 var(--display); letter-spacing: .1em; padding: 4px 6px 2px; border-radius: var(--r-sm); background: var(--ink); color: var(--paper); white-space: nowrap; }
+.f-tag { font: var(--fs-xs)/1 var(--display); letter-spacing: var(--track-open); padding: 4px 6px 2px; border-radius: var(--r-sm); background: var(--ink); color: var(--paper); white-space: nowrap; }
 .f-tag.now { background: var(--brass); color: var(--ink); }
-.f-tag.red { background: var(--red); color: #fff; }
+.f-tag.red { background: var(--red); color: var(--on-accent); }
 
 .hp { display: flex; align-items: center; gap: 8px; }
 .hp .bar { flex: 1; height: 14px; background: var(--paper-2); border: 1px solid var(--ink); border-radius: var(--r-sm); overflow: hidden; }
@@ -25,7 +25,7 @@
 .hp input { width: 48px; padding: 4px; border: 1px solid var(--ink-faint); border-radius: var(--r-sm); font: var(--fs-sm) var(--type); text-align: center; background: #fff; }
 
 .row2 { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-.lbl { font: var(--fs-sm) var(--display); letter-spacing: .14em; color: var(--ink-soft); min-width: 44px; }
+.lbl { font: var(--fs-sm) var(--display); letter-spacing: var(--track-wide); color: var(--ink-soft); min-width: 44px; }
 .pips { display: flex; gap: 4px; }
 .pip { width: 22px; height: 22px; border-radius: 50%; border: 1.5px solid var(--ink); background: transparent; padding: 0; }
 .pip.on { background: var(--rust); border-color: var(--rust-dark); box-shadow: inset 0 -2px 0 var(--shade-3); }
@@ -35,41 +35,41 @@
 .statuses { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .st {
   display: inline-flex; align-items: center; gap: 4px; padding: 2px 4px 1px 8px; border-radius: var(--radius);
-  background: var(--ink); color: var(--paper); font: var(--fs-sm)/1.4 var(--display); letter-spacing: .06em;
+  background: var(--ink); color: var(--paper); font: var(--fs-sm)/1.4 var(--display); letter-spacing: var(--track);
 }
 .st b { font-weight: 400; background: var(--rust); border-radius: var(--radius); padding: 0 6px; }
 .st button { background: none; border: 0; color: var(--on-dark-dim); font: var(--fs-sm)/1 var(--display); padding: 0 3px; }
-.st button:hover { color: #fff; }
+.st button:hover { color: var(--on-accent); }
 .st-add { padding: 3px 6px; border: 1px dashed var(--ink-faint); border-radius: var(--radius); background: transparent; font: var(--fs-xs) var(--body); color: var(--ink-soft); max-width: 128px; }
 
 .f-actions { display: flex; gap: 6px; flex-wrap: wrap; }
 .f-actions .btn { font-size: var(--fs-sm); padding: 6px 9px 4px; box-shadow: none; }
 .ace-ready { background: linear-gradient(90deg, #f0d48a, var(--brass)); border-radius: var(--r-sm); padding: 8px 10px; font-size: var(--fs-sm); }
-.ace-ready b { font: var(--fs-md) var(--display); letter-spacing: .08em; }
+.ace-ready b { font: var(--fs-md) var(--display); letter-spacing: var(--track); }
 
 /* enemy detail (Warden) */
-.e-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; text-align: center; font: var(--fs-xs) var(--display); letter-spacing: .1em; color: var(--ink-soft); }
+.e-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 4px; text-align: center; font: var(--fs-xs) var(--display); letter-spacing: var(--track-open); color: var(--ink-soft); }
 .e-stats b { display: block; font: var(--fs-md) var(--type); letter-spacing: 0; color: var(--ink); }
 .e-stats button { border: 1px solid var(--ink-faint); background: #fff; border-radius: var(--r-sm); padding: 4px 2px; cursor: pointer; font: inherit; color: inherit; }
 .e-stats button:hover { border-color: var(--rust); color: var(--rust); }
 .attacks { display: flex; flex-direction: column; gap: 4px; }
 .atk { display: grid; grid-template-columns: 1fr auto; gap: 2px 8px; align-items: center; padding: 5px 0; border-top: 1px dotted var(--line); font-size: var(--fs-sm); }
 .atk .an { font-weight: 700; }
-.atk .an small { font: var(--fs-xs) var(--display); letter-spacing: .1em; color: var(--ink-faint); margin-left: 4px; }
+.atk .an small { font: var(--fs-xs) var(--display); letter-spacing: var(--track-open); color: var(--ink-faint); margin-left: 4px; }
 .atk .ae { grid-column: 1; color: var(--ink-soft); }
 .atk .rolls { grid-row: 1 / span 2; grid-column: 2; display: flex; gap: 4px; }
-.atk .rolls button { font: var(--fs-xs) var(--display); letter-spacing: .06em; padding: 5px 7px 3px; border: 1px solid var(--ink); border-radius: var(--r-sm); background: var(--ink); color: var(--paper); }
+.atk .rolls button { font: var(--fs-xs) var(--display); letter-spacing: var(--track); padding: 5px 7px 3px; border: 1px solid var(--ink); border-radius: var(--r-sm); background: var(--ink); color: var(--paper); }
 .atk .rolls button.st-roll { background: transparent; color: var(--ink); }
-.atk .rolls button:hover { background: var(--rust); border-color: var(--rust); color: #fff; }
-details.more summary { cursor: pointer; font: var(--fs-sm) var(--display); letter-spacing: .12em; color: var(--rust); }
+.atk .rolls button:hover { background: var(--rust); border-color: var(--rust); color: var(--on-accent); }
+details.more summary { cursor: pointer; font: var(--fs-sm) var(--display); letter-spacing: var(--track-label); color: var(--rust); }
 details.more p { font-size: var(--fs-sm); margin: 6px 0; }
 .frenzy-row { font-size: var(--fs-sm); padding: 6px 8px; border-left: 3px solid var(--ink-faint); background: var(--shade-1); margin-top: 4px; }
 .frenzy-row.hit { border-left-color: var(--red); background: rgba(200,55,45,.1); }
-.frenzy-row b { font: var(--fs-sm) var(--display); letter-spacing: .08em; }
+.frenzy-row b { font: var(--fs-sm) var(--display); letter-spacing: var(--track); }
 
 /* loot (p. 79) */
 .loot { margin: 10px 0 4px; padding: 8px 10px; border: 1.5px dashed var(--brass, var(--brass)); border-radius: var(--radius); background: var(--surface); }
-.loot-h { font: var(--fs-md) var(--display); letter-spacing: .1em; font-weight: 400; color: var(--rust); }
+.loot-h { font: var(--fs-md) var(--display); letter-spacing: var(--track-open); font-weight: 400; color: var(--rust); }
 .loot-tro { font-size: var(--fs-sm); line-height: 1.35; margin: 6px 0; }
 .loot-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; margin: 6px 0; }
 .loot-row select { padding: 5px 7px; border: 1px solid var(--ink-faint); border-radius: var(--r-sm); background: var(--surface); font-size: var(--fs-sm); min-width: 0; max-width: 100%; }

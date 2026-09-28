@@ -64,7 +64,7 @@
 /* "Back to the table" */
 .sl-chip { position: fixed; left: 16px; bottom: 16px; z-index: var(--z-chip); padding: 10px 14px 8px; border-radius: var(--r-pill); border: 2px solid var(--felt-rail); background: var(--felt); color: var(--felt-ink); font: var(--fs-sm) var(--display); letter-spacing: var(--track); box-shadow: var(--shadow-pop); cursor: pointer; }
 .sl-chip .gl { width: 1em; height: 1em; vertical-align: -2px; }
-.sl-chip.turn { color: #fff; border-color: var(--brass); animation: sl-pulse 1.4s ease-in-out infinite; }
+.sl-chip.turn { color: var(--on-accent); border-color: var(--brass); animation: sl-pulse 1.4s ease-in-out infinite; }
 @keyframes sl-pulse { 50% { box-shadow: 0 0 0 6px rgba(201,164,92,.35), var(--shadow-pop); } }
 
 /* the Warden's Saloon card */
@@ -101,7 +101,7 @@
 .fr-card.dead .lk-card { opacity: .35; filter: grayscale(1); }
 .fr-card.bet .lk-card { box-shadow: 0 0 0 3px var(--gold), 0 4px 10px var(--shade-4); }
 .fr-card:not(:disabled):hover .lk-card { transform: translateY(-3px); }
-.fr-chip { position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); padding: 2px 6px 1px; border-radius: var(--r-pill); background: #a4401f; color: #fff; font: 11px var(--display); letter-spacing: .04em; white-space: nowrap; box-shadow: 0 2px 3px var(--shade-4); }
+.fr-chip { position: absolute; bottom: -6px; left: 50%; transform: translateX(-50%); padding: 2px 6px 1px; border-radius: var(--r-pill); background: #a4401f; color: var(--on-accent); font: 11px var(--display); letter-spacing: var(--track-tight); white-space: nowrap; box-shadow: 0 2px 3px var(--shade-4); }
 .fr-chip.copper { background: #b87333; clip-path: polygon(8% 0, 92% 0, 100% 50%, 92% 100%, 8% 100%, 0 50%); border-radius: 0; }
 .fr-chip small { display: none; }
 .fr-others { position: absolute; top: -4px; right: -2px; display: flex; gap: 1px; }
@@ -184,7 +184,7 @@
 .bj-note { margin: 0; color: var(--gold); font-size: var(--fs-sm); text-align: center; }
 .bj-amt { margin: 0; }
 .bj-amt .pm-btn { color: var(--ink); }
-.bj-amt .pm-btn:hover { color: #fff; }
+.bj-amt .pm-btn:hover { color: var(--on-accent); }
 
 /* drinking contest */
 .dk-bar { background: linear-gradient(#5a3a22, #3d2716); }
@@ -193,9 +193,9 @@
 .dk-glass.tipped { color: #b9552f; transform: rotate(-35deg); }
 .dk-seat.me { outline: 2px solid rgba(255, 214, 120, 0.7); }
 .dk-grit { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; color: #fff4dc; width: 100%; justify-content: center; }
-.dk-grit > span { font: var(--fs-xs) var(--display); letter-spacing: .1em; text-transform: uppercase; }
+.dk-grit > span { font: var(--fs-xs) var(--display); letter-spacing: var(--track-open); text-transform: uppercase; }
 .dk-grit .pm-btn { color: var(--ink); }
-.dk-grit .pm-btn:hover { color: #fff; }
+.dk-grit .pm-btn:hover { color: var(--on-accent); }
 .dk-grit small { width: 100%; text-align: center; }
 
 /* ---------- Skill moves ("powers"): one look everywhere — brass-edged buttons with the matchup underneath,
@@ -203,7 +203,7 @@
 .sl-table .btn.skill {
   display: inline-flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 14px 6px;
   border: 2px solid var(--brass); border-radius: var(--radius); background: rgba(201,164,92,.14); color: var(--on-dark-bright);
-  font: var(--fs-md)/1.1 var(--display); letter-spacing: .08em; box-shadow: 2px 2px 0 rgba(0,0,0,.35); cursor: pointer;
+  font: var(--fs-md)/1.1 var(--display); letter-spacing: var(--track); box-shadow: 2px 2px 0 rgba(0,0,0,.35); cursor: pointer;
   transition: transform .08s, box-shadow .08s, background .15s, color .15s;
 }
 .sl-table .btn.skill .gl { width: 1.1em; height: 1.1em; }
@@ -211,7 +211,7 @@
 .sl-table .btn.skill:hover:not(:disabled) { background: var(--brass); color: var(--ink); }
 .sl-table .btn.skill:active:not(:disabled) { transform: translate(2px, 2px); box-shadow: none; }
 .sl-power { flex-basis: 100%; display: grid; gap: 8px; justify-items: center; padding: 10px 12px; margin: 4px 0; border: 1px solid rgba(201,164,92,.45); border-radius: var(--radius); background: rgba(0,0,0,.18); }
-.sl-power-h { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: center; gap: 4px 10px; font: var(--fs-md) var(--display); letter-spacing: .12em; color: var(--brass); text-transform: uppercase; }
+.sl-power-h { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: center; gap: 4px 10px; font: var(--fs-md) var(--display); letter-spacing: var(--track-label); color: var(--brass); text-transform: uppercase; }
 .sl-power-h .gl { width: 1.1em; height: 1.1em; align-self: center; }
 .sl-power-h small { font: italic var(--fs-xs) var(--body); letter-spacing: 0; text-transform: none; color: var(--on-dark); }
 .sl-power-targets { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; }

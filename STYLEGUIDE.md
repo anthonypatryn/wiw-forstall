@@ -32,6 +32,7 @@ Everything below lives in `public/css/style.css`. Page stylesheets (`posse.css`,
 | `--info` (`--teal`) / `--info-tint` | #2f6d73 | neutral information, posse turn |
 | `--now` | pale gold | "it's their turn" row highlight |
 | `--on-dark` / `--on-dark-dim` / `--on-dark-bright` / `--on-dark-warn` | creams / pink | text on ink or iron backgrounds (nav, masthead, dark panels) |
+| `--on-accent` | #fff | text on a solid accent, success, danger or ink fill (selected chips, tags, badges) |
 | `--secret` / `--secret-tint` / `--secret-line` | purple | Warden-only and hidden-from-players things (hidden tokens, secret NPC notes) |
 
 **Themed screens** keep their own look, but only through these tokens:
@@ -51,7 +52,7 @@ Everything below lives in `public/css/style.css`. Page stylesheets (`posse.css`,
 | Rye | `--western` | rare flourishes only (Scanner target name, notebook title) |
 
 **Scale** — use these sizes only: `--fs-xs` 12 · `--fs-sm` 14 · `--fs-md` 16 · `--fs-lg` 18 · `--fs-xl` 22 · `--fs-2xl` 28 (card titles) · `--fs-3xl` 40 (hero numbers). Page titles use the masthead clamp.
-**Letter-spacing** for display text: `--track-tight` .04em (names, numbers) · `--track` .08em (buttons, chips) · `--track-wide` .14em (small caps labels, kickers).
+**Letter-spacing** for display text: `--track-tight` .04em (names, numbers) · `--track` .08em (buttons, chips) · `--track-open` .1em (headings, tags) · `--track-label` .12em (field and section labels) · `--track-wide` .14em (small caps labels, kickers). Only a handful of deliberately wide-set labels (.2em and up: the page-two label, the Trade name) keep their own value.
 Body text is 17px (16px on phones), line-height 1.5.
 
 ## Spacing, shape, depth
@@ -73,6 +74,7 @@ Body text is 17px (16px on phones), line-height 1.5.
 | Status pill | `.pill` (`.hot` `.ok` `.no` `.info` `.fs` `.wait`) | Statuses, flags, roll results |
 | List row | `.item-row` > `.item-who` + `.item-nums` | name + small facts left; `.hp-bar`, `.hp-num`, `.stat`, `.pm-btn` right. `.now` = their turn, `.sitting` = out |
 | Notice row | `.notice` (`.urgent`) | something waiting on you; link text + inline buttons |
+| Map controls | `.map-ctrls` | the zoom / fit buttons over the Map and the Battle Map |
 | Icon link grid | `.link-grid` | big "jump to" tiles: icon, bold name, small hint |
 | Checkbox | `label.check` > `input` | only for true on/off settings; prefer chips for choosing people/things |
 | Dice pool input | `poolHTML()` (`.dp`) | always Black/Gold number boxes — never ask for "3B1G" text |

@@ -24,7 +24,7 @@
 .deck.shuffling .dcard:nth-child(even) { animation: riffleR .7s ease-in-out; }
 @keyframes riffleL { 30% { transform: translate(-58px, -6px) rotate(-12deg); } 60% { transform: translate(-10px, 2px) rotate(-3deg); } }
 @keyframes riffleR { 30% { transform: translate(58px, -6px) rotate(12deg); } 60% { transform: translate(10px, 2px) rotate(3deg); } }
-.deck-count { font: var(--fs-md) var(--display); letter-spacing: .16em; color: var(--felt-ink); }
+.deck-count { font: var(--fs-md) var(--display); letter-spacing: var(--track-wide); color: var(--felt-ink); }
 
 .hand { display: grid; grid-template-columns: repeat(4, var(--cw)); gap: 18px; justify-content: center; }
 .slot { position: relative; width: var(--cw); height: calc(var(--ch) + 30px); display: flex; flex-direction: column; align-items: center; }
@@ -32,7 +32,7 @@
   content: ''; position: absolute; top: 0; left: 0; width: var(--cw); height: var(--ch); border-radius: var(--radius);
   border: 2px dashed rgba(207,227,211,.35);
 }
-.slot-label { position: absolute; bottom: 0; font: var(--fs-sm) var(--display); letter-spacing: .16em; color: var(--felt-ink); }
+.slot-label { position: absolute; bottom: 0; font: var(--fs-sm) var(--display); letter-spacing: var(--track-wide); color: var(--felt-ink); }
 
 /* ---------- cards ---------- */
 .pcard { position: absolute; top: 0; left: 0; width: var(--cw); height: var(--ch); perspective: 900px; cursor: pointer; }
@@ -74,9 +74,9 @@
 .btn.deal { font-size: var(--fs-2xl); padding: 12px 26px 10px; background: var(--rust); border-color: #3a1509; }
 .btn.deal:hover { background: #bf5329; }
 .btn.light { color: var(--surface-2); border-color: rgba(244,234,214,.6); }
-.btn.light:hover { background: var(--shade-3); color: #fff; }
+.btn.light:hover { background: var(--shade-3); color: var(--on-accent); }
 .seg { display: inline-flex; border: 1.5px solid rgba(244,234,214,.6); border-radius: var(--radius); overflow: hidden; }
-.seg button { background: transparent; border: 0; color: var(--felt-ink); font: var(--fs-sm) var(--display); letter-spacing: .1em; padding: 8px 12px 6px; }
+.seg button { background: transparent; border: 0; color: var(--felt-ink); font: var(--fs-sm) var(--display); letter-spacing: var(--track-open); padding: 8px 12px 6px; }
 .seg button[aria-checked="true"] { background: var(--surface-2); color: var(--felt); }
 .table-tip { grid-column: 1 / -1; text-align: center; margin: 0; font: italic var(--fs-sm) var(--body); color: var(--felt-ink); }
 
@@ -91,7 +91,7 @@
 .npc-top { display: flex; justify-content: space-between; gap: 8px; align-items: flex-start; }
 .npc-name { font: 400 var(--fs-xl)/1.1 var(--western); }
 .npc-traits { font: italic var(--fs-sm) var(--body); color: var(--ink-soft); }
-.npc label.f { display: flex; flex-direction: column; gap: 3px; font: var(--fs-xs) var(--display); letter-spacing: .14em; color: var(--ink-soft); }
+.npc label.f { display: flex; flex-direction: column; gap: 3px; font: var(--fs-xs) var(--display); letter-spacing: var(--track-wide); color: var(--ink-soft); }
 .npc input[type=text], .npc textarea { font: var(--fs-sm)/1.4 var(--body); border: 1px solid var(--line); border-radius: var(--r-sm); background: rgba(255,255,255,.7); padding: 6px 8px; width: 100%; letter-spacing: 0; color: var(--ink); }
 .npc textarea { min-height: 70px; resize: vertical; }
 .npc .secret-note { color: var(--secret); }
@@ -114,26 +114,26 @@
 .manual { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
 .manual label { min-width: 0; }
 .manual input:not([type=checkbox]) { width: 100%; min-width: 0; }
-.manual label { display: flex; flex-direction: column; gap: 3px; font: var(--fs-xs) var(--display); letter-spacing: .12em; color: var(--ink-soft); }
+.manual label { display: flex; flex-direction: column; gap: 3px; font: var(--fs-xs) var(--display); letter-spacing: var(--track-label); color: var(--ink-soft); }
 .manual input:not([type=checkbox]) { padding: 7px 9px; border: 1px solid var(--ink-faint); border-radius: var(--r-sm); background: var(--surface); font: var(--fs-md) var(--body); letter-spacing: 0; color: var(--ink); }
 .manual-go { grid-column: 1 / -1; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
 @media (max-width: 760px) { .manual { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
 .faction { border-top: 2px solid var(--ink); padding: 14px 0 6px; }
 .faction:first-child { border-top: 0; padding-top: 0; }
 .faction > h3 { margin: 0 0 10px; font: 400 var(--fs-2xl)/1 var(--western); }
-.faction > h3 small { font: var(--fs-xs) var(--display); letter-spacing: .14em; color: var(--ink-faint); margin-left: 8px; }
+.faction > h3 small { font: var(--fs-xs) var(--display); letter-spacing: var(--track-wide); color: var(--ink-faint); margin-left: 8px; }
 .book-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 12px; }
 .bnpc { background: var(--surface); border: 1.5px solid var(--ink); border-radius: var(--radius); padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; }
 .bnpc .hd { display: flex; gap: 10px; align-items: center; }
 .bnpc .hd img { width: 58px; height: 58px; border-radius: 50%; flex: none; box-shadow: 0 2px 4px var(--shade-3); }
 .bnpc .nm { font: 400 var(--fs-lg)/1.1 var(--western); }
-.bnpc .tag { font: var(--fs-xs) var(--display); letter-spacing: .14em; color: var(--rust); }
+.bnpc .tag { font: var(--fs-xs) var(--display); letter-spacing: var(--track-wide); color: var(--rust); }
 .bnpc q { font: italic var(--fs-sm)/1.35 var(--body); color: var(--ink-soft); }
 .bnpc p { margin: 0; font-size: var(--fs-sm); line-height: 1.4; }
 .bnpc .statline { display: flex; flex-wrap: wrap; gap: 4px 12px; font-size: var(--fs-xs); }
 .bnpc .statline span { white-space: nowrap; }
-.bnpc .statline b { font: var(--fs-xs) var(--display); letter-spacing: .12em; color: var(--ink-faint); font-weight: 400; margin-right: 3px; }
-.bnpc details summary { cursor: pointer; font: var(--fs-xs) var(--display); letter-spacing: .12em; color: var(--rust); }
+.bnpc .statline b { font: var(--fs-xs) var(--display); letter-spacing: var(--track-label); color: var(--ink-faint); font-weight: 400; margin-right: 3px; }
+.bnpc details summary { cursor: pointer; font: var(--fs-xs) var(--display); letter-spacing: var(--track-label); color: var(--rust); }
 .bnpc details p { margin: 4px 0; }
 .bnpc .acts { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: auto; }
 .bnpc .acts input { flex: 1 1 120px; min-width: 0; padding: 6px 8px; border: 1px solid var(--ink-faint); border-radius: var(--r-sm); font-size: var(--fs-sm); }
@@ -152,14 +152,14 @@ details.faction > summary::-webkit-details-marker { display: none; }
 details.faction > summary::before { content: '▸'; color: var(--rust); font-size: var(--fs-lg); transition: transform .2s; }
 details.faction[open] > summary::before { transform: rotate(90deg); }
 details.faction > summary h3 { margin: 0; font: 400 var(--fs-2xl)/1 var(--western); }
-details.faction > summary h3 small { font: var(--fs-xs) var(--display); letter-spacing: .14em; color: var(--ink-faint); margin-left: 8px; }
+details.faction > summary h3 small { font: var(--fs-xs) var(--display); letter-spacing: var(--track-wide); color: var(--ink-faint); margin-left: 8px; }
 details.faction[open] > summary { margin-bottom: 10px; }
 details.faction { padding: 12px 0; }
 details.faction:first-of-type { border-top: 0; }
 
 /* factions */
 .faction-new { display: grid; grid-template-columns: 1fr 2fr; gap: 10px 14px; margin-bottom: 14px; }
-.faction-new label { display: flex; flex-direction: column; gap: 4px; font: var(--fs-xs) var(--display); letter-spacing: .12em; color: var(--ink-soft); }
+.faction-new label { display: flex; flex-direction: column; gap: 4px; font: var(--fs-xs) var(--display); letter-spacing: var(--track-label); color: var(--ink-soft); }
 .faction-new input:not([type=checkbox]) { padding: 7px 9px; border: 1px solid var(--ink-faint); border-radius: var(--r-sm); background: var(--surface); font: var(--fs-md) var(--type); }
 .faction-new .manual-go { grid-column: 1 / -1; }
 @media (max-width: 600px) { .faction-new { grid-template-columns: 1fr; } }
@@ -169,7 +169,7 @@ details.fac > summary::-webkit-details-marker { display: none; }
 details.fac > summary::before { content: '▸'; color: var(--rust); font-size: var(--fs-lg); transition: transform .2s; }
 details.fac[open] > summary::before { transform: rotate(90deg); }
 details.fac > summary h3 { margin: 0; font: 400 var(--fs-xl)/1.1 var(--western); }
-details.fac > summary h3 small { display: block; font: var(--fs-xs) var(--display); letter-spacing: .14em; color: var(--ink-faint); margin-top: 2px; }
+details.fac > summary h3 small { display: block; font: var(--fs-xs) var(--display); letter-spacing: var(--track-wide); color: var(--ink-faint); margin-top: 2px; }
 details.fac[open] > summary { margin-bottom: 8px; }
 .fac textarea { min-height: 60px; }
 .fac-book { font-size: var(--fs-sm); margin: 6px 0; }
@@ -178,11 +178,11 @@ details.fac[open] > summary { margin-bottom: 8px; }
 .fac-members .mem i { opacity: .7; }
 .fac-members .mem button { border: 0; background: rgba(255,255,255,.18); color: inherit; width: 20px; height: 20px; border-radius: 50%; line-height: 1; cursor: pointer; }
 .fac-add select, .npc select[data-faction] { width: 100%; max-width: 420px; padding: 6px 8px; border: 1px solid var(--ink-faint); border-radius: var(--r-sm); background: var(--surface); font-size: var(--fs-sm); }
-.npc-faction { display: inline-block; margin: 4px 0 2px; padding: 3px 8px 1px; border-radius: var(--r-sm); background: var(--ink); color: var(--paper); font: var(--fs-xs) var(--display); letter-spacing: .12em; }
+.npc-faction { display: inline-block; margin: 4px 0 2px; padding: 3px 8px 1px; border-radius: var(--r-sm); background: var(--ink); color: var(--paper); font: var(--fs-xs) var(--display); letter-spacing: var(--track-label); }
 
 /* custom traits on a dealt stranger */
 .npc-extra { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 14px; max-width: 760px; margin: 14px auto 4px; text-align: left; }
-.npc-extra label { display: flex; flex-direction: column; gap: 3px; font: var(--fs-xs) var(--display); letter-spacing: .12em; color: var(--ink-soft); }
+.npc-extra label { display: flex; flex-direction: column; gap: 3px; font: var(--fs-xs) var(--display); letter-spacing: var(--track-label); color: var(--ink-soft); }
 .npc-extra label small { font: italic var(--fs-xs) var(--body); letter-spacing: 0; }
 .npc-extra input { padding: 7px 9px; border: 1px solid var(--ink-faint); border-radius: var(--r-sm); background: var(--surface); font: var(--fs-md) var(--body); color: var(--ink); }
 @media (max-width: 600px) { .npc-extra { grid-template-columns: 1fr; } }
@@ -194,10 +194,10 @@ details.fac[open] > summary { margin-bottom: 8px; }
 .stand-row .chip-row { justify-content: flex-end; }
 .stand-note { grid-column: 1 / -1; width: 100%; }
 .stand-why { grid-column: 1 / -1; margin: 0; font-size: var(--fs-sm); color: var(--ink-soft); }
-.pill.stand-revered, .chip-btn.stand-revered.on { background: var(--success); color: #fff; }
-.pill.stand-helpful, .chip-btn.stand-helpful.on { background: var(--teal); color: #fff; }
-.pill.stand-suspicious, .chip-btn.stand-suspicious.on { background: var(--sunset); color: #fff; }
-.pill.stand-hostile, .chip-btn.stand-hostile.on { background: var(--danger); color: #fff; }
+.pill.stand-revered, .chip-btn.stand-revered.on { background: var(--success); color: var(--on-accent); }
+.pill.stand-helpful, .chip-btn.stand-helpful.on { background: var(--teal); color: var(--on-accent); }
+.pill.stand-suspicious, .chip-btn.stand-suspicious.on { background: var(--sunset); color: var(--on-accent); }
+.pill.stand-hostile, .chip-btn.stand-hostile.on { background: var(--danger); color: var(--on-accent); }
 @media (max-width: 600px) { .stand-row { grid-template-columns: 1fr; } .stand-row .chip-row { justify-content: flex-start; } }
 /* what the expansion books add to a faction, and where to find their people */
 .fac-note { margin: 8px 0; padding: 8px 10px; background: var(--wash); border-left: 3px solid var(--brass); font-size: var(--fs-sm); }
