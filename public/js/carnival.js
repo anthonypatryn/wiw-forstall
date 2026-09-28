@@ -1,7 +1,7 @@
 // The Traveling Carnival (Judgment on the Iron Road pp. 62–67). Players: an invite when the Warden opens it, then a
 // scene of booths played with their own sheet (every roll is public, in the Table Log) and a prize booth.
 // The Warden: a card on Run the Game (Start Something) to open or pack up the carnival and see who's won what.
-import { esc, api, toast, store, me, savedPin, startPolling, ask, onChange, dollars as $$ } from './common.js';
+import { esc, api, toast, store, me, savedPin, startPolling, ask, onChange, placeChip, dollars as $$ } from './common.js';
 import { gl } from './glyphs.js';
 import { play, preload, ambience } from './sound.js';
 import { runShow, hasShow } from './carnival-shows.js';
@@ -91,14 +91,14 @@ export function openCarnival() {
 
 // the corner chip to get back in while the carnival's in town
 function showChip() {
-  let chip = document.querySelector('.cv-chip');
+  let chip = document.querySelector('.cv-chip:not(.ct-chip)'); // the contests chip shares the look
   if (!view?.open || scene) { chip?.remove(); return; }
   carnivalStyles();
   if (!chip) {
     chip = document.createElement('button');
     chip.type = 'button'; chip.className = 'cv-chip';
     chip.addEventListener('click', openCarnival);
-    document.body.append(chip);
+    placeChip(chip);
   }
   chip.innerHTML = `${gl('star')} The carnival`;
 }

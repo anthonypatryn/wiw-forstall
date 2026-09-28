@@ -1,5 +1,5 @@
 // The saloon card table: the Warden's Saloon card (Run the Game), the players' invite, and the full-screen poker table.
-import { esc, api, toast, startPolling, savedPin, store, rollPopup, ask, onChange, me, dollars as $$ } from './common.js';
+import { esc, api, toast, startPolling, savedPin, store, rollPopup, ask, onChange, me, placeChip, dollars as $$ } from './common.js';
 import { gl } from './glyphs.js';
 import { play, ambience } from './sound.js';
 import { attention } from './attention.js';
@@ -633,7 +633,7 @@ function showChip() {
     chip = document.createElement('button');
     chip.type = 'button'; chip.className = 'sl-chip';
     chip.addEventListener('click', () => { store.set('wiw.saloonHidden', ''); openTable(false); showChip(); });
-    document.body.append(chip);
+    placeChip(chip);
   }
   const myTurn = turnOf(t) === `pc:${me()}`;
   chip.classList.toggle('turn', !!myTurn);

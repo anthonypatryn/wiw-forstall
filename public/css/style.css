@@ -1188,3 +1188,6 @@ body .fs-dig-row .num-wrap .fs-dig { width: 100%; }
 .loading { margin: 6px 0; color: var(--ink-soft); font-style: italic; font-size: var(--fs-sm); display: flex; align-items: center; gap: 8px; }
 .loading::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: currentColor; opacity: .6; animation: loadPulse .9s ease-in-out infinite alternate; }
 @keyframes loadPulse { from { opacity: .15; } }
+
+/* "back to …" chips (carnival, saloon, contests) ride at the front of the bottom-right button row */
+.fab-row :is(.cv-chip, .sl-chip) { position: static; }

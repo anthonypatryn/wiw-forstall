@@ -273,6 +273,8 @@ export function toast(msg, err = false) {
 // which character this device plays ("This is me")
 export const me = () => store.get('wiw.me', null);
 // 12.5 → "$12.50"
+// a "back to …" chip (carnival, saloon, contests) sits at the front of the bottom-right button row
+export const placeChip = (chip) => { const row = document.querySelector('.fab-row'); if (row) row.prepend(chip); else document.body.append(chip); };
 export const dollars = (n) => `$${Number(n || 0).toFixed(2)}`;
 // a flag for this browser tab only (e.g. "Later" on a pop-up); safe when storage is blocked
 export const tabFlag = (k) => { try { return sessionStorage.getItem(k); } catch { return null; } };

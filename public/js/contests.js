@@ -2,7 +2,7 @@
 // one, enter with their own sheet (and horse), and can put a side bet on anyone. When the Warden runs it, everyone
 // watches it play out: horses down the track leg by leg, or the tricks round by round. Every roll is in the Table Log.
 // The Warden: a card on Run the Game (Start Something) to open, run and close it.
-import { esc, api, toast, store, me, savedPin, startPolling, ask, onChange, dollars as $$ } from './common.js';
+import { esc, api, toast, store, me, savedPin, startPolling, ask, onChange, placeChip, dollars as $$ } from './common.js';
 import { gl } from './glyphs.js';
 import { play, preload, ambience } from './sound.js';
 import { carnivalStyles } from './carnival.js';
@@ -170,7 +170,7 @@ function showChip() {
     chip = document.createElement('button');
     chip.type = 'button'; chip.className = 'cv-chip ct-chip';
     chip.addEventListener('click', openContest);
-    document.body.append(chip);
+    placeChip(chip);
   }
   chip.innerHTML = `${gl(view.kind === 'race' ? 'horseshoe' : 'revolver')} The ${view.kind === 'race' ? 'race' : 'trick shots'}`;
 }
