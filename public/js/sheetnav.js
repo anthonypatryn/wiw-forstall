@@ -4,34 +4,71 @@
 import { esc } from './common.js';
 import { gl } from './glyphs.js';
 
+// Each view: [key, label, icon, rows]. A row is a set of columns side by side; a column stacks sections, and its last
+// box stretches so the columns end level (no holes). Fight also shows the fight panel and At a glance above it.
 export const SHEET_VIEWS = [
-  ['fight', 'Fight', 'revolver', ['fight', 'quickref', 'health', 'statuses', 'weapons']],
-  ['skills', 'Skills & Abilities', 'star', ['skills', 'abilities', 'talents']],
-  ['gear', 'Gear & Inventory', 'satchel', ['gear', 'inventory', 'forstall']],
-  ['rides', 'Horse & Mech', 'horseshoe', ['horse', 'mech']],
-  ['story', 'Story & Reputation', 'scroll', ['disposition', 'appearance', 'reputation', 'history']],
-  ['prestige', 'Prestige & Titles', 'trophy', ['prestige', 'achievements']],
+  ['fight', 'Fight', 'revolver', [[['health'], ['statuses'], ['gear']], [['weapons']]]],
+  ['skills', 'Skills & Prestige', 'star', [[['skills'], ['talents'], ['prestige']], [['abilities']]]],
+  ['gear', 'Gear & Rides', 'satchel', [[['inventory', 'horse'], ['forstall', 'mech']]]],
+  ['story', 'Story & Titles', 'scroll', [[['achievements'], ['disposition', 'appearance', 'history', 'reputation']]]],
 ];
+const ABOVE = { fight: ['fight', 'quickref'] }; // shown in place, above the view's own layout
+const OLD = { rides: 'gear', prestige: 'skills' }; // views that were merged
+const secsOf = (v) => [...(ABOVE[v] || []), ...SHEET_VIEWS.find(([k]) => k === v)[3].flat(2)];
 const ALWAYS = new Set(['starter']); // the creation checklist stays in every view
 const KEY = 'wiw.sheetView';
 const stored = () => { try { return localStorage.getItem(KEY) || 'fight'; } catch { return 'fight'; } };
 let current = null;
 
-export const viewOf = (section) => SHEET_VIEWS.find(([, , , secs]) => secs.includes(section))?.[0] || 'all';
+export const viewOf = (section) => SHEET_VIEWS.find(([k]) => secsOf(k).includes(section))?.[0] || 'all';
 export const currentView = () => current;
+
+// put every section back where the printed sheet has it
+function restore(view) {
+  view.querySelectorAll('[data-sv-home]').forEach((home) => { const el = document.getElementById(`sec-${home.dataset.svHome}`); if (el) home.replaceWith(el); else home.remove(); });
+  view.querySelector('.sv-stage')?.remove();
+}
+// lay one view's sections out in its own rows and columns (a placeholder remembers each one's home)
+function stage(view, v) {
+  const rows = SHEET_VIEWS.find(([k]) => k === v)[3];
+  const box = document.createElement('div');
+  box.className = 'sheet sv-stage';
+  for (const row of rows) {
+    const r = document.createElement('div');
+    r.className = `sv-row cols-${row.length}`;
+    for (const col of row) {
+      const c = document.createElement('div');
+      c.className = 'sv-col';
+      for (const id of col) {
+        const el = document.getElementById(`sec-${id}`);
+        if (!el) continue;
+        const home = document.createElement('i');
+        home.hidden = true; home.dataset.svHome = id;
+        el.before(home); c.append(el);
+      }
+      r.append(c);
+    }
+    box.append(r);
+  }
+  view.querySelector('.sheet')?.before(box);
+}
 
 // show one view's sections (or all), and tidy the pages around them
 export function applySheetView(view, v, { remember = true } = {}) {
+  v = OLD[v] || v;
   if (!SHEET_VIEWS.some(([k]) => k === v) && v !== 'all') v = 'fight';
   current = v;
   if (remember) { try { localStorage.setItem(KEY, v); } catch {} }
-  const secs = v === 'all' ? null : new Set(SHEET_VIEWS.find(([k]) => k === v)[3]);
+  restore(view);
+  const secs = v === 'all' ? null : new Set(secsOf(v));
   view.dataset.sv = v;
   view.querySelectorAll('[id^="sec-"]').forEach((el) => {
     const id = el.id.slice(4);
     el.classList.toggle('sv-off', !!secs && !secs.has(id) && !ALWAYS.has(id));
   });
-  view.querySelectorAll('.sheet').forEach((pg) => pg.classList.toggle('sv-off', !!secs && ![...pg.children].some((c) => !c.classList.contains('sv-off'))));
+  if (secs) stage(view, v);
+  // a page left with nothing on screen steps aside too (measured with the page showing)
+  view.querySelectorAll('.sheet:not(.sv-stage)').forEach((pg) => { pg.classList.remove('sv-off'); if (secs && ![...pg.children].some((c) => c.getClientRects().length)) pg.classList.add('sv-off'); });
   document.querySelectorAll('#sheet-nav [data-sv]').forEach((a) => { if (a.dataset.sv === v) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
 }
 

@@ -421,27 +421,27 @@ body.on-sheet .wrap { max-width: 1480px; }
 
 
 /* Table view: the sheet trimmed to what you need at the table */
-#sheet-view.table-view :is(#sec-prestige, #sec-achievements, #sec-talents, #sec-disposition, #sec-appearance, #sec-reputation, #sec-history, #sec-inventory, .tv-empty) { display: none; }
-#sheet-view.table-view .sheet-toc :is([data-jump="prestige"], [data-jump="talents"], [data-jump="achievements"], [data-jump="disposition"], [data-jump="reputation"], [data-jump="inventory"]) { display: none; }
+#sheet-view.table-view[data-sv="all"] :is(#sec-prestige, #sec-achievements, #sec-talents, #sec-disposition, #sec-appearance, #sec-reputation, #sec-history, #sec-inventory, .tv-empty) { display: none; }
+#sheet-view.table-view[data-sv="all"] .sheet-toc :is([data-jump="prestige"], [data-jump="talents"], [data-jump="achievements"], [data-jump="disposition"], [data-jump="reputation"], [data-jump="inventory"]) { display: none; }
 #sheet-view.table-view :is(.sh-art, .sh-logo, .sbox-sub, select.pick, .rm-btn, [data-upg-box], .pack-row, .w-grid .f:has(textarea)) { display: none; }
 #sheet-view.table-view .sheet-head { min-height: 0; padding-top: 6px; padding-bottom: 6px; }
 #sheet-view.table-view .sheet { gap: 10px; }
-#sheet-view.table-view { display: flex; flex-direction: column; }
-#sheet-view.table-view > .sheet { display: contents; }
-#sheet-view.table-view > * { order: 50; }
-#sheet-view.table-view > .sheet-bar { order: 1; }
-#sheet-view.table-view > .sheet-head { order: 2; }
-#sheet-view.table-view > .fight-panel { order: 3; }
-#sheet-view.table-view #sec-health { order: 4; }
-#sheet-view.table-view #sec-statuses { order: 5; }
-#sheet-view.table-view #sec-weapons { order: 6; }
-#sheet-view.table-view #sec-gear { order: 7; }
-#sheet-view.table-view #sec-forstall { order: 8; }
-#sheet-view.table-view #sec-horse { order: 9; }
-#sheet-view.table-view #sec-mech { order: 10; }
-#sheet-view.table-view #sec-skills { order: 11; }
-#sheet-view.table-view #sec-abilities { order: 12; }
-#sheet-view.table-view .sbox { margin-bottom: 12px; }
+#sheet-view.table-view[data-sv="all"] { display: flex; flex-direction: column; }
+#sheet-view.table-view[data-sv="all"] > .sheet { display: contents; }
+#sheet-view.table-view[data-sv="all"] > * { order: 50; }
+#sheet-view.table-view[data-sv="all"] > .sheet-bar { order: 1; }
+#sheet-view.table-view[data-sv="all"] > .sheet-head { order: 2; }
+#sheet-view.table-view[data-sv="all"] > :is(.fight-panel, .quickref) { order: 3; }
+#sheet-view.table-view[data-sv="all"] #sec-health { order: 4; }
+#sheet-view.table-view[data-sv="all"] #sec-statuses { order: 5; }
+#sheet-view.table-view[data-sv="all"] #sec-weapons { order: 6; }
+#sheet-view.table-view[data-sv="all"] #sec-gear { order: 7; }
+#sheet-view.table-view[data-sv="all"] #sec-forstall { order: 8; }
+#sheet-view.table-view[data-sv="all"] #sec-horse { order: 9; }
+#sheet-view.table-view[data-sv="all"] #sec-mech { order: 10; }
+#sheet-view.table-view[data-sv="all"] #sec-skills { order: 11; }
+#sheet-view.table-view[data-sv="all"] #sec-abilities { order: 12; }
+#sheet-view.table-view[data-sv="all"] .sbox { margin-bottom: 12px; }
 #sheet-view.table-view .sk-name :is(small, em) { display: none; }
 .inv-item .inv-where { font-weight: 400; color: var(--teal); }
 .inv-item .inv-off { font-weight: 700; color: var(--rust); }
@@ -572,11 +572,16 @@ body.on-sheet .sv-nav { display: grid; gap: 6px; position: sticky; top: calc(var
 /* one view at a time: the rest of the sheet steps aside */
 #sheet-view .sv-off { display: none; }
 #sheet-view:not([data-sv="all"]) .page-label, #sheet-view:not([data-sv="all"]) .sheet-toc { display: none; }
-#sheet-view:not([data-sv="all"]) .sheet { border-top: 1.5px solid var(--ink); border-radius: var(--radius); }
-#sheet-view:not([data-sv="all"]) .page1 { grid-template-areas: none; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
-#sheet-view:not([data-sv="all"]) .page1 > .sbox { grid-area: auto; }
-#sheet-view:not([data-sv="all"]) .page1 > :is(.weapons, .abilities) { grid-column: 1 / -1; }
-#sheet-view:not([data-sv="all"]) .sheet + .sheet { margin-top: 14px; }
+/* a view's own layout (sheetnav.js stages its sections): rows of columns; each column's last box stretches so they end level */
+.sv-stage { display: grid; gap: 14px; border-top: 1.5px solid var(--ink); border-radius: var(--radius); }
+.sv-row { display: grid; gap: 14px; align-items: stretch; }
+.sv-row.cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.sv-row.cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.sv-col { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
+.sv-col > .sbox { grid-area: auto; margin: 0; align-content: start; } /* a stretched box keeps its contents at the top */
+.sv-col > .sbox:last-child { flex: 1 0 auto; }
+@container (max-width: 1000px) { .sv-row.cols-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } .sv-row.cols-3 > .sv-col:last-child { grid-column: 1 / -1; } }
+@container (max-width: 700px) { .sv-row.cols-2, .sv-row.cols-3 { grid-template-columns: minmax(0, 1fr); } .sv-row.cols-3 > .sv-col:last-child { grid-column: auto; } }
 @media (max-width: 900px) {
   body.on-sheet .sv-desk { grid-template-columns: minmax(0, 1fr); gap: 10px; }
   body.on-sheet .sv-nav { position: static; max-height: none; display: flex; flex-wrap: nowrap; align-items: center; overflow-x: auto; padding: 6px; gap: 6px; }
