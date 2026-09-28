@@ -547,6 +547,7 @@ body.warden-mode .sheet-bar .save-state { color: #9fb0b7; }
 
 /* ---------- the sheet's side nav (public/js/sheetnav.js): the posse, then this sheet's views ---------- */
 .sv-nav { display: none; }
+body.on-sheet .sv-desk > * { min-width: 0; }
 body.on-sheet .sv-desk { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 20px; align-items: start; }
 body.on-sheet .sv-nav { display: grid; gap: 6px; position: sticky; top: calc(var(--nav-h, 46px) + 12px); padding: 10px; background: var(--surface); border: 1.5px solid var(--line); border-radius: var(--radius);
   box-shadow: 3px 3px 0 var(--shade-2, rgba(0,0,0,.12)); max-height: calc(100vh - var(--nav-h, 46px) - 24px); overflow-y: auto; }
@@ -574,7 +575,7 @@ body.on-sheet .sv-nav { display: grid; gap: 6px; position: sticky; top: calc(var
 #sheet-view:not([data-sv="all"]) .page1 > :is(.weapons, .abilities) { grid-column: 1 / -1; }
 #sheet-view:not([data-sv="all"]) .sheet + .sheet { margin-top: 14px; }
 @media (max-width: 900px) {
-  body.on-sheet .sv-desk { grid-template-columns: 1fr; gap: 10px; }
+  body.on-sheet .sv-desk { grid-template-columns: minmax(0, 1fr); gap: 10px; }
   body.on-sheet .sv-nav { position: static; max-height: none; display: flex; flex-wrap: nowrap; align-items: center; overflow-x: auto; padding: 6px; gap: 6px; }
   .sv-h, .sv-posse, .sv-views a .gl, .sv-note { display: none; }
   .sv-posse-sel { display: block; flex: none; }
