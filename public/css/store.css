@@ -37,7 +37,7 @@
 .item p { margin: 0; font-size: var(--fs-sm); line-height: 1.4; color: var(--ink-soft); }
 .item .src { font: italic var(--fs-xs) var(--body); color: var(--ink-faint); }
 .item .actions { display: flex; gap: 6px; align-items: center; margin-top: auto; padding-top: 4px; flex-wrap: wrap; }
-.item .actions input { width: 52px; padding: 5px; border: 1px solid var(--ink-faint); border-radius: var(--r-sm); font: var(--fs-sm) var(--type); text-align: center; }
+.item .actions input { width: 52px; padding: 5px; border: 1px solid var(--ink-faint); border-radius: var(--r-sm); font: var(--fs-sm) var(--body); text-align: center; }
 .item .actions .btn { font-size: var(--fs-sm); padding: 7px 10px 5px; box-shadow: none; }
 
 .shopper select { width: 100%; padding: 8px 10px; border: 1.5px solid var(--ink); border-radius: var(--radius); background: var(--surface); font: var(--fs-md) var(--body); }
@@ -50,7 +50,7 @@
 .req .st { font: var(--fs-xs) var(--display); letter-spacing: var(--track-open); padding: 2px 6px 0; border-radius: var(--r-sm); background: var(--wash); }
 .req .st.pending { background: var(--brass); } .req .st.approved { background: var(--success); color: var(--on-accent); } .req .st.denied, .req .st.cancelled { background: var(--line); }
 .req .ctrl { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
-.req .ctrl input { width: 84px; padding: 5px; border: 1px solid var(--ink-faint); border-radius: var(--r-sm); font: var(--fs-sm) var(--type); }
+.req .ctrl input { width: 84px; padding: 5px; border: 1px solid var(--ink-faint); border-radius: var(--r-sm); font: var(--fs-sm) var(--body); }
 .req .ctrl .btn { font-size: var(--fs-sm); padding: 6px 9px 4px; box-shadow: none; }
 .inv-row { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px dotted var(--line); font-size: var(--fs-sm); }
 .inv-row small { color: var(--ink-faint); display: block; font-size: var(--fs-xs); }

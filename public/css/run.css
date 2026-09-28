@@ -30,7 +30,7 @@
 .aw-nums { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-bottom: 10px; }
 .aw-nums label { display: flex; flex-direction: column; gap: 4px; font: var(--fs-xs) var(--display); letter-spacing: var(--track-open); color: var(--ink-soft); min-width: 0; }
 .aw-nums label .gl { width: 1em; height: 1em; vertical-align: -2px; color: var(--rust); }
-.aw-nums input { width: 100%; min-width: 0; padding: 8px 10px; border: 1px solid var(--shade-3); border-radius: var(--r-sm); background: var(--surface); font: var(--fs-lg) var(--display); letter-spacing: var(--track-tight); color: var(--ink); box-sizing: border-box; }
+.aw-nums input { width: 100%; min-width: 0; padding: 8px 10px; border: 1px solid var(--shade-3); border-radius: var(--r-sm); background: var(--surface); font: var(--fs-lg) var(--body); color: var(--ink); box-sizing: border-box; }
 #award .btn, #jackpot .btn { margin-top: 4px; }
 
 /* card headers: title left, button right (the shared header row wasn't loaded on this page) */

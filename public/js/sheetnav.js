@@ -7,10 +7,10 @@ import { gl } from './glyphs.js';
 // Each view: [key, label, icon, rows]. A row is a set of columns side by side; a column stacks sections, and its last
 // box stretches so the columns end level (no holes). Fight also shows the fight panel and At a glance above it.
 export const SHEET_VIEWS = [
-  ['fight', 'Fight', 'revolver', [[['health'], ['statuses'], ['gear']], [['weapons']]]],
-  ['skills', 'Skills & Prestige', 'star', [[['skills'], ['talents'], ['prestige']], [['abilities']]]],
-  ['gear', 'Gear & Rides', 'satchel', [[['inventory', 'horse'], ['forstall', 'mech']]]],
-  ['story', 'Story & Titles', 'scroll', [[['achievements'], ['disposition', 'appearance', 'history', 'reputation']]]],
+  ['fight', 'Fight', 'revolver', [[['health'], ['statuses', 'gear']], [['weapons']]]],
+  ['skills', 'Skills & Prestige', 'star', [[['skills', 'talents'], ['prestige']], [['abilities']]]],
+  ['gear', 'Gear & Rides', 'satchel', [[['inventory', 'forstall'], ['horse', 'mech']]]],
+  ['story', 'Story & Titles', 'scroll', [[['disposition'], ['appearance'], ['history']], [['reputation']], [['achievements']]]],
 ];
 const ABOVE = { fight: ['fight', 'quickref'] }; // shown in place, above the view's own layout
 const OLD = { rides: 'gear', prestige: 'skills' }; // views that were merged

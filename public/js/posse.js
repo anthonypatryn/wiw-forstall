@@ -208,7 +208,7 @@ function buildSheet(p) {
       </div>
       <div class="ranges">${[['arms', 'Arm’s Reach'], ['short', 'Short Range'], ['long', 'Long Range'], ['distant', 'Distant']].map(([k, l]) =>
         `<div class="range-in"><span class="rl">${l}</span>${poolHTML(`data-pool="weapons.${i}.${k}"`, l)}<button type="button" class="roll-mini" data-roll-path="weapons.${i}.${k}" data-roll-label="${l.toLowerCase()}" data-weapon="${i}" aria-label="Roll ${l}">${gl('die')}</button></div>`).join('')}</div>
-      <div class="w-grid">${[0, 1, 2, 3].map((u) => inp(`weapons.${i}.upgrades.${u}`, `${u + 1}.`)).join('')}</div>
+      <div class="w-grid upg-ins">${[0, 1, 2, 3].map((u) => inp(`weapons.${i}.upgrades.${u}`, `${u + 1}.`)).join('')}</div>
       <div class="upg" data-upg-box="weapon" data-i="${i}"></div>
       <div class="w-grid ammo">${[0, 1].map((a) => inp(`weapons.${i}.ammo.${a}.name`, 'Sp. Ammo', { list: 'ammo-list', max: 40 }) + `<div class="rds-ctl">${inp(`weapons.${i}.ammo.${a}.rds`, 'rds', { max: 6, cls: 'narrow' })}<button type="button" class="pmb sm" data-rds="${i}.${a}" data-d="-1" aria-label="One less">−</button><button type="button" class="pmb sm" data-rds="${i}.${a}" data-d="1" aria-label="One more">+</button></div>`).join('')}</div>
       <div class="w-info" data-winfo="${i}"></div>
@@ -299,7 +299,7 @@ function buildSheet(p) {
           <div class="w-grid">${inp('forstall.grit', 'Grit', { max: 4, cls: 'narrow' })}${inp('forstall.duration', 'Duration (hrs)', { max: 6, cls: 'narrow2' })}
             <div class="range-in full"><span class="rl">Sweep</span>${poolHTML('data-pool="forstall.sweep"', 'Sweep')}<button type="button" class="roll-mini" data-roll-path="forstall.sweep" data-roll-label="Forstall Sweep" data-talent="Forstalls" aria-label="Roll Sweep">${gl('die')}</button></div></div>
           <div class="row2" data-dyn="charges"></div>
-          <div class="w-grid">${[0, 1, 2, 3].map((u) => inp(`forstall.upgrades.${u}`, `${u + 1}.`)).join('')}</div>
+          <div class="w-grid upg-ins">${[0, 1, 2, 3].map((u) => inp(`forstall.upgrades.${u}`, `${u + 1}.`)).join('')}</div>
           <div class="upg" data-upg-box="forstall" data-i="0"></div>
           <p class="muted kz-help">Memory slots: program a frequency the posse has decoded on the Forstall Scanner. Monsters in these slots take +1 from your Sweeps and can be Burst.</p>
           <div class="w-grid">${[0, 1, 2, 3].map((u) => `<label class="f"><span>Memory slot ${u + 1}</span><select data-path="forstall.kz.${u}" data-kz></select></label>`).join('')}</div>`, 'forstall')}
@@ -318,7 +318,7 @@ function buildSheet(p) {
           <div class="ride-dyn" data-dyn="mech"></div>
           <div class="range-in mech-def"><span class="rl">Defense</span>${poolHTML('data-pool="mech.defense"', 'Mech defense')}<button type="button" class="roll-mini" data-roll-path="mech.defense" data-roll-label="Mech Defense" data-talent="Mechs" aria-label="Roll mech defense">${gl('die')}</button></div>
           <div class="w-grid">${inp('mech.supplies', 'Supply slots', { cls: 'narrow2' })}${inp('mech.cover', 'Player cover', { cls: 'narrow2' })}</div>
-          <div class="w-grid">${[0, 1, 2, 3].map((u) => inp(`mech.upgrades.${u}`, `${u + 1}.`)).join('')}</div>
+          <div class="w-grid upg-ins">${[0, 1, 2, 3].map((u) => inp(`mech.upgrades.${u}`, `${u + 1}.`)).join('')}</div>
           <div class="upg" data-upg-box="mech" data-i="0"></div>`, 'mech')}
     <datalist id="ammo-list">${catalog.filter((x) => x.sub === 'Special Ammo & Arrows').map((x) => `<option value="${esc(x.name)}">${esc(x.effect || '')} · $${x.cost}</option>`).join('')}</datalist>
     </div>
@@ -727,6 +727,13 @@ function renderRides(view, p) {
 
 // ---------- in the fight: attack, Dodge, relieve Statuses, end turn (pp. 41–49) ----------
 const checkSeen = new Set(); let checksPrimed = false;
+// viewing hides what isn't filled in: empty weapon and gear slots, blank ammo rows, empty notes (Edit shows every slot)
+function markEmpty(view, p) {
+  view.querySelectorAll('.weapon[data-w]').forEach((el) => { const w = p.weapons[el.dataset.w] || {}; el.classList.toggle('is-empty', !(w.model || w.manufacturer)); });
+  view.querySelectorAll('.gear[data-g]').forEach((el) => { const g = p.gear[el.dataset.g] || {}; el.classList.toggle('is-empty', !(g.item || g.type || g.notes)); });
+  view.querySelectorAll('.w-grid.ammo').forEach((el) => el.classList.toggle('is-empty', ![...el.querySelectorAll('input[data-path$=".name"]')].some((x) => x.value.trim())));
+  view.querySelectorAll('.f').forEach((f) => { const t = f.querySelector(':scope > textarea'); if (t) f.classList.toggle('is-empty', !t.value.trim()); });
+}
 function renderFight(view, p) {
   const box = view.querySelector('[data-dyn="fight"]');
   const c = data.combat || {};
@@ -949,6 +956,7 @@ function hydrate(p) {
   renderAch(view, p);
   renderUpgrades(view, p);
   renderRides(view, p);
+  markEmpty(view, p);
   renderFight(view, p);
   renderQuickRef(view.querySelector('[data-dyn="quickref"]'), p, { meta, combat: data.combat || {}, posse: data.posse || [], enemies: data.enemies || [] });
   applyMode(view, p);

@@ -47,8 +47,8 @@ Everything below lives in `public/css/style.css`. Page stylesheets (`posse.css`,
 | Font | Token | Use |
 |---|---|---|
 | Bebas Neue | `--display` | headings, labels, buttons, chips, numbers. Always UPPERCASE look, letter-spaced |
-| Alegreya | `--body` | reading text, descriptions, form input text |
-| Special Elite | `--type` | "machine" text: Kurtz frequencies, PINs, dice counts, timestamps |
+| Alegreya | `--body` | reading text, descriptions, and **every form field** (inputs, selects, textareas; style.css sets it as the default) |
+| Special Elite | `--type` | "machine" text: Kurtz frequencies, PINs, dice counts, timestamps. The only fields in it: dice-count boxes (`.dp`), the Kurtz frequency and the PIN |
 | Rye | `--western` | rare flourishes only (Scanner target name, notebook title) |
 
 **Scale** — use these sizes only: `--fs-xs` 12 · `--fs-sm` 14 · `--fs-md` 16 · `--fs-lg` 18 · `--fs-xl` 22 · `--fs-2xl` 28 (card titles) · `--fs-3xl` 40 (hero numbers). Page titles use the masthead clamp.
@@ -70,6 +70,7 @@ Body text is 17px (16px on phones), line-height 1.5.
 | Contents bar | `nav.toc-bar` | sticky under the nav; pill links to each band; `.on` = current band |
 | Button | `.btn` | solid ink → rust on hover. `.secondary` = outline. `.small`. `.danger` = solid red (do the dangerous thing). `.secondary.danger` = red outline (delete/clear). Icon first: `${gl('x')} Label` |
 | Tap chip | `.chip-btn` (`.on`) | pick one or many (who rolls, how hard, who's in the fight). Optional `<small>` second line |
+| Chip row | `.chip-row` | a wrapping row of `.chip-btn`s with 8px gaps; always wrap chips in one (or in a `.field-step`) so they never touch |
 | Labelled step | `.field-step` > `span` + chips/field | small-caps label above a row of chips or an input |
 | Status pill | `.pill` (`.hot` `.ok` `.no` `.info` `.fs` `.wait`) | Statuses, flags, roll results |
 | List row | `.item-row` > `.item-who` + `.item-nums` | name + small facts left; `.hp-bar`, `.hp-num`, `.stat`, `.pm-btn` right. `.now` = their turn, `.sitting` = out |

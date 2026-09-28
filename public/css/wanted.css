@@ -1,6 +1,6 @@
 /* Wanted posters: the posting board, town tabs, and the old-timey poster itself (art, so the paper keeps a few literal tones) */
 .wt-towns { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: var(--sp-2); }
-.wt-other select { padding: 8px 10px; border: 1.5px solid var(--ink); border-radius: var(--r-pill); background: var(--surface); font: var(--fs-sm) var(--display); letter-spacing: var(--track); }
+.wt-other select { padding: 8px 10px; border: 1.5px solid var(--ink); border-radius: var(--r-pill); background: var(--surface); font: var(--fs-sm) var(--body); }
 #wt-tools { display: flex; gap: 8px; flex-wrap: wrap; }
 
 /* the board: rough planks the posters are nailed to */

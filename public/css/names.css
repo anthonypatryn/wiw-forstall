@@ -160,7 +160,7 @@ details.faction:first-of-type { border-top: 0; }
 /* factions */
 .faction-new { display: grid; grid-template-columns: 1fr 2fr; gap: 10px 14px; margin-bottom: 14px; }
 .faction-new label { display: flex; flex-direction: column; gap: 4px; font: var(--fs-xs) var(--display); letter-spacing: var(--track-label); color: var(--ink-soft); }
-.faction-new input:not([type=checkbox]) { padding: 7px 9px; border: 1px solid var(--ink-faint); border-radius: var(--r-sm); background: var(--surface); font: var(--fs-md) var(--type); }
+.faction-new input:not([type=checkbox]) { padding: 7px 9px; border: 1px solid var(--ink-faint); border-radius: var(--r-sm); background: var(--surface); font: var(--fs-md) var(--body); }
 .faction-new .manual-go { grid-column: 1 / -1; }
 @media (max-width: 600px) { .faction-new { grid-template-columns: 1fr; } }
 details.fac { border-top: 2px solid var(--ink); padding: 10px 0; }

@@ -77,12 +77,12 @@ body.on-sheet .wrap { max-width: 1480px; }
 .sbox > h3::before, .sbox > h3::after { content: ''; flex: 1; height: 0; border-top: 1.5px solid var(--ink); }
 .sbox > h3 span { padding-top: 4px; }
 .sbox-sub { text-align: center; font: italic var(--fs-xs) var(--body); color: var(--rust); margin: 1px 0 8px; }
-.sbox-in { display: flex; flex-direction: column; gap: 10px; }
+.sbox-in { display: flex; flex-direction: column; gap: 8px; }
 
 .f { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
 .f > span { font: var(--fs-xs) var(--display); letter-spacing: var(--track-label); color: var(--ink-soft); text-transform: uppercase; }
 .f input, .f select, .f textarea {
-  font: var(--fs-md) var(--type); color: var(--ink); border: 0; border-bottom: 1.5px solid rgba(34,31,31,.5); background: transparent; padding: 3px 2px; width: 100%; min-width: 0; border-radius: 0;
+  font: var(--fs-md) var(--body); color: var(--ink); border: 0; border-bottom: 1.5px solid rgba(34,31,31,.5); background: transparent; padding: 3px 2px; width: 100%; min-width: 0; border-radius: 0;
 }
 .f textarea { border: 1px solid var(--line); border-radius: var(--r-sm); min-height: 90px; resize: vertical; font: var(--fs-md)/1.4 var(--body); padding: 6px 8px; background: rgba(255,255,255,.6); }
 .f input:focus, .f select:focus, .f textarea:focus { outline: none; border-color: var(--rust); background: var(--accent-tint); }
@@ -149,7 +149,9 @@ body.on-sheet .wrap { max-width: 1480px; }
 @media (max-width: 600px) { .st-row { grid-template-columns: 1fr auto; } .st-desc { grid-column: 1 / -1; grid-row: 2; padding-left: 36px; } }
 
 /* weapons & gear */
-.weapon, .gear { border: 1px solid var(--line); border-radius: var(--radius); padding: 10px; display: flex; flex-direction: column; gap: 8px; background: var(--surface); }
+.weapon, .gear { border: 1px solid var(--line); border-radius: var(--radius); padding: 8px 10px; display: flex; flex-direction: column; gap: 6px; background: var(--surface); }
+/* viewing: what isn't filled in steps aside, and installed upgrades show as chips instead of the 1–4 lines (Edit shows everything) */
+.viewing .sheet :is(.weapon, .gear, .w-grid.ammo, .f).is-empty, .viewing .sheet .upg-ins { display: none; }
 .w-top { display: flex; gap: 8px; align-items: center; }
 .pick { flex: 1; min-width: 0; padding: 6px 8px; border: 1.5px dashed var(--ink-faint); border-radius: var(--r-sm); background: var(--surface); font: var(--fs-sm) var(--body); color: var(--ink-soft); }
 .pick:focus { border-style: solid; border-color: var(--rust); outline: none; }
@@ -181,7 +183,7 @@ body.on-sheet .wrap { max-width: 1480px; }
 .row2.aces { justify-content: center; }
 
 /* page two */
-.talents { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 4px 12px; }
+.sbox-in > .talents { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 4px 12px; }
 .talents label { display: flex; gap: 8px; align-items: flex-start; font-size: var(--fs-sm); cursor: pointer; }
 .talents input { margin-top: 4px; width: 16px; height: 16px; accent-color: var(--rust); }
 .talents small { color: var(--ink-faint); }
@@ -224,8 +226,8 @@ body.on-sheet .wrap { max-width: 1480px; }
 .pack-row { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; padding: 0 0 12px; margin-bottom: 10px; border-bottom: 1px dotted var(--line); }
 .pack-row .rl { font: var(--fs-xs) var(--display); letter-spacing: var(--track-open); color: var(--rust); }
 .pack-row small { flex-basis: 100%; font-size: var(--fs-xs); }
-.rep select { width: 100%; padding: 5px 6px; border: 0; border-bottom: 1px solid var(--ink); background: transparent; font: var(--fs-md) var(--type); }
-.ride-art { display: block; width: 100%; max-height: 220px; object-fit: contain; margin: 4px 0 10px; border-radius: var(--r-sm); mix-blend-mode: multiply; }
+.rep select { width: 100%; padding: 5px 6px; border: 0; border-bottom: 1px solid var(--ink); background: transparent; font: var(--fs-md) var(--body); }
+.ride-art { display: block; width: 100%; max-height: 150px; object-fit: contain; margin: 2px 0 6px; border-radius: var(--r-sm); mix-blend-mode: multiply; }
 
 /* Prestige tier loadout (p. 33) */
 .tier-kit { flex-basis: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
@@ -580,8 +582,12 @@ body.on-sheet .sv-nav { display: grid; gap: 6px; position: sticky; top: calc(var
 .sv-col { display: flex; flex-direction: column; gap: 14px; min-width: 0; }
 .sv-col > .sbox { grid-area: auto; margin: 0; align-content: start; } /* a stretched box keeps its contents at the top */
 .sv-col > .sbox:last-child { flex: 1 0 auto; }
+/* a full-width section spreads its list out instead of running long and thin */
+.sv-row.cols-1 .reps { grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); }
+.sv-row.cols-1 .ach-list { columns: 2 320px; column-gap: 28px; }
+.sv-row.cols-1 .ach-list li { break-inside: avoid; }
 @container (max-width: 1000px) { .sv-row.cols-3 { grid-template-columns: repeat(2, minmax(0, 1fr)); } .sv-row.cols-3 > .sv-col:last-child { grid-column: 1 / -1; } }
-@container (max-width: 700px) { .sv-row.cols-2, .sv-row.cols-3 { grid-template-columns: minmax(0, 1fr); } .sv-row.cols-3 > .sv-col:last-child { grid-column: auto; } }
+@container (max-width: 860px) { .sv-row.cols-2, .sv-row.cols-3 { grid-template-columns: minmax(0, 1fr); } .sv-row.cols-3 > .sv-col:last-child { grid-column: auto; } }
 @media (max-width: 900px) {
   body.on-sheet .sv-desk { grid-template-columns: minmax(0, 1fr); gap: 10px; }
   body.on-sheet .sv-nav { position: static; max-height: none; display: flex; flex-wrap: nowrap; align-items: center; overflow-x: auto; padding: 6px; gap: 6px; }

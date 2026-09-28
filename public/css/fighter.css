@@ -22,7 +22,7 @@
 .hp .bar i { display: block; height: 100%; background: linear-gradient(180deg, var(--red), var(--danger)); transition: width .3s; }
 .hp .num { font: var(--fs-xl)/1 var(--display); min-width: 58px; text-align: right; }
 .pm { display: inline-flex; gap: 4px; }
-.hp input { width: 48px; padding: 4px; border: 1px solid var(--ink-faint); border-radius: var(--r-sm); font: var(--fs-sm) var(--type); text-align: center; background: #fff; }
+.hp input { width: 48px; padding: 4px; border: 1px solid var(--ink-faint); border-radius: var(--r-sm); font: var(--fs-sm) var(--body); text-align: center; background: var(--surface); }
 
 .row2 { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
 .lbl { font: var(--fs-sm) var(--display); letter-spacing: var(--track-wide); color: var(--ink-soft); min-width: 44px; }

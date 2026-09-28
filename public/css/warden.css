@@ -10,7 +10,7 @@
 .pick select, .custom-form input, .custom-form select {
   padding: 10px 12px; border: 1.5px solid var(--ink); border-radius: var(--radius); background: var(--surface); font-size: var(--fs-md);
 }
-.pick select { flex: 1 1 320px; min-width: 0; font-family: var(--type); }
+.pick select { flex: 1 1 320px; min-width: 0; }
 .small-note { font-size: var(--fs-sm); margin: 10px 0 0; }
 
 .w-kz { display: flex; align-items: center; gap: 6px; margin-top: 4px; }

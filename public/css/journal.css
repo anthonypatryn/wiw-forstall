@@ -42,7 +42,7 @@ button.jq-tick { cursor: pointer; }
 .jq-tools { margin-top: 10px; flex-wrap: wrap; }
 
 /* clues: a corkboard of pinned paper notes */
-.jc-filter select { margin-bottom: var(--sp-3); padding: 8px 10px; border: 1.5px solid var(--ink); border-radius: var(--r-pill); background: var(--surface); font: var(--fs-sm) var(--display); letter-spacing: var(--track); max-width: 100%; }
+.jc-filter select { margin-bottom: var(--sp-3); padding: 8px 10px; border: 1.5px solid var(--ink); border-radius: var(--r-pill); background: var(--surface); font: var(--fs-sm) var(--body); max-width: 100%; }
 .jc-board {
   display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 22px 18px; padding: 24px 18px;
   border-radius: var(--radius); border: 6px solid #6b4a2f; box-shadow: inset 0 0 30px var(--shade-4);

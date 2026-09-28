@@ -70,7 +70,7 @@
 .presets button span { position: absolute; left: 0; right: 0; bottom: 0; background: rgba(20,16,14,.8); color: var(--on-accent); font: var(--fs-xs) var(--display); letter-spacing: var(--track); padding: 3px 4px 1px; }
 .presets button[aria-pressed="true"] { outline: 3px solid var(--brass); outline-offset: 1px; }
 .field-inline { display: flex; align-items: center; gap: 8px; font: var(--fs-sm) var(--display); letter-spacing: var(--track-open); color: var(--ink-soft); margin: 6px 0; }
-.field-inline input[type=number] { width: 64px; padding: 4px 6px; border: 1px solid var(--ink-faint); border-radius: var(--r-sm); font: var(--fs-sm) var(--type); }
+.field-inline input[type=number] { width: 64px; padding: 4px 6px; border: 1px solid var(--ink-faint); border-radius: var(--r-sm); font: var(--fs-sm) var(--body); }
 .field-inline input[type=range] { flex: 1; accent-color: var(--rust); }
 .nudge { display: flex; align-items: center; gap: 4px; font: var(--fs-sm) var(--display); letter-spacing: var(--track-open); color: var(--ink-soft); margin: 4px 0 8px; }
 .nudge span { margin-right: 6px; }
