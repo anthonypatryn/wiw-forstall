@@ -544,3 +544,43 @@ body.warden-mode .sheet-bar .save-state { color: #9fb0b7; }
 .qr-line { font-size: var(--fs-xs); }
 @media (max-width: 900px) { .qr-grid { grid-template-columns: 1fr; } }
 @media print { .quickref { display: none !important; } }
+
+/* ---------- the sheet's side nav (public/js/sheetnav.js): the posse, then this sheet's views ---------- */
+.sv-nav { display: none; }
+body.on-sheet .sv-desk { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 20px; align-items: start; }
+body.on-sheet .sv-nav { display: grid; gap: 6px; position: sticky; top: calc(var(--nav-h, 46px) + 12px); padding: 10px; background: var(--surface); border: 1.5px solid var(--line); border-radius: var(--radius);
+  box-shadow: 3px 3px 0 var(--shade-2, rgba(0,0,0,.12)); max-height: calc(100vh - var(--nav-h, 46px) - 24px); overflow-y: auto; }
+.sv-h { margin: 6px 4px 0; font: var(--fs-xs) var(--display); letter-spacing: .2em; color: var(--ink-soft); }
+.sv-posse, .sv-views { display: grid; gap: 2px; }
+.sv-posse a, .sv-views a { display: flex; align-items: center; gap: 8px; padding: 7px 10px 5px; border-radius: var(--r-sm); color: var(--ink); text-decoration: none; border-left: 3px solid transparent; }
+.sv-posse a { flex-wrap: wrap; gap: 0 6px; font-size: var(--fs-sm); }
+.sv-posse a small { width: 100%; color: var(--ink-soft); font-size: var(--fs-xs); }
+.sv-posse a .gl { width: 1em; height: 1em; color: var(--brass); }
+.sv-posse a.sv-all-chars { font-style: italic; opacity: .8; }
+.sv-views a { font: var(--fs-md) var(--display); letter-spacing: .08em; }
+.sv-views a .gl { width: 1.1em; height: 1.1em; flex: none; opacity: .85; }
+.sv-posse a:hover, .sv-views a:hover { background: var(--accent-tint); }
+.sv-posse a[aria-current="page"], .sv-views a[aria-current="page"] { background: var(--accent); color: #fff; border-left-color: var(--gold); }
+.sv-posse a[aria-current="page"] small { color: rgba(255,255,255,.8); }
+.sv-views a.sv-whole { font: italic var(--fs-sm) var(--body, inherit); letter-spacing: 0; margin-top: 4px; }
+.sv-note { margin: 0 4px; font-size: var(--fs-xs); color: var(--ink-soft); }
+.sv-posse-sel { display: none; }
+/* one view at a time: the rest of the sheet steps aside */
+#sheet-view .sv-off { display: none !important; }
+#sheet-view:not([data-sv="all"]) .page-label, #sheet-view:not([data-sv="all"]) .sheet-toc { display: none; }
+#sheet-view:not([data-sv="all"]) .sheet { border-top: 1.5px solid var(--ink); border-radius: var(--radius); }
+#sheet-view:not([data-sv="all"]) .page1 { grid-template-areas: none; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+#sheet-view:not([data-sv="all"]) .page1 > .sbox { grid-area: auto; }
+#sheet-view:not([data-sv="all"]) .page1 > :is(.weapons, .abilities) { grid-column: 1 / -1; }
+#sheet-view:not([data-sv="all"]) .sheet + .sheet { margin-top: 14px; }
+@media (max-width: 900px) {
+  body.on-sheet .sv-desk { grid-template-columns: 1fr; gap: 10px; }
+  body.on-sheet .sv-nav { position: static; max-height: none; display: flex; flex-wrap: nowrap; align-items: center; overflow-x: auto; padding: 6px; gap: 6px; }
+  .sv-h, .sv-posse, .sv-views a .gl, .sv-note { display: none; }
+  .sv-posse-sel { display: block; flex: none; }
+  .sv-posse-sel select { max-width: 150px; padding: 5px 6px; border: 1px solid var(--ink-faint); border-radius: var(--r-sm); background: var(--surface); font-size: var(--fs-sm); }
+  .sv-views { display: flex; gap: 4px; }
+  .sv-views a { white-space: nowrap; padding: 6px 10px 4px; font-size: var(--fs-sm); }
+  .sv-views a.sv-whole { margin-top: 0; }
+}
+@media print { .sv-nav { display: none !important; } body.on-sheet .sv-desk { display: block; } }

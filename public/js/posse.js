@@ -6,6 +6,7 @@ import { gl } from './glyphs.js';
 import { stashSummary } from './stash.js';
 import { runTour, SHEET_TOUR } from './tour.js';
 import { renderQuickRef, wireQuickRef } from './quickref.js';
+import { applySheetView, renderSheetNav, wireSheetNav, startView, viewOf, currentView } from './sheetnav.js';
 import { faceUrl, portraitUrl, pickPortrait, clearPortrait, showImage } from './portrait.js';
 
 const EP = '/api/combat';
@@ -379,6 +380,7 @@ function wireSheet(p) {
     if (!j) return;
     e.preventDefault();
     const el = document.getElementById(`sec-${j.dataset.jump}`);
+    if (el?.classList.contains('sv-off')) { applySheetView(view, viewOf(j.dataset.jump)); packSheet(); }
     if (el?.tagName === 'DETAILS') el.open = true;
     el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   });
@@ -1095,13 +1097,18 @@ function render() {
     renderList();
     return;
   }
-  if (builtFor !== p.id) { editMode.clear(); buildSheet(p); builtFor = p.id; window.scrollTo(0, 0); }
+  const making = p.done === false;
+  if (builtFor !== p.id) { editMode.clear(); buildSheet(p); builtFor = p.id; window.scrollTo(0, 0); applySheetView($('#sheet-view'), startView(making), { remember: false }); packSheet(); madeView = making; }
+  else if (madeView !== making) { applySheetView($('#sheet-view'), startView(making), { remember: false }); packSheet(); madeView = making; } // just saved: into the views
   if (wants === 'edit') { history.replaceState(null, '', `#${p.id}`); if (p.done !== false) unlockSheet(p).then((ok) => { if (ok) hydrate(pcById(p.id)); }); }
   hydrate(p);
-  // new players: a short tour the first time they open their own finished sheet
-  if (p.id === myId() && p.done !== false) { const force = tourAsked; tourAsked = false; setTimeout(() => runTour(SHEET_TOUR, 'sheet', { force }), 700); }
+  renderSheetNav($('#sheet-nav'), p, data.posse, myId(), { making });
+  // new players: a short tour the first time they open their own finished sheet (it walks the whole sheet)
+  if (p.id === myId() && p.done !== false) { const force = tourAsked; tourAsked = false; setTimeout(() => { if (!savedPin() && (force || !store.get('wiw.tour.sheet', false))) { applySheetView($('#sheet-view'), 'all', { remember: false }); packSheet(); } runTour(SHEET_TOUR, 'sheet', { force }); }, 700); }
 }
 let tourAsked = new URLSearchParams(location.search).has('tour');
+let madeView = null; // was the sheet on screen still being made (so it showed whole)?
+wireSheetNav($('#sheet-nav'), $('#sheet-view'), () => packSheet());
 window.addEventListener('hashchange', render);
 $('#sheet-view').addEventListener('focusout', () => setTimeout(() => { if (vitalsStale) render(); }, 60));
 
