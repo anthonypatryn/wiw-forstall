@@ -438,3 +438,20 @@ body.warden-mode .paint-bar { border-color: var(--w-teal); }
 .tp-quick small { flex-basis: 100%; }
 .tp-quick .gl { align-self: center; }
 .d-tags:empty, .d-st:empty { display: none; }
+
+/* night & weather over the map (the gradients draw the weather: art colours) */
+.wx { position: absolute; inset: 0; pointer-events: none; z-index: 2; transition: background .6s; }
+.wx[data-w="night"] { background: radial-gradient(ellipse at 50% 45%, rgba(10, 20, 45, .25), rgba(5, 10, 30, .62)); }
+.wx[data-w="rain"], .wx[data-w="storm"] { background: repeating-linear-gradient(105deg, rgba(200, 220, 255, .16) 0 1px, transparent 1px 9px), rgba(30, 45, 70, .28); background-size: 60px 60px, auto; animation: wx-rain .5s linear infinite; }
+.wx[data-w="storm"] { background-color: rgba(15, 20, 40, .45); }
+.wx[data-w="dust"] { background: radial-gradient(ellipse at 30% 40%, rgba(190, 140, 70, .35), transparent 60%), rgba(170, 120, 60, .38); animation: wx-drift 8s ease-in-out infinite alternate; }
+.wx[data-w="fog"] { background: radial-gradient(ellipse at 50% 50%, rgba(235, 238, 240, .15), rgba(225, 230, 235, .7) 75%); }
+.wx[data-w="snow"] { background: radial-gradient(circle, rgba(255, 255, 255, .8) 0 1.5px, transparent 2px) 0 0 / 34px 34px, radial-gradient(circle, rgba(255, 255, 255, .6) 0 1px, transparent 1.5px) 17px 17px / 34px 34px, rgba(210, 225, 240, .22); animation: wx-snow 6s linear infinite; }
+@keyframes wx-rain { to { background-position: -12px 60px, 0 0; } }
+@keyframes wx-snow { to { background-position: 0 340px, 17px 357px, 0 0; } }
+@keyframes wx-drift { to { background-position: 40px -20px, 0 0; } }
+.wx-banner { position: absolute; top: 10px; left: 50%; transform: translateX(-50%); z-index: 3; max-width: calc(100% - 140px); padding: 5px 12px 4px; border-radius: var(--r-pill); background: var(--ink); color: var(--on-dark-bright); font-size: var(--fs-sm); box-shadow: var(--shadow-soft); pointer-events: none; text-align: center; }
+.wx-banner b { font: var(--fs-sm) var(--display); letter-spacing: var(--track); color: var(--gold); }
+.wx-set input { flex-basis: 100%; }
+html.less-motion .wx { animation: none !important; }
+@media (prefers-reduced-motion: reduce) { .wx { animation: none; } }

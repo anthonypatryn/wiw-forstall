@@ -920,9 +920,25 @@ function renderWarden() {
   renderFsWarden();
 }
 
+// ---------- night & weather: a tint over the map on every screen, and the penalty the Warden chose ----------
+const WX = { '': ['Clear', ''], night: ['Night', '−1 die at Long Range and beyond; Distant can’t be seen'], rain: ['Rain', 'Mud: moving costs double Grit'], dust: ['Dust storm', '−1 die at Short Range and beyond'],
+  fog: ['Fog', 'Can’t see or target past Short Range'], snow: ['Snow', 'Rough ground: moving costs double Grit; −1 die to Finesse'], storm: ['Thunderstorm', '−1 die at Long Range; lightning is the Warden’s call'] };
+let wxPick = null;
+function renderWeather() {
+  const w = data?.weather;
+  $('#wx').dataset.w = w?.kind || '';
+  const b = $('#wx-banner');
+  b.hidden = !w;
+  if (w) b.innerHTML = `<b>${esc(WX[w.kind]?.[0] || w.kind)}</b>${w.note ? ` · ${esc(w.note)}` : ''}`;
+  if (!warden || document.activeElement?.id === 'wx-note') return;
+  if (wxPick === null) wxPick = w?.kind || '';
+  $('#wx-kinds').innerHTML = Object.entries(WX).map(([k, [l]]) => `<button type="button" class="chip-btn${wxPick === k ? ' on' : ''}" data-wx="${k}">${l}</button>`).join('');
+  if (!$('#wx-note').dataset.touched) { $('#wx-note').value = w?.kind === wxPick ? w.note || '' : WX[wxPick]?.[1] || ''; }
+}
 function render() {
   if (dragging) return; // don't yank a token out from under a drag
   renderStage();
+  renderWeather();
   renderTerrain();
   renderFields();
   renderRanges();
@@ -1366,6 +1382,9 @@ $('#fs-add').addEventListener('submit', async (e) => {
   const f = await act({ action: 'addForstall', kind: $('#fs-kind').value, name: $('#fs-name').value.trim(), ...(sel ? { col: sel.col, row: sel.row } : {}) }, 'Forstall placed — drag it where you want it.');
   if (f?.id) { $('#fs-name').value = ''; selFs = f.id; }
 });
+$('#wx-kinds').addEventListener('click', (e) => { const b = e.target.closest('[data-wx]'); if (!b) return; wxPick = b.dataset.wx; delete $('#wx-note').dataset.touched; $('#wx-note').value = WX[wxPick]?.[1] || ''; renderWeather(); });
+$('#wx-note').addEventListener('input', (e) => { e.target.dataset.touched = '1'; });
+$('#wx-save').addEventListener('click', async () => { await act({ action: 'weather', kind: wxPick || '', note: $('#wx-note').value }, wxPick ? `${WX[wxPick][0]} over the map.` : 'Clear skies.'); delete $('#wx-note').dataset.touched; });
 $('#fs-cave').addEventListener('change', (e) => act({ action: 'cave', value: e.target.checked }, e.target.checked ? 'Cave: Sweeps roll 1 fewer die.' : 'Out of the cave.'));
 
 // ---------- data & boot ----------
