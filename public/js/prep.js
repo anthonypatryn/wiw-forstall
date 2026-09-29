@@ -46,7 +46,7 @@ function renderEditor() {
     <div class="field-step"><span>BATTLE MAP</span>${MAPS.map(([v, l]) => `<button type="button" class="chip-btn${ed.battleMap === v ? ' on' : ''}" data-map="${v}">${l}</button>`).join('')}</div>
     <div class="prep-rows">${ed.enemies.map((e, i) => `<div class="prep-row">
         <select aria-label="Enemy" data-row="enemies" data-i="${i}" data-k="profile"><option value="">Pick a monster or NPC…</option>
-          <optgroup label="Monsters">${monsters.map((m) => opt(m.name, m.name, e.profile)).join('')}</optgroup>
+          ${['Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Titan'].map((sz) => { const g = monsters.filter((m) => m.size === sz).sort((a, b) => a.name.localeCompare(b.name)); return g.length ? `<optgroup label="Monsters · ${sz}">${g.map((m) => opt(m.name, m.name, e.profile)).join('')}</optgroup>` : ''; }).join('')}
           <optgroup label="Book NPCs">${npcProfiles.filter((n) => n.faction).map((n) => opt(n.key, n.name, e.profile)).join('')}</optgroup>
           <optgroup label="Human combatants (p. 191)">${npcProfiles.filter((n) => !n.faction).map((n) => opt(n.key, n.name.replace('Human - ', ''), e.profile)).join('')}</optgroup></select>
         <input data-row="enemies" data-i="${i}" data-k="name" maxlength="40" value="${esc(e.name)}" placeholder="Name (optional)">
