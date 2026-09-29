@@ -1399,3 +1399,17 @@ test('Poker: a palmed card goes up your sleeve and counts at the showdown (best 
     assert.throws(() => saloonAction(st, { action: 'palm', pc: 'a', card: 1 }, ctx), /Once a hand/);
   }
 });
+
+test('Boot Hill: a death keeps a headstone (how, epitaph, best moments from the log); reviving clears it', () => {
+  const state = freshCombat();
+  const pc = publicAction(state, { action: 'addPc', trade: 'Hunter', name: 'Tess' }, { warden: true });
+  state.log.unshift({ type: 'roll', who: 'Tess', label: 'Attack · Rifle', hits: 7, aces: 2, dice: [] }, { type: 'event', text: 'Jackpot! The posse votes Tess the play of the game.' });
+  publicAction(state, { action: 'pc', id: pc.id, op: 'die', how: 'Eaten by the Golden Bear' }, { warden: true });
+  assert.equal(pc.dead, true); assert.equal(pc.death.how, 'Eaten by the Golden Bear');
+  assert.ok(pc.death.moments.some((m) => /Jackpot/.test(m))); assert.ok(pc.death.moments.some((m) => /7 Hits \(2 Aces\)/.test(m)));
+  publicAction(state, { action: 'pc', id: pc.id, op: 'epitaph', epitaph: 'She never missed twice.' }, { warden: false });
+  assert.equal(pc.death.epitaph, 'She never missed twice.');
+  publicAction(state, { action: 'pc', id: pc.id, op: 'revive' }, { warden: true });
+  assert.equal(pc.dead, false); assert.equal(pc.death, undefined);
+  assert.throws(() => publicAction(state, { action: 'pc', id: pc.id, op: 'epitaph', epitaph: 'x' }, { warden: false }), /still kicking/);
+});

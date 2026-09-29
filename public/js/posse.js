@@ -997,7 +997,7 @@ function hydrate(p) {
       ${cylinder(p.grit)}
       ${bleedPanel(p, meta.skills)}
       ${!p.dead && !p.bleeding && p.health === 0 && p.statuses?.Unconscious > 0 ? '<p class="bleed"><b>UNCONSCIOUS</b> — saved! Relieve Unconscious (roll Intuition) to wake up with 1 Health.</p>' : ''}
-      ${p.dead ? `<p class="bleed"><b>FALLEN</b> — this character has died. If the story allows it, the Warden can bring them back.${warden ? ` <button type="button" class="btn small" data-revive>${gl('heart')} Revive</button>` : ''}</p>` : ''}
+      ${p.dead ? `<p class="bleed"><b>FALLEN</b> — this character has died; their headstone is on <a href="/boothill">Boot Hill</a>. If the story allows it, the Warden can bring them back.${warden ? ` <button type="button" class="btn small" data-revive>${gl('heart')} Revive</button>` : ''}</p>` : ''}
       ${p.dead ? '' : `<div class="rest-row"><span class="rl">REST</span>
         <select data-camp-skill aria-label="Skill to roll at camp">${meta.skills.map((s) => `<option value="${s}">${s} (${esc(String(p.skills[s.toLowerCase()] || '—').toUpperCase())})</option>`).join('')}</select>
         <button class="btn small secondary" type="button" data-camp title="Roll a Skill; regain Health equal to Hits (p. 52)">${gl('fire')} Campfire</button>

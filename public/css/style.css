@@ -555,6 +555,7 @@ body.nav-open .fab-row, body.nav-open .hud-strip { display: none; }
 /* Bleeding Out on a fighter card and on the sheet (pale warning ink on deep red) */
 .bleed { background: var(--danger-deep); color: var(--on-dark-warn); border-radius: var(--r-sm); padding: 8px 10px; font-size: var(--fs-sm); }
 .bleed b { font: var(--fs-md) var(--display); letter-spacing: var(--track-wide); color: var(--on-dark-warn); }
+.bleed a { color: var(--on-dark-bright); }
 .bleed .skills { display: flex; gap: 4px; flex-wrap: wrap; margin: 6px 0; }
 .bleed .skills button { font: var(--fs-xs) var(--display); letter-spacing: var(--track); padding: 4px 7px 2px; border-radius: var(--r-sm); border: 1px solid var(--on-dark-warn); background: transparent; color: var(--on-dark-warn); }
 .bleed .skills button.done { background: var(--on-dark-warn); color: var(--danger-deep); text-decoration: line-through; }
