@@ -26,7 +26,7 @@ export function setPin(p) { wardenPin = p; }
 export async function api(method, body, query = '', endpoint = '/api/scan') {
   const headers = { 'Content-Type': 'application/json' };
   // pages that never ran their own unlock (the Posse Stash page, dialogs opened anywhere) still act as the Warden in this tab
-  const pin = wardenPin || savedPin();
+  const pin = TV ? null : wardenPin || savedPin(); // the TV screen never acts as the Warden
   if (pin) headers['x-warden-pin'] = pin;
   let r;
   try { r = await fetch(endpoint + query, { method, headers, body: body ? JSON.stringify(body) : undefined }); }
@@ -44,7 +44,7 @@ const DEPS = {
   '/api/scan': ['state', 'battle', 'combat'], '/api/combat': ['combat', 'battle', 'shop', 'whispers'], '/api/battle': ['battle', 'combat'],
   '/api/handouts': ['handouts', 'combat'], '/api/journal': ['journal', 'map', 'npcs', 'wanted'], '/api/lockpick': ['locks', 'combat', 'shop'],
   '/api/map': ['map', 'combat'], '/api/npcs': ['npcs'], '/api/papers': ['papers', 'combat', 'map', 'session', 'wanted'],
-  '/api/saloon': ['saloon', 'combat'], '/api/carnival': ['carnival', 'combat'], '/api/contest': ['contest', 'combat'], '/api/sound': ['sound'], '/api/scenes': ['scenes'], '/api/session': ['session', 'combat'], '/api/shop': ['shop', 'combat'],
+  '/api/saloon': ['saloon', 'combat'], '/api/carnival': ['carnival', 'combat'], '/api/contest': ['contest', 'combat'], '/api/sound': ['sound'], '/api/tv': ['tv'], '/api/scenes': ['scenes'], '/api/session': ['session', 'combat'], '/api/shop': ['shop', 'combat'],
   '/api/wanted': ['wanted', 'combat', 'journal', 'map', 'npcs'], '/api/whispers': ['whispers', 'combat'],
 };
 const PULSE_MS = 2500, PULSE_HIDDEN_MS = 15000, PULSE_RETRY_MS = 5000;
@@ -324,7 +324,7 @@ export function mountNav(active) {
   const el = document.querySelector('[data-nav]');
   if (!el) return;
   navActive = active ?? navActive;
-  const on = !!pinStore.get();
+  const on = !!savedPin(); // (never on the TV screen)
   // Warden mode sticks until "Switch to player view": the scanner link goes to the Warden's scanner
   const cur = navActive === '/warden' || (navActive === '/' && on) ? (on ? '/warden' : '/') : navActive;
   const items = on ? NAV_WARDEN : NAV_PLAYER;
@@ -345,7 +345,7 @@ export function mountNav(active) {
         ${on ? `<button type="button" class="nav-undo" aria-expanded="false" title="Undo a recent change" aria-label="Undo a recent change">↶</button>
           <button type="button" class="nav-needs" aria-expanded="false" title="What's waiting on you"><span class="nn">Needs you</span> <b>·</b></button>
           <div class="nav-group nav-warden"><button type="button" class="nav-drop" aria-expanded="false">${gl('star')} Warden <i>▾</i></button>
-            <div class="nav-menu right" hidden><a href="/run">Run the Game</a><a href="/battle">Battle Map</a><a href="/run#grp-tools">Backup &amp; homebrew</a><button type="button" data-player>Switch to player view</button></div></div>`
+            <div class="nav-menu right" hidden><a href="/run">Run the Game</a><a href="/battle">Battle Map</a><a href="/tv" target="_blank" rel="noopener">TV screen (for the table)</a><a href="/run#grp-tools">Backup &amp; homebrew</a><button type="button" data-player>Switch to player view</button></div></div>`
           : `<button type="button" class="nav-unlock" title="Warden PIN">${gl('star')} <span>Warden</span></button>`}
         <button type="button" class="nav-menu-btn" aria-expanded="false">Menu</button>
       </div>
@@ -432,7 +432,9 @@ export async function tryWarden(pin, endpoint) {
   catch { setPin(null); markWarden(false); return false; }
 }
 export function forgetWarden() { setPin(null); pinStore.set(null); markWarden(false); }
-export const savedPin = () => pinStore.get();
+// the TV table screen (/tv, and the Battle Map inside it) always shows the player view, even opened from the Warden's tab
+export const TV = location.pathname === '/tv' || new URLSearchParams(location.search).has('tv');
+export const savedPin = () => (TV ? null : pinStore.get());
 
 // The PIN lives only for this browser tab, so a shared or player device drops back to
 // player view when the tab closes. (Older versions kept it forever — clear that.)

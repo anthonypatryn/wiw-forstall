@@ -1,4 +1,4 @@
-import { $, esc, api, startPolling, toast, mountNav, tryWarden, forgetWarden, savedPin, wardenModal, rollPopup, abilityOptions, abilityTargetsHTML, abilityBody, ask, pickFighters, isPool } from './common.js';
+import { $, esc, api, startPolling, toast, mountNav, tryWarden, forgetWarden, savedPin, TV, wardenModal, rollPopup, abilityOptions, abilityTargetsHTML, abilityBody, ask, pickFighters, isPool } from './common.js';
 import { gl } from './glyphs.js';
 import { play, weaponSound, preload } from './sound.js';
 preload('steps', 'hooves', 'melee', 'bow', 'shotgun', 'boomSmall', 'boomMedium', 'boomLarge', 'fsBurst', 'fsReadout', 'fsSweep', 'fsScan');
@@ -11,6 +11,7 @@ import { openAddEnemies } from './enemy-add.js';
 import { panZoom } from './panzoom.js';
 
 const EP = '/api/battle';
+if (TV) document.body.classList.add('tv-mode'); // inside the TV table screen: just the map, fitted, no controls
 mountTableLog();
 mountNav('/battle');
 
@@ -108,6 +109,7 @@ const pz = panZoom(vp, stage, {
 $('#zoom-in').addEventListener('click', () => pz.zoom(1.35));
 $('#zoom-out').addEventListener('click', () => pz.zoom(1 / 1.35));
 $('#zoom-fit').addEventListener('click', () => pz.fit());
+if (TV) { addEventListener('resize', () => pz.fit()); setTimeout(() => pz.fit(), 1500); }
 
 // ---------- pings: press and hold (or right-click) the map → a marker everyone sees for a few seconds ----------
 const PING_HOLD_MS = 550, PING_SHOW_MS = 4000;

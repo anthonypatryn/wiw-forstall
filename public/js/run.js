@@ -16,6 +16,13 @@ import { mountBookTables } from './tables-desk.js';
 import { mountDowntime } from './downtime.js';
 import { mountSalvage } from './search.js';
 import { mountEncounters } from './encounters.js';
+// the Table Screen card: what's up on the TV, and a button to clear it
+const tvDesk = () => api('GET', null, '', '/api/tv').then((d) => {
+  $('#tv-desk').innerHTML = `<p class="muted sess-note">Open it on a TV or a second screen: the Battle Map, whose turn it is and every roll, big. It always shows the player view. Put a scene’s read-aloud or a handout up with their “Show on the TV” buttons.</p>
+    ${d.show ? `<p><b>On the TV now:</b> ${esc(d.show.title || (d.show.text || '').slice(0, 60) || 'a picture')}</p><button type="button" class="btn small secondary" data-tv-clear>Clear the TV</button>` : '<p class="muted">Nothing up right now; the TV shows the map.</p>'}`;
+  $('#tv-desk [data-tv-clear]')?.addEventListener('click', async () => { await api('POST', { action: 'clear' }, '', '/api/tv'); tvDesk(); });
+}).catch(() => {});
+onChange(['tv'], tvDesk); tvDesk();
 import { mountCarnivalDesk } from './carnival.js';
 import { mountContestDesk, contestStyles } from './contests.js';
 import { mountSoundboard } from './soundboard.js';

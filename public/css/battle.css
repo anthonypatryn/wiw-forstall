@@ -455,3 +455,8 @@ body.warden-mode .paint-bar { border-color: var(--w-teal); }
 .wx-set input { flex-basis: 100%; }
 html.less-motion .wx { animation: none !important; }
 @media (prefers-reduced-motion: reduce) { .wx { animation: none; } }
+
+/* TV table screen (/tv embeds /battle?tv): only the map, filling the frame */
+body.tv-mode :is(.masthead, .sitenav, .panel, .side-toggle, .fab-row, .hud-strip, .map-ctrls, .fightbar, .fcard, .paint-bar, .hud-myturn, .log-drawer, .toast) { display: none !important; }
+body.tv-mode .battle-wrap { display: block; height: 100vh; margin: 0; padding: 0; max-width: none; }
+body.tv-mode .viewport { height: 100vh; border: 0; cursor: default; }

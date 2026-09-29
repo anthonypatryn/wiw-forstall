@@ -47,7 +47,7 @@ export function mountSceneRun(el, getCombat, after = () => {}) {
     const fight = s.enemies.length || s.battleMap;
     el.innerHTML = `${pick}
       <h3 class="sr-title">${esc(s.title)}</h3>
-      ${s.readAloud ? `<blockquote class="sr-read"><small>READ ALOUD</small>${esc(s.readAloud).replace(/\n/g, '<br>')}</blockquote>` : ''}
+      ${s.readAloud ? `<blockquote class="sr-read"><small>READ ALOUD</small>${esc(s.readAloud).replace(/\n/g, '<br>')}<button type="button" class="btn small secondary sr-tv" data-sr-tv>${gl('scroll')} Show on the TV</button></blockquote>` : ''}
       ${s.notes ? `<p class="sr-notes"><b>Your notes:</b> ${esc(s.notes).replace(/\n/g, '<br>')}</p>` : ''}
       <div class="sr-beats">
         ${stage ? beat('stage', `${gl('hat')} Set the stage`, [s.npcs.length && `reveal ${s.npcs.length} NPC${s.npcs.length > 1 ? 's' : ''}`, s.wanted.length && `put up ${s.wanted.length} poster${s.wanted.length > 1 ? 's' : ''}`, s.journal.length && `reveal ${s.journal.length} in the Journal`].filter(Boolean).join(' · ')) : ''}
@@ -98,6 +98,10 @@ export function mountSceneRun(el, getCombat, after = () => {}) {
   el.addEventListener('click', async (e) => {
     const b = e.target.closest('button'); if (!b || busy) return;
     const s = S?.scenes.find((x) => x.id === S.current); if (!s) return;
+    if (b.dataset.srTv !== undefined) { // the read-aloud, big, on the table's TV (/tv)
+      try { await api('POST', { action: 'show', title: s.title, text: s.readAloud }, '', '/api/tv'); toast('It’s on the TV.'); } catch (err) { toast(err.message, true); }
+      return;
+    }
     busy = true;
     try {
       if (b.dataset.beat) {

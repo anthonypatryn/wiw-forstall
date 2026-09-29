@@ -150,6 +150,7 @@ async function main() {
   await check('My sheet', `/posse#${s.pcId}`, `return ${has('.sheet-head')};`, 3000);
   await check('Forstall Scanner', '/', `return ${has('#roll-btn')};`, 2500);
   await check('Journal', '/journal', `return ${has('.card')};`, 2500);
+  await check('TV table screen', '/tv', `const f = document.getElementById('tv-map').contentDocument; return !!f && f.body.classList.contains('tv-mode') && !f.body.classList.contains('warden-mode');`, 4000);
   await check('Boot Hill', '/boothill', `return ${has('#bh-yard')} && !document.querySelector('#bh-yard').textContent.includes('Walking up');`, 2500);
   await check('Rules lookup (/ key)', '/journal', `document.body.dispatchEvent(new KeyboardEvent('keydown', { key: '/', bubbles: true })); await new Promise(r=>setTimeout(r,600)); return ${has('.rules-modal')};`, 2500);
 

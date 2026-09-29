@@ -18,7 +18,7 @@ export function mountHandout(el, getCombat) {
       <div class="field-step"><span>${st.kind === 'note' ? 'HEADING (optional)' : 'NAME'}</span><input data-ho="title" maxlength="80" value="${esc(st.title)}" placeholder="${st.kind === 'note' ? 'e.g. A letter from Pa' : 'e.g. Rusted skeleton key'}"></div>
       <div class="field-step"><span>${st.kind === 'note' ? 'THE NOTE' : 'DESCRIPTION'}</span><textarea data-ho="text" rows="${st.kind === 'note' ? 5 : 3}" maxlength="4000" placeholder="${st.kind === 'note' ? 'Write it the way it’s written…' : 'What it looks like, what it does, where it was found'}">${esc(st.text)}</textarea></div>
       ${st.kind === 'item' ? `<div class="ho-photo">${st.photo ? `<img src="${st.photo.head}" alt="">` : ''}<button type="button" class="btn small secondary" data-ho-photo>${gl('camera')} ${st.photo ? 'Change photo' : 'Add a photo'}</button>${st.photo ? '<button type="button" class="btn small secondary" data-ho-nophoto>Remove</button>' : ''}</div>` : ''}
-      <div class="btn-row"><button type="button" class="btn" data-ho-send>${gl('hat')} Hand it over</button><a class="btn small secondary" href="/backpack">Open the Backpack</a></div>`;
+      <div class="btn-row"><button type="button" class="btn" data-ho-send>${gl('hat')} Hand it over</button><button type="button" class="btn small secondary" data-ho-tv>Show on the TV</button><a class="btn small secondary" href="/backpack">Open the Backpack</a></div>`;
   }
   el.addEventListener('input', (e) => { const k = e.target.dataset.ho; if (k) st[k] = e.target.value; });
   el.addEventListener('click', async (e) => {
@@ -35,6 +35,10 @@ export function mountHandout(el, getCombat) {
         try { const img = await loadImg(f); st.photo = { head: shrink(img, 480, 0.84), full: shrink(img) }; draw(); } catch { toast('Couldn’t read that picture.', true); }
       });
       document.body.append(input); input.click();
+      return;
+    }
+    if (b.dataset.hoTv !== undefined) { // put it up on the table's TV (/tv) as well (or instead)
+      try { await api('POST', { action: 'show', title: st.title, text: st.text, img: st.kind === 'item' ? st.photo?.head || '' : '' }, '', '/api/tv'); toast('It’s on the TV.'); } catch (err) { toast(err.message, true); } // the 480px photo: small enough to store
       return;
     }
     if (b.dataset.hoSend !== undefined) {

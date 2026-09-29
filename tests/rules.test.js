@@ -1438,3 +1438,11 @@ test('Bestiary: fighting, scanning and trophies unlock a monster’s entry step 
   assert.ok(!bestiaryView(state, {}).entries.some((x) => x.name === 'Chupacabra'));
   assert.equal(bestiaryView(state, {}, { warden: true }).entries.length, 70);
 });
+
+test('every browser script parses as a module (a stray comment can break a whole page)', async () => {
+  const fs = await import('node:fs'), path = await import('node:path'), { spawnSync } = await import('node:child_process');
+  const dir = path.join(path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1')), '..', 'public', 'js');
+  const bad = fs.readdirSync(dir).filter((f) => f.endsWith('.js'))
+    .filter((f) => spawnSync(process.execPath, ['--input-type=module', '--check'], { input: fs.readFileSync(path.join(dir, f)) }).status !== 0);
+  assert.deepEqual(bad, []);
+});

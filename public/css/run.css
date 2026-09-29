@@ -218,3 +218,5 @@ body.warden-mode .run-nav .btn.secondary.rn-end:hover { background: rgba(95,179,
 /* Encounter builder: a scrolling list of picks */
 .en-list { max-height: 420px; overflow-y: auto; margin: 4px 0 10px; border-top: 1px solid var(--line-soft); }
 .en-list .item-who small { display: block; }
+
+.sr-tv { display: block; margin-top: 8px; }
