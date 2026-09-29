@@ -7,13 +7,15 @@ import { gl } from './glyphs.js';
 import { paperHTML, openPaper } from './paper.js';
 import { shrink, showImage, loadImg } from './portrait.js';
 import { mountRecords } from './records.js';
+import { mountBestiary } from './bestiary.js';
 
 mountTableLog();
 mountNav('/journal');
 mountRecords(document.getElementById('records'));
+const bestiary = mountBestiary(document.getElementById('bestiary'), () => warden);
 const EP = '/api/journal';
 let J = null, papers = null, warden = false, filter = '';
-let tab = ['quests', 'clues', 'papers', 'records'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'quests';
+let tab = ['quests', 'clues', 'papers', 'records', 'bestiary'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'quests';
 
 const npcName = (id) => J?.npcs.find((n) => n.id === id)?.name || '';
 const townName = (id) => J?.towns.find((t) => t.id === id)?.name || '';
@@ -229,7 +231,7 @@ document.addEventListener('click', async (e) => {
     else if (d.delq !== undefined) { if (await ask(`Delete the quest “${q.title}”?`)) await act({ action: 'remove', kind: 'quest', id: q.id }, 'Deleted.'); }
   } catch (err) { toast(err.message, true); }
 });
-window.addEventListener('hashchange', () => { const h = location.hash.slice(1); if (['quests', 'clues', 'papers', 'records'].includes(h)) { tab = h; showTab(); } });
+window.addEventListener('hashchange', () => { const h = location.hash.slice(1); if (['quests', 'clues', 'papers', 'records', 'bestiary'].includes(h)) { tab = h; showTab(); } });
 document.addEventListener('change', (e) => { if (e.target.dataset.filter !== undefined) { filter = e.target.value; renderClues(); } });
 // posse notes save shortly after typing stops
 let noteTimer = null;
@@ -244,6 +246,7 @@ document.addEventListener('input', (e) => {
 (async () => {
   showTab();
   if (savedPin()) warden = await tryWarden(savedPin(), EP);
+  bestiary.refresh(); // the Warden's view of the book
   // don't redraw under someone typing notes
   startPolling(warden ? 'warden' : 'player', (d) => { J = d; if (!warden) store.set('wiw.journalSeenAt', Date.now()); if (!document.activeElement?.dataset?.notes) render(); }, null, EP);
   startPolling(warden ? 'warden' : 'player', (d) => { papers = d; renderPapers(); }, null, '/api/papers');

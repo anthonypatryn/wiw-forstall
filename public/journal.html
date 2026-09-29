@@ -13,9 +13,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Rye&family=Special+Elite&family=Reenie+Beanie&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=121">
-  <link rel="stylesheet" href="/css/journal.css?v=39">
-  <link id="paper-css" rel="stylesheet" href="/css/paper.css?v=37">
+  <link rel="stylesheet" href="/css/style.css?v=122">
+  <link rel="stylesheet" href="/css/journal.css?v=40">
+  <link id="paper-css" rel="stylesheet" href="/css/paper.css?v=38">
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=UnifrakturMaguntia&family=Old+Standard+TT:ital,wght@0,400;0,700;1,400&display=swap">
 </head>
 <body>
@@ -37,6 +37,7 @@
       <button type="button" class="chip-btn" data-tab="clues">Clues</button>
       <button type="button" class="chip-btn" data-tab="papers">Newspapers</button>
       <button type="button" class="chip-btn" data-tab="records">Records</button>
+      <button type="button" class="chip-btn" data-tab="bestiary">Bestiary</button>
     </nav>
     <section class="card corner" data-pane="quests">
       <div class="head-row"><h2 class="section-title">Quests</h2><span data-warden-only hidden><button type="button" class="btn small" data-new-quest>+ New quest</button></span></div>
@@ -57,8 +58,13 @@
       <p class="muted small-text mt-0">Lifetime winnings and losses at the card tables, the carnival and the contests. Tap a name for the game-by-game.</p>
       <div id="records"><p class="loading" role="status">Loading…</p></div>
     </section>
+    <section class="card corner" data-pane="bestiary" hidden>
+      <h2 class="section-title">Bestiary</h2>
+      <p class="muted small-text mt-0">Every monster the posse has met. Fighting one fills in its strength, Scanning it its Tolerances and habits, and taking its trophy what it’s worth.</p>
+      <div id="bestiary"><p class="loading" role="status">Loading…</p></div>
+    </section>
   </main>
 
-  <script type="module" src="/js/journal.js?v=74"></script>
+  <script type="module" src="/js/journal.js?v=75"></script>
 </body>
 </html>

@@ -101,3 +101,25 @@ button.jq-tick { cursor: pointer; }
 .rec-games { width: 100%; border-collapse: collapse; font-size: var(--fs-sm); font-variant-numeric: tabular-nums; }
 .rec-games th { text-align: left; font-weight: 600; padding: 4px 10px; }
 .rec-games td { padding: 4px 6px; text-align: right; white-space: nowrap; }
+
+/* Bestiary */
+.bs-tools { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; margin-bottom: 10px; }
+.bs-tools .search { flex: 1 1 220px; }
+.bs-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; align-items: start; }
+.bs-card { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 12px; display: grid; gap: 6px; box-shadow: var(--shadow-stamp); }
+.bs-card.unknown { opacity: .75; }
+.bs-head { display: flex; gap: 10px; align-items: flex-start; }
+.bs-head h3 { margin: 0; font: var(--fs-lg) var(--display); letter-spacing: var(--track); font-weight: 400; }
+.bs-head small { color: var(--ink-soft); font-size: var(--fs-xs); }
+.bs-art { flex: none; width: 56px; height: 56px; border-radius: 50%; overflow: hidden; display: grid; place-items: center; background: var(--surface-2); border: 1px solid var(--line); }
+.bs-art img { width: 100%; height: 100%; object-fit: cover; }
+.bs-art .gl { width: 28px; height: 28px; color: var(--ink-soft); }
+.bs-tags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; }
+.bs-stats { display: flex; gap: 14px; }
+.bs-stats span { display: grid; font: var(--fs-md) var(--display); letter-spacing: var(--track-tight); }
+.bs-stats small { font-size: var(--fs-xs); color: var(--ink-soft); letter-spacing: var(--track); }
+.bs-attacks, .bs-feats { margin: 0; padding-left: 18px; font-size: var(--fs-sm); display: grid; gap: 2px; }
+.bs-attacks small { color: var(--ink-soft); }
+.bs-line { margin: 0; font-size: var(--fs-sm); }
+.bs-locked { margin: 0; font-size: var(--fs-xs); color: var(--ink-faint); font-style: italic; }
+.bs-locked .gl { width: 1em; height: 1em; vertical-align: -2px; }

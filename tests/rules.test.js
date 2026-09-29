@@ -1413,3 +1413,28 @@ test('Boot Hill: a death keeps a headstone (how, epitaph, best moments from the 
   assert.equal(pc.dead, false); assert.equal(pc.death, undefined);
   assert.throws(() => publicAction(state, { action: 'pc', id: pc.id, op: 'epitaph', epitaph: 'x' }, { warden: false }), /still kicking/);
 });
+
+test('Bestiary: fighting, scanning and trophies unlock a monster’s entry step by step; the Warden sees all and can show or hide', async () => {
+  const { bestiaryView } = await import('../lib/bestiary.js');
+  const state = freshCombat();
+  publicAction(state, { action: 'addPc', trade: 'Hunter', name: 'Tess' }, { warden: true });
+  publicAction(state, { action: 'addEnemy', profile: 'Chupacabra' }, { warden: true });
+  let v = bestiaryView(state, {});
+  assert.equal(v.entries.length, 0); assert.equal(v.unknown, 70);
+  publicAction(state, { action: 'start' }, { warden: true });
+  v = bestiaryView(state, {});
+  const ch = v.entries.find((e) => e.name === 'Chupacabra');
+  assert.ok(ch && ch.health && ch.attacks.length); assert.equal(ch.tolerances, undefined); assert.equal(ch.trophy, undefined);
+  v = bestiaryView(state, { Chupacabra: { solved: true } });
+  assert.ok(v.entries[0].tolerances && v.entries[0].decoded);
+  const e = state.enemies[0];
+  publicAction(state, { action: 'enemy', id: e.id, op: 'health', delta: -99 }, { warden: true });
+  assert.equal(state.bestiary.Chupacabra.defeated, 1);
+  publicAction(state, { action: 'loot', enemy: e.id, pc: state.posse[0].id, condition: 'Good' }, { warden: true });
+  assert.ok(bestiaryView(state, {}).entries[0].trophy);
+  publicAction(state, { action: 'bestiary', name: 'Golden Bear', mode: 'show' }, { warden: true });
+  assert.ok(bestiaryView(state, {}).entries.some((x) => x.name === 'Golden Bear' && x.tolerances));
+  publicAction(state, { action: 'bestiary', name: 'Chupacabra', mode: 'hide' }, { warden: true });
+  assert.ok(!bestiaryView(state, {}).entries.some((x) => x.name === 'Chupacabra'));
+  assert.equal(bestiaryView(state, {}, { warden: true }).entries.length, 70);
+});
