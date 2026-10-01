@@ -472,7 +472,7 @@ body.nav-open .fab-row, body.nav-open .hud-strip { display: none; }
 
 /* ---------- modal ---------- */
 .modal-back { position: fixed; inset: 0; background: rgba(15,11,9,.6); display: grid; place-items: center; z-index: var(--z-modal); padding: 16px; }
-.modal { background: var(--paper) url('../img/paper.jpg') center / 900px; background-blend-mode: multiply; border: 2px solid var(--ink); border-radius: var(--radius); padding: 20px; width: min(420px, 100%); box-shadow: 6px 6px 0 var(--shade-3); }
+.modal { background: var(--paper) url('../img/paper.jpg') center / 900px; background-blend-mode: multiply; border: 2px solid var(--ink); border-radius: var(--radius); padding: 20px; width: min(420px, 100%); max-height: calc(100vh - 32px); overflow-y: auto; box-sizing: border-box; box-shadow: 6px 6px 0 var(--shade-3); } /* never taller than the screen: it scrolls */
 .modal h2 { margin: 0 0 12px; font: var(--fs-2xl) var(--display); letter-spacing: var(--track); }
 .modal form { display: flex; gap: 8px; }
 .modal input:not([type=checkbox]):not([type=radio]) { flex: 1; min-width: 0; padding: 10px 12px; border: 1.5px solid var(--ink); border-radius: var(--radius); background: var(--surface); font: var(--fs-lg) var(--body); }
@@ -970,7 +970,7 @@ input[type=range]::-moz-range-thumb { width: 16px; height: 16px; border-radius: 
 .jw-list { margin: 6px 0 12px; padding-left: 20px; font: var(--fs-md)/1.4 var(--body); }
 
 /* trading between players */
-.trade-modal { max-width: 560px; }
+.trade-modal { width: min(560px, 100%); }
 .trade-money { display: flex; align-items: center; gap: 8px; width: 100%; }
 .trade-open { display: grid; gap: 6px; margin-bottom: 12px; font: var(--fs-sm) var(--body); }
 .trade-sum { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 10px 0; }
@@ -1038,7 +1038,7 @@ body.warden-mode .footer, body.warden-mode .footer .conn { color: #9fb0b7; }
 body.warden-mode main > .muted, body.warden-mode main > p:not([class]) { color: #9fb0b7; }
 
 /* "Previously on…" */
-.prev-modal { max-width: 560px; }
+.prev-modal { width: min(560px, 100%); }
 .prev-recap { font: var(--fs-md)/1.55 var(--body); margin: 4px 0 10px; max-height: 45vh; overflow-y: auto; }
 .prev-recap p { margin: 0 0 10px; }
 .prev-h { margin: 12px 0 6px; font: var(--fs-md) var(--display); letter-spacing: var(--track-open); color: var(--accent); }
@@ -1111,7 +1111,7 @@ body.warden-mode :is(.pmb, .pm-btn, .sev button, .inv-item .qty button, .pm > bu
 
 /* Lock Pick: How to play */
 .lock-how { color: var(--brass); font-size: var(--fs-sm); margin-left: auto; }
-.lock-how-modal { max-width: 560px; }
+.lock-how-modal { width: min(560px, 100%); }
 .lock-how-steps { margin: 8px 0 10px 20px; padding: 0; display: grid; gap: 8px; font: var(--fs-md)/1.5 var(--body); }
 
 /* Scanner page mid-fight: the banner, and the roll + guess controls step aside */
@@ -1164,7 +1164,7 @@ html.cb-ranges { --band-arm: #0072b2; --band-short: #e69f00; --band-long: #cc79a
 .nav-settings { flex: none; display: flex; align-items: center; justify-content: center; width: 38px; padding: 0; border: 0; background: none; color: var(--on-dark-dim); cursor: pointer; }
 .nav-settings:hover { color: var(--on-accent); }
 .nav-settings .gl { width: 20px; height: 20px; margin: 0; }
-.settings-modal { max-width: 460px; display: grid; gap: 14px; }
+.settings-modal { width: min(460px, 100%); display: grid; grid-template-columns: minmax(0, 1fr); gap: 14px; }
 .settings-modal .ho-kicker small { font: italic var(--fs-xs) var(--body); letter-spacing: 0; margin-left: 6px; }
 .set-vol { display: flex; align-items: center; gap: 10px; font-size: var(--fs-sm); margin-top: 6px; }
 .set-vol input { flex: 1; accent-color: var(--accent); }

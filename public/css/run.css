@@ -170,7 +170,7 @@ body.warden-mode .rn-quick button { background: transparent; color: var(--on-dar
 /* Start Session */
 .rn-start { margin-top: 8px; }
 .rn-start + .rn-end { margin-top: 4px; }
-.start-modal { max-width: 620px; display: grid; gap: 10px; }
+.start-modal { width: min(560px, 100%); max-height: calc(100vh - 32px); overflow-y: auto; box-sizing: border-box; display: grid; grid-template-columns: minmax(0, 1fr); gap: 10px; } /* the column never grows past the dialog; a long posse scrolls */
 .start-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 10px; }
 .start-h { margin: 6px 0 0; font: var(--fs-sm) var(--display); letter-spacing: var(--track-wide); color: var(--ink-soft); }
 .start-h small { font: italic var(--fs-xs) var(--body); letter-spacing: 0; margin-left: 6px; }
@@ -220,3 +220,5 @@ body.warden-mode .run-nav .btn.secondary.rn-end:hover { background: rgba(95,179,
 .en-list .item-who small { display: block; }
 
 .sr-tv { display: block; margin-top: 8px; }
+/* Start Session: the buttons stay in view while a long posse scrolls */
+.start-modal > .ask-btns { position: sticky; bottom: -20px; margin: 0 -20px -20px; padding: 10px 20px 16px; background: var(--paper); border-top: 1px solid var(--line-soft); }

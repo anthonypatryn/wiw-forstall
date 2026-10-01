@@ -491,7 +491,7 @@ body.warden-mode .sheet-bar .save-state { color: #9fb0b7; }
 .lu-callout { display: flex; align-items: center; gap: 12px; margin: 10px 0; padding: 10px 14px; border: 2px solid var(--brass); border-radius: var(--radius); background: rgba(201,164,92,.14); }
 .lu-callout > .gl { width: 22px; height: 22px; color: var(--brass); flex: none; }
 .lu-callout span { flex: 1; font-size: var(--fs-md); }
-.lu-modal { max-width: 640px; display: grid; gap: 12px; }
+.lu-modal { width: min(640px, 100%); display: grid; grid-template-columns: minmax(0, 1fr); gap: 12px; }
 .lu-modal .ho-kicker small { font: italic var(--fs-xs) var(--body); letter-spacing: 0; margin-left: 6px; }
 .lu-lead { margin: 0; font-size: var(--fs-md); }
 .lu-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 8px; }
