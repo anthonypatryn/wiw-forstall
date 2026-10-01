@@ -15,7 +15,6 @@
 
 /* tabs */
 .jn-tabs { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: var(--sp-4); }
-.pill.secret { background: var(--secret-tint); color: var(--secret); border-color: var(--secret-line); }
 
 /* quests */
 .jq { padding: 14px 16px; margin-bottom: 14px; background: var(--surface); border: 1.5px solid var(--ink); border-left: 6px solid var(--info); border-radius: var(--radius); box-shadow: var(--shadow-stamp); }

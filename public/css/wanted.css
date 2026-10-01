@@ -46,6 +46,7 @@
 }
 .poster.is-captured .ps-photo img, .poster.is-dead .ps-photo img, .poster.is-claimed .ps-photo img { filter: sepia(.9) grayscale(.6) contrast(.9) brightness(.9); }
 .poster.is-hidden { opacity: .6; }
+.ps-tile.is-hid { outline: 2px dashed var(--secret); outline-offset: 3px; border-radius: var(--radius); } /* hidden from the posse: the same dashed purple as hidden clues (on the tile; the torn poster clips its own outline) */
 
 /* one poster, large */
 .wt-back { z-index: var(--z-float); align-items: start; overflow-y: auto; }

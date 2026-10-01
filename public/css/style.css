@@ -731,6 +731,7 @@ input, select, textarea { font-family: var(--body); } /* typed text is Alegreya;
 .pill.hot { background: var(--accent); color: var(--on-accent); }
 .pill.ok { background: var(--success); color: var(--on-accent); }
 .pill.no { background: var(--danger); color: var(--on-accent); }
+.pill.secret { background: var(--secret-tint); color: var(--secret); border-color: var(--secret-line); } /* hidden from the posse (Journal, Wanted) */
 .pill.info { background: var(--info); color: var(--on-accent); }
 .pill.fs { background: var(--forstall-bg); color: var(--forstall-ink); }
 .pill.wait { background: var(--wash); font-style: italic; }

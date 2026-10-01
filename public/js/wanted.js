@@ -45,7 +45,7 @@ function render() {
   $('#wt-here').textContent = data.here ? (town === data.here ? `The posse is in ${townName(town)}.` : `The posse is in ${townName(data.here)}.`) : '';
   const list = posters.filter((p) => p.town === town).sort((a, b) => (a.status === 'wanted' ? 0 : 1) - (b.status === 'wanted' ? 0 : 1) || b.at - a.at);
   $('#wt-board').innerHTML = list.length
-    ? list.map((p) => `<button type="button" class="ps-tile" data-p="${esc(p.id)}" style="--tilt:${tilt(p.id)}deg">${posterHTML(p)}${warden && p.hidden ? '<span class="pill ps-flag">hidden</span>' : ''}${p.status === 'wanted' && p.takenBy?.length ? `<span class="pill info ps-taken">taken by ${esc(takers(p).join(', '))}</span>` : ''}</button>`).join('')
+    ? list.map((p) => `<button type="button" class="ps-tile${warden && p.hidden ? ' is-hid' : ''}" data-p="${esc(p.id)}" style="--tilt:${tilt(p.id)}deg">${posterHTML(p)}${warden && p.hidden ? '<span class="pill secret ps-flag">hidden</span>' : ''}${p.status === 'wanted' && p.takenBy?.length ? `<span class="pill info ps-taken">taken by ${esc(takers(p).join(', '))}</span>` : ''}</button>`).join('')
     : `<p class="empty-note">${warden ? `No posters in ${esc(townName(town))} yet. Put one up with “New poster”.` : `Nobody’s wanted in ${esc(townName(town))} right now. Must be a quiet town.`}</p>`;
   $('#wt-tools').innerHTML = warden ? `<button type="button" class="btn small secondary" data-newtown>+ New town</button> <button type="button" class="btn small" data-new>${gl('pin')} New poster</button>` : '';
 }
