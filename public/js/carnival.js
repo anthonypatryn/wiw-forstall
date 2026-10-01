@@ -108,8 +108,9 @@ export function watchCarnival() {
   startPolling(`player&pc=${encodeURIComponent(me())}`, async (d) => {
     view = d;
     if (!d.open) { if (scene) { ambience('game', null); scene.remove(); scene = null; toast('The carnival has packed up its tents.'); } showChip(); return; }
-    if (store.get('wiw.carnivalAsked', 0) !== d.at && !scene && !document.querySelector('.ask-back')) {
-      store.set('wiw.carnivalAsked', d.at);
+    const askKey = d.reinvite ? `${d.at}.${d.reinvite}` : d.at; // the Warden's Re-invite asks again (not if you have a ticket)
+    if (store.get('wiw.carnivalAsked', 0) !== askKey && !(d.reinvite && d.me?.ticket) && !scene && !document.querySelector('.ask-back')) {
+      store.set('wiw.carnivalAsked', askKey);
       play('chime');
       if (await ask(`The carnival’s in ${d.where}!\n\nThe Traveling Carnival of Wild Oddities and Western Curiosities: horseshoes, the Wheel of Fortune, archery, the High Striker, a fortune teller and a pie eating contest. Tickets are ${$$(d.ticket)}.`, { ok: 'Go to the carnival', cancel: 'Maybe later', danger: false })) openCarnival();
     }
@@ -130,7 +131,7 @@ export function mountCarnivalDesk(el, getCombat) {
     el.innerHTML = data?.open
       ? `<p><b>Open in ${esc(data.where)}.</b> Players got an invite; the booths are on their screens.</p>
         ${rows.length ? `<ul class="cv-desk">${rows.map(([id, m]) => `<li><b>${esc(names[id] || id)}</b> ${m.ticket ? 'has a ticket' : 'no ticket yet'} · vouchers ${m.vouchers.small}/${m.vouchers.medium}/${m.vouchers.large}${m.last ? ` · <i>${esc(m.last.text)}</i>` : ''}</li>`).join('')}</ul>` : '<p class="muted">Nobody’s bought a ticket yet.</p>'}
-            <button type="button" class="btn small secondary danger" data-cv-close>Pack up the carnival</button>`
+            <div class="btn-row"><button type="button" class="btn small secondary" data-cv-reinvite title="The invite pops up again for anyone not in yet">${gl('sound')} Re-invite</button><button type="button" class="btn small secondary danger" data-cv-close>Pack up the carnival</button></div>`
       : `<p class="muted">Judgment on the Iron Road’s traveling carnival (Omaha, pp. 62–67). Everyone gets an invite; they buy a $0.25 ticket and play the booths with their own dice.</p>
         <label class="field-step"><span>WHERE</span><input maxlength="40" value="${esc(st.where)}" data-cv-where></label>
         <button type="button" class="btn small" data-cv-open>${gl('star')} Open the carnival</button>`;
@@ -140,6 +141,7 @@ export function mountCarnivalDesk(el, getCombat) {
     const b = e.target.closest('button'); if (!b) return;
     try {
       if (b.dataset.cvOpen !== undefined) { await api('POST', { action: 'open', where: st.where }, '', EP); toast('The carnival is open. Everyone gets an invite.'); }
+      if (b.dataset.cvReinvite !== undefined) { await api('POST', { action: 'reinvite' }, '', EP); toast('Invite sent again to anyone without a ticket.'); }
       if (b.dataset.cvClose !== undefined) { if (!await ask('Pack up the carnival? Unused vouchers are lost.')) return; await api('POST', { action: 'close' }, '', EP); }
       refresh();
     } catch (err) { toast(err.message, true); }

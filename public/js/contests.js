@@ -187,8 +187,9 @@ export function watchContest() {
       if (Date.now() - (d.result.at || 0) > 600000) { render(); showChip(); return; }
       if (!scene) openContest();
       render(); await playShow(d.result);
-    } else if (store.get('wiw.contestAsked', 0) !== d.at && !d.result && !scene && !document.querySelector('.ask-back')) {
-      store.set('wiw.contestAsked', d.at);
+    } else if (store.get('wiw.contestAsked', 0) !== (d.reinvite ? `${d.at}.${d.reinvite}` : d.at) && !d.result && !scene && !document.querySelector('.ask-back')
+      && !(d.reinvite && d.entrants.some((e) => e.pc === me()))) { // a Re-invite skips anyone already entered
+      store.set('wiw.contestAsked', d.reinvite ? `${d.at}.${d.reinvite}` : d.at);
       play('chime');
       const pitch = d.kind === 'race' ? `A horse race at ${d.where}\n\nThree legs, entry ${$$(d.fee)}, winner takes the pot. Bring your horse, or rent one there. Side bets welcome.`
         : `A trick-shot contest in ${d.where}\n\n${d.rounds} rounds with Adda’s pistols. Entry ${$$(d.fee)}, winner takes the pot. Side bets welcome.`;
@@ -211,6 +212,7 @@ export function mountContestDesk(el) {
         <ul class="cv-desk">${data.entrants.map((e) => `<li><b>${esc(e.name)}</b>${e.kind === 'npc' ? ` (${esc(e.tough)})` : ''}${e.horse ? ` on ${e.horse.rented ? 'a rented nag' : esc(e.horse.breed)}` : ''}${data.bets.filter((b) => b.on === e.key).map((b) => ` · ${esc(b.name)} bet ${$$(b.amount)}`).join('')}</li>`).join('')}</ul>
         ${data.result ? `<p><i>${esc(data.result.text)}</i></p>` : ''}
         <div class="btn-row">${data.result ? '' : `<button type="button" class="btn small" data-ct-run${data.entrants.length < 2 ? ' disabled' : ''}>${gl('flash')} ${data.kind === 'race' ? 'Start the race' : 'Start the contest'}</button>`}
+          ${data.result ? '' : `<button type="button" class="btn small secondary" data-ct-reinvite title="The invite pops up again for anyone not in yet">${gl('sound')} Re-invite</button>`}
           <button type="button" class="btn small secondary" data-ct-watch>Watch${data.result ? ' it again' : ''}</button>
           <button type="button" class="btn small secondary danger" data-ct-close>${data.result ? 'Close it' : 'Call it off (refunds)'}</button></div>`;
       return;
@@ -244,6 +246,7 @@ export function mountContestDesk(el) {
       if (d.ctOpen !== undefined) { await api('POST', { action: 'open', ...st }, '', EP); toast('It’s open. Everyone gets an invite.'); }
       if (d.ctRun !== undefined) { const r = await api('POST', { action: 'run' }, '', EP); view = r.state; openContest(); await playShow(r.result); }
       if (d.ctWatch !== undefined) { view = data; openContest(); if (data.result) await playShow(data.result); }
+      if (d.ctReinvite !== undefined) { await api('POST', { action: 'reinvite' }, '', EP); toast('Invite sent again to anyone not entered.'); }
       if (d.ctClose !== undefined) { if (!await ask(data.result ? 'Close the contest?' : 'Call it off? Entry fees and bets go back.')) return; await api('POST', { action: 'close' }, '', EP); closeScene(); }
       refresh();
     } catch (err) { toast(err.message, true); }

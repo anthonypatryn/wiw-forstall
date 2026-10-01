@@ -660,8 +660,9 @@ export function watchSaloon() {
     }
     const key = `pc:${me()}`, seated = t.seats.some((s) => s.key === key);
     const invited = !t.invite?.length || t.invite.includes(me());
-    if (!seated && invited && store.get('wiw.saloonAsked', '') !== t.id && !scene && !busy) {
-      store.set('wiw.saloonAsked', t.id);
+    const askKey = t.reinvite ? `${t.id}.${t.reinvite}` : t.id; // the Warden's Re-invite asks again
+    if (!seated && invited && store.get('wiw.saloonAsked', '') !== askKey && !scene && !busy) {
+      store.set('wiw.saloonAsked', askKey);
       play('chime');
       const pitch = t.game === 'drinking' ? `A drinking contest at ${t.where}\n\n${$$(t.stakes.ante)} to get in, last one standing takes the pot. It’s Nerve, Grit and your Health against the whiskey. First to pass out pays the bar tab.` : t.game === 'blackjack' ? `Blackjack at ${t.where}\n\nBets from ${$$(t.stakes.ante)} to ${$$(t.stakes.bet * 5)}, blackjack pays 3 to 2. It’s your real money.` : t.game === 'liars' ? `Liar’s Dice at ${t.where}\n\n${$$(t.stakes.ante)} a head, winner takes the pot. Five dice each, ones are wild. It’s your real money.` : t.game === 'faro' ? `A faro bank at ${t.where}\n\nBet on any card from ${$$(t.stakes.ante)} to ${$$(t.stakes.bet * 5)}. It’s your real money.` : `A card game at ${t.where}\n\nFive-card draw, ${$$(t.stakes.ante)} ante, bets of ${$$(t.stakes.bet)} (${$$(t.stakes.bet * 2)} after the draw). It’s your real money.`;
       if (await ask(pitch, { ok: 'Take a seat', cancel: 'Not tonight', danger: false })) {
@@ -691,7 +692,7 @@ export function mountSaloonDesk(el, getCombat) {
       const h = t.hand;
       el.innerHTML = `<p class="sl-desk-sum"><b>${{ faro: 'Faro', liars: 'Liar’s Dice', blackjack: 'Blackjack', drinking: 'Drinking contest' }[t.game] || 'Poker'} at ${esc(t.where)}</b> · ${t.handsPlayed || 0} hand${t.handsPlayed === 1 ? '' : 's'} played${h && h.phase !== 'over' ? ` · hand ${h.no}: ${esc(PHASE[h.phase])}, pot ${$$(h.pot)}` : ''}</p>
         <div class="sl-desk-seats">${t.seats.map((s) => `<div class="item-row"><span class="item-who"><b>${esc(s.name)}</b><small class="muted">${s.kind === 'npc' ? `${['faro', 'blackjack'].includes(t.game) ? 'the dealer' : esc(STYLE[s.style] || '')} · bank ${$$(s.bank)}` : `${s.net >= 0 ? 'up' : 'down'} ${$$(Math.abs(s.net))}`}${h?.all?.[s.key] ? ` · ${esc(h.all[s.key].name)}` : ''}${t.liars?.all?.[s.key] ? ` · cup: ${t.liars.all[s.key].join(' ')}` : ''}</small></span>${s.kind === 'pc' ? `<button type="button" class="btn small secondary" data-kick="${esc(s.key)}">Remove</button>` : ''}</div>`).join('')}</div>
-        <div class="btn-row"><button type="button" class="btn" data-watch>${gl('die')} Watch the table</button>${t.game === 'drinking' ? (!t.drink || t.drink.over ? '<button type="button" class="btn secondary" data-deal>Start a contest</button>' : '') : t.game === 'blackjack' ? (!t.bj || t.bj.phase === 'done' ? '<button type="button" class="btn secondary" data-deal>Start a round</button>' : '') : t.game === 'liars' ? (!t.liars || t.liars.over ? '<button type="button" class="btn secondary" data-deal>Start a game</button>' : '') : t.game === 'faro' ? (!t.faro || t.faro.over ? '<button type="button" class="btn secondary" data-deal>Shuffle a deal</button>' : '') : !h || h.phase === 'over' ? '<button type="button" class="btn secondary" data-deal>Deal a hand</button>' : ''}<button type="button" class="btn secondary" data-close>Close the table</button></div>`;
+        <div class="btn-row"><button type="button" class="btn" data-watch>${gl('die')} Watch the table</button>${t.game === 'drinking' ? (!t.drink || t.drink.over ? '<button type="button" class="btn secondary" data-deal>Start a contest</button>' : '') : t.game === 'blackjack' ? (!t.bj || t.bj.phase === 'done' ? '<button type="button" class="btn secondary" data-deal>Start a round</button>' : '') : t.game === 'liars' ? (!t.liars || t.liars.over ? '<button type="button" class="btn secondary" data-deal>Start a game</button>' : '') : t.game === 'faro' ? (!t.faro || t.faro.over ? '<button type="button" class="btn secondary" data-deal>Shuffle a deal</button>' : '') : !h || h.phase === 'over' ? '<button type="button" class="btn secondary" data-deal>Deal a hand</button>' : ''}<button type="button" class="btn secondary" data-reinvite title="The invite pops up again for anyone not in yet">${gl('sound')} Re-invite</button><button type="button" class="btn secondary" data-close>Close the table</button></div>`;
       return;
     }
     const posse = (getCombat()?.posse || []).filter((p) => !p.dead);
@@ -746,6 +747,7 @@ export function mountSaloonDesk(el, getCombat) {
       }
       if (d.watch !== undefined) { openTable(true); return; }
       if (d.deal !== undefined) { const r = await api('POST', { action: 'deal' }, '', EP); data = r.state; view = r.state; draw(); return; }
+      if (d.reinvite !== undefined) { const r = await api('POST', { action: 'reinvite' }, '', EP); data = r.state; view = r.state; draw(); toast('Invite sent again to anyone not seated.'); return; }
       if (d.kick) { const r = await api('POST', { action: 'kick', key: d.kick }, '', EP); data = r.state; view = r.state; draw(); return; }
       if (d.close !== undefined) { if (!await ask('Close the table? An unfinished hand gets called off and bets go back.', { ok: 'Close it' })) return; const r = await api('POST', { action: 'close' }, '', EP); data = r.state; view = r.state; draw(); toast('The game breaks up.'); }
     } catch (err) { toast(err.message, true); }

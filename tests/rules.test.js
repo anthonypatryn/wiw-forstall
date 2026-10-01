@@ -1476,3 +1476,25 @@ test('Nudge: an open roll pops up again only for whoever hasn’t rolled', () =>
   publicAction(state, { action: 'pc', id: b.id, op: 'checkRoll', check: ck.id }, { warden: false });
   assert.throws(() => publicAction(state, { action: 'checkNudge', id: ck.id }, { warden: true }), /Everyone has rolled/);
 });
+
+test('Re-invite: saloon, contest and carnival stamp a new invite (Warden only); views carry it', async () => {
+  const { freshSaloon, saloonAction, saloonView } = await import('../lib/saloon.js');
+  const { freshContest, contestAction, contestView } = await import('../lib/contests.js');
+  const { freshCarnival, carnivalAction, carnivalView } = await import('../lib/carnival.js');
+  const log = () => {};
+  const sl = freshSaloon();
+  assert.throws(() => saloonAction(sl, { action: 'reinvite' }, { warden: true, log }), /No table/);
+  saloonAction(sl, { action: 'open', npcs: [{ name: 'Doc' }] }, { warden: true, log, posse: [] });
+  assert.throws(() => saloonAction(sl, { action: 'reinvite' }, { warden: false, log }), /PIN/);
+  saloonAction(sl, { action: 'reinvite' }, { warden: true, log });
+  assert.ok(saloonView(sl, { warden: false, pc: '' }).table.reinvite > 0);
+  const ct = freshContest(), cctx = { warden: true, log, pc: () => null, pay: () => {} };
+  contestAction(ct, { action: 'open', kind: 'trickshot', npcs: [{ name: 'Adda' }, { name: 'Bo' }] }, cctx);
+  contestAction(ct, { action: 'reinvite' }, cctx);
+  assert.ok(contestView(ct).reinvite > 0);
+  assert.throws(() => contestAction(ct, { action: 'reinvite' }, { ...cctx, warden: false }), /PIN/);
+  const cv = freshCarnival();
+  carnivalAction(cv, { action: 'open', where: 'Omaha' }, { warden: true, log });
+  carnivalAction(cv, { action: 'reinvite' }, { warden: true, log });
+  assert.ok(carnivalView(cv).reinvite > 0);
+});
