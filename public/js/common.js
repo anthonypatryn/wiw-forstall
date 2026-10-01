@@ -321,6 +321,12 @@ const NAV_WARDEN = [
 ];
 let navActive = null;
 const pathIs = (href, cur) => href === cur;
+// a sound change made somewhere else (a game scene's sound panel) updates the nav's button and slider
+document.addEventListener('wiw:sound', () => {
+  document.querySelectorAll('.nav-sound').forEach((b) => { b.innerHTML = gl(isMuted() ? 'mute' : 'sound'); b.setAttribute('aria-pressed', String(!isMuted())); });
+  document.querySelectorAll('.nav-sound-sheet').forEach((b) => { b.textContent = isMuted() ? 'Sound is off — turn on' : 'Sound is on — mute'; });
+  document.querySelectorAll('.nav-vol').forEach((r) => { if (document.activeElement !== r) r.value = volume(); });
+});
 export function mountNav(active) {
   const el = document.querySelector('[data-nav]');
   if (!el) return;

@@ -1192,3 +1192,14 @@ body .fs-dig-row .num-wrap .fs-dig { width: 100%; }
 
 /* "back to …" chips (carnival, saloon, contests) ride at the front of the bottom-right button row */
 .fab-row :is(.cv-chip, .sl-chip) { position: static; }
+
+/* sound controls inside game scenes (soundctl.js): a round button in the header, a small panel under it */
+.snd-btn { flex: none; width: 36px; height: 36px; display: inline-grid; place-items: center; border-radius: 50%; border: 1.5px solid var(--on-dark-dim); background: transparent; color: var(--on-dark); cursor: pointer; padding: 0; }
+.snd-btn .gl { width: 18px; height: 18px; }
+.snd-btn[aria-pressed="false"] { opacity: .7; }
+.snd-btn:hover, .snd-btn:focus-visible { border-color: var(--brass); color: var(--brass); }
+.snd-panel { position: fixed; z-index: var(--z-scene-dialog); width: 230px; display: grid; gap: 8px; padding: 12px 14px; background: var(--surface); color: var(--ink); border: 1.5px solid var(--ink); border-radius: var(--radius); box-shadow: var(--shadow-pop); }
+.snd-h { font: var(--fs-xs) var(--display); letter-spacing: var(--track-label); color: var(--ink-soft); }
+.snd-h small { font: var(--fs-xs) var(--body); letter-spacing: 0; text-transform: none; }
+.snd-vol { display: grid; gap: 4px; font-size: var(--fs-sm); }
+.snd-vol input { width: 100%; }

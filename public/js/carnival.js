@@ -6,6 +6,7 @@ import { gl } from './glyphs.js';
 import { play, preload, ambience } from './sound.js';
 import { runShow, hasShow } from './carnival-shows.js';
 import { runTour, CARNIVAL_TOUR } from './tour.js';
+import { soundBtn } from './soundctl.js';
 
 const EP = '/api/carnival';
 const FACE = { blank: 'Blank', spur: 'Spur', hit: 'Hit', ace: 'Ace' };
@@ -35,7 +36,7 @@ function sceneHTML() {
   return `<header class="cv-head"><div><div class="cv-kicker">${gl('star')} THE TRAVELING CARNIVAL · ${esc(d.where.toUpperCase())}</div>
       <h2>Wild Oddities &amp; Western Curiosities</h2></div>
       <div class="cv-me"><span>${$$(m?.wallet || 0)}</span><span class="cv-v">Vouchers: ${v.small} small · ${v.medium} medium · ${v.large} large</span></div>
-      <button type="button" class="cv-x" data-cv-x aria-label="Leave the carnival">×</button></header>
+      ${soundBtn('cv-snd')}<button type="button" class="cv-x" data-cv-x aria-label="Leave the carnival">×</button></header>
     ${!m?.ticket ? `<div class="cv-ticket"><p>Tickets are sold at a long covered booth by friendly cashiers.</p><button type="button" class="btn" data-cv="ticket">${gl('star')} Buy a ticket (${$$(d.ticket)})</button></div>` : ''}
     ${last ? `<div class="cv-last"><b>${esc(last.text)}</b>${lastRolls.length ? `<small>${lastRolls.map((r) => `${esc(r.who)}: ${esc(r.label)} ${esc(r.pool)} → ${esc(diceText(r))} (${r.hits} Hit${r.hits === 1 ? '' : 's'})`).join('<br>')}</small>` : ''}</div>` : ''}
     <div class="cv-booths">${BOOTHS.map((b) => `<section class="cv-booth">

@@ -4,6 +4,7 @@ import { gl } from './glyphs.js';
 import { play, ambience } from './sound.js';
 import { attention } from './attention.js';
 import { runTour, SALOON_TOUR } from './tour.js';
+import { soundBtn } from './soundctl.js';
 
 const EP = '/api/saloon';
 const TOUGH = [['npc:Human - Weak Combatant', 'Green', 'weak Skills'], ['npc:Human - Moderate Combatant', 'Seasoned', 'fair Skills'], ['npc:Human - Strong Combatant', 'Sharp', 'strong Skills']];
@@ -177,7 +178,7 @@ function render() {
   const mine = asWarden ? null : h?.mine;
   scene.innerHTML = `<div class="sl-table" role="dialog" aria-modal="true" aria-label="Poker at ${esc(t.where)}">
     <div class="sl-top"><div><small>FIVE-CARD DRAW · ${esc(t.where.toUpperCase())}</small><b>${h ? `Hand ${h.no} — ${PHASE[h.phase] || ''}` : t.status === 'closed' ? 'The game has broken up' : 'Waiting for the deal'}</b></div>
-      <span class="sl-stakes">Ante ${$$(t.stakes.ante)} · bets ${$$(t.stakes.bet)} / ${$$(t.stakes.bet * 2)}</span>${rulesBtn}<button type="button" class="sl-x" data-sl="hide" aria-label="Step away">×</button></div>
+      <span class="sl-stakes">Ante ${$$(t.stakes.ante)} · bets ${$$(t.stakes.bet)} / ${$$(t.stakes.bet * 2)}</span>${rulesBtn}${soundBtn('sl-snd')}<button type="button" class="sl-x" data-sl="hide" aria-label="Step away">×</button></div>
     <div class="sl-felt">
       <div class="sl-seats">${[...npcs, ...pcs].map((s) => seatHTML(t, s)).join('')}</div>
       <div class="sl-pot">${h ? `<span class="chips" aria-hidden="true">${'<i></i>'.repeat(Math.min(12, Math.ceil((h.pot || 0) / Math.max(1, t.stakes.bet))))}</span><b>POT ${$$(h.pot)}</b>` : ''}${h?.result ? `<p class="sl-result">${esc(h.result)}</p>` : ''}</div>
@@ -248,7 +249,7 @@ function renderLiars(t) {
   const title = L ? (L.over ? `Game ${L.game} is over` : `Game ${L.game} — round ${L.round} · ${L.total} dice on the table`) : t.status === 'closed' ? 'The game has broken up' : 'Waiting for the first roll';
   scene.innerHTML = `<div class="sl-table" role="dialog" aria-modal="true" aria-label="Liar’s Dice at ${esc(t.where)}">
     <div class="sl-top"><div><small>LIAR’S DICE · ${esc(t.where.toUpperCase())}</small><b>${title}</b></div>
-      <span class="sl-stakes">${$$(t.stakes.ante)} a head · ones are wild</span>${rulesBtn}<button type="button" class="sl-x" data-sl="hide" aria-label="Step away">×</button></div>
+      <span class="sl-stakes">${$$(t.stakes.ante)} a head · ones are wild</span>${rulesBtn}${soundBtn('sl-snd')}<button type="button" class="sl-x" data-sl="hide" aria-label="Step away">×</button></div>
     <div class="sl-felt">
       <div class="sl-seats">${others.map(seatBox).join('')}</div>
       <div class="sl-pot">${L ? `<b>POT ${$$(L.pot)}</b>` : ''}${L?.bid && !L.over ? `<p class="ld-bid">The bid: <b>${esc(bidText(L.bid))}</b> <small>by ${esc(t.seats.find((s) => s.key === L.bid.by)?.name || '?')}</small></p>` : ''}${L?.over && L.winner ? `<p class="sl-result">${esc(t.seats.find((s) => s.key === L.winner)?.name || '')} takes the pot.</p>` : ''}</div>
@@ -307,7 +308,7 @@ function renderDrinking(t) {
   const drinkers = [...t.seats.filter((s) => s.kind === 'npc'), ...t.seats.filter((s) => s.kind === 'pc')];
   scene.innerHTML = `<div class="sl-table" role="dialog" aria-modal="true" aria-label="Drinking contest at ${esc(t.where)}">
     <div class="sl-top"><div><small>DRINKING CONTEST · ${esc(t.where.toUpperCase())}</small><b>${title}</b></div>
-      <span class="sl-stakes">${$$(t.stakes.ante)} to get in · pot ${$$(D?.pot || 0)} · bar tab ${$$(D?.tab || 0)}</span>${rulesBtn}<button type="button" class="sl-x" data-sl="hide" aria-label="Step away">×</button></div>
+      <span class="sl-stakes">${$$(t.stakes.ante)} to get in · pot ${$$(D?.pot || 0)} · bar tab ${$$(D?.tab || 0)}</span>${rulesBtn}${soundBtn('sl-snd')}<button type="button" class="sl-x" data-sl="hide" aria-label="Step away">×</button></div>
     ${D?.mySpit ? '<p class="bj-note">Your glass is going in the spittoon this round.</p>' : ''}${D?.myDouble ? '<p class="bj-note">Caught! You drink a double this round.</p>' : ''}
     <div class="sl-felt dk-bar"><div class="sl-seats">${drinkers.map(seatHTML).join('')}</div></div>
     <div class="sl-controls"><div class="btn-row sl-moves">${btns.join('')}</div>${needleHTML}</div>
@@ -359,7 +360,7 @@ function renderBj(t) {
   const dealerCards = B?.dealer?.length ? B.dealer.map((c, i) => card(c, i === 1 && B.holeSeen ? 'peeked' : '')).join('') : card(null) + card(null);
   scene.innerHTML = `<div class="sl-table" role="dialog" aria-modal="true" aria-label="Blackjack at ${esc(t.where)}">
     <div class="sl-top"><div><small>BLACKJACK · ${esc(t.where.toUpperCase())}</small><b>${title}</b></div>
-      <span class="sl-stakes">${esc(dealer?.name || 'The dealer')} banks ${$$(dealer?.bank)} · bets ${$$(min)}–${$$(max)} · blackjack pays 3 to 2</span>${rulesBtn}<button type="button" class="sl-x" data-sl="hide" aria-label="Step away">×</button></div>
+      <span class="sl-stakes">${esc(dealer?.name || 'The dealer')} banks ${$$(dealer?.bank)} · bets ${$$(min)}–${$$(max)} · blackjack pays 3 to 2</span>${rulesBtn}${soundBtn('sl-snd')}<button type="button" class="sl-x" data-sl="hide" aria-label="Step away">×</button></div>
     <div class="sl-felt bj-felt">
       <div class="bj-dealer"><small>${esc((dealer?.name || 'The dealer').toUpperCase())} · DEALER${B?.dealer?.length ? ` · ${B.phase === 'done' || asWarden ? B.dealerTotal : `showing ${B.dealerTotal}`}` : ''}</small><div class="sl-cards">${dealerCards}</div>${B?.holeSeen ? '<p class="bj-note">Your shiner shows the hole card.</p>' : ''}</div>
       <p class="bj-rule">Dealer draws to 16 and stands on all 17s</p>
@@ -404,7 +405,7 @@ function renderFaro(t) {
   const title = f ? (f.over ? `Deal ${f.deal} is done` : `Deal ${f.deal} — ${f.left} card${f.left === 1 ? '' : 's'} in the box`) : t.status === 'closed' ? 'The bank is closed' : 'Waiting for the shuffle';
   scene.innerHTML = `<div class="sl-table" role="dialog" aria-modal="true" aria-label="Faro at ${esc(t.where)}">
     <div class="sl-top"><div><small>FARO · ${esc(t.where.toUpperCase())}</small><b>${title}</b></div>
-      <span class="sl-stakes">${esc(dealer?.name || 'The dealer')} banks ${$$(dealer?.bank)} · bets ${$$(t.stakes.ante)}–${$$(t.stakes.bet * 5)} a card</span>${rulesBtn}<button type="button" class="sl-x" data-sl="hide" aria-label="Step away">×</button></div>
+      <span class="sl-stakes">${esc(dealer?.name || 'The dealer')} banks ${$$(dealer?.bank)} · bets ${$$(t.stakes.ante)}–${$$(t.stakes.bet * 5)} a card</span>${rulesBtn}${soundBtn('sl-snd')}<button type="button" class="sl-x" data-sl="hide" aria-label="Step away">×</button></div>
     ${asWarden && f ? `<p class="fr-secret">${f.crooked ? `Crooked box: on${f.cheats ? ` (stacked ${f.cheats} turn${f.cheats > 1 ? 's' : ''} so far)` : ''}` : 'The box is square.'}</p>` : ''}
     <div class="sl-felt fr-felt">
       <div class="fr-box">

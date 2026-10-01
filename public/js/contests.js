@@ -7,6 +7,7 @@ import { gl } from './glyphs.js';
 import { play, preload, ambience } from './sound.js';
 import { carnivalStyles } from './carnival.js';
 import { runTour, CONTEST_TOUR } from './tour.js';
+import { soundBtn } from './soundctl.js';
 
 const EP = '/api/contest';
 let view = null, scene = null, busy = false, shown = '';
@@ -45,7 +46,7 @@ function sceneHTML() {
   return `<header class="cv-head ct-head"><div><div class="cv-kicker">${gl(d.kind === 'race' ? 'horseshoe' : 'revolver')} ${esc(d.name.toUpperCase())} · ${esc(d.where.toUpperCase())}</div>
       <h2>${d.kind === 'race' ? 'Off to the Races' : 'The Trick-Shot Contest'}</h2></div>
       <div class="cv-me"><span>Pot ${$$(d.pot)}</span>${me() && !savedPin() ? `<span class="cv-v">Wallet ${$$(d.wallet || 0)}</span>` : ''}</div>
-      <button type="button" class="cv-x" data-ct-x aria-label="Close">×</button></header>
+      ${soundBtn('cv-snd')}<button type="button" class="cv-x" data-ct-x aria-label="Close">×</button></header>
     <div class="ct-body">
       ${ran ? `<div class="cv-last"><b>${esc(d.result.text)}</b><small>${d.result.pot ? `The pot of ${$$(d.result.pot)} is paid out.` : ''}${d.result.betPool ? ` Side bets: ${d.result.bets.some((b) => b.won) ? d.result.bets.filter((b) => b.won).map((b) => `${esc(b.name)} collects ${$$(b.won)}`).join(', ') : 'nobody backed the winner.'}` : ''}</small>
         <button type="button" class="btn small secondary" data-ct-replay>${gl('flash')} Watch it again</button></div>` : ''}
