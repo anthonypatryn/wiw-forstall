@@ -97,7 +97,7 @@ export function renderChecks() {
     const help = Math.max(0, ...Object.values(ck.helps || {}).map((h) => h.hits));
     // still waiting: "Call off" cancels it. Everyone's in: it's highlighted with a clear "Close it" (Help still works until then)
     const finished = ck.kind === 'challenge' ? !!ck.winner : ck.who.every((pid) => ck.rolls[pid]);
-    const done = finished ? `<button type="button" class="btn small" data-ck-close="${ck.id}">${gl('pin')} Close it</button>` : `<button type="button" class="btn small secondary" data-ck-close="${ck.id}" title="Cancel this roll">Call off</button>`;
+    const done = finished ? `<button type="button" class="btn small" data-ck-close="${ck.id}">${gl('pin')} Close it</button>` : `<span class="ck-btns"><button type="button" class="btn small" data-ck-nudge="${ck.id}" title="Pop it up again for whoever hasn’t rolled">${gl('sound')} Nudge</button><button type="button" class="btn small secondary" data-ck-close="${ck.id}" title="Cancel this roll">Call off</button></span>`;
     const helpNote = finished && ck.kind !== 'challenge' ? '<div class="muted ck-help-note">Everyone’s rolled. The posse can still Help until you close it.</div>' : '';
     if (ck.kind === 'challenge') {
       return `<div class="notice${ck.winner ? ' ck-finished' : ' urgent'}"><div class="ck-body"><b>${gl('revolver')} ${esc(ck.skill)} Challenge</b>${ck.round > 1 ? ` · round ${ck.round}` : ''}${ck.note ? ` · <i>${esc(ck.note)}</i>` : ''}
@@ -112,6 +112,11 @@ export function renderChecks() {
   }).join('');
   $('#check-list').innerHTML = rows || '<p class="muted">No rolls open. Call one from <a href="#grp-start">Start Something</a>.</p>';
   $('#check-list').querySelectorAll('[data-ck-close]').forEach((b) => b.addEventListener('click', () => combatAct({ action: 'checkClose', id: b.dataset.ckClose })));
+  $('#check-list').querySelectorAll('[data-ck-nudge]').forEach((b) => b.addEventListener('click', async () => {
+    b.disabled = true;
+    const r = await combatAct({ action: 'checkNudge', id: b.dataset.ckNudge });
+    if (r?.names?.length) toast(`Nudged ${r.names.join(' & ')}.`);
+  }));
 }
 
 export function renderRecent() {

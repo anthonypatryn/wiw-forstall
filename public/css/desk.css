@@ -31,6 +31,7 @@
 /* open rolls (Run-the-Game style rows) */
 .ck-body { flex: 1 1 240px; min-width: 0; font-size: var(--fs-sm); }
 .ck-body .gl { width: 1.1em; height: 1.1em; vertical-align: -3px; color: var(--rust); }
+.ck-btns { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .ck-who { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 5px; }
 .pill.wait { background: var(--shade-1); font-style: italic; }
 .pill.ok { background: var(--success); color: var(--on-accent); }

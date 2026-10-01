@@ -1463,3 +1463,16 @@ test('site password: everything needs the cookie except the splash page (and the
   assert.equal(await gateDecision(`${B}/battle?tv=1`, `${COOKIE}=nope`), 'page');
   assert.equal(enterUrl(`${B}/journal?x=1`), '/enter?next=%2Fjournal%3Fx%3D1');
 });
+
+test('Nudge: an open roll pops up again only for whoever hasn’t rolled', () => {
+  const state = freshCombat();
+  const a = publicAction(state, { action: 'addPc', trade: 'Hunter', name: 'Tess' }, { warden: true });
+  const b = publicAction(state, { action: 'addPc', trade: 'Hunter', name: 'Bo' }, { warden: true });
+  const ck = publicAction(state, { action: 'checkStart', who: [a.id, b.id], skill: 'Nerve', diff: 'Medium' }, { warden: true });
+  assert.throws(() => publicAction(state, { action: 'checkNudge', id: ck.id }, { warden: false }), /PIN/);
+  publicAction(state, { action: 'pc', id: a.id, op: 'checkRoll', check: ck.id }, { warden: false });
+  assert.deepEqual(publicAction(state, { action: 'checkNudge', id: ck.id }, { warden: true }).names, ['Bo']);
+  assert.ok(state.checks[0].nudge > 0);
+  publicAction(state, { action: 'pc', id: b.id, op: 'checkRoll', check: ck.id }, { warden: false });
+  assert.throws(() => publicAction(state, { action: 'checkNudge', id: ck.id }, { warden: true }), /Everyone has rolled/);
+});

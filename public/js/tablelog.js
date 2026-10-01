@@ -187,7 +187,7 @@ export function renderHud(h) {
   // 4) a Skill check / Challenge for this device's character — on any page
   const mine = me();
   const onMySheet = location.pathname.startsWith('/posse') && location.hash.slice(1).split('/')[0] === mine;
-  const open = mine && !onMySheet ? (h.checks || []).find((c) => c.who.some((w) => w.id === mine && !w.rolled) && seen(`wiw.ck.${c.id}.${c.round}`) !== 'later') : null;
+  const open = mine && !onMySheet ? (h.checks || []).find((c) => c.who.some((w) => w.id === mine && !w.rolled) && seen(`wiw.ck.${c.id}.${c.round}`) !== `later.${c.nudge}`) : null; // a Nudge brings it back
   if (!open) {
     // not called? You can Help (p. 13): roll half your dice and the best helper's Hits are added
     const assist = mine && !onMySheet ? (h.checks || []).find((c) => c.kind !== 'challenge' && !c.who.some((w) => w.id === mine) && !(c.helped || []).includes(mine) && seen(`wiw.help.${c.id}`) !== 'no') : null;
@@ -212,17 +212,17 @@ export function renderHud(h) {
     });
     return;
   }
-  if (ck.dataset.id === `${open.id}.${open.round}` && !ck.hidden) return;
-  ck.dataset.id = `${open.id}.${open.round}`;
+  if (ck.dataset.id === `${open.id}.${open.round}.${open.nudge}` && !ck.hidden) return;
+  ck.dataset.id = `${open.id}.${open.round}.${open.nudge}`;
   const who = open.who.find((w) => w.id === mine);
   const others = open.who.filter((w) => w.id !== mine).map((w) => w.name).concat(open.vs ? [open.vs] : []);
   ck.hidden = false;
   play('chime');
   try { navigator.vibrate?.(150); } catch {}
-  ck.innerHTML = `<div><small>${open.kind === 'challenge' ? `CHALLENGE${open.round > 1 ? ` · ROUND ${open.round} (TIE)` : ''} — MOST HITS WINS` : 'THE WARDEN ASKS YOU TO ROLL'}</small>
+  ck.innerHTML = `<div><small>${open.kind === 'challenge' ? `CHALLENGE${open.round > 1 ? ` · ROUND ${open.round} (TIE)` : ''} — MOST HITS WINS` : open.nudge ? 'THE WARDEN IS STILL WAITING ON YOUR ROLL' : 'THE WARDEN ASKS YOU TO ROLL'}</small>
     <b>${esc(who.name)}: ${esc(open.skill)}</b> ${open.kind === 'challenge' ? `vs ${esc(others.join(' & '))}` : `· ${esc(open.diff)} — ${open.target} Hit${open.target === 1 ? '' : 's'}`}${open.note ? ` · <i>${esc(open.note)}</i>` : ''}</div>
     <div class="hud-ck-btns"><button type="button" class="btn" data-ck-go>Roll ${esc(open.skill)}</button><button type="button" class="btn small secondary" data-ck-later>Later</button></div>`;
-  ck.querySelector('[data-ck-later]').addEventListener('click', () => { setSeen(`wiw.ck.${open.id}.${open.round}`, 'later'); ck.hidden = true; });
+  ck.querySelector('[data-ck-later]').addEventListener('click', () => { setSeen(`wiw.ck.${open.id}.${open.round}`, `later.${open.nudge}`); ck.hidden = true; });
   ck.querySelector('[data-ck-go]').addEventListener('click', async (e) => {
     e.target.disabled = true;
     try {

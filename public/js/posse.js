@@ -744,7 +744,8 @@ function renderFight(view, p) {
   const checks = (data.checks || []).filter((ck) => (ck.who.includes(p.id) ? !ck.rolls[p.id] && !ck.winner : ck.kind !== 'challenge' && !ck.helps[p.id]));
   // a new roll called for this character: buzz once
   checks.filter((ck) => ck.who.includes(p.id)).forEach((ck) => {
-    if (!checkSeen.has(ck.id)) { if (checkSeen.size || checksPrimed) { toast(`The Warden wants a ${ck.skill} roll from ${p.name}!`); try { navigator.vibrate?.(150); } catch {} } checkSeen.add(ck.id); }
+    const k = `${ck.id}.${ck.nudge || 0}`; // a Nudge from the Warden buzzes again
+    if (!checkSeen.has(k)) { if (checkSeen.size || checksPrimed) { toast(ck.nudge ? `The Warden is still waiting on ${p.name}’s ${ck.skill} roll!` : `The Warden wants a ${ck.skill} roll from ${p.name}!`); try { navigator.vibrate?.(150); } catch {} } checkSeen.add(k); }
   });
   checksPrimed = true;
   const show = ((statuses.length && !c.active) || checks.length) && !p.dead;
