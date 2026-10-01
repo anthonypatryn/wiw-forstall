@@ -37,7 +37,7 @@ function renderEditor() {
     <div class="field-step"><span>READ ALOUD <small>what you say to set the scene</small></span><textarea data-f="readAloud" rows="4" maxlength="4000" placeholder="The wind dies. Somewhere up the canyon, a horse whinnies…">${esc(ed.readAloud)}</textarea></div>
     <div class="field-step"><span>YOUR NOTES <small>only you see these</small></span><textarea data-f="notes" rows="3" maxlength="4000" placeholder="What the NPCs want, what happens if the posse runs…">${esc(ed.notes)}</textarea></div>
 
-    <h3 class="prep-h">${gl('hat')} Set the stage <small>one tap reveals all of these</small></h3>
+    <h3 class="prep-h">${gl('hat')} Set the stage <small>each gets its own button on Run the Game, plus one for all at once</small></h3>
     ${chipSet('npcs', ref.npcs.map((n) => ({ id: n.id, name: n.name, sub: n.known ? 'already met' : 'not met yet' })), 'NPCS THE POSSE MEETS')}
     ${chipSet('wanted', ref.posters.map((p) => ({ id: p.id, name: p.name, sub: p.hidden ? 'hidden poster' : 'already up' })), 'WANTED POSTERS TO PUT UP')}
     ${chipSet('journal', jn, 'QUESTS &amp; CLUES TO REVEAL')}

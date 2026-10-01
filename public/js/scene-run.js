@@ -29,9 +29,17 @@ function pickWho(posse, title, go = 'Send') {
 }
 
 export function mountSceneRun(el, getCombat, after = () => {}) {
-  let S = null, busy = false;
+  let S = null, busy = false, names = { npc: {}, wanted: {}, quest: {}, clue: {} };
   const alive = () => (getCombat()?.posse || []).filter((p) => !p.dead);
-  const load = () => api('GET', null, '', EP).then((d) => { S = d; draw(); }).catch(() => { el.innerHTML = '<p class="muted">Couldn’t load your scenes.</p>'; });
+  // names for the one-per-thing stage beats (the scene only keeps ids)
+  const loadNames = () => Promise.all([api('GET', null, '?view=warden', '/api/npcs'), api('GET', null, '?view=warden', '/api/wanted'), api('GET', null, '?view=warden', '/api/journal')]).then(([n, w, j]) => {
+    names = { npc: {}, wanted: {}, quest: {}, clue: {} };
+    for (const x of n.npcs || []) names.npc[x.id] = x.name;
+    for (const x of w.posters || []) names.wanted[x.id] = x.name;
+    for (const x of j.quests || []) names.quest[x.id] = x.title;
+    for (const x of j.clues || []) names.clue[x.id] = x.title || (x.text || '').slice(0, 30);
+  }).catch(() => {});
+  const load = () => Promise.all([api('GET', null, '', EP), loadNames()]).then(([d]) => { S = d; draw(); }).catch(() => { el.innerHTML = '<p class="muted">Couldn’t load your scenes.</p>'; });
   const mark = async (s, key) => { const r = await api('POST', { action: 'used', id: s.id, key }, '', EP); S = r.state; };
 
   function draw() {
@@ -50,7 +58,10 @@ export function mountSceneRun(el, getCombat, after = () => {}) {
       ${s.readAloud ? `<blockquote class="sr-read"><small>READ ALOUD</small>${esc(s.readAloud).replace(/\n/g, '<br>')}<button type="button" class="btn small secondary sr-tv" data-sr-tv>${gl('scroll')} Show on the TV</button></blockquote>` : ''}
       ${s.notes ? `<p class="sr-notes"><b>Your notes:</b> ${esc(s.notes).replace(/\n/g, '<br>')}</p>` : ''}
       <div class="sr-beats">
-        ${stage ? beat('stage', `${gl('hat')} Set the stage`, [s.npcs.length && `reveal ${s.npcs.length} NPC${s.npcs.length > 1 ? 's' : ''}`, s.wanted.length && `put up ${s.wanted.length} poster${s.wanted.length > 1 ? 's' : ''}`, s.journal.length && `reveal ${s.journal.length} in the Journal`].filter(Boolean).join(' · ')) : ''}
+        ${stage > 1 ? beat('stage', `${gl('hat')} Set the whole stage`, `all ${stage} below at once`) : ''}
+        ${s.npcs.map((id) => beat(`npc:${id}`, `${gl('hat')} Reveal: ${esc(names.npc[id] || 'an NPC')}`, 'the posse meets them')).join('')}
+        ${s.wanted.map((id) => beat(`wanted:${id}`, `${gl('scroll')} Put up: ${esc(names.wanted[id] || 'a poster')}`, 'Wanted poster')).join('')}
+        ${s.journal.map((x) => beat(`journal:${x.kind}:${x.id}`, `${gl('scroll')} Reveal: ${esc(names[x.kind]?.[x.id] || `a ${x.kind}`)}`, `${x.kind} in the Journal`)).join('')}
         ${fight ? beat('fight', `${gl('revolver')} Set up the fight`, [s.battleMap && 'load the battle map', s.enemies.length && s.enemies.map((e) => `${e.count > 1 ? `${e.count}× ` : ''}${e.name || e.profile.replace(/^npc:(Human - )?/, '')}`).join(', ')].filter(Boolean).join(' · ')) : ''}
         ${s.handouts.map((h) => beat(`handout:${h.id}`, `${gl(h.kind === 'note' ? 'scroll' : 'satchel')} Hand out: ${esc(h.title || 'a note')}`, 'to the whole posse')).join('')}
         ${s.locks.map((l) => beat(`lock:${l.id}`, `${gl('lock')} Lock: ${esc(l.what)}`, `${l.difficulty} in a row${l.loot ? ' · something inside' : ''}${l.trap ? ' · trapped' : ''}`)).join('')}
@@ -60,12 +71,21 @@ export function mountSceneRun(el, getCombat, after = () => {}) {
   }
 
   async function fire(s, key) {
-    const [kind, ref] = key.split(':');
-    if (kind === 'stage') {
-      for (const id of s.npcs) await api('POST', { action: 'known', id, value: true }, '', '/api/npcs').catch(() => {});
-      for (const id of s.wanted) await api('POST', { action: 'edit', id, hidden: false }, '', '/api/wanted').catch(() => {});
-      for (const j of s.journal) await api('POST', { action: 'reveal', kind: j.kind, id: j.id, value: true }, '', '/api/journal').catch(() => {});
+    const [kind, ref, ref2] = key.split(':');
+    const npc = (id) => api('POST', { action: 'known', id, value: true }, '', '/api/npcs');
+    const poster = (id) => api('POST', { action: 'edit', id, hidden: false }, '', '/api/wanted');
+    const clue = (k, id) => api('POST', { action: 'reveal', kind: k, id, value: true }, '', '/api/journal');
+    if (kind === 'stage') { // everything at once; each one is ticked off too
+      for (const id of s.npcs) { await npc(id).catch(() => {}); await mark(s, `npc:${id}`); }
+      for (const id of s.wanted) { await poster(id).catch(() => {}); await mark(s, `wanted:${id}`); }
+      for (const j of s.journal) { await clue(j.kind, j.id).catch(() => {}); await mark(s, `journal:${j.kind}:${j.id}`); }
       toast('The stage is set — the posse can see who and what they’ve found.');
+    } else if (kind === 'npc') {
+      await npc(ref); toast(`${names.npc[ref] || 'They'} — now on the posse’s NPC ledger.`);
+    } else if (kind === 'wanted') {
+      await poster(ref); toast(`${names.wanted[ref] || 'The poster'} is up on the Wanted board.`);
+    } else if (kind === 'journal') {
+      await clue(ref, ref2); toast(`${names[ref]?.[ref2] || 'It'} is in the posse’s Journal.`);
     } else if (kind === 'fight') {
       if (s.battleMap) await api('POST', { action: 'preset', id: s.battleMap }, '', '/api/battle');
       for (const e of s.enemies) await api('POST', { action: 'addEnemy', profile: e.profile || undefined, name: e.name || undefined, count: e.count }, '', '/api/combat');
