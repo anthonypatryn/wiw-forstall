@@ -8,3 +8,4 @@
 .ht-list .gl { width: 26px; height: 26px; color: var(--rust); margin-top: 1px; }
 .ht-acts { margin: 8px 0; padding-left: 4px; list-style: none; display: grid; gap: 6px; }
 .ht-acts .gl { width: 1.15em; height: 1.15em; color: var(--rust); vertical-align: -3px; }
+.ht-tours { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }

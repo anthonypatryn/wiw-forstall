@@ -9,6 +9,7 @@ import { mountTableLog } from './tablelog.js';
 import { pcCardHTML, enemyCardHTML, wireFighters, openSpoils } from './fighter-card.js';
 import { openAddEnemies } from './enemy-add.js';
 import { panZoom } from './panzoom.js';
+import { runTour, BATTLE_TOUR } from './tour.js';
 
 const EP = '/api/battle';
 if (TV) document.body.classList.add('tv-mode'); // inside the TV table screen: just the map, fitted, no controls
@@ -1398,6 +1399,7 @@ async function act(body, okMsg) {
     return res.result ?? true;
   } catch (e) { toast(e.message, true); render(); return null; }
 }
+let toured = false;
 function connect() {
   poller?.stop();
   combatPoller?.stop();
@@ -1407,6 +1409,7 @@ function connect() {
     if (selected && !data.tokens.some((t) => t.id === selected)) selected = null;
     if (selFs && !fsOf(selFs)) selFs = null;
     render();
+    if (!warden && !toured) { toured = true; const force = new URLSearchParams(location.search).has('tour'); setTimeout(() => runTour(BATTLE_TOUR, 'battle', { force }), 900); } // first visit: the tour
   }, (ok, e) => { if (e?.status === 401) { warden = false; forgetWarden(); setWarden(); connect(); } }, EP);
 }
 function setWarden() {

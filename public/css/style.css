@@ -986,7 +986,7 @@ input[type=range]::-moz-range-thumb { width: 16px; height: 16px; border-radius: 
 
 /* new-player tour: dim everything, spotlight one thing, explain it */
 .tour-back { position: fixed; inset: 0; z-index: var(--z-tour); }
-.tour-spot { position: fixed; border-radius: var(--radius); box-shadow: 0 0 0 9999px rgba(20, 16, 14, .72); outline: 2px solid var(--brass); transition: all .2s ease; pointer-events: none; }
+.tour-spot { position: fixed; border-radius: var(--radius); box-shadow: 0 0 0 200vmax rgba(20, 16, 14, .72); outline: 2px solid var(--brass); transition: all .2s ease; pointer-events: none; }
 .tour-tip { position: fixed; width: min(360px, calc(100vw - 24px)); background: var(--surface); border: 1.5px solid var(--ink); border-radius: var(--radius); padding: 14px 16px; box-shadow: var(--shadow-pop); }
 .tour-tip.docked { left: 12px; right: 12px; bottom: 12px; width: auto; }
 .tour-tip h3 { margin: 2px 0 6px; font: var(--fs-lg) var(--display); letter-spacing: var(--track-tight); }

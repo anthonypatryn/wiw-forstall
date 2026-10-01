@@ -94,7 +94,7 @@ async function main() {
     await goto('/howto', 800);
     await js(who === 'warden'
       ? `sessionStorage.setItem('wiw.pin', '${PIN}'); localStorage.setItem('wiw.me', 'null'); localStorage.setItem('wiw.prevSeen', '"x"'); return 1;`
-      : `sessionStorage.removeItem('wiw.pin'); localStorage.setItem('wiw.me', JSON.stringify('${s.pcId}')); localStorage.setItem('wiw.prevSeen', '"x"'); localStorage.setItem('wiw.tour.sheet', '1'); return 1;`);
+      : `sessionStorage.removeItem('wiw.pin'); localStorage.setItem('wiw.me', JSON.stringify('${s.pcId}')); localStorage.setItem('wiw.prevSeen', '"x"'); for (const k of ['sheet', 'battle', 'map', 'npcs', 'wanted', 'journal', 'saloon', 'carnival', 'contest']) localStorage.setItem('wiw.tour.' + k, '1'); return 1;`);
   };
   async function check(name, p, expr, wait) {
     errors = [];

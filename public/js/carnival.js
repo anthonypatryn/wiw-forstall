@@ -5,6 +5,7 @@ import { esc, api, toast, store, me, savedPin, startPolling, ask, onChange, plac
 import { gl } from './glyphs.js';
 import { play, preload, ambience } from './sound.js';
 import { runShow, hasShow } from './carnival-shows.js';
+import { runTour, CARNIVAL_TOUR } from './tour.js';
 
 const EP = '/api/carnival';
 const FACE = { blank: 'Blank', spur: 'Spur', hit: 'Hit', ace: 'Ace' };
@@ -67,6 +68,7 @@ export function openCarnival() {
   scene.innerHTML = '<div class="cv-scene" role="dialog" aria-modal="true" aria-label="The Traveling Carnival"></div><div class="cv-showbox" hidden></div>';
   document.body.append(scene);
   render();
+  setTimeout(() => scene && runTour(CARNIVAL_TOUR, 'carnival', { scene: true }), 700); // a player's first visit: the tour
   scene.addEventListener('click', async (e) => {
     if (e.target.closest('.cv-showbox')) return; // the booth's show has its own button
     if (e.target.closest('[data-cv-x]') || e.target === scene) { ambience('game', null); scene.remove(); scene = null; showChip(); return; }

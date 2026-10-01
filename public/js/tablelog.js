@@ -38,6 +38,7 @@ export function mountTableLog() {
   import('./contests.js').then((m) => m.watchContest()).catch(() => {}); // the horse race and the trick-shot contest
   import('./soundboard.js').then((m) => m.watchSoundcast()).catch(() => {}); // the Warden's soundboard: effects and background loops
   import('./journal-watch.js').then((m) => m.watchJournal()).catch(() => {}); // a new quest or clue the Warden reveals
+  if (!savedPin()) import('./tour.js').then((m) => m.pageTour()).catch(() => {}); // World pages: a first-visit tour
   const btn = document.createElement('button');
   btn.type = 'button';
   btn.className = 'log-fab';

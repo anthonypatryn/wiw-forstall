@@ -6,6 +6,7 @@ import { esc, api, toast, store, me, savedPin, startPolling, ask, onChange, plac
 import { gl } from './glyphs.js';
 import { play, preload, ambience } from './sound.js';
 import { carnivalStyles } from './carnival.js';
+import { runTour, CONTEST_TOUR } from './tour.js';
 
 const EP = '/api/contest';
 let view = null, scene = null, busy = false, shown = '';
@@ -85,6 +86,7 @@ export function openContest() {
   scene.innerHTML = '<div class="cv-scene ct-scene" role="dialog" aria-modal="true" aria-label="Contest"></div><div class="cv-showbox" hidden></div>';
   document.body.append(scene);
   render();
+  if (!view?.result) setTimeout(() => scene && runTour(CONTEST_TOUR, 'contest', { scene: true }), 700); // a player's first contest: the tour (not over a replay)
   let pick = 'finesse';
   scene.addEventListener('click', async (e) => {
     if (e.target.closest('.cv-showbox')) return;

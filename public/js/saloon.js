@@ -3,6 +3,7 @@ import { esc, api, toast, startPolling, savedPin, store, rollPopup, ask, onChang
 import { gl } from './glyphs.js';
 import { play, ambience } from './sound.js';
 import { attention } from './attention.js';
+import { runTour, SALOON_TOUR } from './tour.js';
 
 const EP = '/api/saloon';
 const TOUGH = [['npc:Human - Weak Combatant', 'Green', 'weak Skills'], ['npc:Human - Moderate Combatant', 'Seasoned', 'fair Skills'], ['npc:Human - Strong Combatant', 'Sharp', 'strong Skills']];
@@ -618,6 +619,7 @@ function openTable(warden = false) {
     document.body.classList.add('nav-open');
     render();
     requestAnimationFrame(() => { if (scene && !scene.contains(document.activeElement)) scene.querySelector('button')?.focus({ preventScroll: true }); }); // keyboard users land inside the scene
+    if (!warden) setTimeout(() => scene && runTour(SALOON_TOUR, 'saloon', { scene: true }), 700); // a player's first seat: the tour
     return;
   }
   render();
