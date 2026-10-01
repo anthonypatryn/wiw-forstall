@@ -1,4 +1,4 @@
-// Call for a roll (pp. 12–13), the quick way: tap who, tap how hard, tap the Skill — the request goes out.
+// Call for a roll (pp. 12–13): tap who, how hard and the Skill, then Call for the roll sends it out.
 import { esc, api, toast } from './common.js';
 import { gl } from './glyphs.js';
 
@@ -7,7 +7,7 @@ const SKILLS = [['Charm', 'convince, barter, intimidate'], ['Finesse', 'sneak, c
 
 // el: the box to draw into. getCombat(): the Warden combat view. after(ck): called once a roll is called.
 export function mountRollCaller(el, getCombat, after) {
-  const sel = { who: null, diff: 'Medium', note: '', npc: '' }; // who: null = everyone (or everyone in the fight)
+  const sel = { who: null, diff: 'Medium', note: '', npc: '', skill: null }; // who: null = everyone (or everyone in the fight)
   const people = () => {
     const c = getCombat();
     if (!c) return [];
@@ -31,8 +31,9 @@ export function mountRollCaller(el, getCombat, after) {
           ${(c?.enemies || []).filter((e) => !e.defeated).map((e) => `<option value="en:${e.id}"${sel.npc === `en:${e.id}` ? ' selected' : ''}>${esc(e.name)}</option>`).join('')}
           <optgroup label="Book NPCs">${(c?.npcCatalog || []).map((n) => { const v = `np:${n.key}|${n.faction ? n.name : ''}`; return `<option value="${esc(v)}"${sel.npc === v ? ' selected' : ''}>${esc(n.name.replace('Human - ', 'Human: '))}</option>`; }).join('')}</optgroup></select></div>` : ''}
       <div class="field-step"><span>FOR</span><input data-rc-note maxlength="80" placeholder="what’s it for? (optional) e.g. climb the cliff" value="${esc(sel.note)}"></div>
-      <div class="rc-skills">${SKILLS.map(([s, d]) => `<button type="button" class="rc-skill" data-rc-skill="${s}">${gl('die')}<b>${s}</b><small>${d}</small></button>`).join('')}</div>
-      <p class="muted rc-tip">Tap a Skill to send it — it pops up on ${chosen().length === 1 ? `${esc(chosen()[0].name)}’s` : 'their'} phones. Anyone not called gets a pop-up to Help with half their dice — pick one person when the others should help.</p>`;
+      <div class="rc-skills">${SKILLS.map(([s, d]) => `<button type="button" class="rc-skill${sel.skill === s ? ' on' : ''}" data-rc-skill="${s}" aria-pressed="${sel.skill === s}">${gl('die')}<b>${s}</b><small>${d}</small></button>`).join('')}</div>
+      <button type="button" class="btn rc-go" data-rc-go${sel.skill ? '' : ' disabled'}>${gl('die')} ${sel.skill ? `Call for the ${esc(sel.skill)} roll` : 'Pick a Skill to call for'}</button>
+      <p class="muted rc-tip">It pops up on ${chosen().length === 1 ? `${esc(chosen()[0].name)}’s` : 'their'} phones. Anyone not called gets a pop-up to Help with half their dice — pick one person when the others should help.</p>`;
   }
   el.addEventListener('click', async (e) => {
     const b = e.target.closest('button');
@@ -45,14 +46,15 @@ export function mountRollCaller(el, getCombat, after) {
       draw(); return;
     }
     if (b.dataset.rcDiff) { sel.diff = b.dataset.rcDiff; draw(); return; }
-    if (b.dataset.rcSkill) {
+    if (b.dataset.rcSkill) { sel.skill = sel.skill === b.dataset.rcSkill ? null : b.dataset.rcSkill; draw(); return; }
+    if (b.dataset.rcGo !== undefined && sel.skill) {
       const who = chosen().map((p) => p.id);
       if (!who.length) return toast('Nobody to roll.', true);
       b.disabled = true;
       try {
-        const res = await api('POST', { action: 'checkStart', who, skill: b.dataset.rcSkill, diff: sel.diff, npc: sel.diff === 'challenge' ? sel.npc : '', note: sel.note }, '', '/api/combat');
-        toast(`${b.dataset.rcSkill} roll called${who.length === 1 ? ` for ${chosen()[0].name}` : ` for ${who.length}`}.`);
-        sel.note = '';
+        const res = await api('POST', { action: 'checkStart', who, skill: sel.skill, diff: sel.diff, npc: sel.diff === 'challenge' ? sel.npc : '', note: sel.note }, '', '/api/combat');
+        toast(`${sel.skill} roll called${who.length === 1 ? ` for ${chosen()[0].name}` : ` for ${who.length}`}.`);
+        sel.note = ''; sel.skill = null;
         after?.(res);
       } catch (err) { toast(err.message, true); }
       b.disabled = false;

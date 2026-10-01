@@ -1,9 +1,11 @@
-/* Call for a roll: tap who → how hard → Skill */
+/* Call for a roll: tap who → how hard → Skill → Call for the roll */
 .rc-skills { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin-top: 4px; }
 @media (max-width: 600px) { .rc-skills { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .rc-skill { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 10px 6px 8px; border: 2px solid var(--rust); border-radius: var(--radius); background: var(--accent-tint); color: var(--ink); cursor: pointer; }
 .rc-skill:hover { background: var(--rust); color: var(--on-accent); }
-.rc-skill:disabled { opacity: .5; }
+.rc-skill.on, .rc-skill.on:hover { background: var(--rust); color: var(--on-accent); box-shadow: inset 0 0 0 2px var(--ink); }
+.rc-skill.on .gl { color: var(--on-accent); }
+.rc-go { width: 100%; justify-content: center; margin-top: 10px; }
 .rc-skill .gl { width: 22px; height: 22px; color: var(--rust); }
 .rc-skill:hover .gl { color: var(--on-accent); }
 .rc-skill b { font: var(--fs-lg)/1 var(--display); letter-spacing: var(--track); font-weight: 400; }
