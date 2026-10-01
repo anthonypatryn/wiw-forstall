@@ -1498,3 +1498,16 @@ test('Re-invite: saloon, contest and carnival stamp a new invite (Warden only); 
   carnivalAction(cv, { action: 'reinvite' }, { warden: true, log });
   assert.ok(carnivalView(cv).reinvite > 0);
 });
+
+test('Records: the Warden can start them fresh; wallets are untouched', async () => {
+  const { snapWallets, tally, recordsView } = await import('../lib/records.js');
+  const state = freshCombat();
+  const pc = publicAction(state, { action: 'addPc', trade: 'Hunter', name: 'Lila' }, { warden: true });
+  const before = snapWallets(state.posse); state.posse[0].wallet = '9.00'; tally(state, before, 'poker');
+  assert.equal(recordsView(state).rows[0].games.length, 1);
+  assert.throws(() => publicAction(state, { action: 'recordsReset' }, { warden: false }), /PIN/);
+  publicAction(state, { action: 'recordsReset' }, { warden: true });
+  assert.equal(recordsView(state).rows[0].games.length, 0);
+  assert.equal(state.posse[0].wallet, '9.00');
+  assert.ok(pc.id);
+});

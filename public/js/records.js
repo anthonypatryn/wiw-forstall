@@ -1,5 +1,5 @@
 // Journal → Records: lifetime winnings and losses at the saloon tables, the carnival and the contests (lib/records.js).
-import { esc, api, onChange, dollars } from './common.js';
+import { esc, api, onChange, dollars, savedPin, ask, toast } from './common.js';
 import { gl } from './glyphs.js';
 
 const signed = (n) => `${n > 0 ? '+' : n < 0 ? '−' : ''}${dollars(Math.abs(n))}`;
@@ -23,8 +23,14 @@ export function mountRecords(el) {
         <div class="rec-sum">Won ${dollars(x.won)} · Lost ${dollars(x.lost)} · Biggest haul ${dollars(x.best)}${x.prizes ? ` · ${gl('trophy')} ${x.prizes} carnival prize${x.prizes === 1 ? '' : 's'}` : ''}</div>
         <table class="rec-games"><tbody>${x.games.sort((a, b) => b.net - a.net).map((g) => `<tr><th>${esc(g.name)}</th><td>won ${dollars(g.won)}</td><td>lost ${dollars(g.lost)}</td><td class="${cls(g.net)}">${signed(g.net)}</td></tr>`).join('')}</tbody></table>
       </details></li>`).join('')}</ol>
-      <p class="muted small-text">Buying in counts as money out and cashing out as money in, so the net is what each of them is really up or down.</p>`;
+      <p class="muted small-text">Buying in counts as money out and cashing out as money in, so the net is what each of them is really up or down.</p>
+      ${savedPin() ? '<p class="warden-only"><button type="button" class="btn small secondary danger" data-rec-reset>Start the records fresh</button> <span class="muted small-text">Clears every win and loss here. Wallets and prizes stay as they are; Undo brings the records back.</span></p>' : ''}`;
   };
+  el.addEventListener('click', async (e) => {
+    if (!e.target.closest('[data-rec-reset]')) return;
+    if (!await ask('Start the Records fresh? Every win and loss at the saloon, the carnival and the contests is cleared. Wallets and prizes stay as they are.', { ok: 'Start fresh' })) return;
+    try { await api('POST', { action: 'recordsReset' }, '', '/api/combat'); toast('The Records start fresh.'); draw(); } catch (err) { toast(err.message, true); }
+  });
   onChange(['combat'], draw);
   draw();
 }
