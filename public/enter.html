@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Posse Stash · Wild Imaginary West</title>
+  <title>Wild Imaginary West</title>
   <meta name="robots" content="noindex, nofollow">
-  <meta name="description" content="The money and gear the posse shares.">
+  <meta name="description" content="The posse’s table kit for Wild Imaginary West.">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23151d22'/><path fill='%23f0c46a' d='M50 14L81 68H19ZM50 86L19 32H81Z'/><g fill='%23f0c46a'><circle cx='50' cy='14' r='6'/><circle cx='81' cy='68' r='6'/><circle cx='19' cy='68' r='6'/><circle cx='50' cy='86' r='6'/><circle cx='19' cy='32' r='6'/><circle cx='81' cy='32' r='6'/></g><circle cx='50' cy='50' r='11' fill='%23151d22'/><circle cx='50' cy='50' r='7.5' fill='%23f0c46a'/></svg>">
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="apple-touch-icon" href="/img/icon-180.png">
@@ -14,28 +14,21 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Rye&family=Special+Elite&family=Reenie+Beanie&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css?v=125">
+  <link rel="stylesheet" href="/css/enter.css?v=2">
 </head>
-<body>
-  <header class="masthead">
-    <div class="masthead-inner">
-      <img class="brand-logo" src="/img/logo-light.svg" alt="Wild Imaginary West">
-      <div class="brand-title">
-        <div class="kicker">WHAT THE POSSE SHARES</div>
-        <h1>Posse Stash</h1>
-        <div class="sub">Money and gear anyone in the posse can put in or take out</div>
-      </div>
-    </div>
-  </header>
-  <nav class="sitenav" data-nav aria-label="Site"></nav>
-
-  <main class="wrap">
-    <section class="card corner">
-      <div class="head-row"><h2 class="section-title">In the Stash</h2><button class="btn small" type="button" data-stash><span data-gl="satchel"></span> Put in or take out</button></div>
-      <div id="st-list"><p class="muted">Opening the strongbox…</p></div>
-      <p class="fine muted">Every move shows up in the Table Log. A gun keeps its upgrades and a horse its Bond while it’s in here.</p>
-    </section>
+<body class="enter-page">
+  <main class="enter-wrap">
+    <form class="enter-card" id="enter-form" autocomplete="off">
+      <img class="enter-logo" src="/img/logo-light.svg" alt="Wild Imaginary West">
+      <div class="enter-kicker">THE POSSE’S TABLE KIT</div>
+      <h1>Say the password, partner</h1>
+      <label class="enter-field"><span class="enter-lbl">PASSWORD</span>
+        <input type="password" id="enter-pw" autocomplete="current-password" required autofocus aria-describedby="enter-msg"></label>
+      <button type="submit" class="btn enter-go">Ride in</button>
+      <p class="enter-msg" id="enter-msg" role="status" aria-live="polite"></p>
+      <p class="enter-fine">You only need it once on each device.</p>
+    </form>
   </main>
-
-  <script type="module" src="/js/stash-page.js?v=66"></script>
+  <script type="module" src="/js/enter.js?v=2"></script>
 </body>
 </html>

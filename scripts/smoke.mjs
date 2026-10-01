@@ -6,6 +6,7 @@ import { spawn } from 'node:child_process';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
+import { token, COOKIE } from '../lib/gate.js';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -31,11 +32,11 @@ process.on('SIGINT', () => done(130));
 async function startServer() {
   const srv = spawn(process.execPath, [path.join(ROOT, 'dev-server.mjs')], { env: { ...process.env, PORT: String(PORT), WIW_DATA_DIR: path.join(tmp, 'data'), KV_REST_API_URL: '', UPSTASH_REDIS_REST_URL: '' }, stdio: 'ignore' });
   kids.push(srv);
-  for (let i = 0; i < 50; i++) { try { if ((await fetch(`${BASE}/api/pulse`)).ok) return; } catch {} await sleep(100); }
+  for (let i = 0; i < 50; i++) { try { if ((await fetch(`${BASE}/api/pulse`)).status < 500) return; } catch {} await sleep(100); } // answering (a 401 just means the site password is on)
   throw new Error('The dev server didn’t start.');
 }
 async function call(p, body, warden = true) {
-  const r = await fetch(BASE + p, { method: body ? 'POST' : 'GET', headers: { 'content-type': 'application/json', ...(warden ? { 'x-warden-pin': PIN } : {}) }, body: body ? JSON.stringify(body) : undefined });
+  const r = await fetch(BASE + p, { method: body ? 'POST' : 'GET', headers: { 'content-type': 'application/json', cookie: `${COOKIE}=${await token()}`, ...(warden ? { 'x-warden-pin': PIN } : {}) }, body: body ? JSON.stringify(body) : undefined });
   const j = await r.json().catch(() => ({}));
   if (!r.ok) throw new Error(`${p} ${body?.action || ''}: ${j.error || r.status}`);
   return j;
@@ -80,6 +81,7 @@ async function main() {
   const c = cdp(await startChrome());
   await c.ready;
   await c.send('Runtime.enable'); await c.send('Page.enable'); await c.send('Log.enable');
+  await c.send('Network.enable'); await c.send('Network.setCookie', { name: COOKIE, value: await token(), url: BASE }); // past the site password
   let errors = [];
   c.on((m) => {
     if (m.method === 'Runtime.exceptionThrown') errors.push(m.params.exceptionDetails.exception?.description?.split('\n')[0] || m.params.exceptionDetails.text);

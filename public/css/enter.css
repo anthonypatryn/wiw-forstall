@@ -1,0 +1,19 @@
+/* The splash page (/enter): the map of the West behind a dark wash, one card with the password */
+body.enter-page { min-height: 100vh; margin: 0; display: grid; place-items: center; background: linear-gradient(var(--shade-4), var(--shade-5)), url('/img/map-header.webp') center / cover no-repeat, var(--ink); }
+.enter-wrap { width: 100%; padding: 24px 16px; box-sizing: border-box; display: grid; place-items: center; }
+.enter-card { width: min(420px, 100%); box-sizing: border-box; display: grid; justify-items: center; gap: 12px; padding: 28px 28px 22px; text-align: center;
+  background: var(--paper); color: var(--ink); border: 2px solid var(--ink); border-radius: var(--radius); box-shadow: var(--shadow-pop); }
+.enter-logo { width: 190px; max-width: 70%; filter: drop-shadow(0 2px 0 var(--shade-3)); background: var(--ink); padding: 14px 18px; border-radius: var(--radius); }
+.enter-kicker { font: var(--fs-xs) var(--display); letter-spacing: var(--track-wide); color: var(--rust); }
+.enter-card h1 { margin: 0; font: var(--fs-2xl) var(--western); font-weight: 400; }
+.enter-field { width: 100%; display: grid; gap: 4px; text-align: left; }
+.enter-lbl { font: var(--fs-xs) var(--display); letter-spacing: var(--track-label); color: var(--ink-soft); }
+.enter-field input { width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1.5px solid var(--ink); border-radius: var(--radius); background: var(--surface); font: var(--fs-lg) var(--body); }
+.enter-field input:focus { outline: none; border-color: var(--rust); box-shadow: 0 0 0 3px var(--accent-tint); }
+.enter-go { width: 100%; justify-content: center; }
+.enter-msg { min-height: 1.3em; margin: 0; font-size: var(--fs-sm); color: var(--danger); }
+.enter-fine { margin: 0; font-size: var(--fs-xs); color: var(--ink-soft); }
+.enter-card.wrong { animation: enter-shake .4s; }
+@keyframes enter-shake { 20%, 60% { transform: translateX(-8px); } 40%, 80% { transform: translateX(8px); } }
+html.less-motion .enter-card.wrong { animation: none; }
+@media (prefers-reduced-motion: reduce) { .enter-card.wrong { animation: none; } }

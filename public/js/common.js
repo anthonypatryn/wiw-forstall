@@ -32,6 +32,7 @@ export async function api(method, body, query = '', endpoint = '/api/scan') {
   try { r = await fetch(endpoint + query, { method, headers, body: body ? JSON.stringify(body) : undefined }); }
   catch { connection(false); const e = new Error('Can’t reach the game right now. Check your connection, then try again.'); e.offline = true; throw e; }
   const data = await r.json().catch(() => ({ error: 'Bad response from server.' }));
+  if (r.status === 401 && data.gate) { location.href = `/enter?next=${encodeURIComponent(location.pathname + location.search + location.hash)}`; throw new Error('Password needed.'); } // the site password ran out on this device
   if (!r.ok) { const e = new Error(data.error || r.statusText); e.status = r.status; throw e; }
   return data;
 }

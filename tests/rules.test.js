@@ -1439,10 +1439,27 @@ test('Bestiary: fighting, scanning and trophies unlock a monster’s entry step 
   assert.equal(bestiaryView(state, {}, { warden: true }).entries.length, 70);
 });
 
-test('every browser script parses as a module (a stray comment can break a whole page)', async () => {
+test('every script parses as a module (a stray comment can break a whole page)', async () => {
   const fs = await import('node:fs'), path = await import('node:path'), { spawnSync } = await import('node:child_process');
-  const dir = path.join(path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1')), '..', 'public', 'js');
-  const bad = fs.readdirSync(dir).filter((f) => f.endsWith('.js'))
-    .filter((f) => spawnSync(process.execPath, ['--input-type=module', '--check'], { input: fs.readFileSync(path.join(dir, f)) }).status !== 0);
+  const root = path.join(path.dirname(new URL(import.meta.url).pathname.replace(/^\/([A-Za-z]:)/, '$1')), '..');
+  const files = [...['public/js', 'lib', 'lib/routes', 'scripts', 'api'].flatMap((d) => fs.readdirSync(path.join(root, d)).filter((f) => /\.m?js$/.test(f)).map((f) => path.join(d, f))), 'middleware.js', 'dev-server.mjs'];
+  const bad = files.filter((f) => spawnSync(process.execPath, ['--input-type=module', '--check'], { input: fs.readFileSync(path.join(root, f)) }).status !== 0);
   assert.deepEqual(bad, []);
+});
+
+test('site password: everything needs the cookie except the splash page (and the nightly backup); pages go to /enter, the API says 401', async () => {
+  const { gateDecision, token, passwordOk, enterUrl, COOKIE } = await import('../lib/gate.js');
+  const B = 'https://wiw.example';
+  assert.equal(passwordOk('Bussy'), true); assert.equal(passwordOk(' bussy '), true); assert.equal(passwordOk('buss'), false);
+  assert.equal(await gateDecision(`${B}/posse`, ''), 'page');
+  assert.equal(await gateDecision(`${B}/api/combat`, ''), 'api');
+  assert.equal(await gateDecision(`${B}/enter?next=/posse`, ''), 'ok');
+  assert.equal(await gateDecision(`${B}/api/gate`, ''), 'ok');
+  assert.equal(await gateDecision(`${B}/css/style.css?v=9`, ''), 'ok');
+  assert.equal(await gateDecision(`${B}/api/backup?nightly=1`, ''), 'ok');
+  assert.equal(await gateDecision(`${B}/api/backup`, ''), 'api');
+  const ok = `a=1; ${COOKIE}=${await token()}`;
+  assert.equal(await gateDecision(`${B}/api/combat`, ok), 'ok');
+  assert.equal(await gateDecision(`${B}/battle?tv=1`, `${COOKIE}=nope`), 'page');
+  assert.equal(enterUrl(`${B}/journal?x=1`), '/enter?next=%2Fjournal%3Fx%3D1');
 });
