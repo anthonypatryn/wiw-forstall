@@ -1558,3 +1558,25 @@ test('put a removed token back', async () => {
   assert.equal(s.tokens.filter((x) => x.ref === 'p1').length, 1);
   assert.deepEqual(s.removed, []);
 });
+
+test('Reputation adds or takes Charm dice on a called roll against a faction (p. 118)', async () => {
+  const { repFor } = await import('../lib/combat.js');
+  const state = freshCombat();
+  const a = publicAction(state, { action: 'addPc', trade: 'Hunter', name: 'Tess' }, { warden: true });
+  const pa = state.posse.find((p) => p.id === a.id);
+  pa.skills.charm = '2B';
+  pa.reputation[0] = { faction: 'The Rosewoods', level: 'Helpful' };
+  assert.deepEqual(repFor(pa, 'the rosewoods'), { level: 'Helpful', dice: 1, from: 'sheet' });
+  assert.equal(repFor(pa, 'Hogwild Gang', 'Hostile').dice, -2); // not on the sheet: the posse's Standing
+  pa.abilities.push('Warm Reception');
+  assert.equal(repFor(pa, 'Hogwild Gang', 'Suspicious').level, 'Neutral'); // one level up from Suspicious
+  assert.equal(repFor(pa, 'Hogwild Gang', 'Hostile').level, 'Hostile'); // but not from Hostile
+  pa.abilities.pop();
+  const ck = publicAction(state, { action: 'checkStart', who: [a.id], skill: 'Charm', diff: 'Medium', faction: 'The Rosewoods', posseLevel: 'Neutral' }, { warden: true });
+  assert.equal(ck.faction, 'The Rosewoods');
+  const r = publicAction(state, { action: 'pc', id: a.id, op: 'checkRoll', check: ck.id }, { warden: false });
+  assert.equal(r.dice.length, 3); // 2B + 1B for Helpful
+  assert.match(r.label, /The Rosewoods: Helpful \+1B/);
+  // a faction only counts for Charm
+  assert.equal(publicAction(state, { action: 'checkStart', who: [a.id], skill: 'Nerve', diff: 'Medium', faction: 'The Rosewoods' }, { warden: true }).faction, '');
+});

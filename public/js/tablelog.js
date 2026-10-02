@@ -221,7 +221,7 @@ export function renderHud(h) {
   play('chime');
   try { navigator.vibrate?.(150); } catch {}
   ck.innerHTML = `<div><small>${open.kind === 'challenge' ? `CHALLENGE${open.round > 1 ? ` · ROUND ${open.round} (TIE)` : ''} — MOST HITS WINS` : open.nudge ? 'THE WARDEN IS STILL WAITING ON YOUR ROLL' : 'THE WARDEN ASKS YOU TO ROLL'}</small>
-    <b>${esc(who.name)}: ${esc(open.skill)}</b> ${open.kind === 'challenge' ? `vs ${esc(others.join(' & '))}` : `· ${esc(open.diff)} — ${open.target} Hit${open.target === 1 ? '' : 's'}`}${open.note ? ` · <i>${esc(open.note)}</i>` : ''}</div>
+    <b>${esc(who.name)}: ${esc(open.skill)}</b> ${open.kind === 'challenge' ? `vs ${esc(others.join(' & '))}` : `· ${esc(open.diff)} — ${open.target} Hit${open.target === 1 ? '' : 's'}`}${open.faction ? ` · with ${esc(open.faction)}` : ''}${open.note ? ` · <i>${esc(open.note)}</i>` : ''}</div>
     <div class="hud-ck-btns"><button type="button" class="btn" data-ck-go>Roll ${esc(open.skill)}</button><button type="button" class="btn small secondary" data-ck-later>Later</button></div>`;
   ck.querySelector('[data-ck-later]').addEventListener('click', () => { setSeen(`wiw.ck.${open.id}.${open.round}`, `later.${open.nudge}`); ck.hidden = true; });
   ck.querySelector('[data-ck-go]').addEventListener('click', async (e) => {

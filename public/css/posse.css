@@ -281,7 +281,7 @@ body.on-sheet .wrap { max-width: 1480px; }
 .viewing .sheet :is(input, textarea, select):disabled, .viewing .sheet-head input:disabled { opacity: 1; -webkit-text-fill-color: currentColor; cursor: default; }
 .viewing .sheet :is(.f input, .f textarea, .f select):disabled { border-color: transparent; background: transparent; color: var(--ink); }
 .viewing .sheet textarea:disabled { resize: none; }
-.viewing .sheet select:disabled { appearance: none; -webkit-appearance: none; }
+.viewing .sheet select:disabled { appearance: none; -webkit-appearance: none; background-image: none !important; padding-right: 4px !important; } /* view mode reads like text: no drop-down arrow */
 .viewing .sheet .pick, .viewing .sheet .pack-row { display: none; }
 .viewing .sheet .spur:disabled { cursor: default; }
 .mode-tag { font: var(--fs-xs) var(--display); letter-spacing: var(--track-wide); padding: 3px 8px 1px; border-radius: var(--r-sm); background: var(--ink); color: var(--paper); }

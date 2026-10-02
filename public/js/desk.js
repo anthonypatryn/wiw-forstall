@@ -105,7 +105,7 @@ export function renderChecks() {
         ${ck.winner ? `<div class="ck-win">${gl('trophy')} ${esc(ck.winner)} wins — ${(ck.last || []).map((x) => `${esc(x.name)} ${x.hits}`).join(' · ')}</div>` : ck.last ? `<div class="muted">Tied (${ck.last.map((x) => `${esc(x.name)} ${x.hits}`).join(' · ')}) — rolling again.</div>` : ''}</div>${done}</div>`;
     }
     const waiting = ck.who.some((pid) => !ck.rolls[pid]);
-    return `<div class="notice${waiting ? ' urgent' : ' ck-finished'}"><div class="ck-body"><b>${gl('die')} ${esc(ck.skill)}</b> · ${esc(ck.diff)} (${ck.target})${ck.note ? ` · <i>${esc(ck.note)}</i>` : ''}
+    return `<div class="notice${waiting ? ' urgent' : ' ck-finished'}"><div class="ck-body"><b>${gl('die')} ${esc(ck.skill)}</b> · ${esc(ck.diff)} (${ck.target})${ck.faction ? ` · with ${esc(ck.faction)}` : ''}${ck.note ? ` · <i>${esc(ck.note)}</i>` : ''}
       <div class="ck-who">${ck.who.map((pid) => { const r = ck.rolls[pid]; const tot = r ? r.hits + help : null;
         return `<span class="pill${r ? (tot >= ck.target ? ' ok' : ' no') : ' wait'}">${esc(nm(pid))} ${r ? `${tot >= ck.target ? '✓' : '✗'} ${tot}/${ck.target}` : '…'}</span>`; }).join('')}
       ${Object.values(ck.helps || {}).map((h) => `<span class="pill">${esc(h.name)} helped +${h.hits}</span>`).join('')}</div>${helpNote}</div>${done}</div>`;

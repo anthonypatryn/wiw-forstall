@@ -757,7 +757,7 @@ function renderFight(view, p) {
     ${checks.map((ck) => { const mineCk = ck.who.includes(p.id);
       const vs = ck.kind === 'challenge' ? [...ck.who.filter((x) => x !== p.id).map((x) => data.posse.find((q) => q.id === x)?.name), ck.npc?.name].filter(Boolean).join(' & ') : '';
       return `<div class="ck-prompt${mineCk ? ' mine' : ''}"><div><small>${ck.kind === 'challenge' ? `CHALLENGE${ck.round > 1 ? ` · ROUND ${ck.round} (TIE)` : ''} — MOST HITS WINS` : mineCk ? 'THE WARDEN ASKS YOU TO ROLL' : 'SOMEONE ELSE IS ROLLING — YOU CAN HELP'}</small>
-        <b>${esc(ck.skill)}</b> · ${ck.kind === 'challenge' ? `vs ${esc(vs)}` : `${esc(ck.diff)} — ${ck.target} Hit${ck.target === 1 ? '' : 's'}`}${ck.note ? ` · <i>${esc(ck.note)}</i>` : ''}</div>
+        <b>${esc(ck.skill)}</b> · ${ck.kind === 'challenge' ? `vs ${esc(vs)}` : `${esc(ck.diff)} — ${ck.target} Hit${ck.target === 1 ? '' : 's'}`}${ck.faction ? ` · with ${esc(ck.faction)}` : ''}${ck.note ? ` · <i>${esc(ck.note)}</i>` : ''}</div>
         <button type="button" class="btn small${mineCk ? '' : ' secondary'}" data-ck-roll="${ck.id}">${mineCk ? `${gl('die')} Roll ${esc(ck.skill)} (${skillPool(ck.skill)})` : 'Help (½ dice)'}</button></div>`; }).join('')}
     ${statuses.length && !c.active ? `<div class="fp-relieve"><b class="fp-h">RELIEVE A STATUS</b> <span class="muted">${c.active ? '1 Grit per die, once per Status per turn, on your turn.' : 'Out of combat: no Grit, try as often as you like.'}</span>
       ${statuses.map(([st, v]) => {
