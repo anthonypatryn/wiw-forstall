@@ -18,7 +18,8 @@ function draw() {
     <div class="chip-row"><button type="button" class="chip-btn${amb ? ' on' : ''}" data-amb="on"${off ? ' disabled' : ''}>On</button><button type="button" class="chip-btn${amb ? '' : ' on'}" data-amb="off"${off ? ' disabled' : ''}>Off</button></div>`;
 }
 function place() {
-  if (!panel || !anchor?.isConnected) { const fresh = document.querySelector('[data-sndctl]'); if (!fresh) return close(); anchor = fresh; }
+  if (!panel) return; // closed: nothing to move (a resize used to trip over this)
+  if (!anchor?.isConnected) { const fresh = document.querySelector('[data-sndctl]'); if (!fresh) return close(); anchor = fresh; }
   const r = anchor.getBoundingClientRect(), w = panel.offsetWidth, W = document.documentElement.clientWidth;
   panel.style.top = `${r.bottom + 8}px`;
   panel.style.left = `${Math.max(12, Math.min(W - w - 12, r.right - w))}px`;

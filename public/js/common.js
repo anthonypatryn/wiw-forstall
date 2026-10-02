@@ -663,6 +663,7 @@ export function abilityBody(pc, sel) {
   addEventListener('error', (e) => {
     const f = e.filename || '';
     if ((f && !f.startsWith(location.origin)) || /ResizeObserver/.test(e.message || '')) return; // browser extensions, harmless noise
+    if (/^Script error\.?$/i.test(e.message || '') && !f) return; // a script from elsewhere (an extension, an in-app browser): no details to act on
     report(e.message, `${f.replace(location.origin, '').replace(/\?v=\d+/, '')}:${e.lineno}`);
   });
   addEventListener('unhandledrejection', (e) => {

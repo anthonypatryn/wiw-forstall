@@ -260,6 +260,21 @@ async function renderProblems() {
       <div class="muted prob-meta">${esc(x.page)}${x.where ? ` · ${esc(x.where)}` : ''} · ${x.count > 1 ? `${x.count} times, last ` : ''}${esc(timeAgo(x.last))}${x.who ? ` · ${esc(who(x.who))}` : ''}${x.ua ? ` · ${esc(x.ua)}` : ''}</div></div></div>`).join('')
     : '<p class="muted">No problems reported. Nice.</p>';
 }
+// the whole list as plain text, to paste to whoever fixes things
+$('#problems-copy')?.addEventListener('click', async () => {
+  try {
+    const r = await api('GET', null, '', '/api/problems');
+    if (!r.list.length) { toast('Nothing to copy: no problems reported.'); return; }
+    const names = Object.fromEntries((getCombat?.()?.posse || []).map((p) => [p.id, p.name]));
+    const who = (w) => String(w || '').split(', ').map((x) => names[x] || x).filter(Boolean).join(', ');
+    const text = `${r.list.length} problem${r.list.length === 1 ? '' : 's'} from the Problems board (script errors from players' screens):\n\n${r.list.map((x) => [
+      `Error: ${x.msg}`, `Where: ${x.page}${x.where ? ` · ${x.where}` : ''}`,
+      `Seen: ${x.count > 1 ? `${x.count} times, ` : ''}first ${new Date(x.first).toLocaleString()}, last ${new Date(x.last).toLocaleString()}`,
+      `Who: ${who(x.who) || 'unknown'} · ${x.ua || 'unknown browser'}`].join('\n')).join('\n\n---\n\n')}`;
+    await navigator.clipboard.writeText(text);
+    toast(`${r.list.length} problem${r.list.length === 1 ? '' : 's'} copied. Paste them to Claude.`);
+  } catch (err) { toast(err.message, true); }
+});
 $('#problems-clear')?.addEventListener('click', async () => {
   if (!await ask('Clear the Problems list?', { ok: 'Clear it' })) return;
   try { await api('POST', { action: 'clear' }, '', '/api/problems'); renderProblems(); } catch (e) { toast(e.message, true); }
