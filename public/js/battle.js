@@ -9,6 +9,7 @@ import { mountTableLog } from './tablelog.js';
 import { pcCardHTML, enemyCardHTML, wireFighters, openSpoils } from './fighter-card.js';
 import { openAddEnemies } from './enemy-add.js';
 import { panZoom } from './panzoom.js';
+import { cropImage } from './cropper.js';
 import { runTour, BATTLE_TOUR } from './tour.js';
 
 const EP = '/api/battle';
@@ -1057,22 +1058,24 @@ $('#npc-add').addEventListener('submit', async (e) => {
 });
 $('#clear').addEventListener('click', async () => { if (await ask('Remove every token from the board?')) { selected = null; act({ action: 'clearTokens' }); } });
 
-// Shrink uploads in the browser so they fit comfortably in the database.
+// Crop, then shrink uploads in the browser so they fit comfortably in the database. The map counts as 36 inches wide
+// (like the built-in maps); Map setup → Grid changes the hex size if it needs to.
 $('#upload').addEventListener('change', async (e) => {
   const file = e.target.files[0];
   e.target.value = '';
   if (!file) return;
-  toast('Preparing the map…');
   try {
     const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = URL.createObjectURL(file); });
-    const scale = Math.min(1, 3000 / Math.max(img.naturalWidth, img.naturalHeight));
-    const w = Math.round(img.naturalWidth * scale), h = Math.round(img.naturalHeight * scale);
+    const cut = await cropImage(img);
+    if (!cut) return;
+    toast('Preparing the map…');
+    const scale = Math.min(1, 3000 / Math.max(cut.sw, cut.sh));
+    const w = Math.round(cut.sw * scale), h = Math.round(cut.sh * scale);
     const c = document.createElement('canvas'); c.width = w; c.height = h;
-    c.getContext('2d').drawImage(img, 0, 0, w, h);
+    c.getContext('2d').drawImage(img, cut.sx, cut.sy, cut.sw, cut.sh, 0, 0, w, h);
     let q = 0.82, data64 = c.toDataURL('image/jpeg', q);
     while (data64.length > 2_700_000 && q > 0.4) { q -= 0.1; data64 = c.toDataURL('image/jpeg', q); }
-    const inches = Number($('#inches').value) || 36;
-    await act({ action: 'upload', data: data64, name: file.name.replace(/\.[^.]+$/, ''), w, h, inches }, 'Map uploaded.');
+    await act({ action: 'upload', data: data64, name: file.name.replace(/\.[^.]+$/, ''), w, h, inches: 36 }, 'Map uploaded.');
   } catch { toast('Couldn’t read that image.', true); }
 });
 

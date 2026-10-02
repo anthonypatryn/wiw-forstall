@@ -460,3 +460,19 @@ html.less-motion .wx { animation: none !important; }
 body.tv-mode :is(.masthead, .sitenav, .panel, .side-toggle, .fab-row, .hud-strip, .map-ctrls, .fightbar, .fcard, .paint-bar, .hud-myturn, .log-drawer, .toast) { display: none !important; }
 body.tv-mode .battle-wrap { display: block; height: 100vh; margin: 0; padding: 0; max-width: none; }
 body.tv-mode .viewport { height: 100vh; border: 0; cursor: default; }
+
+/* cropping an uploaded map (js/cropper.js); sits above Map setup */
+.crop-back { z-index: calc(var(--z-modal) + 2); }
+.crop-modal { width: min(760px, 100%); display: grid; gap: 10px; }
+.crop-h { display: grid; gap: 2px; }
+.crop-h b { font: var(--fs-lg) var(--display); letter-spacing: var(--track); }
+.crop-h small { color: var(--ink-soft); }
+.crop-stage { position: relative; justify-self: center; line-height: 0; overflow: hidden; touch-action: none; user-select: none; background: var(--ink); }
+.crop-stage img { display: block; max-width: 100%; max-height: 56vh; }
+.crop-box { position: absolute; box-sizing: border-box; border: 2px solid #fff; box-shadow: 0 0 0 9999px rgba(15,11,9,.6); cursor: move; outline: 1px dashed rgba(0,0,0,.6); outline-offset: -3px; }
+.crop-box i { position: absolute; width: 22px; height: 22px; background: #fff; border: 2px solid var(--ink); border-radius: 50%; box-sizing: border-box; }
+.crop-box i[data-h="nw"] { left: -11px; top: -11px; cursor: nwse-resize; }
+.crop-box i[data-h="ne"] { right: -11px; top: -11px; cursor: nesw-resize; }
+.crop-box i[data-h="sw"] { left: -11px; bottom: -11px; cursor: nesw-resize; }
+.crop-box i[data-h="se"] { right: -11px; bottom: -11px; cursor: nwse-resize; }
+.crop-size { margin: 0; text-align: center; }
