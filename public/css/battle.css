@@ -547,3 +547,6 @@ body.tv-mode .viewport { height: 100vh; border: 0; cursor: default; }
 .bprop.trap { background: #e8b7a6; }
 .bprop.door { background: #b9875a; color: #fff6e6; border-radius: 10%; }
 .bprop.door.spent { opacity: .4; }
+
+.tp-read { display: flex; flex-wrap: wrap; gap: 6px; }
+.tp-read .btn small { margin-left: 4px; opacity: .75; }

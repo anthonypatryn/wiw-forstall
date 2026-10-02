@@ -649,6 +649,8 @@ function renderFightTurn(bar, fb, c) {
   const gear = isPc ? a.gear.map((g, k) => [g, k]).filter(([g]) => g.item) : [];
   const sts = isPc ? Object.entries(a.statuses || {}).filter(([, v]) => v) : [];
   const abil = isPc && meta ? abilityOptions(a, meta) : [];
+  // enemies this character could still size up (Read Health: a free Intuition roll, once each)
+  const readable = isPc && !combat.settings?.showEnemyHealth ? (combat.enemies || []).filter((e) => !e.defeated && !e.out && !e.hpShown && !(e.readTries || []).includes(a.id)) : [];
   const ACTIONS = [
     ['attack', 'gun', 'Attack', 'weapon’s Grit'],
     ['dodge', 'shield', 'Dodge', '1 per die'],
@@ -656,6 +658,7 @@ function renderFightTurn(bar, fb, c) {
     ...(gear.length ? [['item', 'backpack', 'Use Item', 'item’s Grit']] : []),
     ...(sts.length ? [['relieve', 'bandage', 'Relieve', '1 per die']] : []),
     ['improvise', 'bulb', 'Improvise', '1+'],
+    ...(readable.length ? [['read', 'target', 'Read Health', 'free · Intuition']] : []),
     ...(isPc && workable(a.id).length ? [['forstall', 'forstall', 'Forstall', `Scan ${scanCost()} · Sweep ${workable(a.id)[0].grit}`]] : []),
     ...(isPc ? [['prepare', 'hourglass', 'Prepare', 'held', a.prepared]] : []),
     ...(isPc ? [['fool', 'heart', 'Fool’s Grit', '+1 for 1 HP', a.foolUsed]] : []),
@@ -691,6 +694,10 @@ function renderFightTurn(bar, fb, c) {
       drawer = `<p class="tp-hint">Roll up to your Skill’s dice, 1 Grit each. Each Hit lowers the Severity by 1 (once per Status per turn).</p>
         <div class="tp-form"><select aria-label="Status to relieve" data-tp="rl">${sts.map(([st, v]) => `<option value="${st}"${st === tp.rl ? ' selected' : ''}>${st} [${v}]</option>`).join('')}</select>
         <input aria-label="Dice to roll" type="number" min="1" max="12" data-tp="rlDice" value="${tp.rlDice}"> dice <button type="button" class="btn small" data-tp-rl>Roll</button></div>`;
+      break;
+    case 'read':
+      drawer = `<p class="tp-hint">Size an enemy up with Intuition. Make it and everyone sees its Health for the rest of the fight. One try per enemy.</p>
+        <div class="tp-read">${readable.map((e) => `<button type="button" class="btn small secondary" data-tp-read="${esc(e.id)}">${gl('target')} ${esc(e.name)} <small>${esc(e.readDiff || 'Medium')}</small></button>`).join('')}</div>`;
       break;
     case 'improvise':
       drawer = `<div class="tp-form"><input data-tp="impLabel" maxlength="60" placeholder="What? e.g. climb the wagon" value="${esc(tp.impLabel)}">
@@ -927,6 +934,12 @@ function wireTurnBar(bar, cur, tok) {
   bar.querySelectorAll('input[data-tp]:not([type=checkbox])').forEach((el) => el.addEventListener('input', () => { tp[el.dataset.tp] = el.type === 'number' ? Number(el.value) : el.value; }));
   bar.querySelector('[data-tp-mount]')?.addEventListener('change', (e) => tpAct({ ...base, op: 'mount', value: e.target.value }, e.target.value ? 'Mounted up.' : 'On foot.'));
   bar.querySelector('[data-tp-horse]')?.addEventListener('click', () => tpAct({ ...base, op: 'horseGrit' }, '+1 Grit.'));
+  bar.querySelectorAll('[data-tp-read]').forEach((btn) => btn.addEventListener('click', async () => {
+    btn.disabled = true;
+    const r = await tpAct({ ...base, op: 'readHealth', enemy: btn.dataset.tpRead });
+    if (r?.dice) { await rollPopup(r, `${a.name} · Read ${r.enemy}’s Health · needs ${r.target}`); toast(r.ok ? `${r.enemy}’s Health is showing for everyone.` : `${a.name} can’t tell how hurt ${r.enemy} is.`, !r.ok); tp.open = ''; }
+    else btn.disabled = false;
+  }));
   bar.querySelector('[data-tp-dodge]')?.addEventListener('click', async () => {
     const r = await tpAct({ ...base, op: 'dodge', grit: tp.dodge });
     if (r?.dice) rollPopup(r, `${a.name} · Dodge · ${r.pool}`);
