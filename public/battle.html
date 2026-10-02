@@ -13,9 +13,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Rye&family=Special+Elite&family=Reenie+Beanie&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=139">
-  <link rel="stylesheet" href="/css/fighter.css?v=58">
-  <link rel="stylesheet" href="/css/battle.css?v=99">
+  <link rel="stylesheet" href="/css/style.css?v=140">
+  <link rel="stylesheet" href="/css/fighter.css?v=59">
+  <link rel="stylesheet" href="/css/battle.css?v=100">
 </head>
 <body>
   <header class="masthead">
@@ -78,10 +78,10 @@
           <div class="presets" id="presets"></div>
           <label class="upload-btn btn small secondary">⬆ Upload a map<input type="file" id="upload" accept="image/*" hidden></label>
           <label class="check"><input type="checkbox" id="fs-cave"> In a cave or tunnels (Edison’s Rule 2: Sweeps roll 1 fewer die)</label>
-          <div class="field-step wx-set"><span>NIGHT &amp; WEATHER <small>everyone sees it; you apply the penalty</small></span>
+          <div class="field-step wx-set"><span>NIGHT &amp; WEATHER <small>tap one and everyone sees it; you apply the penalty</small></span>
             <div class="chip-row" id="wx-kinds"></div>
             <input id="wx-note" maxlength="120" placeholder="The penalty, if any (e.g. −1 die at Long Range)" aria-label="Weather penalty">
-            <button type="button" class="btn small" id="wx-save">Set it</button></div>
+            <button type="button" class="btn small secondary" id="wx-save">Update the penalty</button></div>
         </div>
         <div data-spane="grid" hidden>
           <label class="check"><input type="checkbox" id="g-show"> Show hexes</label>
@@ -118,6 +118,6 @@
     </div>
   </div>
 
-  <script type="module" src="/js/battle.js?v=169"></script>
+  <script type="module" src="/js/battle.js?v=170"></script>
 </body>
 </html>

@@ -462,7 +462,7 @@ body.tv-mode .battle-wrap { display: block; height: 100vh; margin: 0; padding: 0
 body.tv-mode .viewport { height: 100vh; border: 0; cursor: default; }
 
 /* cropping an uploaded map (js/cropper.js); sits above Map setup */
-.crop-back { z-index: calc(var(--z-modal) + 2); }
+.crop-back { z-index: calc(var(--z-dialog) + 5); } /* above Map setup (--z-dialog) */
 .crop-modal { width: min(760px, 100%); display: grid; gap: 10px; }
 .crop-h { display: grid; gap: 2px; }
 .crop-h b { font: var(--fs-lg) var(--display); letter-spacing: var(--track); }

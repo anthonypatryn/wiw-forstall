@@ -1388,7 +1388,12 @@ $('#fs-add').addEventListener('submit', async (e) => {
   const f = await act({ action: 'addForstall', kind: $('#fs-kind').value, name: $('#fs-name').value.trim(), ...(sel ? { col: sel.col, row: sel.row } : {}) }, 'Forstall placed — drag it where you want it.');
   if (f?.id) { $('#fs-name').value = ''; selFs = f.id; }
 });
-$('#wx-kinds').addEventListener('click', (e) => { const b = e.target.closest('[data-wx]'); if (!b) return; wxPick = b.dataset.wx; delete $('#wx-note').dataset.touched; $('#wx-note').value = WX[wxPick]?.[1] || ''; renderWeather(); });
+// a weather chip takes effect at once (with its usual penalty); edit the penalty and press Update to change just that
+$('#wx-kinds').addEventListener('click', async (e) => {
+  const b = e.target.closest('[data-wx]'); if (!b) return;
+  wxPick = b.dataset.wx; delete $('#wx-note').dataset.touched; $('#wx-note').value = WX[wxPick]?.[1] || ''; renderWeather();
+  await act({ action: 'weather', kind: wxPick, note: $('#wx-note').value }, wxPick ? `${WX[wxPick][0]} over the map.` : 'Clear skies.');
+});
 $('#wx-note').addEventListener('input', (e) => { e.target.dataset.touched = '1'; });
 $('#wx-save').addEventListener('click', async () => { await act({ action: 'weather', kind: wxPick || '', note: $('#wx-note').value }, wxPick ? `${WX[wxPick][0]} over the map.` : 'Clear skies.'); delete $('#wx-note').dataset.touched; });
 $('#fs-cave').addEventListener('change', (e) => act({ action: 'cave', value: e.target.checked }, e.target.checked ? 'Cave: Sweeps roll 1 fewer die.' : 'Out of the cave.'));
