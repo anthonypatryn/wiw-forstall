@@ -568,3 +568,38 @@ body.tv-mode .viewport { height: 100vh; border: 0; cursor: default; }
 .d-aim { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin: 6px 0 2px; font-size: var(--fs-sm); }
 .d-aim span { margin-right: 4px; }
 .d-aim .chip-btn { min-width: 34px; padding: 4px 6px 2px; font-size: var(--fs-lg); }
+
+/* Forstall mode (js/forstall-mode.js): the Scanner page's device over the map, mid-fight */
+.fsm-back { z-index: var(--z-scene); place-items: start center; overflow-y: auto; padding: 16px; background: #120e0b radial-gradient(ellipse at 50% 0%, #2a1f17 0%, #120e0b 70%) fixed; }
+.fsm .fsm-x, body.warden-mode .fsm .fsm-x { background: transparent; color: var(--paper); border-color: rgba(232,220,196,.6); box-shadow: none; }
+.fsm .fsm-x:hover { background: rgba(255,255,255,.08); }
+.fsm { width: min(1080px, 100%); color: var(--on-dark); }
+.fsm-head { display: flex; flex-wrap: wrap; gap: 10px 16px; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.fsm-head small { display: block; font: var(--fs-xs) var(--display); letter-spacing: .24em; color: var(--brass); }
+.fsm-head b { display: block; font: 400 var(--fs-2xl)/1.1 var(--western); color: var(--paper); }
+.fsm-sub { display: block; font: var(--fs-sm) var(--type, var(--body)); color: var(--on-dark-dim); margin-top: 2px; }
+.fsm-x { flex: none; }
+.fsm-grid { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 16px; align-items: start; }
+.fsm-side { display: grid; gap: 8px; position: sticky; top: 0; }
+.fsm-h { font: var(--fs-xs) var(--display); letter-spacing: .2em; color: var(--brass); }
+.fsm-tgt { display: grid; gap: 2px; text-align: left; padding: 10px 12px 8px; border: 1.5px solid rgba(232,220,196,.25); border-radius: var(--radius); background: rgba(255,255,255,.04); color: var(--paper); cursor: pointer; }
+.fsm-tgt b { font: var(--fs-md) var(--display); letter-spacing: var(--track); }
+.fsm-tgt small { font: var(--fs-xs) var(--body); color: var(--on-dark-dim); }
+.fsm-tgt.on { border-color: var(--brass); background: rgba(201,164,92,.16); box-shadow: 0 0 0 1px var(--brass); }
+.fsm-tgt.off { opacity: .6; }
+.fsm-main { display: grid; gap: 12px; min-width: 0; }
+.fsm-main .card.target { margin: 0; }
+.fsm-scan { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
+.fsm-scan .note { font: var(--fs-sm) var(--body); color: var(--on-dark-dim); }
+.fsm-main .tray { margin-top: 0; }
+.fsm-main .tally { margin-top: 0; color: var(--paper); }
+.fsm-main .tip { margin: 0; padding-top: 0; border: 0; color: var(--on-dark-dim); }
+.fsm-main .tip b { color: var(--brass); }
+.fsm-main .forstall { margin: 0; }
+.fs-open-mode { width: 100%; justify-content: center; }
+@media (max-width: 760px) {
+  .fsm-grid { grid-template-columns: minmax(0, 1fr); }
+  .fsm-side { position: static; grid-auto-flow: column; grid-auto-columns: minmax(170px, 1fr); overflow-x: auto; padding-bottom: 4px; }
+  .fsm-side .fsm-h { display: none; }
+  .fsm-main .die { width: 84px; }
+}

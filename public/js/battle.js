@@ -11,6 +11,7 @@ import { openAddEnemies } from './enemy-add.js';
 import { panZoom } from './panzoom.js';
 import { cropImage } from './cropper.js';
 import { propDialog, propCard, propIcon } from './props-ui.js';
+import { openForstallMode } from './forstall-mode.js';
 import { runTour, BATTLE_TOUR } from './tour.js';
 
 const EP = '/api/battle';
@@ -1302,94 +1303,42 @@ function scanOperator(f) {
   if (!pc || !(warden || myId() === pc.id)) return null;
   return canWork(f, pc.id) ? pc : null;
 }
+// the monsters a character could Scan from this Forstall, nearest first, each with why not (if not)
+function scanTargets(f, pc) {
+  const fight = !!combat?.combat?.active, cost = fight ? scanCost() : 0;
+  const sr = fight ? combat.scanRound : null, taken = sr && sr.round === combat.combat.round && sr.by !== pc.id ? sr.name : null;
+  const kinds = {};
+  for (const e of (combat?.enemies || []).filter((x) => !x.defeated && x.profile)) {
+    const t = data?.tokens.find((x) => x.kind === 'enemy' && x.ref === e.id && !x.hidden);
+    if (!t || !f.pos) continue;
+    kinds[e.profile] = Math.min(kinds[e.profile] ?? 999, dist(f.pos, t));
+  }
+  return Object.entries(kinds).sort((a, b) => a[1] - b[1]).map(([name, d]) => {
+    const decoded = kzPosse.some((k) => k.name === name);
+    const why = decoded ? 'already decoded' : f.rangeIn < 999 && d > f.rangeIn ? `${d}″ away, out of Range (${f.rangeIn}″)` : f.jammed ? 'scrambled by a Natural EMP' : taken ? `${taken} Scanned this round` : fight && (pc.grit ?? 0) < cost ? `needs ${cost} Grit (${pc.name} has ${pc.grit ?? 0})` : '';
+    return { name, d, why, decoded };
+  });
+}
+// on the card: a short summary; the Scan itself happens in Forstall mode (js/forstall-mode.js), the Scanner page's device
 function scanHTML(f) {
   const pc = scanOperator(f);
   if (!pc) return '';
   const fight = !!combat?.combat?.active, cost = fight ? scanCost() : 0, pool = intuitionOf(pc);
-  const head = `<div class="fs-scan-h">${gl('target')} SCAN <small>${fight ? `${cost} Grit` : 'free out of a fight'} · Intuition ${poolTxt(pool)}${scanEasy ? ' · Warden’s aid: positions shown' : ''}</small></div>`;
-  // the guess is too big for the card (BUG-4): it opens in its own window
-  if (scanPending && scanPending.pc === pc.id) return `<div class="fs-scan">${head}<p class="fs-note">${esc(pc.name)} has a guess to make at the ${esc(scanPending.name)}’s frequency.</p><button type="button" class="btn small" data-fs-open-guess>${gl('target')} Make the guess</button></div>`;
-  const sr = fight ? combat.scanRound : null, taken = sr && sr.round === combat.combat.round && sr.by !== pc.id ? sr.name : null;
-  const kinds = {};
-  for (const e of combat.enemies.filter((x) => !x.defeated && x.profile)) {
-    const t = data.tokens.find((x) => x.kind === 'enemy' && x.ref === e.id && !x.hidden);
-    if (!t || !f.pos) continue;
-    const d = dist(f.pos, t);
-    kinds[e.profile] = Math.min(kinds[e.profile] ?? 999, d);
-  }
-  const rows = Object.entries(kinds).sort((a, b) => a[1] - b[1]).map(([name, d]) => {
-    const decoded = kzPosse.some((k) => k.name === name);
-    const why = decoded ? 'already decoded' : f.rangeIn < 999 && d > f.rangeIn ? `${d}″ away, out of Range (${f.rangeIn}″)` : f.jammed ? 'scrambled by a Natural EMP' : taken ? `${taken} Scanned this round` : fight && (pc.grit ?? 0) < cost ? `needs ${cost} Grit (${pc.name} has ${pc.grit ?? 0})` : '';
-    return `<button type="button" class="btn small fs-scan-btn" data-fs-scan="${esc(f.key)}" data-mon="${esc(name)}"${why ? ' disabled' : ''}>Scan the ${esc(name)}<small>${why || `${d}″ away${fight ? ` · ${cost} Grit` : ''}`}</small></button>`;
-  });
-  return `<div class="fs-scan">${head}${rows.length ? `<div class="fs-scan-list">${rows.join('')}</div>` : '<p class="muted fs-note">No monsters on the board to Scan.</p>'}</div>`;
+  const pend = scanPending && scanPending.pc === pc.id, list = scanTargets(f, pc), ready = list.filter((t) => !t.why).length;
+  return `<div class="fs-scan"><div class="fs-scan-h">${gl('target')} SCAN <small>${fight ? `${cost} Grit` : 'free out of a fight'} · Intuition ${poolTxt(pool)}</small></div>
+    <p class="fs-note">${pend ? `${esc(pc.name)} has a guess waiting on the ${esc(scanPending.name)}.` : list.length ? `${ready} of ${list.length} monster${list.length === 1 ? '' : 's'} on the board ${ready === 1 ? 'is' : 'are'} ready to Scan.` : 'No monsters on the board to Scan.'}</p>
+    <button type="button" class="btn small fs-open-mode" data-fs-open-mode="${esc(f.key)}">${gl('forstall')} ${pend ? 'Make the guess' : 'Open the Forstall'}</button></div>`;
 }
-function guessHTML(name) {
-  const e = scanNb.find((x) => x.name === name) || { known: [], guesses: [], positional: [] };
-  const last = e.rolls?.[0];
-  const dias = (digits, result) => `<div class="fs-dias">${digits.map((d, i) => `<span class="dia ${result?.[i] || ''}"><span>${d ?? '·'}</span></span>`).join('')}</div>`;
-  return `<div class="fs-guess">
-    <p class="fs-note">${last ? `Picked up: <b>${last.newDigits?.length ? last.newDigits.join(', ') : 'nothing new'}</b> · ` : ''}Digits known: <b>${e.known?.length ? e.known.join(' ') : 'none yet'}</b>${scanEasy ? '' : ' (in number order, not their spots)'}</p>
-    ${scanEasy && e.positional?.some((x) => x != null) ? `<small class="muted">WHERE THEY GO</small>${dias(e.positional, e.positional.map((x) => (x != null ? 'green' : '')))}` : ''}
-    ${e.guesses?.length ? `<small class="muted">EARLIER GUESSES</small>${e.guesses.slice(-3).map((g) => dias(g.digits, g.result)).join('')}` : ''}
-    <small class="muted">YOUR GUESS — ONE PER SCAN</small>
-    <div class="fs-dig-row">${[0, 1, 2, 3, 4, 5].map((i) => `<input class="fs-dig" data-dig="${i}" data-no-step inputmode="numeric" min="0" max="9" maxlength="1" aria-label="Digit ${i + 1}" value="${e.positional?.[i] ?? ''}">`).join('')}</div>
-    <button type="button" class="btn small" data-fs-guess>${gl('target')} Guess the ${esc(name)}’s frequency</button>
-  </div>`;
-}
-async function scanAct(body) {
-  try { const res = await api('POST', body, '', '/api/scan'); return res.result; }
-  catch (e) { toast(e.message, true); return null; }
+function openMode(f) {
+  const pc = f && scanOperator(f);
+  if (!pc) return;
+  const fight = !!combat?.combat?.active;
+  openForstallMode({ f, pc, fight, cost: fight ? scanCost() : 0, pool: poolTxt(intuitionOf(pc)), easy: scanEasy,
+    targets: () => scanTargets(f, pc),
+    onChange: async () => { await loadKz(); combatPoller?.now?.(); poller?.now?.(); renderTurnBar(); renderPanel(); } });
 }
 function wireScan(box) {
-  box.querySelectorAll('[data-fs-scan]').forEach((b) => b.addEventListener('click', async () => {
-    const f = fsOf(b.dataset.fsScan), pc = f && scanOperator(f);
-    if (!pc) return;
-    b.disabled = true;
-    play('fsScan');
-    const r = await scanAct({ action: 'combatScan', pc: pc.id, key: f.key, monster: b.dataset.mon });
-    if (!r) { b.disabled = false; return; }
-    await rollPopup(r, `${pc.name} · ${r.label} · ${r.pool}`);
-    if (r.newDigits?.length) play('fsReadout');
-    toast(r.newDigits?.length ? `Picked up ${r.newDigits.length} digit${r.newDigits.length === 1 ? '' : 's'}: ${r.newDigits.join(', ')}. Now make your guess.` : 'No new digits this time. You still get your guess.');
-    await loadKz(); combatPoller?.now?.(); poller?.now?.(); renderTurnBar(); renderPanel();
-    openGuess(); // straight on to the guess
-  }));
-  box.querySelector('[data-fs-open-guess]')?.addEventListener('click', openGuess);
-}
-// BUG-4: the frequency guess in a roomy window over the map (it didn't fit in the fighter card)
-function openGuess() {
-  if (!scanPending || document.querySelector('.fs-guess-back')) return;
-  const back = document.createElement('div');
-  back.className = 'modal-back ask-back fs-guess-back';
-  back.innerHTML = `<div class="modal ask fs-guess-modal" role="dialog" aria-modal="true" aria-label="Guess the frequency">
-    <h2>${gl('forstall')} The ${esc(scanPending.name)}</h2>${guessHTML(scanPending.name)}
-    <div class="ask-btns"><a class="btn secondary" href="/" target="_blank" rel="noopener">The Scanner notebook</a><button type="button" class="btn secondary" data-x>Later</button></div></div>`;
-  const close = () => { back.remove(); document.removeEventListener('keydown', key, true); };
-  const key = (e) => { if (e.key === 'Escape') { e.stopPropagation(); close(); } };
-  back.addEventListener('click', (e) => { if (e.target === back || e.target.closest('[data-x]')) close(); });
-  document.addEventListener('keydown', key, true);
-  document.body.append(back);
-  wireGuess(back, close);
-  back.querySelector('.fs-dig')?.focus();
-}
-function wireGuess(box, done = () => {}) {
-  const digs = [...box.querySelectorAll('.fs-dig')];
-  digs.forEach((el, i) => el.addEventListener('input', () => { el.value = el.value.replace(/\D/g, '').slice(-1); if (el.value && digs[i + 1]) digs[i + 1].focus(); }));
-  box.querySelector('[data-fs-guess]')?.addEventListener('click', async (ev) => {
-    const digits = digs.map((el) => el.value);
-    if (digits.some((d) => d === '')) { toast('Fill in all six digits.', true); return; }
-    const pc = scanPending && combat.posse.find((p) => p.id === scanPending.pc);
-    ev.currentTarget.disabled = true;
-    const r = await scanAct({ action: 'combatGuess', pc: pc?.id, digits: digits.map(Number) });
-    if (r) play('fsReadout'); // the lights come up on the scanner screen
-    if (!r) { ev.currentTarget.disabled = false; return; }
-    const n = (k) => r.result.filter((x) => x === k).length;
-    if (r.solved) { play('success'); toast(`Decoded! The ${r.name}’s frequency can go in a memory slot now.`); }
-    else toast(`${n('green')} green, ${n('yellow')} yellow, ${n('red')} red.`);
-    done();
-    await loadKz(); renderTurnBar(); renderPanel();
-  });
+  box.querySelectorAll('[data-fs-open-mode]').forEach((b) => b.addEventListener('click', () => openMode(fsOf(b.dataset.fsOpenMode))));
 }
 async function loadKz() {
   // a character's Forstall: only what the posse has fully decoded. The Warden's own Forstalls: any monster.
