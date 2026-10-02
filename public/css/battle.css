@@ -502,3 +502,12 @@ body.tv-mode .viewport { height: 100vh; border: 0; cursor: default; }
 .d-mount .gl { width: 18px; height: 18px; flex: none; }
 .d-mount select { flex: 1; min-width: 0; }
 .d-hp.mech .bar i { background: var(--brass, #c9a45c); }
+
+/* the Warden's terrain tools, always on the map (top left) */
+.map-tools { position: absolute; left: 12px; top: 12px; z-index: 5; display: flex; flex-wrap: wrap; gap: 4px; max-width: calc(100% - 90px); }
+.map-tools button { padding: 6px 10px 4px; border: 2px solid var(--ink); border-radius: var(--r-pill); background: rgba(238,243,244,.95); color: var(--ink); font: var(--fs-xs) var(--display); letter-spacing: var(--track); cursor: pointer; box-shadow: 0 2px 0 var(--shade-3); }
+.map-tools button[data-paint] { background: var(--ink); color: var(--paper); }
+.map-tools button:hover { filter: brightness(1.08); }
+/* lights: a lit token glows; the Warden sees the lit part of the fog */
+.btoken.lit { box-shadow: 0 0 0 3px rgba(255,214,120,.9), 0 0 28px 10px rgba(255,200,90,.55); }
+.terrain .fog.lit { fill: rgba(255,214,120,.18); fill-opacity: 1; stroke: rgba(255,214,120,.5); stroke-width: 1.5; stroke-dasharray: none; }

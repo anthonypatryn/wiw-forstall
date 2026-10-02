@@ -1619,3 +1619,40 @@ test('Battle Map tokens show riding a horse or driving a mech', async () => {
   t = battleView(s, { warden: false, combat }).tokens[0];
   assert.deepEqual([t.mounted, t.horseName, t.mechHp], ['horse', 'Dusty', undefined]);
 });
+
+test('A lantern or flashlight lights the fog around its token', async () => {
+  const { freshBattle, battleAction, battleView } = await import('../lib/battle.js');
+  const s = freshBattle();
+  const me = battleAction(s, { action: 'addToken', kind: 'npc', name: 'Lamp', col: 10, row: 10 }, { warden: true });
+  battleAction(s, { action: 'addToken', kind: 'npc', name: 'Near', col: 12, row: 10 }, { warden: true });
+  battleAction(s, { action: 'addToken', kind: 'npc', name: 'Mid', col: 15, row: 10 }, { warden: true });
+  battleAction(s, { action: 'layerAll', layer: 'fog', on: true }, { warden: true });
+  const names = () => battleView(s, { warden: false, combat: null }).tokens.map((t) => t.name).sort();
+  assert.deepEqual(names(), []);
+  assert.throws(() => battleAction(s, { action: 'light', id: me.id, light: 'lantern' }, { warden: false }), /your own/);
+  battleAction(s, { action: 'light', id: me.id, light: 'lantern' }, { warden: true });
+  assert.deepEqual(names(), ['Lamp', 'Near']);
+  battleAction(s, { action: 'light', id: me.id, light: 'flashlight' }, { warden: true });
+  assert.deepEqual(names(), ['Lamp', 'Mid', 'Near']);
+  assert.equal(battleView(s, { warden: true, combat: null }).lit.length > 0, true);
+  battleAction(s, { action: 'light', id: me.id, light: '' }, { warden: true });
+  assert.deepEqual(names(), []);
+});
+
+test('Players light their own lantern or flashlight, if it’s in their Inventory', async () => {
+  const { freshBattle, battleAction, battleView } = await import('../lib/battle.js');
+  const combat = freshCombat();
+  const a = publicAction(combat, { action: 'addPc', trade: 'Hunter', name: 'Tess' }, { warden: true });
+  const pc = combat.posse.find((p) => p.id === a.id);
+  const s = freshBattle();
+  const t = battleAction(s, { action: 'addToken', kind: 'pc', ref: a.id, name: 'Tess' }, { warden: true });
+  assert.throws(() => battleAction(s, { action: 'light', id: t.id, light: 'lantern', pc: a.id }, { warden: false, combat }), /no lantern/);
+  pc.items.push({ uid: 'x', itemId: 'general-goods-lighting-kerosene-lantern', name: 'Kerosene Lantern', qty: 1 });
+  assert.deepEqual(battleView(s, { warden: false, combat }).tokens[0].lights, ['lantern']);
+  assert.throws(() => battleAction(s, { action: 'light', id: t.id, light: 'lantern', pc: 'someone-else' }, { warden: false, combat }), /your own/);
+  battleAction(s, { action: 'light', id: t.id, light: 'lantern', pc: a.id }, { warden: false, combat });
+  assert.equal(s.tokens[0].light, 'lantern');
+  assert.throws(() => battleAction(s, { action: 'light', id: t.id, light: 'flashlight', pc: a.id }, { warden: false, combat }), /no flashlight/);
+  battleAction(s, { action: 'light', id: t.id, light: '', pc: a.id }, { warden: false, combat });
+  assert.equal(s.tokens[0].light, '');
+});

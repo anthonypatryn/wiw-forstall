@@ -234,7 +234,7 @@ function renderTokens() {
     const nStatus = Object.keys(t.statuses || {}).length;
     const big = t.mounted === 'mech' ? 1.45 : 1, ts = size * big; // in the mech: a Large token
     const mh = t.mechHp, mPct = mh ? Math.max(0, Math.min(100, (mh.health / Math.max(1, mh.maxHealth)) * 100)) : 0;
-    return `<div class="btoken ${t.kind}${tg}${art ? ' art' : ' stand-in'}${canMove(t) ? ' movable' : ''}${t.id === selected ? ' sel' : ''}${t.ref && t.ref === data.current ? ' turn' : ''}${t.hidden ? ' hidden-tok' : ''}${t.down ? ' down' : ''}${t.frenzied ? ' frenzied' : ''}"
+    return `<div class="btoken ${t.kind}${tg}${art ? ' art' : ' stand-in'}${canMove(t) ? ' movable' : ''}${t.id === selected ? ' sel' : ''}${t.ref && t.ref === data.current ? ' turn' : ''}${t.hidden ? ' hidden-tok' : ''}${t.light ? ' lit' : ''}${t.down ? ' down' : ''}${t.frenzied ? ' frenzied' : ''}"
       data-id="${t.id}" data-size="${esc(t.size || '')}" style="left:${c.x}px;top:${c.y}px;width:${ts}px;height:${ts}px;${bg};font-size:${font}px;border-width:${data.grid.ppi * 0.05}px"
       title="${esc(t.name)}${t.mounted === 'horse' ? ` · riding ${esc(t.horseName)}` : t.mounted === 'mech' ? ` · in the ${esc(t.mechName)}` : ''}">${art ? '' : esc(initials(t.name))}
       ${t.holding ? `<span class="hold-dot" style="font-size:${labFont * 1.4}px" title="Prepared: ${esc(t.holding)}">${gl('watch')}</span>` : ''}
@@ -286,6 +286,8 @@ function renderPanel() {
       ${fcHTML ? "" : `<div class="d-row">${sel.grit != null ? `<span><b>GRIT</b> ${sel.grit}</span>` : ''}${sel.defense ? `<span><b>DEFENSE</b> ${esc(sel.defense)}</span>` : ''}${sel.speed ? `<span><b>SPEED</b> ${esc(sel.speed)}</span>` : ''}${sel.finesse ? `<span><b>FINESSE</b> ${esc(sel.finesse)}</span>` : ''}${sel.aces ? `<span><b>ACES</b> ${sel.aces}/6</span>` : ''}${sel.size ? `<span><b>SIZE</b> ${esc(sel.size)}</span>` : ''}</div>`}
       ${sel.frenzyText?.length ? `<div class="d-note">${sel.frenzyText.map(esc).join('<br>')}</div>` : ''}
       ${sel.kind === 'pc' && !actor && (sel.hasHorse || sel.hasMech) && (warden || sel.ref === myId()) ? `<label class="d-mount">${gl(sel.mounted || 'boot')} <select data-mount="${esc(sel.ref)}" aria-label="On foot or mounted"><option value="">On foot</option>${sel.hasHorse ? `<option value="horse"${sel.mounted === 'horse' ? ' selected' : ''}>Riding ${esc(sel.horseName)} (Fast)</option>` : ''}${sel.hasMech ? `<option value="mech"${sel.mounted === 'mech' ? ' selected' : ''}>In the ${esc(sel.mechName)}</option>` : ''}</select></label>` : sel.kind === 'pc' && sel.mounted ? `<p class="d-mount">${gl(sel.mounted)} ${sel.mounted === 'horse' ? `Riding ${esc(sel.horseName)}` : `In the ${esc(sel.mechName)}`}</p>` : ''}
+      ${warden || (sel.kind === 'pc' && sel.ref === myId() && sel.lights?.length) ? `<label class="d-mount">${gl('bulb')} <select data-light="${esc(sel.id)}" aria-label="Light"><option value="">${warden ? 'No light' : 'Light’s out'}</option>${['lantern', 'flashlight'].filter((k) => warden || sel.lights.includes(k)).map((k) => `<option value="${k}"${sel.light === k ? ' selected' : ''}>${k === 'lantern' ? 'Lantern lit (3″ through fog)' : 'Flashlight on (6″ through fog)'}</option>`).join('')}</select></label>`
+        : sel.light ? `<p class="d-mount">${gl('bulb')} Carrying a ${sel.light}</p>` : ''}
       ${sel.mechHp ? `<div class="d-hp mech"><span class="bar"><i style="width:${Math.max(0, Math.min(100, sel.mechHp.health / Math.max(1, sel.mechHp.maxHealth) * 100))}%"></i></span><b>Mech ${sel.mechHp.health}/${sel.mechHp.maxHealth}${sel.mechHp.state ? ` · ${esc(sel.mechHp.state)}` : ''}</b></div>` : ''}
       ${!warden && sel.kind === 'enemy' && sel.readDiff && !sel.hpShown && myId() ? (sel.readTries.includes(myId())
         ? '<p class="muted small-text">You’ve tried to read its Health. Someone else can try.</p>'
@@ -305,6 +307,7 @@ function renderPanel() {
       ${others.length ? others.map(({ t, d }) => `<div class="tok-row" data-pick="${t.id}"><span class="chip" style="background:${color(t)}">${esc(initials(t.name))}</span>
         <span class="n">${esc(t.name)}</span><span class="d ${band(d)}">${d}″ · ${BAND_LABEL[band(d)]}</span></div>`).join('') : '<p class="muted">Nobody else on the board.</p>'}</details></div>`;
     if (actor) wireTurnBar(box, actor.cur, actor.tok); else wireFs(box);
+    box.querySelector('[data-light]')?.addEventListener('change', (e) => act({ action: 'light', id: e.target.dataset.light, light: e.target.value, pc: myId() }, e.target.value ? `The ${e.target.value} is lit.` : 'The light’s out.'));
     box.querySelector('[data-mount]')?.addEventListener('change', async (e) => {
       try {
         await api('POST', { action: 'pc', id: e.target.dataset.mount, op: 'mount', value: e.target.value }, '', '/api/combat');
@@ -387,7 +390,8 @@ function renderTerrain() {
   const path = (list) => list.map((k) => { const [c, r] = k.split(',').map(Number); return hexPath(c, r); }).join('');
   svg.innerHTML = `<defs><pattern id="rough-hatch" width="14" height="14" patternUnits="userSpaceOnUse" patternTransform="rotate(35)"><rect width="14" height="14" fill="rgba(122,82,40,.35)"/><path d="M0 0v14" stroke="rgba(60,36,14,.75)" stroke-width="4"/></pattern></defs>
     ${data.rough?.length ? `<path class="rough" d="${path(data.rough)}"/>` : ''}
-    ${data.fog?.length ? `<path class="fog${warden ? ' warden' : ''}" d="${path(data.fog)}"/>` : ''}`;
+    ${data.fog?.length ? `<path class="fog${warden ? ' warden' : ''}" d="${path(warden && data.lit?.length ? data.fog.filter((k) => !data.lit.includes(k)) : data.fog)}"/>` : ''}
+    ${warden && data.lit?.length ? `<path class="fog lit" d="${path(data.lit)}"/>` : ''}`;
 }
 const paint = { layer: null, on: true, size: 1, cells: new Map() };
 function paintBar() {
@@ -401,9 +405,9 @@ function paintBar() {
     <button type="button" class="btn small" data-pb-done>Done</button>`;
   b.querySelectorAll('[data-pb-on]').forEach((x) => x.addEventListener('click', () => { paint.on = x.dataset.pbOn === 'true'; paintBar(); }));
   b.querySelectorAll('[data-pb-size]').forEach((x) => x.addEventListener('click', () => { paint.size = Number(x.dataset.pbSize); paintBar(); }));
-  b.querySelector('[data-pb-done]').addEventListener('click', () => { paint.layer = null; vp.classList.remove('painting'); paintBar(); toast('Done painting.'); });
+  b.querySelector('[data-pb-done]').addEventListener('click', () => { paint.layer = null; vp.classList.remove('painting'); paintBar(); $('#map-tools').hidden = !warden; toast('Done painting.'); });
 }
-function startPaint(layer) { paint.layer = layer; paint.on = true; $('#setup').hidden = true; vp.classList.add('painting'); select(null); paintBar(); }
+function startPaint(layer) { paint.layer = layer; paint.on = true; $('#setup').hidden = true; vp.classList.add('painting'); select(null); paintBar(); $('#map-tools').hidden = true; }
 function brushAt(cx, cy) {
   const pt = pz.toStage(cx, cy), h = toHex(pt.x, pt.y), r = paint.size - 1;
   const key = `${paint.layer}`, set = new Set(data[key] || []);
@@ -974,6 +978,7 @@ const mapImg = (m, thumb) => `/api/battle?view=img${m.id && m.id !== 'upload' ? 
 
 function renderWarden() {
   $('#setup-btn').hidden = !warden;
+  if (!paint.layer) $('#map-tools').hidden = !warden;
   if (!warden) { $('#setup').hidden = true; return; }
   const pre = $('#presets');
   pre.innerHTML = data.presets.map((p) => `<button type="button" data-preset="${p.id}" aria-pressed="${data.map.kind === 'preset' && data.map.id === p.id}">
