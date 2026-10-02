@@ -349,10 +349,11 @@ export function mountNav(active) {
         <button type="button" class="nav-sound" title="Sound effects" aria-pressed="${!isMuted()}">${gl(isMuted() ? 'mute' : 'sound')}</button>
         <button type="button" class="nav-settings" data-settings title="Settings" aria-label="Settings">${gl('gear')}</button>
         <button type="button" class="nav-help" data-rule="" title="Look up a rule" aria-label="Look up a rule">?</button>
+        <button type="button" class="nav-bug" data-bugreport title="Report a bug" aria-label="Report a bug">${gl('bug')}</button>
         ${on ? `<button type="button" class="nav-undo" aria-expanded="false" title="Undo a recent change" aria-label="Undo a recent change">↶</button>
           <button type="button" class="nav-needs" aria-expanded="false" title="What's waiting on you"><span class="nn">Needs you</span> <b>·</b></button>
           <div class="nav-group nav-warden"><button type="button" class="nav-drop" aria-expanded="false">${gl('star')} Warden <i>▾</i></button>
-            <div class="nav-menu right" hidden><a href="/run">Run the Game</a><a href="/battle">Battle Map</a><a href="/tv" target="_blank" rel="noopener">TV screen (for the table)</a><a href="/run#grp-tools">Backup &amp; homebrew</a><button type="button" data-player>Switch to player view</button></div></div>`
+            <div class="nav-menu right" hidden><a href="/run">Run the Game</a><a href="/battle">Battle Map</a><a href="/tv" target="_blank" rel="noopener">TV screen (for the table)</a><a href="/run#grp-tools">Backup &amp; homebrew</a><a href="/run#grp-tools">Bug reports</a><button type="button" data-bugreport>Report a bug</button><button type="button" data-player>Switch to player view</button></div></div>`
           : `<button type="button" class="nav-unlock" title="Warden PIN">${gl('star')} <span>Warden</span></button>`}
         <button type="button" class="nav-menu-btn" aria-expanded="false">Menu</button>
       </div>
