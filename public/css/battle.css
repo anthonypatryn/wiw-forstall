@@ -483,3 +483,6 @@ body.tv-mode .viewport { height: 100vh; border: 0; cursor: default; }
 .pm-tools { position: absolute; top: 4px; right: 4px; display: flex; gap: 4px; }
 .pm-tools button { width: 28px; height: 28px; display: grid; place-items: center; padding: 0; border: 1.5px solid var(--ink); border-radius: 50%; background: var(--surface); color: var(--ink); cursor: pointer; font: var(--fs-md)/1 var(--display); }
 .pm-tools button .gl { width: 15px; height: 15px; }
+
+.fb-btns.four { grid-template-columns: 1fr auto auto auto; }
+@media (max-width: 420px) { .fb-btns.four .fb-ghost .gl { display: none; } } /* four buttons on a phone: words only */

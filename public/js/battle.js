@@ -502,6 +502,39 @@ function moveCostFor(kind, a, inches, rough) {
 }
 const pips = (n) => `<span class="grit-pips">${Array.from({ length: Math.max(6, n) }, (_, i) => `<i class="${i < n ? 'on' : ''}"></i>`).join('')}</span>`;
 
+// the posse members with no token on the board (taken off, or no fight yet): the fight bar's "+ Posse" puts them back
+let lastOffKey = null;
+function offBoard() {
+  if (!warden || !data) return [];
+  const on = new Set(data.tokens.map((t) => t.ref).filter(Boolean));
+  return (combat?.posse || []).filter((p) => !p.dead && !on.has(p.id));
+}
+const posseBtn = () => (offBoard().length ? `<button type="button" class="btn small fb-ghost" data-addposse title="Put the posse back on the map">${gl('hat')} + Posse</button>` : '');
+function openPutBack() {
+  const back = document.createElement('div');
+  back.className = 'modal-back ask-back';
+  const draw = () => {
+    const off = offBoard();
+    back.innerHTML = `<div class="modal ask" role="dialog" aria-modal="true" aria-label="Put the posse back on the map"><h2>Back on the map</h2>
+      <p class="ask-body">${off.length ? 'Tap anyone to put their token back on the board.' : 'Everyone in the posse is on the board.'}</p>
+      <div class="chip-row">${off.map((p) => `<button type="button" class="chip-btn" data-put="${esc(p.id)}">+ ${esc(p.name)}<small>${esc(p.trade || 'posse')}</small></button>`).join('')}</div>
+      <div class="btn-row ask-btns"><button type="button" class="btn" data-done>Done</button></div></div>`;
+  };
+  const close = () => { back.remove(); document.removeEventListener('keydown', onKey, true); };
+  const onKey = (e) => { if (e.key === 'Escape') { e.stopPropagation(); close(); } };
+  back.addEventListener('click', async (e) => {
+    if (e.target === back || e.target.closest('[data-done]')) { close(); return; }
+    const b = e.target.closest('[data-put]'); if (!b) return;
+    const p = (combat?.posse || []).find((x) => x.id === b.dataset.put);
+    b.disabled = true;
+    if (await act({ action: 'addToken', kind: 'pc', ref: p.id, name: p.name }, `${p.name}’s back on the map.`)) { draw(); if (!offBoard().length) close(); }
+    else b.disabled = false;
+  });
+  document.addEventListener('keydown', onKey, true);
+  draw(); document.body.append(back);
+  back.querySelector('[data-put], [data-done]')?.focus();
+}
+
 function renderTurnBar() {
   const bar = $('#turn-bar'), fb = $('#fight-bar');
   const busy = (el) => el.contains(document.activeElement) && /^(SELECT|INPUT)$/.test(document.activeElement.tagName);
@@ -512,10 +545,11 @@ function renderTurnBar() {
     if (turnUI) { turnUI = null; tp.open = ''; renderPanel(); }
     const n = (combat?.enemies || []).filter((e) => !e.defeated).length, pcs = (combat?.posse || []).filter((p) => !p.dead).length;
     fb.innerHTML = warden ? `<div class="fightbar idle"><div class="fb-top"><b>NO FIGHT RUNNING</b><small>${pcs} in the posse · ${n} enem${n === 1 ? 'y' : 'ies'} ready</small></div>
-      <div class="fb-btns two"><button type="button" class="btn fb-next" data-startfight${pcs ? '' : ' disabled'}>${gl('revolver')} Start combat</button><button type="button" class="btn small fb-ghost" data-addenemies>${gl('claws')} Add enemies</button></div></div>`
+      <div class="fb-btns${offBoard().length ? '' : ' two'}"><button type="button" class="btn fb-next" data-startfight${pcs ? '' : ' disabled'}>${gl('revolver')} Start combat</button><button type="button" class="btn small fb-ghost" data-addenemies>${gl('claws')} Add enemies</button>${posseBtn()}</div></div>`
       : '<div class="fightbar idle"><div class="fb-top"><b>NO FIGHT RUNNING</b></div><small class="fb-sub">Tap a token to see its ranges.</small></div>';
     const bar = fb;
     bar.querySelector('[data-addenemies]')?.addEventListener('click', () => openAddEnemies(combat, () => poller?.now?.()));
+    bar.querySelector('[data-addposse]')?.addEventListener('click', openPutBack);
     bar.querySelector('[data-startfight]')?.addEventListener('click', startFight);
     return;
   }
@@ -682,7 +716,7 @@ function fightBarHTML(cur) {
   return `<div class="fightbar">
     <div class="fb-top"><b>ROUND ${c.round || 1}</b><small>${order.map((k) => `<span class="${k === c.current || (k === 'enemies' && cur?.kind === 'enemy') ? 'now' : ''}">${esc(nm(k))}</span>`).join(' → ')}</small></div>
     ${cur ? `<div class="fb-who"><b data-goto title="Find them on the map">${esc(a.name)}</b>’s turn · ${a.grit ?? 0} Grit left</div>` : ''}
-    ${next || hasMenu ? `<div class="fb-btns${warden ? '' : ' two'}">${next}${warden ? `<button type="button" class="btn small fb-ghost" data-addenemies title="Reinforcements">${gl('claws')} + Enemies</button>` : ''}
+    ${next || hasMenu ? `<div class="fb-btns${warden ? (offBoard().length ? ' four' : '') : ' two'}">${next}${warden ? `<button type="button" class="btn small fb-ghost" data-addenemies title="Reinforcements">${gl('claws')} + Enemies</button>${posseBtn()}` : ''}
       ${hasMenu ? `<div class="fb-more"><button type="button" class="btn small fb-ghost" data-fbmenu aria-expanded="${fbState.menu}" aria-label="More fight controls">⋯</button>${menu}</div>` : ''}</div>` : ''}
   </div>`;
 }
@@ -693,6 +727,7 @@ function wireFightBar(fb) {
   fb.querySelector('[data-clear-enemies]')?.addEventListener('click', async () => { fbState.menu = false; if (await ask('Remove every enemy from the fight?', { ok: 'Remove them all' })) { await combatAct({ action: 'clearEnemies' }); poller?.now?.(); } renderTurnBar(); });
   fb.querySelector('[data-nextturn]')?.addEventListener('click', () => { tp.open = ''; fbState.menu = false; tpAct({ action: 'next' }); });
   fb.querySelector('[data-addenemies]')?.addEventListener('click', () => openAddEnemies(combat, () => poller?.now?.()));
+  fb.querySelector('[data-addposse]')?.addEventListener('click', openPutBack);
   fb.querySelector('[data-endmine]')?.addEventListener('click', () => { tp.open = ''; tpAct({ action: 'pc', id: c.current, op: 'endTurn' }); });
   fb.querySelector('[data-endfight]')?.addEventListener('click', async () => {
     fbState.menu = false;
@@ -972,6 +1007,8 @@ function render() {
   renderPings();
   renderPanel();
   renderWarden();
+  const offKey = offBoard().map((p) => p.id).join(); // the fight bar's "+ Posse" shows only while someone's off the board
+  if (offKey !== lastOffKey) { lastOffKey = offKey; renderTurnBar(); }
   if (combat) renderTurnBar(); // quick moves and ranges need the token positions
 }
 function select(id) { if (id !== selected) { cardPos = null; if (!turnUI?.tok || id !== turnUI.tok.id) tp.open = ''; } selected = id; selFs = null; renderRanges(); renderTokens(); renderPanel(); if (warden && data) renderFsWarden(); if (combat?.combat?.active) renderTurnBar(); }
