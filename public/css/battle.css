@@ -599,7 +599,22 @@ body.tv-mode .viewport { height: 100vh; border: 0; cursor: default; }
 .fs-open-mode { width: 100%; justify-content: center; }
 @media (max-width: 760px) {
   .fsm-grid { grid-template-columns: minmax(0, 1fr); }
-  .fsm-side { position: static; grid-auto-flow: column; grid-auto-columns: minmax(170px, 1fr); overflow-x: auto; padding-bottom: 4px; }
-  .fsm-side .fsm-h { display: none; }
+  .fsm-side { position: static; }
   .fsm-main .die { width: 84px; }
 }
+
+/* Forstall mode's left column: the monster list, then the Forstall's own controls (forstallCard full) */
+.fsm-tgts { display: grid; gap: 8px; }
+.fsm-ctl .fs-card { margin: 0; }
+@media (max-width: 760px) {
+  .fsm-side { grid-auto-flow: row; overflow: visible; }
+  .fsm-tgts { grid-auto-flow: column; grid-auto-columns: minmax(170px, 1fr); overflow-x: auto; padding-bottom: 4px; }
+}
+
+/* the Forstall's controls on the dark device screen */
+.fsm-ctl .fs-card { background: rgba(255,255,255,.04); color: var(--paper); }
+.fsm-ctl .fs-card small, .fsm-ctl .fs-note, .fsm-ctl .muted { color: var(--on-dark-dim); }
+.fsm-ctl select { background-color: rgba(255,255,255,.08); color: var(--paper); border: 1px solid rgba(232,220,196,.35); border-radius: var(--r-sm); padding: 5px 8px; }
+.fsm-ctl select option { color: var(--ink); }
+.fsm-ctl .btn.secondary, body.warden-mode .fsm-ctl .btn.secondary { background: transparent; color: var(--paper); border-color: rgba(232,220,196,.55); box-shadow: none; }
+.fsm-ctl .fs-slots > span { color: var(--brass); }

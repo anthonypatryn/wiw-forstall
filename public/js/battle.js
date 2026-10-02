@@ -11,7 +11,7 @@ import { openAddEnemies } from './enemy-add.js';
 import { panZoom } from './panzoom.js';
 import { cropImage } from './cropper.js';
 import { propDialog, propCard, propIcon } from './props-ui.js';
-import { openForstallMode } from './forstall-mode.js';
+import { openForstallMode, refreshForstallMode } from './forstall-mode.js';
 import { runTour, BATTLE_TOUR } from './tour.js';
 
 const EP = '/api/battle';
@@ -1125,6 +1125,7 @@ function render() {
   renderFields();
   renderRanges();
   renderProps();
+  refreshForstallMode();
   renderTokens();
   renderPings();
   renderPanel();
@@ -1326,15 +1327,18 @@ function scanHTML(f) {
   const fight = !!combat?.combat?.active, cost = fight ? scanCost() : 0, pool = intuitionOf(pc);
   const pend = scanPending && scanPending.pc === pc.id, list = scanTargets(f, pc), ready = list.filter((t) => !t.why).length;
   return `<div class="fs-scan"><div class="fs-scan-h">${gl('target')} SCAN <small>${fight ? `${cost} Grit` : 'free out of a fight'} · Intuition ${poolTxt(pool)}</small></div>
-    <p class="fs-note">${pend ? `${esc(pc.name)} has a guess waiting on the ${esc(scanPending.name)}.` : list.length ? `${ready} of ${list.length} monster${list.length === 1 ? '' : 's'} on the board ${ready === 1 ? 'is' : 'are'} ready to Scan.` : 'No monsters on the board to Scan.'}</p>
-    <button type="button" class="btn small fs-open-mode" data-fs-open-mode="${esc(f.key)}">${gl('forstall')} ${pend ? 'Make the guess' : 'Open the Forstall'}</button></div>`;
+    <p class="fs-note">${pend ? `${esc(pc.name)} has a guess waiting on the ${esc(scanPending.name)}.` : list.length ? `${ready} of ${list.length} monster${list.length === 1 ? '' : 's'} on the board ${ready === 1 ? 'is' : 'are'} ready to Scan.` : 'No monsters on the board to Scan.'}</p></div>`;
 }
 function openMode(f) {
-  const pc = f && scanOperator(f);
-  if (!pc) return;
+  if (!f) return;
+  const key = f.key, pc = scanOperator(f) || null; // no operator (the Warden, or an owner out of turn): the controls only
   const fight = !!combat?.combat?.active;
-  openForstallMode({ f, pc, fight, cost: fight ? scanCost() : 0, pool: poolTxt(intuitionOf(pc)), easy: scanEasy,
-    targets: () => scanTargets(f, pc),
+  openForstallMode({ f, pc, fight, cost: fight ? scanCost() : 0, pool: pc ? poolTxt(intuitionOf(pc)) : '', easy: scanEasy,
+    getF: () => fsOf(key) || f,
+    getPc: () => (pc && combat?.posse?.find((p) => p.id === pc.id)) || pc, // fresh Grit after a Sweep or a Scan
+    targets: () => (pc ? scanTargets(fsOf(key) || f, pc) : []),
+    controls: () => forstallCard(fsOf(key) || f, { full: true }),
+    wireControls: (el) => wireFs(el),
     onChange: async () => { await loadKz(); combatPoller?.now?.(); poller?.now?.(); renderTurnBar(); renderPanel(); } });
 }
 function wireScan(box) {
@@ -1389,7 +1393,7 @@ function slotOptions(cur, list) {
   return `<option value="">— empty —</option>${opts.map((v) => `<option value="${esc(v)}"${v === cur ? ' selected' : ''}${stale && v === cur ? ' disabled' : ''}>${esc(v)}</option>`).join('')}`
     + (list.length ? '' : '<option value="" disabled>Nothing decoded yet — use the Forstall Scanner</option>');
 }
-function forstallCard(f) {
+function forstallCard(f, { full = false } = {}) {
   const fight = combat?.combat?.active;
   const runner = !f.owner && !warden && fight ? scanOperator(f) : !f.owner && !warden ? combat?.posse?.find((p) => p.id === myId() && canWork(f, p.id)) : null;
   const may = warden || (f.owner && myId() === f.owner) || !!runner;
@@ -1404,8 +1408,9 @@ function forstallCard(f) {
     ${f.jammed ? `<p class="fs-warn">${gl('flash')} Scrambled by a Natural EMP — no Scan or Burst until the monster’s next turn.</p>` : ''}
     ${f.pulse ? `<p class="fs-state">${gl('heart')} <b>Heartbeat Sensor:</b> ${f.pulse.count ? `${f.pulse.count} monster${f.pulse.count === 1 ? '' : 's'} within ${f.rangeIn + 6}″ — the nearest is ${f.pulse.nearest}″ away.` : `quiet — nothing within ${f.rangeIn + 6}″.`}</p>` : ''}
     ${clashWith.length ? `<p class="fs-warn">${gl('flash')} Edison’s Rule 1: its waves cross ${esc(clashWith.join(' and '))}’s.</p>` : ''}
-    ${scanHTML(f)}
-    ${may ? `<div class="fs-btns"><button type="button" class="btn small" data-fs-sweep="${esc(f.key)}"${(f.owner && !f.charges) || f.melted ? ' disabled' : ''}>${gl('forstall')} ${f.sweep ? 'Readjust' : 'Sweep'} · ${cost}</button>
+    ${full ? '' : scanHTML(f)}
+    ${!full && (may || scanOperator(f)) ? `<button type="button" class="btn small fs-open-mode" data-fs-open-mode="${esc(f.key)}">${gl('forstall')} ${scanPending && scanOperator(f) && scanPending.pc === scanOperator(f).id ? 'Make the guess' : 'Open the Forstall'}</button>` : ''}
+    ${full && may ? `<div class="fs-btns"><button type="button" class="btn small" data-fs-sweep="${esc(f.key)}"${(f.owner && !f.charges) || f.melted ? ' disabled' : ''}>${gl('forstall')} ${f.sweep ? 'Readjust' : 'Sweep'} · ${cost}</button>
         ${f.sweep ? `<button type="button" class="btn small secondary" data-fs-off="${esc(f.key)}">Switch off</button>` : ''}</div>
       ${f.efficiency != null ? `<label class="check fs-eff"><input type="checkbox" data-fs-eff="${esc(f.key)}"${f.efficiency < 1 ? ' disabled' : ''}> Forstall Efficiency — turn one Hit into an Ace (${f.efficiency}/2 left today)</label>` : ''}
       <div class="fs-slots"><span>MEMORY SLOTS</span>${[0, 1, 2, 3].map((i) => `<select data-fs-slot="${esc(f.key)}" data-i="${i}" aria-label="Memory slot ${i + 1}">${slotOptions(f.slots[i] || '', f.owner || !warden ? kzPosse : kzAll)}</select>`).join('')}</div>
@@ -1574,7 +1579,7 @@ let toured = false;
 function connect() {
   poller?.stop();
   combatPoller?.stop();
-  combatPoller = startPolling(warden ? 'warden' : 'player', (d) => { combat = d; renderTurnBar(); if (data && !dragging) { renderPanel(); if (warden) renderWarden(); } }, null, '/api/combat');
+  combatPoller = startPolling(warden ? 'warden' : 'player', (d) => { combat = d; refreshForstallMode(); renderTurnBar(); if (data && !dragging) { renderPanel(); if (warden) renderWarden(); } }, null, '/api/combat');
   poller = startPolling(warden ? 'warden' : 'player', (d) => {
     data = d;
     if (selected && !data.tokens.some((t) => t.id === selected)) selected = null;

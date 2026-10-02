@@ -3,12 +3,16 @@
 // with its guess rows, and the keypad. It works through the fight's own Scan rules (lib/routes/scan.js combatScan /
 // combatGuess: the operator's turn, Grit, Range, one Scanner per round, one guess per Scan).
 // openForstallMode(ctx): ctx = { f (the Forstall field), pc (who's at the controls), fight, cost, pool (text),
-//   easy (Warden's aid), targets() → [{ name, d, why, decoded }], onChange() (refresh the map) }.
+//   easy (Warden's aid), targets() → [{ name, d, why, decoded }], getF() (the Forstall now), controls() → HTML for
+//   Sweep / Burst / memory slots (battle.js forstallCard full), wireControls(el), onChange() (refresh the map) }.
+// No `pc` (the Warden, or an owner out of their turn): just the controls; Scanning is for whoever's turn it is.
 import { esc, api, toast, injectDefs, animateRoll, staticDice, readoutHTML, diamondsHTML, chipsHTML, WAVE_SVG } from './common.js';
 import { gl } from './glyphs.js';
 import { play } from './sound.js';
 
 let open = null; // the one open device
+// the map or the fight changed: redraw the controls and the monster list (not the device, so typing isn't lost)
+export function refreshForstallMode() { open?.refresh(); }
 
 export function openForstallMode(ctx) {
   if (open) return;
@@ -20,10 +24,10 @@ export function openForstallMode(ctx) {
   const box = back.firstElementChild;
   document.body.append(back);
   document.body.classList.add('nav-open');
-  open = { back, close };
+  open = { back, close, refresh: () => { if (!st.busy && !back.contains(document.activeElement?.closest?.('select'))) drawSide(); } };
 
   const entry = (name) => st.nb.find((e) => e.name === name) || { name, known: [], guesses: [], positional: Array(6).fill(null), solved: false };
-  const myGuess = () => !!st.pending && st.pending.pc === ctx.pc.id && st.pending.name === st.sel;
+  const myGuess = () => !!ctx.pc && !!st.pending && st.pending.pc === ctx.pc.id && st.pending.name === st.sel;
   const locked = () => entry(st.sel).positional || Array(6).fill(null);
   const openSlots = () => locked().map((d, i) => (d === null ? i : -1)).filter((i) => i >= 0);
   const current = () => locked().map((d, i) => (d !== null ? d : st.input[i]));
@@ -35,7 +39,7 @@ export function openForstallMode(ctx) {
     } catch { /* keep what we had */ }
     const list = ctx.targets();
     // the monster with a guess waiting comes first, then the one picked, then the first we can Scan
-    if (st.pending?.pc === ctx.pc.id) st.sel = st.pending.name;
+    if (ctx.pc && st.pending?.pc === ctx.pc.id) st.sel = st.pending.name;
     else if (!list.some((t) => t.name === st.sel)) st.sel = (list.find((t) => !t.why) || list[0])?.name || null;
   }
 
@@ -47,25 +51,20 @@ export function openForstallMode(ctx) {
 
   function draw() {
     const list = ctx.targets(), t = list.find((x) => x.name === st.sel), e = entry(st.sel), live = myGuess();
-    const canScan = !!t && !t.why && !(st.pending?.pc === ctx.pc.id) && !st.busy;
+    const canScan = !!ctx.pc && !!t && !t.why && !(st.pending?.pc === ctx.pc.id) && !st.busy;
     const fresh = st.seen !== null && (e.guesses || []).length > st.seen ? st.seen : (e.guesses || []).length;
     const rows = !st.sel ? '<div class="empty-msg">NO SIGNAL — no monster in sight</div>'
       : `${(e.guesses || []).map((g, i) => `<div class="row${i >= fresh ? ' fresh' : ''}"><span class="n">${i + 1}</span>${diamondsHTML(g.digits, g.result)}</div>`).join('')}
         ${e.solved ? `<div class="solved-banner">FREQUENCY LOCKED · ${esc(e.kz || '')}</div>`
         : live ? `${(e.guesses || []).length ? '' : '<div class="empty-msg">Punch in six digits and transmit.</div>'}<div class="row input-row"><span class="n">▶</span>${diamondsHTML(current(), [], (i) => (locked()[i] !== null ? ' input locked' : ` input${i === openSlots().find((k) => st.input[k] === null) ? ' cursor' : ''}`))}</div>`
-        : `<div class="empty-msg">${st.pending?.pc === ctx.pc.id ? `A guess is waiting on the ${esc(st.pending.name)}.` : 'Scan to earn a guess.'}</div>`}`;
+        : `<div class="empty-msg">${ctx.pc && st.pending?.pc === ctx.pc.id ? `A guess is waiting on the ${esc(st.pending.name)}.` : ctx.pc ? 'Scan to earn a guess.' : 'Scanning is done by the character whose turn it is.'}</div>`}`;
     const ks = keyStates(e), known = new Set(e.known || []);
     box.innerHTML = `
-      <div class="fsm-head"><div><small>EDISON FORSTALL · ${esc(ctx.f.name.toUpperCase())}</small><b>${esc(ctx.pc.name)} at the controls</b>
-        <span class="fsm-sub">${ctx.fight ? `${ctx.pc.grit ?? 0} Grit left · a Scan costs ${ctx.cost}` : 'Out of a fight: Scanning is free'} · Intuition ${esc(ctx.pool)} · Range ${ctx.f.rangeIn >= 999 ? 'the whole map' : `${ctx.f.rangeIn}″`}</span></div>
+      <div class="fsm-head"><div><small>EDISON FORSTALL · ${esc(ctx.f.name.toUpperCase())}</small><b>${ctx.pc ? `${esc(ctx.pc.name)} at the controls` : 'The Forstall’s controls'}</b>
+        <span class="fsm-sub">${subLine()}</span></div>
         <button type="button" class="btn secondary fsm-x" data-fsm-x>${gl('pin')} Back to the map</button></div>
       <div class="fsm-grid">
-        <section class="fsm-side">
-          <div class="fsm-h">MONSTERS ON THE BOARD</div>
-          ${list.length ? list.map((x) => `<button type="button" class="fsm-tgt${x.name === st.sel ? ' on' : ''}${x.why ? ' off' : ''}" data-fsm-sel="${esc(x.name)}">
-              <b>${esc(x.name)}</b><small>${x.decoded ? '<span class="badge green">DECODED</span> ' : ''}${esc(x.why || `${x.d}″ away · in Range`)}</small></button>`).join('')
-            : '<p class="muted">No monsters on the board to Scan.</p>'}
-        </section>
+        <section class="fsm-side"></section>
         <section class="fsm-main">
           <div class="card target${st.sel ? '' : ' idle'}"><div><div class="label">TARGET IN LINE OF SIGHT</div><div class="name">${st.sel ? esc(st.sel) : 'Nothing in sight'}</div>
             <div class="meta">${t ? esc(t.why || `${t.d}″ away`) : ''}${ctx.easy ? ' <span class="badge teal">WARDEN’S AID: POSITIONS SHOWN</span>' : ''}</div></div>${st.sel ? readoutHTML(e.positional) : ''}</div>
@@ -85,9 +84,28 @@ export function openForstallMode(ctx) {
           </div>
         </section>
       </div>`;
+    drawSide();
     const rowsEl = box.querySelector('.rows'); rowsEl.scrollTop = rowsEl.scrollHeight;
     st.seen = (e.guesses || []).length;
     if (st.lastRoll) staticDice(box.querySelector('.fsm-tray'), st.lastRoll.dice), tally(st.lastRoll);
+  }
+
+  // under the name: Grit (fresh, so a Sweep or Scan shows), the Scan cost, Intuition, Range
+  function subLine() {
+    const pc = ctx.getPc?.() || ctx.pc, f = ctx.getF?.() || ctx.f;
+    return `${pc ? `${ctx.fight ? `${pc.grit ?? 0} Grit left · a Scan costs ${ctx.cost}` : 'Out of a fight: Scanning is free'} · Intuition ${esc(ctx.pool)} · ` : ''}Range ${f.rangeIn >= 999 ? 'the whole map' : `${f.rangeIn}″`}`;
+  }
+  // the left column: the monsters to Scan, then the Forstall's own controls (Sweep, Burst, memory slots, EMP state)
+  function drawSide() {
+    const sub = box.querySelector('.fsm-sub'); if (sub) sub.textContent = subLine();
+    const side = box.querySelector('.fsm-side'); if (!side) return;
+    const list = ctx.targets();
+    side.innerHTML = `${ctx.pc ? `<div class="fsm-h">MONSTERS ON THE BOARD</div>
+      <div class="fsm-tgts">${list.length ? list.map((x) => `<button type="button" class="fsm-tgt${x.name === st.sel ? ' on' : ''}${x.why ? ' off' : ''}" data-fsm-sel="${esc(x.name)}">
+          <b>${esc(x.name)}</b><small>${x.decoded ? '<span class="badge green">DECODED</span> ' : ''}${esc(x.why || `${x.d}″ away · in Range`)}</small></button>`).join('')
+        : '<p class="muted">No monsters on the board to Scan.</p>'}</div>` : ''}
+      <div class="fsm-h">THE FORSTALL</div><div class="fsm-ctl">${ctx.controls ? ctx.controls() : ''}</div>`;
+    if (ctx.wireControls) ctx.wireControls(side.querySelector('.fsm-ctl'));
   }
 
   function tally(r) {
@@ -102,7 +120,6 @@ export function openForstallMode(ctx) {
     try {
       const r = await api('POST', { action: 'combatScan', pc: ctx.pc.id, key: ctx.f.key, monster: st.sel }, '', '/api/scan');
       const res = r.result;
-      if (ctx.fight) ctx.pc.grit = (ctx.pc.grit || 0) - (res.cost || 0);
       await animateRoll(box.querySelector('.fsm-tray'), res.dice);
       if (res.newDigits?.length) play('fsReadout');
       st.lastRoll = { dice: res.dice, hits: res.hits, newDigits: res.newDigits, pool: res.pool, halved: res.halved };
