@@ -1759,3 +1759,20 @@ test('A door or trap right next to the token counts (the first step of the path)
   assert.throws(() => battleAction(s, { action: 'move', id: me.id, col: 6, row: 10, pc: 'p1' }, { warden: false }), /shut/);
   assert.equal(trapOnPath(s, hexLine({ col: 6, row: 7 }, { col: 9, row: 7 }))?.id, trap.id);
 });
+
+test('Bestiary: a partial Scan shows the Scanned tag but not Tolerances; the posse can tick quest steps', async () => {
+  const { bestiaryView } = await import('../lib/bestiary.js');
+  const combat = { bestiary: { 'Badlands Sasquatch': { fought: true } } };
+  const part = bestiaryView(combat, { 'Badlands Sasquatch': { solved: false } }).entries.find((e) => e.name === 'Badlands Sasquatch');
+  assert.equal(part.scanned, true);
+  assert.equal(part.tolerances, undefined);
+  const full = bestiaryView(combat, { 'Badlands Sasquatch': { solved: true } }).entries.find((e) => e.name === 'Badlands Sasquatch');
+  assert.ok(full.tolerances);
+  const { journalAction } = await import('../lib/journal.js');
+  const j = { quests: [], clues: [], news: [] };
+  const q = journalAction(j, { action: 'saveQuest', title: 'Find the payroll', revealed: true, steps: [{ text: 'Ask at the mine' }, { text: 'Secret', hidden: true }] }, { warden: true });
+  journalAction(j, { action: 'step', id: q.id, step: q.steps[0].id, done: true }, { warden: false });
+  assert.equal(j.quests[0].steps[0].done, true);
+  assert.throws(() => journalAction(j, { action: 'step', id: q.id, step: q.steps[1].id, done: true }, { warden: false }), /gone/);
+  assert.throws(() => journalAction(j, { action: 'step', id: q.id, step: q.steps[0].id, hidden: true }, { warden: false }), /PIN/);
+});

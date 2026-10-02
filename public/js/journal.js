@@ -39,7 +39,7 @@ function questHTML(q) {
     ${meta ? `<div class="jq-meta">${meta}</div>` : ''}
     ${q.text ? `<div class="jq-text">${paras(q.text)}</div>` : ''}
     ${q.steps.length ? `<ul class="jq-steps">${q.steps.map((s) => `<li class="${s.done ? 'done' : ''}${s.hidden ? ' secret' : ''}">
-        ${warden ? `<button type="button" class="jq-tick" data-tick="${esc(s.id)}" aria-label="${s.done ? 'Not done' : 'Done'}">${s.done ? '✓' : ''}</button>` : `<span class="jq-tick">${s.done ? '✓' : ''}</span>`}
+        <button type="button" class="jq-tick" data-tick="${esc(s.id)}" aria-label="${s.done ? 'Not done' : 'Done'}" title="${s.done ? 'Mark it not done' : 'Mark it done'}">${s.done ? '✓' : ''}</button>
         <span>${esc(s.text)}</span>${warden ? `<button type="button" class="linkish" data-stephide="${esc(s.id)}">${s.hidden ? 'show the posse' : 'hide'}</button>` : ''}</li>`).join('')}</ul>` : ''}
     ${q.reward ? `<div class="jq-reward">${gl('trophy')} Reward: ${esc(q.reward)}</div>` : ''}
     ${links.length ? `<div class="jq-links">Clues: ${links.map((c) => `<button type="button" class="linkish" data-openclue="${esc(c.id)}">${esc(c.title || c.text.slice(0, 40))}</button>`).join(' · ')}</div>` : ''}
