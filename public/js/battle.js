@@ -332,7 +332,7 @@ function renderPanel() {
       ${sel.mechHp ? `<div class="d-hp mech"><span class="bar"><i style="width:${Math.max(0, Math.min(100, sel.mechHp.health / Math.max(1, sel.mechHp.maxHealth) * 100))}%"></i></span><b>Mech ${sel.mechHp.health}/${sel.mechHp.maxHealth}${sel.mechHp.state ? ` · ${esc(sel.mechHp.state)}` : ''}</b></div>` : ''}
       ${!warden && sel.kind === 'enemy' && sel.readDiff && !sel.hpShown && myId() ? (sel.readTries.includes(myId())
         ? '<p class="muted small-text">You’ve tried to read its Health. Someone else can try.</p>'
-        : `<button type="button" class="btn small secondary" data-readhp="${esc(sel.ref)}">${gl('bulb')} Read its Health <small>Intuition · ${esc(sel.readDiff)}</small></button>`) : ''}
+        : `<button type="button" class="btn small secondary" data-readhp="${esc(sel.ref)}">${gl('bulb')} Read its Health <small>${combat?.combat?.active ? '1 Grit · ' : ''}Intuition · ${esc(sel.readDiff)}</small></button>`) : ''}
       ${sel.sweepPreview ? `<div class="d-note fs-prev">${gl('forstall')} ${esc(sel.sweepPreview)}</div>` : ''}
       ${sel.emp != null ? `<button type="button" class="btn small danger" data-emp="${esc(sel.ref)}"${sel.emp < 1 ? ' disabled' : ''}>${gl('flash')} Natural EMP (${sel.emp}/2 left today)</button>` : ''}
       ${warden && sel.kind === 'enemy' && sel.ref ? `<label class="check"><input type="checkbox" data-submerged="${esc(sel.ref)}"${sel.submerged ? ' checked' : ''}> Submerged — Forstalls can’t reach it</label>` : ''}
@@ -658,7 +658,7 @@ function renderFightTurn(bar, fb, c) {
     ...(gear.length ? [['item', 'backpack', 'Use Item', 'item’s Grit']] : []),
     ...(sts.length ? [['relieve', 'bandage', 'Relieve', '1 per die']] : []),
     ['improvise', 'bulb', 'Improvise', '1+'],
-    ...(readable.length ? [['read', 'target', 'Read Health', 'free · Intuition']] : []),
+    ...(readable.length ? [['read', 'target', 'Read Health', '1 Grit · Intuition']] : []),
     ...(isPc && workable(a.id).length ? [['forstall', 'forstall', 'Forstall', `Scan ${scanCost()} · Sweep ${workable(a.id)[0].grit}`]] : []),
     ...(isPc ? [['prepare', 'hourglass', 'Prepare', 'held', a.prepared]] : []),
     ...(isPc ? [['fool', 'heart', 'Fool’s Grit', '+1 for 1 HP', a.foolUsed]] : []),
@@ -696,7 +696,7 @@ function renderFightTurn(bar, fb, c) {
         <input aria-label="Dice to roll" type="number" min="1" max="12" data-tp="rlDice" value="${tp.rlDice}"> dice <button type="button" class="btn small" data-tp-rl>Roll</button></div>`;
       break;
     case 'read':
-      drawer = `<p class="tp-hint">Size an enemy up with Intuition. Make it and everyone sees its Health for the rest of the fight. One try per enemy.</p>
+      drawer = `<p class="tp-hint">1 Grit: size an enemy up with Intuition. Make it and everyone sees its Health for the rest of the fight. One try per enemy.</p>
         <div class="tp-read">${readable.map((e) => `<button type="button" class="btn small secondary" data-tp-read="${esc(e.id)}">${gl('target')} ${esc(e.name)} <small>${esc(e.readDiff || 'Medium')}</small></button>`).join('')}</div>`;
       break;
     case 'improvise':

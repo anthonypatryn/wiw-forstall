@@ -1776,3 +1776,18 @@ test('Bestiary: a partial Scan shows the Scanned tag but not Tolerances; the pos
   assert.throws(() => journalAction(j, { action: 'step', id: q.id, step: q.steps[1].id, done: true }, { warden: false }), /gone/);
   assert.throws(() => journalAction(j, { action: 'step', id: q.id, step: q.steps[0].id, hidden: true }, { warden: false }), /PIN/);
 });
+
+test('Aces in the turn-order roll count; Read Health costs 1 Grit in a fight', () => {
+  const state = freshCombat();
+  const a = publicAction(state, { action: 'addPc', trade: 'Hunter', name: 'Sally' }, { warden: true });
+  publicAction(state, { action: 'addEnemy', name: 'Bandit', health: 9 }, { warden: true });
+  const pc = state.posse[0];
+  pc.skills.finesse = '6G';
+  publicAction(state, { action: 'start' }, { warden: true });
+  const order = state.log.find((l) => l.label === 'Finesse — turn order' && l.who === 'Sally');
+  assert.equal(pc.aces || 0, Math.min(6, order.dice.filter((d) => d.face === 'ace').length));
+  while (state.combat.current !== a.id) publicAction(state, { action: 'next' }, { warden: true });
+  const before = pc.grit;
+  publicAction(state, { action: 'pc', id: a.id, op: 'readHealth', enemy: state.enemies[0].id }, { warden: false });
+  assert.equal(pc.grit, before - 1);
+});
