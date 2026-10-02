@@ -2,9 +2,10 @@
 // The Warden sees every entry, marks which ones the posse knows, and can show or hide an entry by hand.
 import { esc, api, onChange, toast, dollars } from './common.js';
 import { gl } from './glyphs.js';
+const SIZES = ['Tiny', 'Small', 'Medium', 'Large', 'Huge', 'Titan'];
 
 export function mountBestiary(el, isWarden) {
-  const st = { q: '', only: 'known' };
+  const st = { size: '', q: '', only: 'known' };
   let data = null;
   const refresh = async () => { try { data = await api('GET', null, '?view=bestiary', '/api/combat'); draw(); } catch { /* try again on the next change */ } };
   const range = ([lo, hi] = [0, 0]) => `${dollars(lo)}–${dollars(hi)}`;
@@ -29,12 +30,16 @@ export function mountBestiary(el, isWarden) {
     const q = st.q.trim().toLowerCase();
     let list = data.entries.filter((e) => !q || e.name.toLowerCase().includes(q));
     if (warden && st.only === 'known') list = list.filter((e) => e.known);
+    // size chips: only the sizes in the book right now, smallest first
+    const sizes = SIZES.filter((z) => data.entries.some((e) => e.size === z));
+    if (st.size) list = list.filter((e) => e.size === st.size);
     list.sort((a, b) => a.name.localeCompare(b.name));
     const head = `<div class="bs-tools"><input type="search" class="search" placeholder="Find a monster…" value="${esc(st.q)}" data-bs-q aria-label="Find a monster">
+      ${sizes.length > 1 ? `<div class="chip-row" role="group" aria-label="Size"><button type="button" class="chip-btn${st.size ? '' : ' on'}" data-bs-size="">Any size</button>${sizes.map((z) => `<button type="button" class="chip-btn${st.size === z ? ' on' : ''}" data-bs-size="${z}">${z}</button>`).join('')}</div>` : ''}
       ${warden ? `<div class="chip-row"><button type="button" class="chip-btn${st.only === 'known' ? ' on' : ''}" data-bs-only="known">What the posse knows</button><button type="button" class="chip-btn${st.only === 'all' ? ' on' : ''}" data-bs-only="all">Every monster</button></div>` : ''}</div>
       ${!warden && data.unknown ? `<p class="muted small-text">${data.unknown} more out there the posse hasn’t met yet.</p>` : ''}`;
     const body = list.length ? `<div class="bs-grid">${list.map((e) => card(e, warden)).join('')}</div>`
-      : `<p class="empty-note">${warden && st.only === 'known' ? 'The posse hasn’t met any monsters yet. Entries fill in when a fight starts, when they Scan one and when they take a trophy.' : 'Nothing yet. Fight, Scan or trophy a monster and it goes in the book.'}</p>`;
+      : `<p class="empty-note">${st.size || q ? 'No monsters match that.' : warden && st.only === 'known' ? 'The posse hasn’t met any monsters yet. Entries fill in when a fight starts, when they Scan one and when they take a trophy.' : 'Nothing yet. Fight, Scan or trophy a monster and it goes in the book.'}</p>`;
     const focus = document.activeElement?.matches?.('[data-bs-q]');
     el.innerHTML = head + body;
     el.querySelectorAll('[data-bs-img]').forEach((img) => img.addEventListener('error', () => { img.hidden = true; img.nextElementSibling.hidden = false; }, { once: true }));
@@ -43,6 +48,7 @@ export function mountBestiary(el, isWarden) {
   el.addEventListener('input', (e) => { if (e.target.matches('[data-bs-q]')) { st.q = e.target.value; draw(); } });
   el.addEventListener('click', async (e) => {
     const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.bsSize !== undefined) { st.size = b.dataset.bsSize; draw(); return; }
     if (b.dataset.bsOnly) { st.only = b.dataset.bsOnly; draw(); return; }
     if (b.dataset.bsName) {
       try { await api('POST', { action: 'bestiary', name: b.dataset.bsName, mode: b.dataset.bsMode }, '', '/api/combat'); toast(b.dataset.bsMode === 'show' ? 'The posse can read the whole entry.' : b.dataset.bsMode === 'hide' ? 'Hidden from the posse.' : 'Back to what they’ve learned.'); refresh(); }
