@@ -491,3 +491,14 @@ body.tv-mode .viewport { height: 100vh; border: 0; cursor: default; }
 .e-read { display: grid; gap: 4px; margin: 6px 0; font-size: var(--fs-sm); }
 .e-read select { margin-left: 6px; max-width: 100%; }
 [data-readhp] small { margin-left: 6px; opacity: .8; }
+
+/* riding a horse / in a mech: a badge on the token, the mech's own Health bar, and the mount picker on the card */
+.btoken .mount-dot { position: absolute; left: -22%; top: 30%; line-height: 1; z-index: 1; } /* beside the token, clear of the name label */
+.btoken .mount-dot .gl { width: 1em; height: 1em; padding: 2px; border-radius: 50%; background: var(--surface); color: var(--ink); border: 1px solid var(--ink); }
+.btoken .mount-dot.mech .gl { background: var(--ink); color: var(--gold); border-color: var(--gold); }
+.btoken .lab .hpbar.mech > i { background: var(--brass, #c9a45c); }
+.btoken .lab em.mech { color: var(--gold); }
+.d-mount { display: flex; align-items: center; gap: 6px; margin: 6px 0; font-size: var(--fs-sm); }
+.d-mount .gl { width: 18px; height: 18px; flex: none; }
+.d-mount select { flex: 1; min-width: 0; }
+.d-hp.mech .bar i { background: var(--brass, #c9a45c); }

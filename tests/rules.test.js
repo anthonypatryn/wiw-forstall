@@ -1600,3 +1600,22 @@ test('Read an enemy’s Health: free Intuition roll, once each; a success shows 
   publicAction(state, { action: 'enemy', id: e.id, op: 'hpShown', value: true }, { warden: true });
   assert.equal(playerCombatView(state).enemies[0].maxHealth, 9);
 });
+
+test('Battle Map tokens show riding a horse or driving a mech', async () => {
+  const { freshBattle, battleAction, battleView } = await import('../lib/battle.js');
+  const combat = freshCombat();
+  const a = publicAction(combat, { action: 'addPc', trade: 'Hunter', name: 'Tess' }, { warden: true });
+  const pc = combat.posse.find((p) => p.id === a.id);
+  Object.assign(pc.horse, { name: 'Dusty', breed: 'Mustang' });
+  Object.assign(pc.mech, { class: 'Iron Mule', maxHealth: '20', health: '14' });
+  const s = freshBattle();
+  battleAction(s, { action: 'addToken', kind: 'pc', ref: a.id, name: 'Tess' }, { warden: true });
+  let t = battleView(s, { warden: false, combat }).tokens[0];
+  assert.deepEqual([t.mounted, t.hasHorse, t.hasMech, t.size], ['', true, true, 'Human']);
+  publicAction(combat, { action: 'pc', id: a.id, op: 'mount', value: 'mech' }, { warden: false });
+  t = battleView(s, { warden: false, combat }).tokens[0];
+  assert.deepEqual([t.mounted, t.size, t.mechHp.health, t.mechHp.maxHealth], ['mech', 'Large', 14, 20]);
+  publicAction(combat, { action: 'pc', id: a.id, op: 'mount', value: 'horse' }, { warden: false });
+  t = battleView(s, { warden: false, combat }).tokens[0];
+  assert.deepEqual([t.mounted, t.horseName, t.mechHp], ['horse', 'Dusty', undefined]);
+});

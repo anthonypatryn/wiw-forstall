@@ -232,15 +232,18 @@ function renderTokens() {
     const art = t.photo || (t.img ? `/img/tokens/${t.img}.webp` : '');
     const bg = art ? `background:url('${esc(art)}') center / cover, ${SIL[t.beast ? 'beast' : 'person']} center 70% / 80% no-repeat, ${color(t)}` : `background:${SIL[t.beast ? 'beast' : 'person']} center 70% / 82% no-repeat, ${color(t)}`;
     const nStatus = Object.keys(t.statuses || {}).length;
+    const big = t.mounted === 'mech' ? 1.45 : 1, ts = size * big; // in the mech: a Large token
+    const mh = t.mechHp, mPct = mh ? Math.max(0, Math.min(100, (mh.health / Math.max(1, mh.maxHealth)) * 100)) : 0;
     return `<div class="btoken ${t.kind}${tg}${art ? ' art' : ' stand-in'}${canMove(t) ? ' movable' : ''}${t.id === selected ? ' sel' : ''}${t.ref && t.ref === data.current ? ' turn' : ''}${t.hidden ? ' hidden-tok' : ''}${t.down ? ' down' : ''}${t.frenzied ? ' frenzied' : ''}"
-      data-id="${t.id}" data-size="${esc(t.size || '')}" style="left:${c.x}px;top:${c.y}px;width:${size}px;height:${size}px;${bg};font-size:${font}px;border-width:${data.grid.ppi * 0.05}px"
-      title="${esc(t.name)}">${art ? '' : esc(initials(t.name))}
+      data-id="${t.id}" data-size="${esc(t.size || '')}" style="left:${c.x}px;top:${c.y}px;width:${ts}px;height:${ts}px;${bg};font-size:${font}px;border-width:${data.grid.ppi * 0.05}px"
+      title="${esc(t.name)}${t.mounted === 'horse' ? ` · riding ${esc(t.horseName)}` : t.mounted === 'mech' ? ` · in the ${esc(t.mechName)}` : ''}">${art ? '' : esc(initials(t.name))}
       ${t.holding ? `<span class="hold-dot" style="font-size:${labFont * 1.4}px" title="Prepared: ${esc(t.holding)}">${gl('watch')}</span>` : ''}
       ${t.dead ? `<span class="skull" style="font-size:${size * 0.62}px" aria-label="Down">${gl('skull')}</span>` : t.bleeding ? `<span class="skull bleed" style="font-size:${size * 0.5}px" aria-label="Bleeding Out">${gl('drop')}</span>` : ''}
       ${(data.forstalls || []).some((f) => f.owner && f.owner === t.ref) ? `<span class="fs-dot${(data.forstalls || []).find((f) => f.owner === t.ref)?.sweep ? ' on' : ''}" style="font-size:${labFont * 1.3}px" title="Carries a Forstall">${gl('forstall')}</span>` : ''}
       ${t.swept ? `<span class="sw-dot" style="font-size:${labFont * 1.3}px" title="${esc(t.sweepPreview || 'In a Sweeping Forstall’s Range')}">${gl('forstall')}</span>` : ''}
+      ${t.mounted ? `<span class="mount-dot ${t.mounted}" style="font-size:${labFont * 2.2}px" title="${t.mounted === 'horse' ? `Riding ${esc(t.horseName)}` : `In the ${esc(t.mechName)}`}">${gl(t.mounted)}</span>` : ''}
       ${nStatus ? `<span class="st-dot" style="font-size:${labFont}px" title="${esc(Object.entries(t.statuses).map(([k, v]) => `${k} ${v}`).join(', '))}">${nStatus}</span>` : ''}
-      <span class="lab" style="font-size:${labFont}px">${esc(t.name)}${hasHp ? `<i class="hpbar"><i style="width:${pct}%"></i></i><em>${t.health}/${t.maxHealth}</em>` : ''}</span>
+      <span class="lab" style="font-size:${labFont}px">${esc(t.name)}${hasHp ? `<i class="hpbar"><i style="width:${pct}%"></i></i><em>${t.health}/${t.maxHealth}</em>` : ''}${mh ? `<i class="hpbar mech" title="${esc(t.mechName)}${mh.state ? ` · ${esc(mh.state)}` : ''}"><i style="width:${mPct}%"></i></i><em class="mech">Mech ${mh.health}/${mh.maxHealth}</em>` : ''}</span>
       ${d !== null ? `<span class="dist ${band(d)}" style="font-size:${labFont}px">${d}″ · ${BAND_LABEL[band(d)]}</span>` : ''}</div>`;
   }).join('') + fsMarkers();
   layer.querySelectorAll('.btoken').forEach(wireToken);
@@ -282,6 +285,8 @@ function renderPanel() {
       ${!fcHTML && st.length ? `<div class="d-st">${st.map(([k, v]) => `<span class="st">${esc(k)} <b>${v}</b></span>`).join('')}</div>` : ''}
       ${fcHTML ? "" : `<div class="d-row">${sel.grit != null ? `<span><b>GRIT</b> ${sel.grit}</span>` : ''}${sel.defense ? `<span><b>DEFENSE</b> ${esc(sel.defense)}</span>` : ''}${sel.speed ? `<span><b>SPEED</b> ${esc(sel.speed)}</span>` : ''}${sel.finesse ? `<span><b>FINESSE</b> ${esc(sel.finesse)}</span>` : ''}${sel.aces ? `<span><b>ACES</b> ${sel.aces}/6</span>` : ''}${sel.size ? `<span><b>SIZE</b> ${esc(sel.size)}</span>` : ''}</div>`}
       ${sel.frenzyText?.length ? `<div class="d-note">${sel.frenzyText.map(esc).join('<br>')}</div>` : ''}
+      ${sel.kind === 'pc' && !actor && (sel.hasHorse || sel.hasMech) && (warden || sel.ref === myId()) ? `<label class="d-mount">${gl(sel.mounted || 'boot')} <select data-mount="${esc(sel.ref)}" aria-label="On foot or mounted"><option value="">On foot</option>${sel.hasHorse ? `<option value="horse"${sel.mounted === 'horse' ? ' selected' : ''}>Riding ${esc(sel.horseName)} (Fast)</option>` : ''}${sel.hasMech ? `<option value="mech"${sel.mounted === 'mech' ? ' selected' : ''}>In the ${esc(sel.mechName)}</option>` : ''}</select></label>` : sel.kind === 'pc' && sel.mounted ? `<p class="d-mount">${gl(sel.mounted)} ${sel.mounted === 'horse' ? `Riding ${esc(sel.horseName)}` : `In the ${esc(sel.mechName)}`}</p>` : ''}
+      ${sel.mechHp ? `<div class="d-hp mech"><span class="bar"><i style="width:${Math.max(0, Math.min(100, sel.mechHp.health / Math.max(1, sel.mechHp.maxHealth) * 100))}%"></i></span><b>Mech ${sel.mechHp.health}/${sel.mechHp.maxHealth}${sel.mechHp.state ? ` · ${esc(sel.mechHp.state)}` : ''}</b></div>` : ''}
       ${!warden && sel.kind === 'enemy' && sel.readDiff && !sel.hpShown && myId() ? (sel.readTries.includes(myId())
         ? '<p class="muted small-text">You’ve tried to read its Health. Someone else can try.</p>'
         : `<button type="button" class="btn small secondary" data-readhp="${esc(sel.ref)}">${gl('bulb')} Read its Health <small>Intuition · ${esc(sel.readDiff)}</small></button>`) : ''}
@@ -300,6 +305,12 @@ function renderPanel() {
       ${others.length ? others.map(({ t, d }) => `<div class="tok-row" data-pick="${t.id}"><span class="chip" style="background:${color(t)}">${esc(initials(t.name))}</span>
         <span class="n">${esc(t.name)}</span><span class="d ${band(d)}">${d}″ · ${BAND_LABEL[band(d)]}</span></div>`).join('') : '<p class="muted">Nobody else on the board.</p>'}</details></div>`;
     if (actor) wireTurnBar(box, actor.cur, actor.tok); else wireFs(box);
+    box.querySelector('[data-mount]')?.addEventListener('change', async (e) => {
+      try {
+        await api('POST', { action: 'pc', id: e.target.dataset.mount, op: 'mount', value: e.target.value }, '', '/api/combat');
+        toast(e.target.value ? 'Mounted up.' : 'On foot.'); poller?.now?.();
+      } catch (err) { toast(err.message, true); renderPanel(); }
+    });
     box.querySelector('[data-readhp]')?.addEventListener('click', async (e) => {
       e.currentTarget.disabled = true;
       try {
