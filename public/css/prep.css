@@ -25,3 +25,10 @@
 .prep-kind { display: flex; gap: 4px; }
 .prep-save { position: sticky; bottom: 0; margin-top: var(--sp-5); padding: 10px 0; background: linear-gradient(transparent, var(--paper) 30%); }
 @media (max-width: 900px) { .prep-grid { grid-template-columns: minmax(0, 1fr); } .prep-list { position: static; } .prep-row { flex-wrap: wrap; } .prep-row > select, .prep-row > input:not([type=number]) { flex-basis: 100%; } .prep-edit select { max-width: 100%; } }
+
+/* quick "+ New" forms under Set the stage */
+.prep-new-btns { margin: -4px 0 var(--sp-3); }
+.prep-new { display: grid; gap: 8px; margin: 0 0 var(--sp-3); padding: 10px 12px; border: 1.5px dashed var(--secret); border-radius: var(--r-sm); background: var(--wash); }
+.prep-new-h { font: var(--fs-sm) var(--display); letter-spacing: var(--track-label); color: var(--secret); }
+.prep-new-h small { font: var(--fs-xs) var(--body); letter-spacing: 0; color: var(--ink-soft); margin-left: 6px; }
+.prep-new input, .prep-new textarea, .prep-new select { width: 100%; box-sizing: border-box; }

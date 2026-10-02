@@ -9,6 +9,7 @@ const EP = '/api/scenes';
 const SKILLS = ['Charm', 'Finesse', 'Intuition', 'Nerve'];
 const DIFFS = ['Very Easy', 'Easy', 'Medium', 'Difficult', 'Very Difficult'];
 const MAPS = [['', 'No battle map'], ['imaginary-town', 'Imaginary Town'], ['great-plains', 'Great Plains'], ['red-rock-canyon', 'Red Rock Canyon'], ['mountain-pass', 'Mountain Pass'], ['monster-burrow', 'Monster Burrow']];
+let adding = '', draft = {}; // the quick "+ New" form open under Set the stage (npc | poster | quest | clue)
 let S = null, ref = { npcs: [], posters: [], quests: [], clues: [], towns: [], catalog: [], npcCatalog: [] }, ed = null, dirty = false;
 
 const blank = () => ({ title: '', town: '', readAloud: '', notes: '', npcs: [], wanted: [], journal: [], battleMap: '', enemies: [], handouts: [], locks: [], checks: [] });
@@ -20,6 +21,37 @@ function renderList() {
   $('#scene-list').innerHTML = list.length ? list.map((s) => `<button type="button" class="prep-item${ed?.id === s.id ? ' on' : ''}${s.done ? ' done' : ''}" data-open="${esc(s.id)}">
       <b>${esc(s.title)}</b><small>${s.id === S.current ? '<span class="pill hot">tonight</span> ' : ''}${s.done ? '<span class="pill ok">played</span> ' : ''}${esc(count(s) || 'nothing added yet')}</small></button>`).join('')
     : '<p class="empty-note">No scenes yet. Start one with “New scene”.</p>';
+}
+
+// Quick "+ New" forms: make an NPC, poster, quest or clue without leaving Prep. It's saved straight away, hidden from the
+// posse, and added to this scene, so the scene's beat reveals it on game night. Full editing stays on its own page.
+const NEW = {
+  npc: { label: 'NPC', ep: '/api/npcs', fields: [['name', 'Name', 60], ['personality', 'Personality (e.g. jumpy, owes money)', 140], ['physical', 'Looks', 180], ['where', 'Where they’re found', 80]] },
+  poster: { label: 'poster', ep: '/api/wanted', fields: [['name', 'Who’s wanted', 60], ['crime', 'For what', 300], ['reward', 'Reward ($)', 6]] },
+  quest: { label: 'quest', ep: '/api/journal', fields: [['title', 'Quest name', 90], ['text', 'What it’s about', 3000], ['reward', 'Reward', 120]] },
+  clue: { label: 'clue', ep: '/api/journal', fields: [['title', 'Clue name', 90], ['text', 'What the posse learns', 2000]] },
+};
+const newBtns = (...kinds) => `<div class="btn-row prep-new-btns">${kinds.map((k) => `<button type="button" class="btn small secondary" data-new-kind="${k}"${adding === k ? ' disabled' : ''}>+ New ${NEW[k].label}</button>`).join('')}</div>${kinds.includes(adding) ? newForm() : ''}`;
+function newForm() {
+  const k = NEW[adding];
+  const town = adding === 'poster' ? `<select aria-label="Town" data-nf="town">${ref.towns.map((t) => opt(t.id, t.name, draft.town ?? ed.town)).join('')}</select>` : '';
+  return `<div class="prep-new" role="group" aria-label="New ${k.label}"><b class="prep-new-h">NEW ${k.label.toUpperCase()} <small>hidden from the posse until this scene reveals it</small></b>
+    ${k.fields.map(([f, ph, max]) => f === 'text' ? `<textarea data-nf="${f}" rows="2" maxlength="${max}" placeholder="${esc(ph)}">${esc(draft[f] || '')}</textarea>` : `<input data-nf="${f}" maxlength="${max}"${f === 'reward' && adding === 'poster' ? ' type="number" min="0" step="1"' : ''} value="${esc(draft[f] || '')}" placeholder="${esc(ph)}" aria-label="${esc(ph)}">`).join('')}${town}
+    <div class="btn-row"><button type="button" class="btn small" data-nf-make>Make it and add it</button><button type="button" class="btn small secondary" data-nf-cancel>Cancel</button></div></div>`;
+}
+async function makeNew() {
+  const kind = adding, d = { ...draft };
+  const body = kind === 'npc' ? { action: 'add', ...d, known: false }
+    : kind === 'poster' ? { action: 'add', ...d, town: d.town || ed.town || ref.towns[0]?.id, reward: Number(String(d.reward || '').replace(/[^0-9.]/g, '')) || 0, hidden: true }
+    : kind === 'quest' ? { action: 'saveQuest', ...d, revealed: false }
+    : { action: 'saveClue', ...d, revealed: false };
+  const r = await api('POST', body, '', NEW[kind].ep), x = r.result;
+  if (kind === 'npc') { ref.npcs.unshift(x); ed.npcs.push(x.id); }
+  if (kind === 'poster') { ref.posters.unshift(x); ed.wanted.push(x.id); }
+  if (kind === 'quest') { ref.quests.unshift(x); ed.journal.push(`quest:${x.id}`); }
+  if (kind === 'clue') { ref.clues.unshift(x); ed.journal.push(`clue:${x.id}`); }
+  adding = ''; draft = {}; touch(); renderEditor();
+  toast(`Made, and added to this scene. Save the scene to keep it here.`);
 }
 
 const chipSet = (key, items, label) => `<div class="field-step"><span>${label}</span>${items.length ? items.map((x) => `<button type="button" class="chip-btn${ed[key].includes(x.id) ? ' on' : ''}" data-toggle="${key}" data-id="${esc(x.id)}">${esc(x.name)}${x.sub ? `<small>${esc(x.sub)}</small>` : ''}</button>`).join('') : '<span class="muted small-text">Nothing to add yet.</span>'}</div>`;
@@ -38,9 +70,9 @@ function renderEditor() {
     <div class="field-step"><span>YOUR NOTES <small>only you see these</small></span><textarea data-f="notes" rows="3" maxlength="4000" placeholder="What the NPCs want, what happens if the posse runs…">${esc(ed.notes)}</textarea></div>
 
     <h3 class="prep-h">${gl('hat')} Set the stage <small>each gets its own button on Run the Game, plus one for all at once</small></h3>
-    ${chipSet('npcs', ref.npcs.map((n) => ({ id: n.id, name: n.name, sub: n.known ? 'already met' : 'not met yet' })), 'NPCS THE POSSE MEETS')}
-    ${chipSet('wanted', ref.posters.map((p) => ({ id: p.id, name: p.name, sub: p.hidden ? 'hidden poster' : 'already up' })), 'WANTED POSTERS TO PUT UP')}
-    ${chipSet('journal', jn, 'QUESTS &amp; CLUES TO REVEAL')}
+    ${chipSet('npcs', ref.npcs.map((n) => ({ id: n.id, name: n.name, sub: n.known ? 'already met' : 'not met yet' })), 'NPCS THE POSSE MEETS')}${newBtns('npc')}
+    ${chipSet('wanted', ref.posters.map((p) => ({ id: p.id, name: p.name, sub: p.hidden ? 'hidden poster' : 'already up' })), 'WANTED POSTERS TO PUT UP')}${newBtns('poster')}
+    ${chipSet('journal', jn, 'QUESTS &amp; CLUES TO REVEAL')}${newBtns('quest', 'clue')}
 
     <h3 class="prep-h">${gl('revolver')} The fight</h3>
     <div class="field-step"><span>BATTLE MAP</span>${MAPS.map(([v, l]) => `<button type="button" class="chip-btn${ed.battleMap === v ? ' on' : ''}" data-map="${v}">${l}</button>`).join('')}</div>
@@ -90,6 +122,7 @@ const touch = () => { dirty = true; const d = $('#dirty'); if (d) d.textContent 
 document.addEventListener('input', (e) => {
   const d = e.target.dataset;
   if (!ed) return;
+  if (d.nf) { draft[d.nf] = e.target.value; return; }
   if (d.f) { ed[d.f] = e.target.value; touch(); }
   if (d.row) { ed[d.row][Number(d.i)][d.k] = d.k === 'count' ? Number(e.target.value) : e.target.value; touch(); }
   if (d.loot) { ed.locks[Number(d.loot)].loot[d.k] = e.target.value; touch(); }
@@ -106,9 +139,12 @@ document.addEventListener('click', async (e) => {
   const b = e.target.closest('button'); if (!b) return;
   const d = b.dataset;
   try {
-    if (d.new !== undefined) { if (dirty && !await ask('Drop your unsaved changes?', { ok: 'Drop them' })) return; ed = blank(); dirty = false; renderList(); renderEditor(); return; }
-    if (d.open) { if (dirty && !await ask('Drop your unsaved changes?', { ok: 'Drop them' })) return; ed = JSON.parse(JSON.stringify(S.scenes.find((s) => s.id === d.open))); ed.journal = ed.journal.map((j) => `${j.kind}:${j.id}`); dirty = false; renderList(); renderEditor(); return; }
+    if (d.new !== undefined) { if (dirty && !await ask('Drop your unsaved changes?', { ok: 'Drop them' })) return; adding = ''; draft = {}; ed = blank(); dirty = false; renderList(); renderEditor(); return; }
+    if (d.open) { if (dirty && !await ask('Drop your unsaved changes?', { ok: 'Drop them' })) return; adding = ''; draft = {}; ed = JSON.parse(JSON.stringify(S.scenes.find((s) => s.id === d.open))); ed.journal = ed.journal.map((j) => `${j.kind}:${j.id}`); dirty = false; renderList(); renderEditor(); return; }
     if (!ed) return;
+    if (d.newKind) { adding = d.newKind; draft = {}; renderEditor(); document.querySelector('.prep-new [data-nf]')?.focus(); return; }
+    if (d.nfCancel !== undefined) { adding = ''; draft = {}; renderEditor(); return; }
+    if (d.nfMake !== undefined) { b.disabled = true; try { await makeNew(); } finally { b.disabled = false; } return; }
     if (d.toggle) { const k = d.toggle; ed[k] = ed[k].includes(d.id) ? ed[k].filter((x) => x !== d.id) : [...ed[k], d.id]; touch(); renderEditor(); return; }
     if (d.map !== undefined) { ed.battleMap = d.map; touch(); renderEditor(); return; }
     if (d.kind !== undefined) { ed.handouts[Number(d.kind)].kind = d.v; touch(); renderEditor(); return; }
