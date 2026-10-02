@@ -73,7 +73,8 @@ async function loadPosse() {
   try {
     const d = await api('GET', null, '?view=player', '/api/combat');
     posse = (d.posse || []).filter((p) => !p.dead);
-    const sel = $('#scanner'), cur = sel.value || store.get('wiw.scanner', '') || store.get('wiw.me', '');
+    // ?pc=… (the sheet's Open the Scanner) picks that character; then the last pick; then "This is me"
+    const sel = $('#scanner'), cur = sel.value || new URLSearchParams(location.search).get('pc') || store.get('wiw.scanner', '') || store.get('wiw.me', '');
     sel.innerHTML = `<option value="">— pick a character (fills in their Intuition) —</option>${posse.map((p) => `<option value="${p.id}">${esc(p.name)} · Intuition ${esc(String(p.skills?.intuition || '—').toUpperCase())}${(p.talents || []).includes('Intuition') ? ' · Talent' : ''}</option>`).join('')}`;
     sel.value = posse.some((p) => p.id === cur) ? cur : '';
     applyScanner();

@@ -305,6 +305,7 @@ function buildSheet(p) {
           <div class="w-grid upg-ins">${[0, 1, 2, 3].map((u) => inp(`forstall.upgrades.${u}`, `${u + 1}.`)).join('')}</div>
           <div class="upg" data-upg-box="forstall" data-i="0"></div>
           <p class="muted kz-help">Memory slots: program a frequency the posse has decoded on the Forstall Scanner. Monsters in these slots take +1 from your Sweeps and can be Burst.</p>
+          ${p.forstall?.model ? `<p class="fs-open"><a class="btn small secondary" href="/?pc=${encodeURIComponent(p.id)}">${gl('forstall')} Open the Scanner</a> <span class="muted small-text">for a Scan out of a fight (in a fight, Scan from the Battle Map)</span></p>` : ''}
           <div class="w-grid">${[0, 1, 2, 3].map((u) => `<label class="f"><span>Memory slot ${u + 1}</span><select data-path="forstall.kz.${u}" data-kz></select></label>`).join('')}</div>`, 'forstall')}
       ${box('HORSE', 'you’re only as good as your loyal steed', `
           <div class="w-top">${pick('horse', 0, [['Horse breeds', horses]], '— pick a breed —')}<button type="button" class="rm-btn" data-rm-thing="horse" data-i="0" title="Remove the horse" aria-label="Remove the horse">×</button></div>

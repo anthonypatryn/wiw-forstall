@@ -98,12 +98,13 @@ Small helpers: `.btn-row` (a row of buttons), `.fine` (12px note), `.small-text`
 
 ## Navigation
 - One site nav (`mountNav` in `common.js`), grouped by how often a page is used.
-  - **Player:** Posse · Battle Map · Forstall Scanner · World ▾ (Map, NPCs) · Store · ? (How to Play)
-  - **Warden:** ★ Run the Game · Posse · Fight ▾ (Battle Map) · Forstall Scanner · World ▾ · Store · ?
+  - **Player:** Posse · Battle Map · World ▾ (Map, Journal, Wanted, NPCs, Boot Hill) · Gear ▾ (Store, Backpack, Posse Stash, Forstall Scanner)
+  - **Warden:** ★ Run the Game · Battle Map · Posse · Prep ▾ (Scene Prep, Session Notes, Forstall Station) · World ▾ · Gear ▾ (no Forstall: it's Forstall Station under Prep)
+  - Right side, small icons: sound, settings, ? (rules), bug report, then Undo / Needs you / Warden ▾ (TV screen, Backup & homebrew, Bug reports, Report a bug, Switch to player view) for the Warden.
 - Dropdowns open on **tap** (never hover-only); the group label is highlighted when you're on one of its pages.
 - Phones show the most-used links plus **Menu** (a full-screen grouped list).
-- Warden mode lives in the nav: red underline + star, a **Needs you (n)** badge and a **Warden ▾** menu (switch to player view, Run the Game, Battle Map, backup).
-- **Adding a page:** decide who uses it and how often. Frequent → top level. Reference/lore → World. Fighting → Fight (Warden) or the Battle Map. Warden-only tools → Warden ▾ or Run the Game.
+- Warden mode lives in the nav: red underline + star, a **Needs you (n)** badge and a **Warden ▾** menu (no repeats of the bar).
+- **Adding a page:** decide who uses it and how often. Every game night → the bar (keep it to four). Places & story → World. Things the posse carries or buys → Gear. The Warden's before-the-game pages → Prep. Fighting → the Battle Map. Warden tools → Warden ▾ or Run the Game.
 
 ## Building something new — checklist
 1. Put it in a `.card.corner` with a `.head-row` (title + at most one action).

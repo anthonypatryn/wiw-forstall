@@ -302,22 +302,24 @@ export function timeAgo(t) {
 // ---------- site nav: grouped by how often a page is used (see STYLEGUIDE.md → Navigation) ----------
 // An item is [href, label] or { label, items: [[href, label], …] } (a tap-to-open dropdown).
 // `phone: true` items stay on the bar on phones; everything else lives in the Menu there.
-const WORLD = { label: 'World', items: [['/map', 'Map'], ['/names', 'NPCs'], ['/wanted', 'Wanted'], ['/journal', 'Journal'], ['/backpack', 'Backpack'], ['/stash', 'Posse Stash'], ['/boothill', 'Boot Hill']] };
+// World = places & story; Gear = what the posse carries and buys (the Forstall Scanner is for Scans out of a fight:
+// in a fight the Battle Map has its own); Prep = the Warden's before-the-game pages.
+const WORLD = { label: 'World', items: [['/map', 'Map'], ['/journal', 'Journal'], ['/wanted', 'Wanted'], ['/names', 'NPCs'], ['/boothill', 'Boot Hill']] };
+const GEAR = { label: 'Gear', items: [['/store', 'Store'], ['/backpack', 'Backpack'], ['/stash', 'Posse Stash'], ['/', 'Forstall Scanner']] };
+const PREP = { label: 'Prep', items: [['/prep', 'Scene Prep'], ['/run#grp-notes', 'Session Notes'], ['/warden', 'Forstall Station']] };
 const NAV_PLAYER = [
   { href: '/posse', label: 'Posse', phone: true },
   { href: '/battle', label: 'Battle Map', phone: true },
-  { href: '/', label: 'Forstall Scanner', phone: true },
   WORLD,
-  { href: '/store', label: 'Store' },
+  GEAR,
 ];
 const NAV_WARDEN = [
   { href: '/run', label: 'Run the Game', icon: 'star', phone: true },
-  { href: '/prep', label: 'Prep' },
-  { href: '/posse', label: 'Posse', phone: true },
-  { href: '/battle', label: 'Battle Map' },
-  { href: '/warden', label: 'Forstall Scanner' },
+  { href: '/battle', label: 'Battle Map', phone: true },
+  { href: '/posse', label: 'Posse' },
+  PREP,
   WORLD,
-  { href: '/store', label: 'Store' },
+  { ...GEAR, items: GEAR.items.filter(([h]) => h !== '/') }, // the Warden's Forstall page is under Prep
 ];
 let navActive = null;
 const pathIs = (href, cur) => href === cur;
@@ -353,7 +355,7 @@ export function mountNav(active) {
         ${on ? `<button type="button" class="nav-undo" aria-expanded="false" title="Undo a recent change" aria-label="Undo a recent change">↶</button>
           <button type="button" class="nav-needs" aria-expanded="false" title="What's waiting on you"><span class="nn">Needs you</span> <b>·</b></button>
           <div class="nav-group nav-warden"><button type="button" class="nav-drop" aria-expanded="false">${gl('star')} Warden <i>▾</i></button>
-            <div class="nav-menu right" hidden><a href="/run">Run the Game</a><a href="/battle">Battle Map</a><a href="/tv" target="_blank" rel="noopener">TV screen (for the table)</a><a href="/run#grp-tools">Backup &amp; homebrew</a><a href="/run#grp-tools">Bug reports</a><button type="button" data-bugreport>Report a bug</button><button type="button" data-player>Switch to player view</button></div></div>`
+            <div class="nav-menu right" hidden><a href="/tv" target="_blank" rel="noopener">TV screen (for the table)</a><a href="/run#grp-tools">Backup &amp; homebrew</a><a href="/run#grp-tools">Bug reports</a><button type="button" data-bugreport>Report a bug</button><button type="button" data-player>Switch to player view</button></div></div>`
           : `<button type="button" class="nav-unlock" title="Warden PIN">${gl('star')} <span>Warden</span></button>`}
         <button type="button" class="nav-menu-btn" aria-expanded="false">Menu</button>
       </div>
