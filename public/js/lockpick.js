@@ -44,13 +44,12 @@ function showHowTo() {
   back.innerHTML = `<div class="modal ask lock-how-modal" role="dialog" aria-modal="true" aria-label="How to pick a lock">
     <div class="ho-kicker">${gl('wrench')} HOW TO PICK A LOCK</div>
     <ol class="lock-how-steps">
-      <li><b>Roll Finesse.</b> Every Hit is one <b>peek</b>: a look at whether the next card is red or black.</li>
+      <li><b>Roll Finesse.</b> Every Hit (up to 3) is a <b>spare</b>: steady hands that save the pick from one wrong call.</li>
       <li><b>A card is turned up.</b> Call the next one <b>Higher</b> or <b>Lower</b>. Get it right and a pin sets.</li>
-      <li><b>A tie breaks the pick</b>, and so does a wrong call. An Ace drawn next always counts as high. If the first card is an Ace, you choose whether it’s high or low.</li>
-      <li><b>Set every pin in a row</b> (the dots at the top) and the lock opens. Whatever’s inside is yours, unless it’s trapped.</li>
-      <li><b>Snapped it?</b> If the Warden allows retries, <b>Try again</b> (pay the cost at the table). You get a fresh deck and the same number of peeks; no new roll.</li>
+      <li><b>A wrong call (or a tie) bends the pick</b> and uses a spare: the pins you’ve set stay set and you carry on from the new card. Out of spares, it <b>snaps</b>. An Ace drawn next always counts as high. If the first card is an Ace, you choose whether it’s high or low.</li>
+      <li><b>Set every pin</b> (the dots at the top) and the lock opens. Whatever’s inside is yours, unless it’s trapped.</li>
+      <li><b>Snapped it?</b> If the Warden allows retries, <b>Try again</b> (pay the cost at the table). You get a fresh deck and the same number of spares; no new roll.</li>
     </ol>
-    <p class="muted">Peeks are optional. Use one any time before you call.</p>
     <div class="ask-btns"><button type="button" class="btn" data-x>Got it</button></div></div>`;
   document.body.append(back);
   back.addEventListener('click', (e) => { if (e.target === back || e.target.closest('[data-x]')) back.remove(); });
@@ -76,18 +75,18 @@ function render(anim = '') {
     <div class="lock-stage">${lockSVG(a.need, a.wins)}
       <div class="lock-cards">${a.status === 'finesse' ? '' : `
         <div class="lc-col"><small>CURRENT</small>${cardHTML(a.cur)}${a.cur?.r === 14 && a.status !== 'ace' ? `<span class="ace-note">Ace counts ${a.curVal === 1 ? 'LOW' : 'HIGH'}</span>` : ''}</div>
-        <div class="lc-col"><small>NEXT</small>${done && last ? cardHTML(last.card, last.ok ? 'flip-in' : 'flip-in bad') : `<div class="lk-card lk-back">${a.peek ? `<span class="peek-chip ${a.peek}">${a.peek}</span>` : ''}</div>`}</div>`}</div>
+        <div class="lc-col"><small>NEXT</small>${done && last ? cardHTML(last.card, last.ok ? 'flip-in' : 'flip-in bad') : '<div class="lk-card lk-back"></div>'}</div>`}</div>
     </div>
     <div class="lock-controls">${controls(a, last)}</div>
     ${a.history?.length ? `<div class="lock-trail"><small>CARDS PLAYED</small><div class="lt-row">${cardHTML(a.history[0].from, 'mini')}${a.history.map((h) => `<span class="lt-call ${h.ok ? 'ok' : 'no'}">${h.dir === 'higher' ? '▲' : '▼'}</span>${cardHTML(h.card, `mini ${h.ok ? '' : 'miss'}`)}`).join('')}</div></div>` : ''}
   </div>`;
 }
-function controls(a) {
-  if (a.status === 'finesse') return `<p class="lock-tip">Before you start, roll <b>Finesse</b> — every Hit is one <b>peek</b> at the next card’s color. Then call each card <b>Higher</b> or <b>Lower</b>; a tie breaks the pick. Set ${a.need} pin${a.need > 1 ? 's' : ''} in a row to open it.</p>
+function controls(a, last) {
+  if (a.status === 'finesse') return `<p class="lock-tip">Before you start, roll <b>Finesse</b>: every Hit (up to 3) is a <b>spare</b> that saves the pick from one wrong call. Then call each card <b>Higher</b> or <b>Lower</b>; a tie counts as wrong. Set ${a.need} pin${a.need > 1 ? 's' : ''} to open it.</p>
     <button type="button" class="btn" data-lp="finesse">${gl('die')} Roll Finesse</button>`;
   if (a.status === 'ace') return `<p class="lock-tip">Your first card is an <b>Ace</b>. Call it:</p><div class="btn-row"><button type="button" class="btn" data-lp="ace-high">Ace is HIGH</button><button type="button" class="btn" data-lp="ace-low">Ace is LOW</button></div>`;
   if (a.status === 'playing') return `<div class="btn-row lock-guess"><button type="button" class="btn" data-lp="higher">▲ Higher</button><button type="button" class="btn" data-lp="lower">▼ Lower</button>
-    <button type="button" class="btn small secondary" data-lp="peek"${a.peeks < 1 || a.peek ? ' disabled' : ''}>${gl('target')} Peek (${a.peeks})</button></div>
+    </div><p class="lock-spares">${gl('wrench')} ${a.spares ? `${a.spares} spare${a.spares === 1 ? '' : 's'}: a wrong call bends the pick instead of snapping it` : 'No spares left: the next wrong call snaps the pick'}${last?.bent ? ' · <b>bent, but it held!</b>' : ''}</p>
     <button type="button" class="linkish" data-lp="walk">Walk away</button>`;
   if (a.status === 'picked') return `<p class="lock-result good">${gl('trophy')} Click — it’s open!</p>${a.sprung ? `<p class="lock-result bad">It was trapped! ${esc(a.sprung)}</p>` : ''}${a.found ? `<p class="lock-found">Inside you find <b>${esc(a.found)}</b>${/Scrap$|^\$/.test(a.found) ? '' : ' — it’s on your sheet'}.</p>` : ''}<button type="button" class="btn" data-lp="close">Done</button>`;
   return `<p class="lock-result bad">The pick slips${a.history.length && !a.history[a.history.length - 1].ok && a.history[a.history.length - 1].card.r === a.history[a.history.length - 1].fromVal ? ' — a tie breaks it' : ''}.</p>
@@ -99,19 +98,19 @@ async function onClick(e) {
   busy = true;
   try {
     const k = b.dataset.lp;
-    if (k === 'finesse') { const r = await act('finesse'); if (r?.roll) await rollPopup({ ...r.roll, pool: r.roll.pool }, `Finesse · ${r.peeks} peek${r.peeks === 1 ? '' : 's'}`); play('card'); render(); }
+    if (k === 'finesse') { const r = await act('finesse'); if (r?.roll) await rollPopup({ ...r.roll, pool: r.roll.pool }, `Finesse · ${r.spares} spare${r.spares === 1 ? '' : 's'}`); play('card'); render(); }
     else if (k === 'ace-high' || k === 'ace-low') { await act('ace', { value: k === 'ace-low' ? 'low' : 'high' }); render(); }
-    else if (k === 'peek') { await act('peek'); play('card'); render(); }
     else if (k === 'higher' || k === 'lower') {
       const r = await act('guess', { dir: k });
       play('card');
-      if (!r.ok) { play('lockMiss'); setTimeout(() => play('fail'), 600); render('fresh'); }
+      if (r.bent) { play('lockMiss'); render('fresh'); toast(`The pick bends but holds. ${r.spares} spare${r.spares === 1 ? '' : 's'} left.`); }
+      else if (!r.ok) { play('lockMiss'); setTimeout(() => play('fail'), 600); render('fresh'); }
       else if (r.status === 'picked') { play('pickWork'); setTimeout(() => { play('lockUnlock'); play(cur.sprung ? 'fail' : 'success'); if (cur.sprung) setTimeout(() => play('explosion', 'small'), 250); }, 200); render('fresh'); }
       else { play('pickWork'); render('fresh'); }
     } else if (k === 'how') { busy = false; showHowTo(); return;
     } else if (k === 'retry') {
       if (!await ask(`Try again?\n\nThe Warden set the cost: ${cur.retryCost || 'nothing'}. Pay it at the table.`, { ok: 'Pay and try again', danger: false })) { busy = false; return; }
-      await act('retry'); play('card'); render(); toast(`Fresh deck. You still have ${cur.peeks} peek${cur.peeks === 1 ? '' : 's'} from your Finesse roll.`);
+      await act('retry'); play('card'); render(); toast(`Fresh deck. You have ${cur.spares} spare${cur.spares === 1 ? '' : 's'} from your Finesse roll.`);
     } else if (k === 'walk') {
       if (!await ask('Walk away from the lock? It stays locked.', { ok: 'Walk away' })) { busy = false; return; }
       await leave();
@@ -162,7 +161,7 @@ export function mountLockSend(el, getCombat) {
     el.innerHTML = `<div class="field-step"><span>WHO</span><button type="button" class="chip-btn${st.who ? '' : ' on'}" data-lp-all>Everyone</button>
         ${posse.map((p) => `<button type="button" class="chip-btn${st.who?.has(p.id) ? ' on' : ''}" data-lp-who="${esc(p.id)}">${esc(p.name)}</button>`).join('')}</div>
       <div class="field-step"><span>WHAT LOCK</span><input data-lp-f="what" maxlength="60" value="${esc(st.what)}" placeholder="e.g. the sheriff’s strongbox"></div>
-      <div class="field-step"><span>HOW HARD — pins to set in a row</span>${DIFF.map((d, i) => `<button type="button" class="chip-btn${st.need === i + 1 ? ' on' : ''}" data-lp-need="${i + 1}">${d}<small>${i + 1} in a row</small></button>`).join('')}</div>
+      <div class="field-step"><span>HOW HARD — pins to set</span>${DIFF.map((d, i) => `<button type="button" class="chip-btn${st.need === i + 1 ? ' on' : ''}" data-lp-need="${i + 1}">${d}<small>${i + 1} pin${i ? 's' : ''}</small></button>`).join('')}</div>
       <div class="field-step"><span>RETRIES AFTER A FAIL</span>${[0, 1, 2, 3].map((n) => `<button type="button" class="chip-btn${st.retries === n ? ' on' : ''}" data-lp-retries="${n}">${n === 0 ? 'None' : n}</button>`).join('')}
         ${st.retries ? `<input data-lp-f="cost" maxlength="60" value="${esc(st.cost)}" placeholder="each retry costs… e.g. one lockpick, 2 Grit">` : ''}</div>
       <div class="field-step"><span>WHAT’S INSIDE — goes straight to their sheet</span>${LOOT.map(([k, l]) => `<button type="button" class="chip-btn${st.loot === k ? ' on' : ''}" data-lp-loot="${k}">${l}</button>`).join('')}

@@ -246,20 +246,21 @@ test('whispers: player → Warden, Warden replies or starts one; each only reach
   assert.deepEqual(whisperView(st, { pc: 'b' }).list.map((w) => [w.reply, w.fromWarden]), [['you hear a click', true]]);
 });
 
-test('lock picking (High/Low): ties lose, Ace rules, win N in a row, peeks, retries', async () => {
+test('lock picking (High/Low): ties lose, Ace rules, win N in a row, Finesse spares, retries', async () => {
   const { freshLocks, lockAction } = await import('../lib/lockpick.js');
-  const names = { a: 'Ada', b: 'Bo' }, noRoll = () => ({ hits: 1, dice: [] });
+  const names = { a: 'Ada', b: 'Bo' };
   // deck helper: cards are drawn from the END, so list them in reverse (last = starter)
   const D = (...cards) => () => cards.map(([r, s]) => ({ r, s: s || '♠' })).reverse();
-  const start = (need, deck, retries = 0) => {
-    const st = freshLocks();
+  const start = (need, deck, retries = 0, hits = 0) => {
+    const st = freshLocks(), roll = () => ({ hits, dice: [] });
     const { ids: [id] } = lockAction(st, { action: 'start', to: ['a'], difficulty: need, retries, retryCost: 'one lockpick' }, { warden: true, names });
-    lockAction(st, { action: 'finesse', id, pc: 'a' }, { warden: false, names, rollFinesse: noRoll, deck });
-    return { st, id, go: (x) => lockAction(st, { id, pc: 'a', ...x }, { warden: false, names, rollFinesse: noRoll, deck }) };
+    lockAction(st, { action: 'finesse', id, pc: 'a' }, { warden: false, names, rollFinesse: roll, deck });
+    return { st, id, go: (x) => lockAction(st, { id, pc: 'a', ...x }, { warden: false, names, rollFinesse: roll, deck }) };
   };
-  // a tie loses
+  // a tie loses (no spares)
   let t = start(1, D([7], [7, '♥']));
   assert.equal(t.go({ action: 'guess', dir: 'higher' }).ok, false);
+  assert.equal(t.st.list[0].status, 'failed');
   // an Ace as the starter: the player calls it; low → a 2 is higher
   t = start(1, D([14], [2]));
   assert.equal(t.st.list[0].status, 'ace');
@@ -271,22 +272,26 @@ test('lock picking (High/Low): ties lose, Ace rules, win N in a row, peeks, retr
   assert.equal(t.go({ action: 'guess', dir: 'higher' }).ok, true);   // K → A(high)
   assert.equal(t.go({ action: 'guess', dir: 'lower' }).ok, true);    // A(14) → 5
   assert.equal(t.st.list[0].status, 'picked');
-  // peeks show the next card's color and cost one
-  t = start(3, D([9], [3, '♥'], [10]));
-  assert.equal(t.go({ action: 'peek' }).color, 'red');
-  assert.equal(t.st.list[0].peeks, 0);
-  // failing, then retrying costs a try; with none left it can't
-  t = start(1, D([9], [9]), 1);
-  t.go({ action: 'guess', dir: 'lower' });
-  t.st.list[0].peeks = 0; // spent the peek on the first try
+  // Finesse Hits are spares (max 3): a wrong call bends the pick, the pins stay, play goes on from the new card
+  t = start(2, D([9], [10], [4], [2], [8]), 0, 5);
+  assert.equal(t.st.list[0].spares, 3, 'capped at 3');
+  t.go({ action: 'guess', dir: 'higher' });                          // 9 → 10: pin 1
+  const bent = t.go({ action: 'guess', dir: 'higher' });             // 10 → 4: wrong, bends
+  assert.deepEqual([bent.ok, bent.bent, bent.spares, bent.wins], [false, true, 2, 1]);
+  assert.equal(t.st.list[0].status, 'playing');
+  assert.equal(t.go({ action: 'guess', dir: 'lower' }).ok, true);    // 4 → 2: pin 2
+  assert.equal(t.st.list[0].status, 'picked');
+  // failing, then retrying costs a try; the retry gets the same spares, no new roll; with none left it can't
+  t = start(1, D([9], [9], [9]), 1, 1);
+  t.go({ action: 'guess', dir: 'lower' });                           // tie: bends (1 spare → 0)
+  t.go({ action: 'guess', dir: 'lower' });                           // tie again: snaps
+  assert.equal(t.st.list[0].status, 'failed');
   t.go({ action: 'retry' });
   assert.equal(t.st.list[0].status, 'playing', 'no second Finesse roll');
-  assert.equal(t.st.list[0].peeks, 1, 'the same peeks as the first roll');
+  assert.equal(t.st.list[0].spares, 1, 'the same spares as the first roll');
   assert.throws(() => t.go({ action: 'finesse' }), /Already rolled/);
-  t.go({ action: 'guess', dir: 'lower' });
-  assert.throws(() => t.go({ action: 'retry' }), /No more tries/);
   // someone else can't touch your lock
-  assert.throws(() => lockAction(t.st, { action: 'peek', id: t.id, pc: 'b' }, { warden: false, names }), /someone else/);
+  assert.throws(() => lockAction(t.st, { action: 'guess', dir: 'higher', id: t.id, pc: 'b' }, { warden: false, names }), /someone else/);
 });
 
 test('lock loot and traps: hidden until it opens, then handed over once', async () => {

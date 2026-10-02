@@ -53,7 +53,7 @@ export async function propDialog(p = null) {
         ${p ? '' : `<div class="chip-row">${KINDS.map(([k, n, ic]) => `<button type="button" class="chip-btn${st.kind === k ? ' on' : ''}" data-kind="${k}">${gl(ic)} ${n}</button>`).join('')}</div>`}
         <label class="field-step"><span>NAME</span><input name="name" maxlength="50" value="${esc(st.name)}" placeholder="${{ chest: 'e.g. Iron strongbox', body: 'e.g. Dead prospector', clue: 'e.g. Torn letter', marker: 'e.g. Old well' }[st.kind]}"></label>
         ${st.kind === 'chest' ? `
-          <div class="field-step"><span>HOW HARD TO PICK <small>wins in a row at High/Low</small></span><div class="chip-row">${[1, 2, 3, 4, 5].map((n) => `<button type="button" class="chip-btn${st.difficulty === n ? ' on' : ''}" data-diff="${n}">${n}</button>`).join('')}</div></div>
+          <div class="field-step"><span>HOW HARD TO PICK <small>pins to set at High/Low</small></span><div class="chip-row">${[1, 2, 3, 4, 5].map((n) => `<button type="button" class="chip-btn${st.difficulty === n ? ' on' : ''}" data-diff="${n}">${n}</button>`).join('')}</div></div>
           <label class="field-step"><span>EXTRA TRIES <small>each costs one lockpick</small></span><input name="retries" type="number" min="0" max="5" value="${st.retries}"></label>
           <div class="field-step"><span>INSIDE</span>${lootHTML(st.loot, 'chest')}</div>
           <label class="field-step"><span>TRAP <small>Health lost when it opens, 0 = none</small></span><input name="trap" type="number" min="0" max="30" value="${st.trap?.damage || 0}"></label>` : ''}
@@ -99,7 +99,7 @@ export async function propDialog(p = null) {
 export function propCard(p, ctx) {
   const back = document.createElement('div');
   back.className = 'modal-back ask-back pp-back';
-  const what = { chest: p.opened ? `Open and empty (${p.opened} picked it).` : p.picking ? `${p.picking} is working the lock.` : `A locked ${p.name.toLowerCase().includes('chest') ? 'chest' : 'box'}: ${p.difficulty} in a row at High/Low to open it.`,
+  const what = { chest: p.opened ? `Open and empty (${p.opened} picked it).` : p.picking ? `${p.picking} is working the lock.` : `A locked ${p.name.toLowerCase().includes('chest') ? 'chest' : 'box'}: ${p.difficulty} pin${p.difficulty === 1 ? '' : 's'} to set at High/Low to open it.`,
     body: p.left ? 'Someone might find something on them.' : p.searchedBy?.length ? 'Picked clean.' : 'Search it with Intuition.',
     clue: 'Something to read.', marker: '' }[p.kind];
   const wardenInfo = !ctx.warden ? '' : p.kind === 'chest' ? `<p class="pp-secret">${gl('lock')} Inside: <b>${esc(p.lootText || 'nothing')}</b>${p.trap?.damage ? ` · trap −${p.trap.damage} Health` : ''}</p>`
