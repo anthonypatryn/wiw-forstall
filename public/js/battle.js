@@ -104,7 +104,7 @@ function attackHTML(sel) {
 }
 const vp = $('#viewport'), stage = $('#stage');
 const pz = panZoom(vp, stage, {
-  maxScale: 2.5, ignore: '.btoken, .fstoken, .map-ctrls, .fcard, .side-toggle, .map-banner, .range-legend, .paint-bar',
+  maxScale: 2.5, ignore: '.btoken, .fstoken, .map-ctrls, .fcard, .side-toggle, .map-banner, .range-legend, .paint-bar, .map-tools',
   onTap: (target) => { if (!target.closest('.btoken, .fstoken, .fcard')) select(null); },
   onChange: () => positionCard(),
 });
@@ -116,18 +116,22 @@ if (TV) { addEventListener('resize', () => pz.fit()); setTimeout(() => pz.fit(),
 // ---------- pings: press and hold (or right-click) the map → a marker everyone sees for a few seconds ----------
 const PING_HOLD_MS = 550, PING_SHOW_MS = 4000;
 const seenPings = new Set();
+const pingSeenAt = new Map(); // ping id → when this screen should count it from (this device's clock)
 let pingTimer = null, pingRedraw = null;
 function renderPings() {
   const layer = $('#pings');
   if (!layer || !data) return;
-  const live = (data.pings || []).filter((p) => Date.now() - p.at < PING_SHOW_MS);
+  // shown 4 s from when it was made, timed on this device: the server sends each ping's age, never trusting this phone's clock
+  (data.pings || []).forEach((p) => { if (!pingSeenAt.has(p.id)) pingSeenAt.set(p.id, Date.now() - Math.min(p.age ?? 0, PING_SHOW_MS)); });
+  const born = (p) => pingSeenAt.get(p.id) ?? Date.now();
+  const live = (data.pings || []).filter((p) => Date.now() - born(p) < PING_SHOW_MS);
   // big enough to see at any zoom: at least ~110 px across and 15 px text on screen
   const z = pz.view.s || 1, size = Math.max(data.grid.ppi * 1.6, 110 / z), font = Math.max(data.grid.ppi * 0.28, 15 / z);
   layer.innerHTML = live.map((p) => { const c = center(p.col, p.row); return `<div class="map-ping" style="left:${c.x}px;top:${c.y}px;width:${size}px;height:${size}px;border-width:${4 / z}px"><span class="map-ping-name" style="font-size:${font}px;padding:${2 / z}px ${8 / z}px">${esc(p.name)}</span></div>`; }).join('');
   if (live.some((p) => !seenPings.has(p.id))) play('lockClick');
   live.forEach((p) => seenPings.add(p.id));
   clearTimeout(pingRedraw);
-  if (live.length) pingRedraw = setTimeout(renderPings, Math.max(200, Math.min(...live.map((p) => p.at + PING_SHOW_MS - Date.now())) + 50)); // drop it when it expires
+  if (live.length) pingRedraw = setTimeout(renderPings, Math.max(200, Math.min(...live.map((p) => born(p) + PING_SHOW_MS - Date.now())) + 50)); // drop it when it expires
 }
 async function sendPing(clientX, clientY) {
   if (!data) return;
@@ -137,7 +141,7 @@ async function sendPing(clientX, clientY) {
   if (r) { data.pings = [...(data.pings || []).filter((p) => p.id !== r.id), r]; renderPings(); }
 }
 vp.addEventListener('pointerdown', (e) => {
-  if (e.button !== 0 || e.target.closest('.btoken, .fstoken, .map-ctrls')) return;
+  if (e.button !== 0 || e.target.closest('.btoken, .fstoken, .map-ctrls, .map-tools')) return;
   const x0 = e.clientX, y0 = e.clientY;
   clearTimeout(pingTimer);
   pingTimer = setTimeout(() => sendPing(x0, y0), PING_HOLD_MS);
@@ -145,7 +149,7 @@ vp.addEventListener('pointerdown', (e) => {
   const off = () => ['pointermove', 'pointerup', 'pointercancel'].forEach((t) => vp.removeEventListener(t, cancel));
   ['pointermove', 'pointerup', 'pointercancel'].forEach((t) => vp.addEventListener(t, cancel));
 });
-vp.addEventListener('contextmenu', (e) => { if (e.target.closest('.btoken, .fstoken, .map-ctrls')) return; e.preventDefault(); sendPing(e.clientX, e.clientY); });
+vp.addEventListener('contextmenu', (e) => { if (e.target.closest('.btoken, .fstoken, .map-ctrls, .map-tools')) return; e.preventDefault(); sendPing(e.clientX, e.clientY); });
 
 // ---------- hex math: pointy-top, odd rows shifted right ----------
 const R = () => data.grid.ppi / Math.sqrt(3);
@@ -422,7 +426,7 @@ function brushAt(cx, cy) {
 }
 let painting = false;
 vp.addEventListener('pointerdown', (e) => {
-  if (!paint.layer || e.button !== 0 || e.target.closest('.map-ctrls, .paint-bar, .fcard, .side-toggle')) return;
+  if (!paint.layer || e.button !== 0 || e.target.closest('.map-ctrls, .map-tools, .paint-bar, .fcard, .side-toggle')) return;
   e.stopImmediatePropagation(); e.preventDefault();
   painting = true; paint.cells.clear(); brushAt(e.clientX, e.clientY);
   try { vp.setPointerCapture(e.pointerId); } catch {}

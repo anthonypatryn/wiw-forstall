@@ -1669,3 +1669,22 @@ test('Item dice: added by hand to a called roll or a free Skill roll, and noted 
   assert.equal(f.dice.length, 6); // capped at +4
   assert.match(f.label, /Nerve · item \+4B/);
 });
+
+test('Every Ace a character rolls in combat marks their meter, whatever the roll', () => {
+  const state = freshCombat();
+  const a = publicAction(state, { action: 'addPc', trade: 'Hunter', name: 'Tess' }, { warden: true });
+  const pc = state.posse[0];
+  pc.skills.nerve = '6G';
+  publicAction(state, { action: 'addEnemy', name: 'Bandit', health: 9 }, { warden: true });
+  publicAction(state, { action: 'start' }, { warden: true });
+  let expect = 0;
+  const count = (dice) => dice.filter((d) => d.face === 'ace').length;
+  for (let i = 0; i < 4; i++) { // called rolls never used to count
+    const ck = publicAction(state, { action: 'checkStart', who: [a.id], skill: 'Nerve', diff: 'Medium' }, { warden: true });
+    const r = publicAction(state, { action: 'pc', id: a.id, op: 'checkRoll', check: ck.id }, { warden: false });
+    expect = Math.min(6, expect + count(r.dice));
+  }
+  const f = publicAction(state, { action: 'roll', who: a.id, pool: '6G', label: 'Nerve' }, { warden: false });
+  expect = Math.min(6, expect + count(f.dice)); // free rolls still count, once
+  assert.equal(pc.aces, expect);
+});
