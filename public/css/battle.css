@@ -308,9 +308,14 @@ body.warden-mode .fightbar { background: var(--w-slate); border: 1px solid rgba(
 .fb-sub { color: var(--on-dark-dim); font-style: italic; }
 .fb-who { font-size: var(--fs-md); }
 .fb-who b { color: var(--gold); cursor: pointer; text-decoration: underline dotted; }
-.fb-btns { display: grid; grid-template-columns: 1fr auto auto; gap: 6px; align-items: stretch; }
-.fb-btns.two { grid-template-columns: 1fr auto; }
-.fightbar .fb-next { width: 100%; }
+/* the fight bar's buttons: the main one (Next turn / Start combat) gets its own row; the small ones share the next row,
+   icon and words on one line. A player's End my turn sits beside its ⋯ (.two). */
+.fb-btns { display: flex; flex-wrap: wrap; gap: 6px; align-items: stretch; }
+.fb-btns > .fb-next { flex: 1 1 100%; white-space: nowrap; }
+.fb-btns.two > .fb-next { flex: 1 1 auto; }
+.fb-btns > .fb-ghost { flex: 1 1 0; min-width: max-content; display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 7px 12px 5px; white-space: nowrap; }
+.fb-btns > .fb-ghost .gl { width: 1.05em; height: 1.05em; margin: 0; flex: none; }
+.fb-btns > .fb-more { flex: 0 0 auto; }
 body.warden-mode .fightbar .fb-next { background: var(--w-teal); border-color: var(--w-teal-pale); color: var(--w-slate); }
 body.warden-mode .fightbar .fb-next:hover { background: var(--w-teal-pale); }
 .fightbar .fb-ghost { background: transparent; color: var(--on-dark); border-color: rgba(232,220,196,.5); box-shadow: none; }
@@ -484,8 +489,7 @@ body.tv-mode .viewport { height: 100vh; border: 0; cursor: default; }
 .pm-tools button { width: 28px; height: 28px; display: grid; place-items: center; padding: 0; border: 1.5px solid var(--ink); border-radius: 50%; background: var(--surface); color: var(--ink); cursor: pointer; font: var(--fs-md)/1 var(--display); }
 .pm-tools button .gl { width: 15px; height: 15px; }
 
-.fb-btns.four { grid-template-columns: 1fr auto auto auto; }
-@media (max-width: 420px) { .fb-btns.four .fb-ghost .gl { display: none; } } /* four buttons on a phone: words only */
+
 
 /* reading an enemy's Health (fighter card, Warden) */
 .e-read { display: grid; gap: 4px; margin: 6px 0; font-size: var(--fs-sm); }
