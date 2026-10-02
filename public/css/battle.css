@@ -543,3 +543,7 @@ body.tv-mode .viewport { height: 100vh; border: 0; cursor: default; }
 .pp-secret { margin: 8px 0; padding: 8px 10px; border: 1.5px dashed var(--secret); border-radius: var(--r-sm); color: var(--secret); background: var(--secret-tint); font-size: var(--fs-sm); }
 .pp-secret li { margin: 2px 0 2px 16px; }
 .pp-w { margin-top: 10px; }
+
+.bprop.trap { background: #e8b7a6; }
+.bprop.door { background: #b9875a; color: #fff6e6; border-radius: 10%; }
+.bprop.door.spent { opacity: .4; }

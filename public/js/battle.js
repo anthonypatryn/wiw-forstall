@@ -130,7 +130,7 @@ function renderProps() {
   const layer = $('#props'); if (!layer || !data) return;
   const size = data.grid.ppi * 0.78, labFont = data.grid.ppi * 0.2;
   layer.innerHTML = (data.props || []).map((p) => { const c = center(p.col, p.row);
-    return `<div class="bprop ${p.kind}${p.hidden ? ' hidden-prop' : ''}${p.opened || (p.kind === 'body' && !p.left && p.searchedBy?.length) ? ' spent' : ''}" data-prop="${esc(p.id)}" role="button" tabindex="0" aria-label="${esc(p.name)}"
+    return `<div class="bprop ${p.kind}${p.hidden || (p.kind === 'trap' && !p.sprung) ? ' hidden-prop' : ''}${p.opened || p.sprung || (p.kind === 'door' && p.open) || (p.kind === 'body' && !p.left && p.searchedBy?.length) ? ' spent' : ''}" data-prop="${esc(p.id)}" role="button" tabindex="0" aria-label="${esc(p.name)}"
       style="left:${c.x}px;top:${c.y}px;width:${size}px;height:${size}px;font-size:${size * 0.55}px">${gl(propIcon(p))}<span class="lab" style="font-size:${labFont}px">${esc(p.name)}</span></div>`; }).join('');
 }
 function openProp(id) {
@@ -1139,6 +1139,7 @@ function wireToken(el) {
     if (ok) play(combat?.posse?.find((p) => p.id === t.ref)?.mounted === 'horse' ? 'hooves' : 'steps'); // riding: hoofbeats
     if (ok === null) { t.col = was.col; t.row = was.row; render(); } // not allowed: snap back
     else if (ok?.cost) { toast(`${t.name} moved — ${ok.cost} Grit.`); combatPoller?.now?.(); }
+    if (ok?.sprung) { play('explosion', 'small'); toast(`${t.name} sets off ${ok.sprung.name.toLowerCase()}!${ok.sprung.hurt ? ` ${ok.sprung.hurt}.` : ''}`, true); combatPoller?.now?.(); }
   };
   el.addEventListener('pointerup', end);
   el.addEventListener('pointercancel', end);

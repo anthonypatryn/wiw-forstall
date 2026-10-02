@@ -64,6 +64,8 @@ const G = {
   // a padlock
   lock: `<rect ${S} x="5" y="10.5" width="14" height="10" rx="2"/><path ${S} d="M8 10.5V7.8a4 4 0 0 1 8 0v2.7"/><path ${S} d="M12 14.4v2.3"/>`,
   // a wrench (upgrades, repairs)
+  door: `<path ${S} d="M6 21V4.5A1.5 1.5 0 0 1 7.5 3h9A1.5 1.5 0 0 1 18 4.5V21M4 21h16"/><path ${S} d="M14.5 12.5h.01"/>`,
+  trap: `<path ${S} d="M3 15.5h18M5 15.5l2-5 2 5 2-5 2 5 2-5 2 5 2-5"/><path ${S} d="M12 15.5v4"/>`,
   chest: `<path ${S} d="M3.5 10.5h17V19a1 1 0 0 1-1 1h-15a1 1 0 0 1-1-1z"/><path ${S} d="M3.5 10.5V8a4 4 0 0 1 4-4h9a4 4 0 0 1 4 4v2.5M10.5 10.5v3h3v-3"/>`,
   horse: `<path ${S} d="M8 21v-4.5L5.5 14 4 11l3.5-1.5L10 6l1-3 2 2.5 3.5 1.5L20 11l-1.5 2-2.5-1-1.5 1.5V21"/><path ${S} d="M13.5 8.5h.01"/>`,
   mech: `<rect ${S} x="6" y="3.5" width="12" height="9" rx="1.5"/><path ${S} d="M9.5 7.5h.01M14.5 7.5h.01M9 12.5V20M15 12.5V20M6.5 20.5h5M12.5 20.5h5M6 8H4M18 8h2"/>`,

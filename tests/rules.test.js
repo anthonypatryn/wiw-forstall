@@ -1732,3 +1732,30 @@ test('Map objects: placed by the Warden, secrets kept from the posse, bodies sea
   battleAction(s, { action: 'removeProp', id: body.id }, { warden: true });
   assert.equal(s.props.length, 2);
 });
+
+test('Map traps stay hidden until sprung; a shut door stops a player but not the Warden', async () => {
+  const { freshBattle, battleAction, battleView, hexLine } = await import('../lib/battle.js');
+  const { trapOnPath } = await import('../lib/props.js');
+  const s = freshBattle();
+  const me = battleAction(s, { action: 'addToken', kind: 'pc', ref: 'p1', name: 'Tess', col: 2, row: 2 }, { warden: true });
+  const trap = battleAction(s, { action: 'addProp', kind: 'trap', col: 4, row: 2, trap: { damage: 3 } }, { warden: true });
+  battleAction(s, { action: 'addProp', kind: 'door', col: 2, row: 5, name: 'Barn door' }, { warden: true });
+  assert.deepEqual(battleView(s, { warden: false, combat: null }).props.map((p) => p.kind), ['door']); // the trap is hidden
+  assert.equal(trapOnPath(s, hexLine({ col: 2, row: 2 }, { col: 6, row: 2 }))?.id, trap.id); // walking through it counts
+  s.props.find((p) => p.id === trap.id).sprung = 'Tess';
+  assert.deepEqual(battleView(s, { warden: false, combat: null }).props.map((p) => p.kind).sort(), ['door', 'trap']);
+  assert.throws(() => battleAction(s, { action: 'move', id: me.id, col: 2, row: 7, pc: 'p1' }, { warden: false }), /shut/);
+  battleAction(s, { action: 'move', id: me.id, col: 2, row: 7 }, { warden: true });
+  assert.equal(s.tokens[0].row, 7);
+});
+
+test('A door or trap right next to the token counts (the first step of the path)', async () => {
+  const { freshBattle, battleAction, hexLine } = await import('../lib/battle.js');
+  const { trapOnPath } = await import('../lib/props.js');
+  const s = freshBattle();
+  const me = battleAction(s, { action: 'addToken', kind: 'pc', ref: 'p1', name: 'Tess', col: 6, row: 7 }, { warden: true });
+  battleAction(s, { action: 'addProp', kind: 'door', col: 6, row: 8 }, { warden: true });
+  const trap = battleAction(s, { action: 'addProp', kind: 'trap', col: 7, row: 7 }, { warden: true });
+  assert.throws(() => battleAction(s, { action: 'move', id: me.id, col: 6, row: 10, pc: 'p1' }, { warden: false }), /shut/);
+  assert.equal(trapOnPath(s, hexLine({ col: 6, row: 7 }, { col: 9, row: 7 }))?.id, trap.id);
+});
