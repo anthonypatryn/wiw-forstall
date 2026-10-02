@@ -653,7 +653,7 @@ function renderLevelUp(view, p) {
   if (have < 2 || !mine || p.dead || p.done === false) { box.innerHTML = ''; return; }
   if (box.dataset.have === String(have) && box.innerHTML) return;
   box.dataset.have = String(have);
-  box.innerHTML = `<div class="lu-callout">${gl('star')}<span><b>${esc(p.name)} has ${have} Prestige to spend.</b> New Skills, Talents, Abilities and Health.</span><button type="button" class="btn small" data-levelup>Level up</button></div>`;
+  box.innerHTML = `<div class="lu-callout">${gl('star')}<span><b>${esc(p.name)} has ${have} Prestige to spend.</b> New Skills, Talents, Abilities and Health.<small class="lu-hint">Tap ✎ Edit to spend it.</small></span><button type="button" class="btn small" data-levelup>Level up</button></div>`;
   box.querySelector('[data-levelup]').addEventListener('click', () => import('./levelup.js').then((m) => m.openLevelUp({ pc: structuredClone(pcById(p.id)), meta, act: (body) => act(body) })));
 }
 async function spendPrestige(view, p, what) {
@@ -796,25 +796,30 @@ function renderAch(view, p) {
 // View / edit modes. Finished sheets open locked; play trackers stay live (the user's list, 2026-10-02):
 //   live: Health, Grit, Aces, Statuses, Bleeding Out, every roll, Wallet / Scrap / Supplies, ammo rounds, gear uses,
 //         horse & mech Health and condition, Forstall memory slots & charges, Use / Sell / Trade / Stash,
-//         Prestige spending, Level up, Achievements and the Title, rests, "This is me";
-//   Edit only: name & story, portrait, Skill and Defense dice, Talents, max Health, Prestige totals, weapons, gear,
+//         Achievements and the Title, rests, "This is me";
+//   Edit only: name & story, portrait, Skill and Defense dice, Talents, max Health, Prestige totals and spending
+//         (Spend, Level up), weapons, gear,
 //         rides & Forstall (pick / remove / stats), upgrades, Reputation, the Inventory by hand (rows, quantities).
 // applyMode runs again at the end of every redraw (hydrate), since parts of the sheet redraw as you play.
 let starterMissing = [];
 const editMode = new Set();
 const isEditing = (p) => p.done === false || editMode.has(p.id);
 const PLAY_PATHS = /^(wallet|scrap|supplies|forstall\.kz\.\d|horse\.health|mech\.health|mech\.state|mech\.toppled|weapons\.\d\.ammo\.\d\.(rds|name))$/;
-const EDIT_ONLY_BTNS = '.sheet .spur[data-spur], [data-face-pick], [data-face-clear], [data-q], [data-rm-item], [data-rm-thing], [data-upg-pick], [data-upg-go], [data-upg-rm], [data-pack], [data-tl], [data-start]';
+const EDIT_ONLY_BTNS = '.sheet .spur[data-spur], [data-face-pick], [data-face-clear], [data-q], [data-rm-item], [data-rm-thing], [data-upg-pick], [data-upg-go], [data-upg-rm], [data-pack], [data-tl], [data-start], [data-spend], [data-levelup]';
 function applyMode(view, p) {
   const locked = !isEditing(p);
   view.classList.toggle('viewing', locked);
   view.querySelectorAll('.sheet input, .sheet select, .sheet textarea, .sheet-head input, .sheet .spur[data-spur]').forEach((el) => {
-    if (el.matches('[data-stc]') || el.closest('[data-dyn="spend"], [data-dyn="ach"], [data-dyn="horse"], [data-dyn="mech"], [data-dyn="fight"]')) return; // Statuses, Prestige spending, Achievements, ride trackers, the fight panel stay live
+    if (el.matches('[data-stc]') || el.closest('[data-dyn="ach"], [data-dyn="horse"], [data-dyn="mech"], [data-dyn="fight"]')) return; // Statuses, Achievements, ride trackers, the fight panel stay live
     const path = el.dataset.path || el.dataset.vpath || el.closest('.dp[data-pool]')?.dataset.pool;
     el.disabled = locked && !(path && PLAY_PATHS.test(path));
   });
   // buttons that change what the character is or owns: Edit only
-  view.querySelectorAll(EDIT_ONLY_BTNS).forEach((b) => { b.disabled = locked; });
+  // (only undo what this did: some of them, like Spend, are also disabled for their own reasons)
+  view.querySelectorAll(EDIT_ONLY_BTNS).forEach((b) => {
+    if (locked) { if (!b.disabled) { b.disabled = true; b.dataset.modeLock = '1'; } }
+    else if (b.dataset.modeLock) { b.disabled = false; delete b.dataset.modeLock; }
+  });
   const creating = p.done === false;
   view.querySelector('[data-starter]').hidden = !creating;
   view.querySelector('[data-jump="starter"]').hidden = !creating;

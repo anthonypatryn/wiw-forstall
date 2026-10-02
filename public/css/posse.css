@@ -612,3 +612,10 @@ body.on-sheet .sv-nav { display: grid; gap: 6px; position: sticky; top: calc(var
 .viewing .sheet :is([data-q], [data-rm-item], [data-upg-pick], [data-upg-go], [data-upg-rm]):disabled { display: none; }
 .viewing :is([data-face-pick], [data-face-clear]):disabled { display: none; }
 .viewing .sheet .num-wrap:has(input:disabled) .num-step { display: none; }
+
+/* view mode: dice counts read as plain numbers, not boxes; Prestige spending only in Edit */
+.viewing .sheet .dp input:disabled { border-color: transparent; background: transparent; box-shadow: none; padding-left: 0; padding-right: 0; width: 1.6em; font-size: var(--fs-lg); color: var(--ink); -webkit-text-fill-color: var(--ink); opacity: 1; }
+.viewing .sheet [data-dyn="spend"] :is(.sp-pick, [data-spend], [data-levelup]) { display: none; }
+.lu-hint { display: none; }
+.viewing .lu-hint { display: block; margin-top: 2px; font-style: italic; }
+.viewing [data-levelup] { display: none; }
