@@ -1523,3 +1523,25 @@ test('undo labels read the body either way', async () => {
   assert.equal(asText.label, asObj.label);
   assert.equal(undoLabel('combat', { method: 'POST', body: { action: 'sheet', path: 'wallet' }, headers: {} }, held).label, 'Sheet · wallet');
 });
+
+// the Warden's saved battle maps: upload adds one and puts it on the board, its hex size is remembered, removing it
+// from the board falls back to the first built-in map
+test('saved battle maps', async () => {
+  const { freshBattle, battleAction, battleView } = await import('../lib/battle.js');
+  const s = freshBattle();
+  const m = battleAction(s, { action: 'uploaded', mapId: 'abc123', name: 'The River', w: 1800, h: 1250, inches: 36 }, { warden: true });
+  assert.equal(m.name, 'The River');
+  assert.deepEqual([s.map.kind, s.map.id, s.map.name], ['upload', 'abc123', 'The River']);
+  assert.equal(s.grid.ppi, 50);
+  battleAction(s, { action: 'grid', ppi: 60 }, { warden: true });
+  battleAction(s, { action: 'preset', id: 'great-plains' }, { warden: true });
+  battleAction(s, { action: 'useMap', id: 'abc123' }, { warden: true });
+  assert.equal(s.grid.ppi, 60);
+  battleAction(s, { action: 'renameMap', id: 'abc123', name: 'Muddy River' }, { warden: true });
+  assert.equal(s.map.name, 'Muddy River');
+  assert.equal(battleView(s, { warden: true }).maps.length, 1);
+  assert.equal(battleView(s, { warden: false }).maps.length, 0);
+  battleAction(s, { action: 'removeMap', id: 'abc123' }, { warden: true });
+  assert.equal(s.maps.length, 0);
+  assert.equal(s.map.kind, 'preset');
+});

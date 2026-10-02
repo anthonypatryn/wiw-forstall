@@ -476,3 +476,10 @@ body.tv-mode .viewport { height: 100vh; border: 0; cursor: default; }
 .crop-box i[data-h="sw"] { left: -11px; bottom: -11px; cursor: nesw-resize; }
 .crop-box i[data-h="se"] { right: -11px; bottom: -11px; cursor: nwse-resize; }
 .crop-size { margin: 0; text-align: center; }
+
+/* the Warden's own saved maps, after the built-in ones */
+.preset-mine { position: relative; }
+.preset-mine > button { width: 100%; }
+.pm-tools { position: absolute; top: 4px; right: 4px; display: flex; gap: 4px; }
+.pm-tools button { width: 28px; height: 28px; display: grid; place-items: center; padding: 0; border: 1.5px solid var(--ink); border-radius: 50%; background: var(--surface); color: var(--ink); cursor: pointer; font: var(--fs-md)/1 var(--display); }
+.pm-tools button .gl { width: 15px; height: 15px; }

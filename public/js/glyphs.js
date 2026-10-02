@@ -64,6 +64,7 @@ const G = {
   // a padlock
   lock: `<rect ${S} x="5" y="10.5" width="14" height="10" rx="2"/><path ${S} d="M8 10.5V7.8a4 4 0 0 1 8 0v2.7"/><path ${S} d="M12 14.4v2.3"/>`,
   // a wrench (upgrades, repairs)
+  pencil: `<path ${S} d="M4 20l1-4L16 5l3 3L8 19l-4 1z"/><path ${S} d="M14 7l3 3"/>`,
   wrench: `<path ${S} d="M14.7 3.4a5 5 0 0 0-5.3 6.5L3.6 15.7a2 2 0 0 0 2.8 2.8l5.8-5.8a5 5 0 0 0 6.5-5.3l-3 3-2.7-.6-.6-2.7z"/>`,
   // a cowboy hat (the posse)
   hat: `<path ${F} d="M8.6 5.5c1.1-.9 2.2.3 3.4.3s2.3-1.2 3.4-.3c1 .9 1.4 4.3 1.5 7.3H7.1c.1-3 .5-6.4 1.5-7.3z"/><path ${F} d="M2 12.4c1.5 2.4 5 3.9 10 3.9s8.5-1.5 10-3.9c-.4 3.2-4.3 5.8-10 5.8S2.4 15.6 2 12.4z"/>`,

@@ -1,4 +1,4 @@
-import { $, esc, api, startPolling, toast, mountNav, tryWarden, forgetWarden, savedPin, TV, wardenModal, rollPopup, abilityOptions, abilityTargetsHTML, abilityBody, ask, pickFighters, isPool } from './common.js';
+import { $, esc, api, startPolling, toast, mountNav, tryWarden, forgetWarden, savedPin, TV, wardenModal, rollPopup, abilityOptions, abilityTargetsHTML, abilityBody, ask, askText, pickFighters, isPool } from './common.js';
 import { gl } from './glyphs.js';
 import { play, weaponSound, preload } from './sound.js';
 preload('steps', 'hooves', 'melee', 'bow', 'shotgun', 'boomSmall', 'boomMedium', 'boomLarge', 'fsBurst', 'fsReadout', 'fsSweep', 'fsScan');
@@ -184,7 +184,7 @@ let gridKey = '';
 function renderStage() {
   const { map, grid } = data;
   stage.style.width = `${map.w}px`; stage.style.height = `${map.h}px`;
-  const src = map.kind === 'upload' ? `/api/battle?view=img&v=${map.imgV}` : `/img/battle/${map.id}.webp`;
+  const src = map.kind === 'upload' ? mapImg(map) : `/img/battle/${map.id}.webp`;
   const bg = $('#bg');
   if (bg.getAttribute('src') !== src) { bg.src = src; bg.width = map.w; bg.height = map.h; pz.setSize(map.w, map.h); pz.fit(); }
   const key = `${map.w}x${map.h}|${grid.ppi}|${grid.dx}|${grid.dy}|${grid.show}|${grid.opacity}`;
@@ -911,13 +911,29 @@ function wireAttack(box, sel) {
   });
 }
 
+// a saved map's picture (the old single upload has no id of its own)
+const mapImg = (m, thumb) => `/api/battle?view=img${m.id && m.id !== 'upload' ? `&id=${m.id}` : ''}${thumb && m.thumb ? '&thumb=1' : ''}&v=${m.imgV}`;
+
 function renderWarden() {
   $('#setup-btn').hidden = !warden;
   if (!warden) { $('#setup').hidden = true; return; }
   const pre = $('#presets');
   pre.innerHTML = data.presets.map((p) => `<button type="button" data-preset="${p.id}" aria-pressed="${data.map.kind === 'preset' && data.map.id === p.id}">
-    <img src="${p.thumb}" alt="" loading="lazy"><span>${esc(p.name)}</span></button>`).join('');
+    <img src="${p.thumb}" alt="" loading="lazy"><span>${esc(p.name)}</span></button>`).join('')
+    + (data.maps || []).map((m) => `<div class="preset-mine"><button type="button" data-mymap="${esc(m.id)}" aria-pressed="${data.map.kind === 'upload' && data.map.id === m.id}">
+      <img src="${mapImg(m, true)}" alt="" loading="lazy"><span>${esc(m.name)}</span></button>
+      <span class="pm-tools"><button type="button" data-map-rename="${esc(m.id)}" title="Rename" aria-label="Rename ${esc(m.name)}">${gl('pencil')}</button><button type="button" data-map-remove="${esc(m.id)}" title="Remove" aria-label="Remove ${esc(m.name)}">×</button></span></div>`).join('');
   pre.querySelectorAll('[data-preset]').forEach((b) => b.addEventListener('click', () => act({ action: 'preset', id: b.dataset.preset }, 'Map changed.')));
+  pre.querySelectorAll('[data-mymap]').forEach((b) => b.addEventListener('click', () => act({ action: 'useMap', id: b.dataset.mymap }, 'Map changed.')));
+  pre.querySelectorAll('[data-map-rename]').forEach((b) => b.addEventListener('click', async () => {
+    const m = data.maps.find((x) => x.id === b.dataset.mapRename); if (!m) return;
+    const name = await askText('Name this map:', m.name);
+    if (name?.trim()) act({ action: 'renameMap', id: m.id, name }, 'Renamed.');
+  }));
+  pre.querySelectorAll('[data-map-remove]').forEach((b) => b.addEventListener('click', async () => {
+    const m = data.maps.find((x) => x.id === b.dataset.mapRemove); if (!m) return;
+    if (await ask(`Remove “${m.name}” from your maps? The picture is deleted, and this can’t be undone.`, { ok: 'Remove it', danger: true })) act({ action: 'removeMap', id: m.id }, 'Map removed.');
+  }));
   if (document.activeElement?.id !== 'g-ppi') $('#g-ppi').value = data.grid.ppi;
   if (document.activeElement?.id !== 'g-op') $('#g-op').value = data.grid.opacity;
   $('#g-show').checked = data.grid.show;
@@ -1068,6 +1084,8 @@ $('#upload').addEventListener('change', async (e) => {
     const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = URL.createObjectURL(file); });
     const cut = await cropImage(img);
     if (!cut) return;
+    const name = await askText('Name this map:', file.name.replace(/\.[^.]+$/, '').replace(/[-_]+/g, ' ').slice(0, 60));
+    if (name === null) return;
     toast('Preparing the map…');
     const scale = Math.min(1, 3000 / Math.max(cut.sw, cut.sh));
     const w = Math.round(cut.sw * scale), h = Math.round(cut.sh * scale);
@@ -1075,7 +1093,10 @@ $('#upload').addEventListener('change', async (e) => {
     c.getContext('2d').drawImage(img, cut.sx, cut.sy, cut.sw, cut.sh, 0, 0, w, h);
     let q = 0.82, data64 = c.toDataURL('image/jpeg', q);
     while (data64.length > 2_700_000 && q > 0.4) { q -= 0.1; data64 = c.toDataURL('image/jpeg', q); }
-    await act({ action: 'upload', data: data64, name: file.name.replace(/\.[^.]+$/, ''), w, h, inches: 36 }, 'Map uploaded.');
+    // a small copy for the map picker
+    const tw = 360, th = Math.round(tw * h / w), tc = document.createElement('canvas'); tc.width = tw; tc.height = th;
+    tc.getContext('2d').drawImage(c, 0, 0, tw, th);
+    await act({ action: 'upload', data: data64, thumb: tc.toDataURL('image/jpeg', 0.7), name: name.trim() || 'My map', w, h, inches: 36 }, `“${name.trim() || 'My map'}” saved to your maps.`);
   } catch { toast('Couldn’t read that image.', true); }
 });
 
