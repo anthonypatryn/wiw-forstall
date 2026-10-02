@@ -1230,3 +1230,11 @@ body .fs-dig-row .num-wrap .fs-dig { width: 100%; }
 
 .lock-spares { margin: 8px 0 0; text-align: center; font-size: var(--fs-sm); opacity: .9; }
 .lock-spares .gl { width: 1em; height: 1em; vertical-align: -2px; }
+
+/* the Forstall frequency guess in its own window (battle.js openGuess) */
+.fs-guess-modal { width: min(560px, 100%); }
+.fs-guess-modal h2 .gl { width: 1em; height: 1em; vertical-align: -3px; }
+.fs-guess-modal .fs-dig-row { display: flex; gap: 8px; justify-content: center; margin: 8px 0 12px; }
+.fs-guess-modal .fs-dig { width: 3em; height: 3.2em; text-align: center; font: var(--fs-2xl) var(--type, var(--display)); }
+.fs-guess-modal .fs-dias { justify-content: center; }
+.fs-guess-modal [data-fs-guess] { width: 100%; justify-content: center; }
