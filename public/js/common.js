@@ -359,7 +359,7 @@ export function mountNav(active) {
     </div>
     <div class="needs-list" hidden></div>
     <div class="needs-list undo-list" hidden></div>
-    <div class="nav-sheet" hidden><nav aria-label="All pages">${all.map(([h, l]) => (h && h.startsWith('<b>') ? `<div class="nav-sheet-h">${h}</div>` : link(h, esc(l)))).join('')}<button type="button" data-rule="">Look up a rule</button><button type="button" data-settings>Settings</button>${link('/howto', 'How to Play')}<div class="nav-sheet-h">Sound</div><div class="nav-sheet-sound"><button type="button" class="nav-sound-sheet">${isMuted() ? 'Sound is off — turn on' : 'Sound is on — mute'}</button><input type="range" min="0" max="1" step="0.05" value="${volume()}" aria-label="Volume" class="nav-vol"></div>${on ? '<div class="nav-sheet-h">Warden</div><a href="/run#grp-tools">Backup &amp; homebrew</a><button type="button" data-player>Switch to player view</button>' : ''}</nav></div>`;
+    <div class="nav-sheet" hidden><nav aria-label="All pages">${all.map(([h, l]) => (h && h.startsWith('<b>') ? `<div class="nav-sheet-h">${h}</div>` : link(h, esc(l)))).join('')}<button type="button" data-rule="">Look up a rule</button><button type="button" data-settings>Settings</button><button type="button" data-bugreport>Report a bug</button>${link('/howto', 'How to Play')}<div class="nav-sheet-h">Sound</div><div class="nav-sheet-sound"><button type="button" class="nav-sound-sheet">${isMuted() ? 'Sound is off — turn on' : 'Sound is on — mute'}</button><input type="range" min="0" max="1" step="0.05" value="${volume()}" aria-label="Volume" class="nav-vol"></div>${on ? '<div class="nav-sheet-h">Warden</div><a href="/run#grp-tools">Backup &amp; homebrew</a><button type="button" data-player>Switch to player view</button>' : ''}</nav></div>`;
   wireNav(el, on);
   // other sticky bars (sheet toolbar, contents bars) sit just under the nav
   const navH = () => document.documentElement.style.setProperty('--nav-h', `${el.offsetHeight}px`);
@@ -382,6 +382,7 @@ if (!window.__ruleClicks) {
 }
 function wireNav(el, on) {
   el.querySelectorAll('[data-settings]').forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); el.querySelector('.nav-sheet').hidden = true; document.body.classList.remove('nav-open'); openSettings(); }));
+  el.querySelectorAll('[data-bugreport]').forEach((b) => b.addEventListener('click', (e) => { e.stopPropagation(); el.querySelector('.nav-sheet').hidden = true; document.body.classList.remove('nav-open'); import('./bugreport.js').then((m) => m.openBugReport()); }));
   const closeAll = (except) => el.querySelectorAll('.nav-group').forEach((g) => { if (g !== except) { g.querySelector('.nav-menu').hidden = true; g.querySelector('.nav-drop').setAttribute('aria-expanded', 'false'); } });
   el.querySelectorAll('.nav-group').forEach((g) => g.querySelector('.nav-drop').addEventListener('click', (e) => {
     e.stopPropagation();

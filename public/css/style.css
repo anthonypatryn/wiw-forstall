@@ -1215,3 +1215,8 @@ body .fs-dig-row .num-wrap .fs-dig { width: 100%; }
 .item-dice .id-step span { font: var(--fs-sm) var(--display); }
 .item-dice .id-step.gold b { color: var(--ink); text-shadow: 0 0 6px var(--brass); }
 .item-dice input { flex: 1 1 160px; min-width: 0; padding: 6px 8px; border: 1px solid var(--ink-faint); border-radius: var(--r-sm); background: var(--surface); font: var(--fs-sm) var(--body); }
+
+/* bug reports (js/bugreport.js; the Warden's list in desk.js) */
+.bug-modal { width: min(520px, 100%); }
+.bug-modal textarea, .bug-modal select { width: 100%; box-sizing: border-box; }
+.bug-row .bug-what { margin: 4px 0; white-space: pre-wrap; }

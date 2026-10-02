@@ -209,13 +209,42 @@ $('#restore-file')?.addEventListener('change', async (e) => {
   catch (err) { toast(err.message, true); }
 });
 
+// ---------- Bug reports (Menu → Report a bug) ----------
+let bugsShowFixed = false;
+function renderBugs(bugs) {
+  const box = $('#bugs'); if (!box) return;
+  const names = Object.fromEntries((getCombat?.()?.posse || []).map((p) => [p.id, p.name]));
+  const open = bugs.filter((b) => b.status !== 'fixed'), fixed = bugs.filter((b) => b.status === 'fixed');
+  $('#bugs-count').textContent = open.length ? `${open.length} open` : '';
+  const row = (b) => `<div class="notice bug-row${b.status === 'fixed' ? ' ck-finished' : b.blocking ? ' urgent' : ''}"><div class="ck-body">
+      <b>BUG-${b.no} · ${esc(b.kind)} · ${esc(b.area)}</b>${b.blocking ? ' <span class="pill hot">blocking</span>' : ''}${b.status === 'fixed' ? ' <span class="pill ok">fixed</span>' : ''}
+      <p class="bug-what">${esc(b.what)}</p>${b.expected ? `<p class="muted small-text">Expected: ${esc(b.expected)}</p>` : ''}${b.steps ? `<p class="muted small-text">Steps: ${esc(b.steps)}</p>` : ''}
+      <div class="muted prob-meta">${esc(names[b.who] || b.who || 'someone')} · ${esc(b.page)} · ${esc(timeAgo(b.at))}${b.fixNote ? ` · <i>${esc(b.fixNote)}</i>` : ''}</div></div>
+      <div class="ck-btns"><button type="button" class="btn small secondary" data-bug-copy="${b.no}">Copy for Claude</button>${b.status === 'fixed' ? `<button type="button" class="btn small secondary" data-bug-reopen="${b.no}">Reopen</button>` : `<button type="button" class="btn small secondary" data-bug-fix="${b.no}">Mark fixed</button>`}<button type="button" class="btn small secondary danger" data-bug-rm="${b.no}" aria-label="Delete BUG-${b.no}">×</button></div></div>`;
+  box.innerHTML = (open.length ? open.map(row).join('') : '<p class="muted">No open bugs.</p>')
+    + (fixed.length ? `<button type="button" class="btn small secondary" data-bug-fixed>${bugsShowFixed ? 'Hide' : 'Show'} ${fixed.length} fixed</button>${bugsShowFixed ? fixed.map(row).join('') : ''}` : '');
+  box.onclick = async (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    const d = b.dataset, bug = bugs.find((x) => String(x.no) === (d.bugCopy || d.bugFix || d.bugReopen || d.bugRm));
+    try {
+      if (d.bugFixed !== undefined) { bugsShowFixed = !bugsShowFixed; renderBugs(bugs); return; }
+      if (d.bugCopy) { const { bugText } = await import('./bugreport.js'); await navigator.clipboard.writeText(bugText(bug, names)); toast(`BUG-${bug.no} copied. Paste it to Claude.`); return; }
+      if (d.bugFix) { await api('POST', { action: 'bugFix', no: bug.no }, '', '/api/problems'); toast(`BUG-${bug.no} marked fixed.`); }
+      if (d.bugReopen) await api('POST', { action: 'bugReopen', no: bug.no }, '', '/api/problems');
+      if (d.bugRm) { if (!await ask(`Delete BUG-${bug.no}?`, { ok: 'Delete it' })) return; await api('POST', { action: 'bugRemove', no: bug.no }, '', '/api/problems'); }
+      renderProblems();
+    } catch (err) { toast(err.message, true); }
+  };
+}
+
 // ---------- Problems: errors reported from anyone's screen ----------
 async function renderProblems() {
   const box = $('#problems');
   if (!box) return;
   let r;
   try { r = await api('GET', null, '', '/api/problems'); } catch { return; }
-  const fresh = r.list.filter((x) => x.last > (r.seenAt || 0)).length;
+  renderBugs(r.bugs || []);
+  const fresh = r.list.filter((x) => x.last > (r.seenAt || 0)).length + (r.bugs || []).filter((b) => b.status !== 'fixed' && b.at > (r.seenAt || 0)).length;
   const badge = $('#rn-tools'); if (badge) { badge.hidden = !fresh; badge.textContent = fresh; }
   const names = Object.fromEntries((getCombat?.()?.posse || []).map((p) => [p.id, p.name]));
   const who = (w) => String(w || '').split(', ').map((x) => names[x] || x).filter(Boolean).join(', ');
