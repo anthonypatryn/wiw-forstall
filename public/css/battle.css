@@ -554,3 +554,13 @@ body.tv-mode .viewport { height: 100vh; border: 0; cursor: default; }
 
 .tp-read { display: flex; flex-wrap: wrap; gap: 6px; }
 .tp-read .btn small { margin-left: 4px; opacity: .75; }
+
+/* painting: the brush outline (BUG-2) and the movable paint bar (BUG-1) */
+.brush .brush-outline { fill: rgba(255,255,255,.22); stroke: #fff; stroke-width: 2.5; vector-effect: non-scaling-stroke; stroke-dasharray: 6 3; filter: drop-shadow(0 0 2px rgba(0,0,0,.9)); }
+.brush .brush-outline.erase { fill: rgba(255,120,90,.12); stroke: #ffb39f; }
+.paint-bar.moved { transform: none; }
+.paint-bar.dragging { opacity: .85; }
+.pb-grip { display: grid; grid-template-columns: repeat(3, 4px); gap: 3px; padding: 6px 4px; cursor: grab; touch-action: none; }
+.pb-grip i { width: 4px; height: 4px; border-radius: 50%; background: currentColor; opacity: .55; }
+.pb-grip i:nth-child(n) { box-shadow: 0 7px 0 currentColor; }
+.paint-bar.dragging .pb-grip { cursor: grabbing; }

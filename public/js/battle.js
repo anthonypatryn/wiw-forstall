@@ -439,27 +439,60 @@ function paintBar() {
   const b = $('#paint-bar');
   b.hidden = !paint.layer;
   if (!paint.layer) return;
-  b.innerHTML = `<b>${paint.layer === 'fog' ? 'FOG OF WAR' : 'ROUGH TERRAIN'}</b>
+  b.innerHTML = `<span class="pb-grip" data-pb-grip title="Drag to move this bar" aria-label="Move this bar"><i></i><i></i><i></i></span><b>${paint.layer === 'fog' ? 'FOG OF WAR' : 'ROUGH TERRAIN'}</b>
     <div class="chip-row">${[[true, paint.layer === 'fog' ? 'Hide' : 'Paint'], [false, paint.layer === 'fog' ? 'Reveal' : 'Erase']].map(([v, l]) => `<button type="button" class="chip-btn${paint.on === v ? ' on' : ''}" data-pb-on="${v}">${l}</button>`).join('')}</div>
     <div class="chip-row"><span>Brush</span>${[1, 2, 4].map((n) => `<button type="button" class="chip-btn${paint.size === n ? ' on' : ''}" data-pb-size="${n}">${n === 1 ? 'Small' : n === 2 ? 'Medium' : 'Large'}</button>`).join('')}</div>
     <small>Drag on the map. Scroll to zoom.</small>
     <button type="button" class="btn small" data-pb-done>Done</button>`;
   b.querySelectorAll('[data-pb-on]').forEach((x) => x.addEventListener('click', () => { paint.on = x.dataset.pbOn === 'true'; paintBar(); }));
   b.querySelectorAll('[data-pb-size]').forEach((x) => x.addEventListener('click', () => { paint.size = Number(x.dataset.pbSize); paintBar(); }));
-  b.querySelector('[data-pb-done]').addEventListener('click', () => { paint.layer = null; vp.classList.remove('painting'); paintBar(); $('#map-tools').hidden = !warden; toast('Done painting.'); });
+  b.querySelector('[data-pb-done]').addEventListener('click', () => { paint.layer = null; vp.classList.remove('painting'); paintBar(); brushPreview(null); $('#map-tools').hidden = !warden; toast('Done painting.'); });
 }
+// BUG-1: drag the paint bar out of the way by its grip; it stays put (within the map) until the page reloads
+(() => {
+  const bar = $('#paint-bar'); let drag = null;
+  bar.addEventListener('pointerdown', (e) => {
+    if (!e.target.closest('[data-pb-grip]')) return;
+    e.preventDefault(); e.stopPropagation();
+    const r = bar.getBoundingClientRect(), v = vp.getBoundingClientRect();
+    drag = { dx: e.clientX - r.left, dy: e.clientY - r.top, v };
+    bar.setPointerCapture(e.pointerId); bar.classList.add('moved', 'dragging');
+  });
+  bar.addEventListener('pointermove', (e) => {
+    if (!drag) return;
+    const { v } = drag, w = bar.offsetWidth, h = bar.offsetHeight;
+    bar.style.left = `${Math.max(4, Math.min(v.width - w - 4, e.clientX - v.left - drag.dx))}px`;
+    bar.style.top = `${Math.max(4, Math.min(v.height - h - 4, e.clientY - v.top - drag.dy))}px`;
+  });
+  const stop = () => { drag = null; bar.classList.remove('dragging'); };
+  bar.addEventListener('pointerup', stop); bar.addEventListener('pointercancel', stop);
+})();
 function startPaint(layer) { paint.layer = layer; paint.on = true; $('#setup').hidden = true; vp.classList.add('painting'); select(null); paintBar(); $('#map-tools').hidden = true; }
-function brushAt(cx, cy) {
-  const pt = pz.toStage(cx, cy), h = toHex(pt.x, pt.y), r = paint.size - 1;
-  const key = `${paint.layer}`, set = new Set(data[key] || []);
+// the hexes the brush covers with its middle at this screen point
+function brushCells(cx, cy) {
+  const pt = pz.toStage(cx, cy), h = toHex(pt.x, pt.y), r = paint.size - 1, out = [];
   for (let row = h.row - r; row <= h.row + r; row++) for (let col = h.col - r - 1; col <= h.col + r + 1; col++) {
     if (row < 0 || col < 0 || row >= data.size.rows || col >= data.size.cols || dist(h, { col, row }) > r) continue;
+    out.push([col, row]);
+  }
+  return out;
+}
+function brushAt(cx, cy) {
+  const key = `${paint.layer}`, set = new Set(data[key] || []);
+  for (const [col, row] of brushCells(cx, cy)) {
     const k = `${col},${row}`;
     if (paint.on) set.add(k); else set.delete(k);
     paint.cells.set(k, [col, row]);
   }
   data[key] = [...set];
   renderTerrain();
+}
+// BUG-2: an outline of exactly what the brush will paint (or erase), following the pointer
+function brushPreview(cx, cy) {
+  const svg = $('#brush'); if (!svg || !data) return;
+  if (!paint.layer || cx == null) { svg.innerHTML = ''; return; }
+  svg.setAttribute('width', data.map.w); svg.setAttribute('height', data.map.h);
+  svg.innerHTML = `<path class="brush-outline${paint.on ? '' : ' erase'}" d="${brushCells(cx, cy).map(([c, r]) => hexPath(c, r)).join('')}"/>`;
 }
 let painting = false;
 vp.addEventListener('pointerdown', (e) => {
@@ -468,7 +501,11 @@ vp.addEventListener('pointerdown', (e) => {
   painting = true; paint.cells.clear(); brushAt(e.clientX, e.clientY);
   try { vp.setPointerCapture(e.pointerId); } catch {}
 }, true);
-vp.addEventListener('pointermove', (e) => { if (painting) { e.stopImmediatePropagation(); brushAt(e.clientX, e.clientY); } }, true);
+vp.addEventListener('pointermove', (e) => {
+  if (paint.layer && !e.target.closest('.map-ctrls, .map-tools, .paint-bar, .fcard, .side-toggle')) brushPreview(e.clientX, e.clientY); else brushPreview(null);
+  if (painting) { e.stopImmediatePropagation(); brushAt(e.clientX, e.clientY); }
+}, true);
+vp.addEventListener('pointerleave', () => brushPreview(null));
 const paintEnd = async (e) => {
   if (!painting) return;
   e?.stopImmediatePropagation?.();
