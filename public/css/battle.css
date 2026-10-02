@@ -564,3 +564,7 @@ body.tv-mode .viewport { height: 100vh; border: 0; cursor: default; }
 .pb-grip i { width: 4px; height: 4px; border-radius: 50%; background: currentColor; opacity: .55; }
 .pb-grip i:nth-child(n) { box-shadow: 0 7px 0 currentColor; }
 .paint-bar.dragging .pb-grip { cursor: grabbing; }
+
+.d-aim { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin: 6px 0 2px; font-size: var(--fs-sm); }
+.d-aim span { margin-right: 4px; }
+.d-aim .chip-btn { min-width: 34px; padding: 4px 6px 2px; font-size: var(--fs-lg); }

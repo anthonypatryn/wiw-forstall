@@ -1791,3 +1791,17 @@ test('Aces in the turn-order roll count; Read Health costs 1 Grit in a fight', (
   publicAction(state, { action: 'pc', id: a.id, op: 'readHealth', enemy: state.enemies[0].id }, { warden: false });
   assert.equal(pc.grit, before - 1);
 });
+
+test('A flashlight is a cone the way it points; a lantern lights all around', async () => {
+  const { inLight } = await import('../lib/battle.js');
+  const f = { col: 10, row: 10, light: 'flashlight', lightDir: 0 }; // pointing right
+  assert.equal(inLight(f, { col: 15, row: 10 }), true);
+  assert.equal(inLight(f, { col: 17, row: 10 }), false, 'past 6″');
+  assert.equal(inLight(f, { col: 6, row: 10 }), false, 'behind it');
+  assert.equal(inLight(f, { col: 10, row: 14 }), false, 'off to the side');
+  assert.equal(inLight({ ...f, lightDir: 3 }, { col: 6, row: 10 }), true, 'turned around');
+  const l = { col: 10, row: 10, light: 'lantern' };
+  assert.equal(inLight(l, { col: 7, row: 10 }), true);
+  assert.equal(inLight(l, { col: 10, row: 13 }), true);
+  assert.equal(inLight(l, { col: 14, row: 10 }), false);
+});

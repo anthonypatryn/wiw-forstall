@@ -324,9 +324,10 @@ function renderPanel() {
       ${(() => { // lights: a clear button per light (the Warden can light any token; a player their own, from their Inventory)
         const kinds = warden ? ['lantern', 'flashlight'] : sel.kind === 'pc' && sel.ref === myId() ? sel.lights || [] : [];
         const word = (k) => (k === 'lantern' ? 'lantern' : 'flashlight'), reach = (k) => (k === 'lantern' ? '3″' : '6″');
-        if (kinds.length) return `<div class="d-light">${kinds.map((k) => sel.light === k
+        const aim = sel.light === 'flashlight' && kinds.includes('flashlight') ? `<div class="d-aim"><span>Point it</span>${['→', '↘', '↙', '←', '↖', '↗'].map((ar, i) => `<button type="button" class="chip-btn${(sel.lightDir || 0) === i ? ' on' : ''}" data-light="${esc(sel.id)}" data-v="flashlight" data-dir="${i}" aria-label="Point it ${['right', 'down-right', 'down-left', 'left', 'up-left', 'up-right'][i]}">${ar}</button>`).join('')}</div>` : '';
+        if (kinds.length) return aim + `<div class="d-light">${kinds.map((k) => sel.light === k
           ? `<button type="button" class="btn small on" data-light="${esc(sel.id)}" data-v="">${gl('bulb')} Put out the ${word(k)}</button>`
-          : `<button type="button" class="btn small secondary" data-light="${esc(sel.id)}" data-v="${k}">${gl('bulb')} Light ${warden ? 'a' : 'your'} ${word(k)} <small>${reach(k)} through fog</small></button>`).join('')}</div>`;
+          : `<button type="button" class="btn small secondary" data-light="${esc(sel.id)}" data-v="${k}">${gl('bulb')} Light ${warden ? 'a' : 'your'} ${word(k)} <small>${k === 'flashlight' ? `${reach(k)} beam` : `${reach(k)} all around`}</small></button>`).join('')}</div>`;
         return sel.light ? `<p class="d-mount">${gl('bulb')} Their ${sel.light} is lit</p>` : '';
       })()}
       ${sel.mechHp ? `<div class="d-hp mech"><span class="bar"><i style="width:${Math.max(0, Math.min(100, sel.mechHp.health / Math.max(1, sel.mechHp.maxHealth) * 100))}%"></i></span><b>Mech ${sel.mechHp.health}/${sel.mechHp.maxHealth}${sel.mechHp.state ? ` · ${esc(sel.mechHp.state)}` : ''}</b></div>` : ''}
@@ -348,7 +349,7 @@ function renderPanel() {
       ${others.length ? others.map(({ t, d }) => `<div class="tok-row" data-pick="${t.id}"><span class="chip" style="background:${color(t)}">${esc(initials(t.name))}</span>
         <span class="n">${esc(t.name)}</span><span class="d ${band(d)}">${d}″ · ${BAND_LABEL[band(d)]}</span></div>`).join('') : '<p class="muted">Nobody else on the board.</p>'}</details></div>`;
     if (actor) wireTurnBar(box, actor.cur, actor.tok); else wireFs(box);
-    box.querySelectorAll('[data-light]').forEach((b) => b.addEventListener('click', () => { b.disabled = true; act({ action: 'light', id: b.dataset.light, light: b.dataset.v, pc: myId() }, b.dataset.v ? `The ${b.dataset.v} is lit.` : 'The light’s out.'); }));
+    box.querySelectorAll('[data-light]').forEach((b) => b.addEventListener('click', () => { b.disabled = true; act({ action: 'light', id: b.dataset.light, light: b.dataset.v, pc: myId(), ...(b.dataset.dir !== undefined ? { dir: Number(b.dataset.dir) } : {}) }, b.dataset.dir !== undefined ? 'Pointed.' : b.dataset.v ? `The ${b.dataset.v} is lit.` : 'The light’s out.'); }));
     box.querySelector('[data-mount]')?.addEventListener('change', async (e) => {
       try {
         await api('POST', { action: 'pc', id: e.target.dataset.mount, op: 'mount', value: e.target.value }, '', '/api/combat');
