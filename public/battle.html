@@ -13,9 +13,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Rye&family=Special+Elite&family=Reenie+Beanie&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=141">
-  <link rel="stylesheet" href="/css/fighter.css?v=60">
-  <link rel="stylesheet" href="/css/battle.css?v=101">
+  <link rel="stylesheet" href="/css/style.css?v=142">
+  <link rel="stylesheet" href="/css/fighter.css?v=61">
+  <link rel="stylesheet" href="/css/battle.css?v=102">
 </head>
 <body>
   <header class="masthead">
@@ -71,7 +71,7 @@
     <div class="modal setup-modal" role="dialog" aria-modal="true" aria-label="Map setup">
       <div class="setup-h"><b>MAP SETUP</b><button type="button" class="setup-x" data-setup-x aria-label="Close">×</button></div>
       <div class="setup-tabs" role="tablist">
-        <button type="button" role="tab" data-stab="map" class="on">Map</button><button type="button" role="tab" data-stab="grid">Grid</button><button type="button" role="tab" data-stab="fs">Forstalls</button><button type="button" role="tab" data-stab="terrain">Terrain &amp; fog</button><button type="button" role="tab" data-stab="npc">NPC tokens</button>
+        <button type="button" role="tab" data-stab="map" class="on">Map</button><button type="button" role="tab" data-stab="grid">Grid</button><button type="button" role="tab" data-stab="fs">Forstalls</button><button type="button" role="tab" data-stab="terrain">Terrain &amp; fog</button><button type="button" role="tab" data-stab="npc">Tokens</button>
       </div>
       <div class="setup-b">
         <div data-spane="map">
@@ -111,6 +111,7 @@
         </div>
         <div data-spane="npc" hidden>
           <form class="npc-add" id="npc-add"><input id="npc-name" maxlength="40" placeholder="NPC name" aria-label="NPC name"><button class="btn small secondary" type="submit">+ NPC token</button></form>
+          <div class="field-step tok-back"><span>PUT BACK ON THE MAP <small>the posse and enemies who aren’t on the board</small></span><div class="chip-row" id="tok-back"></div></div>
           <p class="muted fs-note">The posse and enemies get their tokens automatically when a fight starts, or when you add enemies.</p>
           <button class="btn small secondary danger" id="clear" type="button">Clear every token</button>
         </div>
@@ -118,6 +119,6 @@
     </div>
   </div>
 
-  <script type="module" src="/js/battle.js?v=171"></script>
+  <script type="module" src="/js/battle.js?v=172"></script>
 </body>
 </html>

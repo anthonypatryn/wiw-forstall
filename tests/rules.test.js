@@ -1545,3 +1545,16 @@ test('saved battle maps', async () => {
   assert.equal(s.maps.length, 0);
   assert.equal(s.map.kind, 'preset');
 });
+
+// putting a removed character back on the Battle Map: one token each, and the "taken off" mark is cleared
+test('put a removed token back', async () => {
+  const { freshBattle, battleAction } = await import('../lib/battle.js');
+  const s = freshBattle();
+  const t = battleAction(s, { action: 'addToken', kind: 'pc', ref: 'p1', name: 'Lila' }, { warden: true });
+  battleAction(s, { action: 'removeToken', id: t.id }, { warden: true });
+  assert.deepEqual(s.removed, ['p1']);
+  battleAction(s, { action: 'addToken', kind: 'pc', ref: 'p1', name: 'Lila' }, { warden: true });
+  battleAction(s, { action: 'addToken', kind: 'pc', ref: 'p1', name: 'Lila' }, { warden: true });
+  assert.equal(s.tokens.filter((x) => x.ref === 'p1').length, 1);
+  assert.deepEqual(s.removed, []);
+});

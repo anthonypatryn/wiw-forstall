@@ -934,6 +934,12 @@ function renderWarden() {
     const m = data.maps.find((x) => x.id === b.dataset.mapRemove); if (!m) return;
     if (await ask(`Remove “${m.name}” from your maps? The picture is deleted, and this can’t be undone.`, { ok: 'Remove it', danger: true })) act({ action: 'removeMap', id: m.id }, 'Map removed.');
   }));
+  // anyone in the posse or a live enemy without a token (taken off, or no fight yet) can be put back
+  const onBoard = new Set(data.tokens.map((t) => t.ref).filter(Boolean));
+  const off = [...(combat?.posse || []).filter((p) => !p.dead && !onBoard.has(p.id)).map((p) => ({ kind: 'pc', ref: p.id, name: p.name })),
+    ...(combat?.enemies || []).filter((e) => !e.defeated && !e.out && !onBoard.has(e.id)).map((e) => ({ kind: 'enemy', ref: e.id, name: e.name }))];
+  $('#tok-back').innerHTML = off.length ? off.map((x) => `<button type="button" class="chip-btn" data-tok-back="${esc(x.ref)}" data-kind="${x.kind}">+ ${esc(x.name)}<small>${x.kind === 'pc' ? 'posse' : 'enemy'}</small></button>`).join('')
+    : '<span class="muted small-text">Everyone’s on the board.</span>';
   if (document.activeElement?.id !== 'g-ppi') $('#g-ppi').value = data.grid.ppi;
   if (document.activeElement?.id !== 'g-op') $('#g-op').value = data.grid.opacity;
   $('#g-show').checked = data.grid.show;
@@ -1066,6 +1072,12 @@ function sideOpen(on) {
 }
 $('#side-toggle').addEventListener('click', () => sideOpen($('.battle-wrap').classList.contains('side-closed')));
 try { if (localStorage.getItem('wiw.bmSide') === '0') sideOpen(false); } catch {}
+$('#tok-back').addEventListener('click', (e) => {
+  const b = e.target.closest('[data-tok-back]'); if (!b) return;
+  const who = [...(combat?.posse || []), ...(combat?.enemies || [])].find((x) => x.id === b.dataset.tokBack);
+  b.disabled = true;
+  act({ action: 'addToken', kind: b.dataset.kind, ref: b.dataset.tokBack, name: who?.name || '' }, `${who?.name || 'They'}’s back on the map.`);
+});
 $('#npc-add').addEventListener('submit', async (e) => {
   e.preventDefault();
   const name = $('#npc-name').value.trim();
@@ -1432,7 +1444,7 @@ let toured = false;
 function connect() {
   poller?.stop();
   combatPoller?.stop();
-  combatPoller = startPolling(warden ? 'warden' : 'player', (d) => { combat = d; renderTurnBar(); if (data && !dragging) renderPanel(); }, null, '/api/combat');
+  combatPoller = startPolling(warden ? 'warden' : 'player', (d) => { combat = d; renderTurnBar(); if (data && !dragging) { renderPanel(); if (warden) renderWarden(); } }, null, '/api/combat');
   poller = startPolling(warden ? 'warden' : 'player', (d) => {
     data = d;
     if (selected && !data.tokens.some((t) => t.id === selected)) selected = null;
