@@ -9,7 +9,7 @@ const done = (key) => store.get(`wiw.tour.${key}`, false);
 export function runTour(steps, key, { force = false, scene = false, tries = 0 } = {}) {
   if (savedPin() || (!force && done(key)) || document.querySelector('.tour-back')) return;
   // something else is asking for attention (the turn-order pop-up, a confirm, the paper, a game): wait for it, then start
-  const busy = `.hud-pop-back, .ask-back, .roll-pop, .paper-back, .ho-back, .lock-back, .duel-back${scene ? '' : ', .saloon-back, .cv-back'}`;
+  const busy = `.hud-pop-back, .hud-check, .ask-back, .roll-pop, .paper-back, .ho-back, .lock-back, .duel-back${scene ? '' : ', .saloon-back, .cv-back'}`;
   if ([...document.querySelectorAll(busy)].some((x) => !x.hidden && x.getClientRects().length)) {
     if (tries < 40) setTimeout(() => runTour(steps, key, { force, scene, tries: tries + 1 }), 1500);
     return;

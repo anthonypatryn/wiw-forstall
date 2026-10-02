@@ -1204,3 +1204,14 @@ body .fs-dig-row .num-wrap .fs-dig { width: 100%; }
 .snd-h small { font: var(--fs-xs) var(--body); letter-spacing: 0; text-transform: none; }
 .snd-vol { display: grid; gap: 4px; font-size: var(--fs-sm); }
 .snd-vol input { width: 100%; }
+
+/* item dice: + Black / + Gold steppers before a Skill roll (js/itemdice.js) */
+.item-dice { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin: 8px 0; padding: 8px 10px; border: 1px dashed var(--line); border-radius: var(--r-sm); background: var(--wash); color: var(--ink); }
+.item-dice .id-h { flex: 1 1 100%; font: var(--fs-xs) var(--display); letter-spacing: var(--track-label); }
+.item-dice .id-h small { font: var(--fs-xs) var(--body); letter-spacing: 0; color: var(--ink-soft); margin-left: 4px; }
+.item-dice .id-step { display: inline-flex; align-items: center; gap: 4px; }
+.item-dice .id-step button { width: 28px; height: 28px; padding: 0; border: 1.5px solid var(--ink); border-radius: 50%; background: var(--surface); color: var(--ink); font: var(--fs-md)/1 var(--display); cursor: pointer; }
+.item-dice .id-step b { min-width: 1.2em; text-align: center; font: var(--fs-lg) var(--display); }
+.item-dice .id-step span { font: var(--fs-sm) var(--display); }
+.item-dice .id-step.gold b { color: var(--ink); text-shadow: 0 0 6px var(--brass); }
+.item-dice input { flex: 1 1 160px; min-width: 0; padding: 6px 8px; border: 1px solid var(--ink-faint); border-radius: var(--r-sm); background: var(--surface); font: var(--fs-sm) var(--body); }

@@ -1656,3 +1656,16 @@ test('Players light their own lantern or flashlight, if it’s in their Inventor
   battleAction(s, { action: 'light', id: t.id, light: '', pc: a.id }, { warden: false, combat });
   assert.equal(s.tokens[0].light, '');
 });
+
+test('Item dice: added by hand to a called roll or a free Skill roll, and noted in the log', async () => {
+  const state = freshCombat();
+  const a = publicAction(state, { action: 'addPc', trade: 'Hunter', name: 'Tess' }, { warden: true });
+  state.posse[0].skills.nerve = '2B';
+  const ck = publicAction(state, { action: 'checkStart', who: [a.id], skill: 'Nerve', diff: 'Medium' }, { warden: true });
+  const r = publicAction(state, { action: 'pc', id: a.id, op: 'checkRoll', check: ck.id, itemB: 1, itemG: 1, itemFrom: 'lucky horseshoe' }, { warden: false });
+  assert.equal(r.dice.length, 4);
+  assert.match(r.label, /item \+1B1G \(lucky horseshoe\)/);
+  const f = publicAction(state, { action: 'roll', who: a.id, pool: '2B', label: 'Nerve', itemB: 9 }, { warden: false });
+  assert.equal(f.dice.length, 6); // capped at +4
+  assert.match(f.label, /Nerve · item \+4B/);
+});
