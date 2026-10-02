@@ -511,3 +511,9 @@ body.tv-mode .viewport { height: 100vh; border: 0; cursor: default; }
 /* lights: a lit token glows; the Warden sees the lit part of the fog */
 .btoken.lit { box-shadow: 0 0 0 3px rgba(255,214,120,.9), 0 0 28px 10px rgba(255,200,90,.55); }
 .terrain .fog.lit { fill: rgba(255,214,120,.18); fill-opacity: 1; stroke: rgba(255,214,120,.5); stroke-width: 1.5; stroke-dasharray: none; }
+
+.d-light { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0; }
+.d-light .btn { display: inline-flex; align-items: center; gap: 6px; }
+.d-light .btn .gl { width: 16px; height: 16px; }
+.d-light .btn small { opacity: .75; }
+.d-light .btn.on { background: #f3c45a; color: #2a1d08; border-color: #2a1d08; box-shadow: 0 0 14px rgba(255,200,90,.6); }
