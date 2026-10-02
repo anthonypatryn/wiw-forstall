@@ -1220,3 +1220,7 @@ body .fs-dig-row .num-wrap .fs-dig { width: 100%; }
 .bug-modal { width: min(520px, 100%); }
 .bug-modal textarea, .bug-modal select { width: 100%; box-sizing: border-box; }
 .bug-row .bug-what { margin: 4px 0; white-space: pre-wrap; }
+
+.bug-batch { margin-bottom: 8px; align-items: center; }
+.bug-pick { margin-right: 6px; }
+.bug-pick input { width: 18px; height: 18px; vertical-align: -3px; }

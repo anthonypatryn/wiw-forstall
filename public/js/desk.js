@@ -211,20 +211,28 @@ $('#restore-file')?.addEventListener('change', async (e) => {
 
 // ---------- Bug reports (Menu → Report a bug) ----------
 let bugsShowFixed = false;
+const bugsPicked = new Set(); // ticked for a batch copy / fix
 function renderBugs(bugs) {
   const box = $('#bugs'); if (!box) return;
   const names = Object.fromEntries((getCombat?.()?.posse || []).map((p) => [p.id, p.name]));
   const open = bugs.filter((b) => b.status !== 'fixed'), fixed = bugs.filter((b) => b.status === 'fixed');
   $('#bugs-count').textContent = open.length ? `${open.length} open` : '';
+  [...bugsPicked].forEach((n) => { if (!open.some((b) => b.no === n)) bugsPicked.delete(n); });
   const row = (b) => `<div class="notice bug-row${b.status === 'fixed' ? ' ck-finished' : b.blocking ? ' urgent' : ''}"><div class="ck-body">
-      <b>BUG-${b.no} · ${esc(b.kind)} · ${esc(b.area)}</b>${b.blocking ? ' <span class="pill hot">blocking</span>' : ''}${b.status === 'fixed' ? ' <span class="pill ok">fixed</span>' : ''}
+      ${b.status === 'fixed' ? '' : `<label class="bug-pick"><input type="checkbox" data-bug-pick="${b.no}"${bugsPicked.has(b.no) ? ' checked' : ''} aria-label="Pick BUG-${b.no}"></label>`}<b>BUG-${b.no} · ${esc(b.kind)} · ${esc(b.area)}</b>${b.blocking ? ' <span class="pill hot">blocking</span>' : ''}${b.status === 'fixed' ? ' <span class="pill ok">fixed</span>' : ''}
       <p class="bug-what">${esc(b.what)}</p>${b.expected ? `<p class="muted small-text">Expected: ${esc(b.expected)}</p>` : ''}${b.steps ? `<p class="muted small-text">Steps: ${esc(b.steps)}</p>` : ''}
       <div class="muted prob-meta">${esc(names[b.who] || b.who || 'someone')} · ${esc(b.page)} · ${esc(timeAgo(b.at))}${b.fixNote ? ` · <i>${esc(b.fixNote)}</i>` : ''}</div></div>
       <div class="ck-btns"><button type="button" class="btn small secondary" data-bug-copy="${b.no}">Copy for Claude</button>${b.status === 'fixed' ? `<button type="button" class="btn small secondary" data-bug-reopen="${b.no}">Reopen</button>` : `<button type="button" class="btn small secondary" data-bug-fix="${b.no}">Mark fixed</button>`}<button type="button" class="btn small secondary danger" data-bug-rm="${b.no}" aria-label="Delete BUG-${b.no}">×</button></div></div>`;
-  box.innerHTML = (open.length ? open.map(row).join('') : '<p class="muted">No open bugs.</p>')
+  const batch = open.length > 1 ? `<div class="btn-row bug-batch"><button type="button" class="btn small" data-bug-copyall>Copy all ${open.length} open</button>${bugsPicked.size ? `<button type="button" class="btn small secondary" data-bug-copysel>Copy ${bugsPicked.size} picked</button><button type="button" class="btn small secondary" data-bug-fixsel>Mark ${bugsPicked.size} fixed</button>` : '<span class="muted small-text">or tick some to copy a few</span>'}</div>` : '';
+  box.innerHTML = batch + (open.length ? open.map(row).join('') : '<p class="muted">No open bugs.</p>')
     + (fixed.length ? `<button type="button" class="btn small secondary" data-bug-fixed>${bugsShowFixed ? 'Hide' : 'Show'} ${fixed.length} fixed</button>${bugsShowFixed ? fixed.map(row).join('') : ''}` : '');
+  box.onchange = (e) => { const c = e.target.closest('[data-bug-pick]'); if (!c) return; const n = Number(c.dataset.bugPick); if (c.checked) bugsPicked.add(n); else bugsPicked.delete(n); renderBugs(bugs); };
+  const copyMany = async (list) => { const { bugText } = await import('./bugreport.js'); await navigator.clipboard.writeText(`${list.length} bug report${list.length === 1 ? '' : 's'} from the table:\n\n${list.map((x) => bugText(x, names)).join('\n\n---\n\n')}`); toast(`${list.length} bug${list.length === 1 ? '' : 's'} copied (${list.map((x) => `BUG-${x.no}`).join(', ')}). Paste them to Claude.`); };
   box.onclick = async (e) => {
     const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.bugCopyall !== undefined) { try { await copyMany(open); } catch (err) { toast(err.message, true); } return; }
+    if (b.dataset.bugCopysel !== undefined) { try { await copyMany(open.filter((x) => bugsPicked.has(x.no))); } catch (err) { toast(err.message, true); } return; }
+    if (b.dataset.bugFixsel !== undefined) { try { await api('POST', { action: 'bugFix', nos: [...bugsPicked] }, '', '/api/problems'); toast(`${bugsPicked.size} marked fixed.`); bugsPicked.clear(); renderProblems(); } catch (err) { toast(err.message, true); } return; }
     const d = b.dataset, bug = bugs.find((x) => String(x.no) === (d.bugCopy || d.bugFix || d.bugReopen || d.bugRm));
     try {
       if (d.bugFixed !== undefined) { bugsShowFixed = !bugsShowFixed; renderBugs(bugs); return; }
