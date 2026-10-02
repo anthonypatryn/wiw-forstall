@@ -85,6 +85,8 @@ export function enemyCardHTML(e, { data, meta }) {
       ${skills.map(([k, v]) => `<div>${k.toUpperCase()}<b>${roll(v, k[0].toUpperCase() + k.slice(1), v)}</b></div>`).join('')}
     </div>
     ${statusesHTML(e, meta)}
+    ${e.defeated ? '' : `<div class="e-read"><label>Reading its Health <select data-readdiff aria-label="How hard to read its Health"><option value="">By its ${/weak|moderate|strong/i.test(e.profile || '') ? 'toughness' : 'size'} (${esc(e.readDiff || 'Medium')})</option>${['Very Easy', 'Easy', 'Medium', 'Difficult', 'Very Difficult'].map((d) => `<option${e.readDiffSet === d ? ' selected' : ''}>${d}</option>`).join('')}</select></label>
+      <label class="check"><input type="checkbox" data-hpshown${e.hpShown ? ' checked' : ''}> The posse sees its Health</label></div>`}
     ${p ? `<div class="attacks">${p.attacks.map((a) => {
       const dmg = damagePool(a.effect);
       return `<div class="atk"><span class="an">${esc(a.name)}<small>${a.range.toUpperCase()}${a.aoe ? ' · AOE' : ''} · ${a.grit} GRIT</small></span>
@@ -132,6 +134,8 @@ export function wireFighters(box, ctx) {
   box.querySelectorAll('[data-fc-enemy]').forEach((card) => {
     const eid = card.dataset.fcEnemy;
     const send = (o) => act({ action: 'enemy', id: eid, ...o });
+    card.querySelector('[data-readdiff]')?.addEventListener('change', (ev) => send({ op: 'readDiff', diff: ev.target.value }));
+    card.querySelector('[data-hpshown]')?.addEventListener('change', (ev) => send({ op: 'hpShown', value: ev.target.checked }));
     common(card, send);
     // every roll is public: it goes in the Table Log, and pops up here
     card.querySelectorAll('[data-rollpool]').forEach((b) => b.addEventListener('click', async () => {

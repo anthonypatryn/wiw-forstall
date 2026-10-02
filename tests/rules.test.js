@@ -1580,3 +1580,23 @@ test('Reputation adds or takes Charm dice on a called roll against a faction (p.
   // a faction only counts for Charm
   assert.equal(publicAction(state, { action: 'checkStart', who: [a.id], skill: 'Nerve', diff: 'Medium', faction: 'The Rosewoods' }, { warden: true }).faction, '');
 });
+
+test('Read an enemy’s Health: free Intuition roll, once each; a success shows it to everyone', async () => {
+  const { readDiffFor, playerCombatView } = await import('../lib/combat.js');
+  assert.equal(readDiffFor({ size: 'Titan' }), 'Very Difficult');
+  assert.equal(readDiffFor({ size: 'Small' }), 'Easy');
+  assert.equal(readDiffFor({ size: 'Human', profile: 'Human - Strong' }), 'Difficult');
+  assert.equal(readDiffFor({ size: 'Titan', readDiff: 'Easy' }), 'Easy');
+  const state = freshCombat();
+  const a = publicAction(state, { action: 'addPc', trade: 'Hunter', name: 'Tess' }, { warden: true });
+  publicAction(state, { action: 'addEnemy', name: 'Bandit', health: 9 }, { warden: true });
+  const e = state.enemies[0];
+  publicAction(state, { action: 'enemy', id: e.id, op: 'readDiff', diff: 'Very Easy' }, { warden: true });
+  state.posse[0].skills.intuition = '6G'; // the roll can still miss: both outcomes are checked below
+  let r = publicAction(state, { action: 'pc', id: a.id, op: 'readHealth', enemy: e.id }, { warden: false });
+  assert.throws(() => publicAction(state, { action: 'pc', id: a.id, op: 'readHealth', enemy: e.id }, { warden: false }), /already|can already/);
+  if (r.ok) assert.equal(playerCombatView(state).enemies[0].health, 9);
+  else assert.equal(playerCombatView(state).enemies[0].health, undefined);
+  publicAction(state, { action: 'enemy', id: e.id, op: 'hpShown', value: true }, { warden: true });
+  assert.equal(playerCombatView(state).enemies[0].maxHealth, 9);
+});

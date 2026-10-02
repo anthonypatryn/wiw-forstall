@@ -486,3 +486,8 @@ body.tv-mode .viewport { height: 100vh; border: 0; cursor: default; }
 
 .fb-btns.four { grid-template-columns: 1fr auto auto auto; }
 @media (max-width: 420px) { .fb-btns.four .fb-ghost .gl { display: none; } } /* four buttons on a phone: words only */
+
+/* reading an enemy's Health (fighter card, Warden) */
+.e-read { display: grid; gap: 4px; margin: 6px 0; font-size: var(--fs-sm); }
+.e-read select { margin-left: 6px; max-width: 100%; }
+[data-readhp] small { margin-left: 6px; opacity: .8; }

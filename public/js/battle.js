@@ -282,6 +282,9 @@ function renderPanel() {
       ${!fcHTML && st.length ? `<div class="d-st">${st.map(([k, v]) => `<span class="st">${esc(k)} <b>${v}</b></span>`).join('')}</div>` : ''}
       ${fcHTML ? "" : `<div class="d-row">${sel.grit != null ? `<span><b>GRIT</b> ${sel.grit}</span>` : ''}${sel.defense ? `<span><b>DEFENSE</b> ${esc(sel.defense)}</span>` : ''}${sel.speed ? `<span><b>SPEED</b> ${esc(sel.speed)}</span>` : ''}${sel.finesse ? `<span><b>FINESSE</b> ${esc(sel.finesse)}</span>` : ''}${sel.aces ? `<span><b>ACES</b> ${sel.aces}/6</span>` : ''}${sel.size ? `<span><b>SIZE</b> ${esc(sel.size)}</span>` : ''}</div>`}
       ${sel.frenzyText?.length ? `<div class="d-note">${sel.frenzyText.map(esc).join('<br>')}</div>` : ''}
+      ${!warden && sel.kind === 'enemy' && sel.readDiff && !sel.hpShown && myId() ? (sel.readTries.includes(myId())
+        ? '<p class="muted small-text">You’ve tried to read its Health. Someone else can try.</p>'
+        : `<button type="button" class="btn small secondary" data-readhp="${esc(sel.ref)}">${gl('bulb')} Read its Health <small>Intuition · ${esc(sel.readDiff)}</small></button>`) : ''}
       ${sel.sweepPreview ? `<div class="d-note fs-prev">${gl('forstall')} ${esc(sel.sweepPreview)}</div>` : ''}
       ${sel.emp != null ? `<button type="button" class="btn small danger" data-emp="${esc(sel.ref)}"${sel.emp < 1 ? ' disabled' : ''}>${gl('flash')} Natural EMP (${sel.emp}/2 left today)</button>` : ''}
       ${warden && sel.kind === 'enemy' && sel.ref ? `<label class="check"><input type="checkbox" data-submerged="${esc(sel.ref)}"${sel.submerged ? ' checked' : ''}> Submerged — Forstalls can’t reach it</label>` : ''}
@@ -297,6 +300,15 @@ function renderPanel() {
       ${others.length ? others.map(({ t, d }) => `<div class="tok-row" data-pick="${t.id}"><span class="chip" style="background:${color(t)}">${esc(initials(t.name))}</span>
         <span class="n">${esc(t.name)}</span><span class="d ${band(d)}">${d}″ · ${BAND_LABEL[band(d)]}</span></div>`).join('') : '<p class="muted">Nobody else on the board.</p>'}</details></div>`;
     if (actor) wireTurnBar(box, actor.cur, actor.tok); else wireFs(box);
+    box.querySelector('[data-readhp]')?.addEventListener('click', async (e) => {
+      e.currentTarget.disabled = true;
+      try {
+        const r = await api('POST', { action: 'pc', id: myId(), op: 'readHealth', enemy: e.currentTarget.dataset.readhp }, '', '/api/combat');
+        rollPopup(r.result, `Read ${r.result.enemy}’s Health · needs ${r.result.target} Hit${r.result.target === 1 ? '' : 's'}`);
+        toast(r.result.ok ? `${r.result.enemy}’s Health is showing for everyone.` : `You can’t tell how hurt ${r.result.enemy} is.`, !r.result.ok);
+        poller?.now?.();
+      } catch (err) { toast(err.message, true); renderPanel(); }
+    });
   }
   wireCardHead(head);
   if (sel && !focus && warden) wireFighters(box, { data: combat, meta, act: async (body) => { const r = await combatAct(body); renderPanel(); renderTurnBar(); poller?.now?.(); return r; } });
