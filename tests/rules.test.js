@@ -1682,7 +1682,7 @@ test('Every Ace a character rolls in combat marks their meter, whatever the roll
   pc.skills.nerve = '6G';
   publicAction(state, { action: 'addEnemy', name: 'Bandit', health: 9 }, { warden: true });
   publicAction(state, { action: 'start' }, { warden: true });
-  let expect = 0;
+  let expect = pc.aces || 0; // the turn-order roll at the start counts too
   const count = (dice) => dice.filter((d) => d.face === 'ace').length;
   for (let i = 0; i < 4; i++) { // called rolls never used to count
     const ck = publicAction(state, { action: 'checkStart', who: [a.id], skill: 'Nerve', diff: 'Medium' }, { warden: true });
