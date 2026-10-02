@@ -1707,3 +1707,23 @@ test('Watching: carnival booth plays go in a public feed; a saloon watcher never
   assert.equal(watcher.table.hand?.mine ?? null, null);
   assert.equal(watcher.table.hand?.all, undefined);
 });
+
+test('Map objects: placed by the Warden, secrets kept from the posse, bodies searched by Hits', async () => {
+  const { freshBattle, battleAction, battleView } = await import('../lib/battle.js');
+  const { searchBody } = await import('../lib/props.js');
+  const s = freshBattle();
+  assert.throws(() => battleAction(s, { action: 'addProp', kind: 'chest', col: 3, row: 3 }, { warden: false }), /PIN/);
+  const chest = battleAction(s, { action: 'addProp', kind: 'chest', col: 3, row: 3, name: 'Strongbox', difficulty: 2, loot: { kind: 'money', amount: 5 } }, { warden: true });
+  const body = battleAction(s, { action: 'addProp', kind: 'body', col: 5, row: 3, finds: [{ kind: 'money', amount: 2, need: 1 }, { kind: 'custom', name: 'Locket', need: 3 }] }, { warden: true });
+  battleAction(s, { action: 'addProp', kind: 'marker', col: 7, row: 3, name: 'Secret', hidden: true }, { warden: true });
+  const seen = battleView(s, { warden: false, combat: null }).props;
+  assert.deepEqual(seen.map((p) => p.name).sort(), ['A body', 'Strongbox']);
+  assert.equal(seen.find((p) => p.id === chest.id).loot, undefined); // what's inside stays secret
+  assert.equal(battleView(s, { warden: true, combat: null }).props.find((p) => p.id === chest.id).lootText, '$5');
+  const p = s.props.find((x) => x.id === body.id);
+  assert.deepEqual(searchBody(p, 'a', 2).map((f) => f.amount), [2]);
+  assert.throws(() => searchBody(p, 'a', 6), /already/);
+  assert.deepEqual(searchBody(p, 'b', 4).map((f) => f.name), ['Locket']);
+  battleAction(s, { action: 'removeProp', id: body.id }, { warden: true });
+  assert.equal(s.props.length, 2);
+});

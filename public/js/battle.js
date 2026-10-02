@@ -10,6 +10,7 @@ import { pcCardHTML, enemyCardHTML, wireFighters, openSpoils } from './fighter-c
 import { openAddEnemies } from './enemy-add.js';
 import { panZoom } from './panzoom.js';
 import { cropImage } from './cropper.js';
+import { propDialog, propCard, propIcon } from './props-ui.js';
 import { runTour, BATTLE_TOUR } from './tour.js';
 
 const EP = '/api/battle';
@@ -104,14 +105,44 @@ function attackHTML(sel) {
 }
 const vp = $('#viewport'), stage = $('#stage');
 const pz = panZoom(vp, stage, {
-  maxScale: 2.5, ignore: '.btoken, .fstoken, .map-ctrls, .fcard, .side-toggle, .map-banner, .range-legend, .paint-bar, .map-tools',
-  onTap: (target) => { if (!target.closest('.btoken, .fstoken, .fcard')) select(null); },
+  maxScale: 2.5, ignore: '.btoken, .fstoken, .map-ctrls, .fcard, .side-toggle, .map-banner, .range-legend, .paint-bar, .map-tools, .bprop',
+  onTap: (target, pt) => {
+    if (placing && pt) { const h = toHex(pt.x, pt.y), spec = placing; placing = null; placeBanner(); act(spec.id ? { action: 'moveProp', id: spec.id, col: h.col, row: h.row } : { action: 'addProp', ...spec, col: h.col, row: h.row }, spec.id ? 'Moved.' : 'Placed.'); return; }
+    if (!target.closest('.btoken, .fstoken, .fcard')) select(null);
+  },
   onChange: () => positionCard(),
 });
 $('#zoom-in').addEventListener('click', () => pz.zoom(1.35));
 $('#zoom-out').addEventListener('click', () => pz.zoom(1 / 1.35));
 $('#zoom-fit').addEventListener('click', () => pz.fit());
 if (TV) { addEventListener('resize', () => pz.fit()); setTimeout(() => pz.fit(), 1500); }
+
+// ---------- things on the map (lib/props.js): chests, bodies, notes, markers ----------
+let placing = null; // the Warden's next tap places this (or moves {id})
+function placeBanner() {
+  let b = $('#place-banner');
+  if (!placing) { b?.remove(); return; }
+  if (!b) { b = document.createElement('div'); b.id = 'place-banner'; b.className = 'map-banner place-banner'; vp.append(b); }
+  b.innerHTML = `${gl(propIcon(placing))} Tap the map where ${placing.id ? 'it goes' : `the ${placing.kind === 'clue' ? 'note' : placing.kind} goes`} <button type="button" data-place-x>Cancel</button>`;
+  b.querySelector('[data-place-x]').addEventListener('click', () => { placing = null; placeBanner(); });
+}
+function renderProps() {
+  const layer = $('#props'); if (!layer || !data) return;
+  const size = data.grid.ppi * 0.78, labFont = data.grid.ppi * 0.2;
+  layer.innerHTML = (data.props || []).map((p) => { const c = center(p.col, p.row);
+    return `<div class="bprop ${p.kind}${p.hidden ? ' hidden-prop' : ''}${p.opened || (p.kind === 'body' && !p.left && p.searchedBy?.length) ? ' spent' : ''}" data-prop="${esc(p.id)}" role="button" tabindex="0" aria-label="${esc(p.name)}"
+      style="left:${c.x}px;top:${c.y}px;width:${size}px;height:${size}px;font-size:${size * 0.55}px">${gl(propIcon(p))}<span class="lab" style="font-size:${labFont}px">${esc(p.name)}</span></div>`; }).join('');
+}
+function openProp(id) {
+  const p = (data?.props || []).find((x) => x.id === id); if (!p) return;
+  const mine = data.tokens.find((t) => t.kind === 'pc' && t.ref === myId());
+  propCard(p, { warden, me: myId(), near: !!mine && dist(mine, p) <= 1, act, refresh: (st) => { if (st) poller?.push(st); },
+    onMove: (q) => { placing = { id: q.id, kind: q.kind, icon: q.icon }; placeBanner(); } });
+}
+$('#props').addEventListener('click', (e) => { const el = e.target.closest('[data-prop]'); if (el) openProp(el.dataset.prop); });
+$('#props').addEventListener('keydown', (e) => { const el = e.target.closest('[data-prop]'); if (el && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); openProp(el.dataset.prop); } });
+document.querySelector('[data-place]')?.addEventListener('click', async () => { const f = await propDialog(); if (f) { placing = f; placeBanner(); } });
+document.addEventListener('keydown', (e) => { if (placing && e.key === 'Escape') { placing = null; placeBanner(); } });
 
 // ---------- pings: press and hold (or right-click) the map → a marker everyone sees for a few seconds ----------
 const PING_HOLD_MS = 550, PING_SHOW_MS = 4000;
@@ -141,7 +172,7 @@ async function sendPing(clientX, clientY) {
   if (r) { data.pings = [...(data.pings || []).filter((p) => p.id !== r.id), r]; renderPings(); }
 }
 vp.addEventListener('pointerdown', (e) => {
-  if (e.button !== 0 || e.target.closest('.btoken, .fstoken, .map-ctrls, .map-tools')) return;
+  if (e.button !== 0 || e.target.closest('.btoken, .fstoken, .map-ctrls, .map-tools, .bprop')) return;
   const x0 = e.clientX, y0 = e.clientY;
   clearTimeout(pingTimer);
   pingTimer = setTimeout(() => sendPing(x0, y0), PING_HOLD_MS);
@@ -149,7 +180,7 @@ vp.addEventListener('pointerdown', (e) => {
   const off = () => ['pointermove', 'pointerup', 'pointercancel'].forEach((t) => vp.removeEventListener(t, cancel));
   ['pointermove', 'pointerup', 'pointercancel'].forEach((t) => vp.addEventListener(t, cancel));
 });
-vp.addEventListener('contextmenu', (e) => { if (e.target.closest('.btoken, .fstoken, .map-ctrls, .map-tools')) return; e.preventDefault(); sendPing(e.clientX, e.clientY); });
+vp.addEventListener('contextmenu', (e) => { if (e.target.closest('.btoken, .fstoken, .map-ctrls, .map-tools, .bprop')) return; e.preventDefault(); sendPing(e.clientX, e.clientY); });
 
 // ---------- hex math: pointy-top, odd rows shifted right ----------
 const R = () => data.grid.ppi / Math.sqrt(3);
@@ -1041,6 +1072,7 @@ function render() {
   renderTerrain();
   renderFields();
   renderRanges();
+  renderProps();
   renderTokens();
   renderPings();
   renderPanel();

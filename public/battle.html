@@ -13,9 +13,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Rye&family=Special+Elite&family=Reenie+Beanie&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/style.css?v=151">
-  <link rel="stylesheet" href="/css/fighter.css?v=70">
-  <link rel="stylesheet" href="/css/battle.css?v=111">
+  <link rel="stylesheet" href="/css/style.css?v=152">
+  <link rel="stylesheet" href="/css/fighter.css?v=71">
+  <link rel="stylesheet" href="/css/battle.css?v=112">
 </head>
 <body>
   <header class="masthead">
@@ -39,6 +39,7 @@
         <svg class="terrain" id="terrain" aria-hidden="true"></svg>
         <svg class="fields" id="fields" aria-hidden="true"></svg>
         <svg class="ranges" id="ranges" aria-hidden="true"></svg>
+        <div class="props" id="props"></div>
         <div class="tokens" id="tokens"></div>
         <div class="pings" id="pings" aria-live="polite"></div>
       </div>
@@ -56,6 +57,7 @@
       <div class="paint-bar" id="paint-bar" hidden></div>
       <!-- the Warden's terrain tools, always on the map (js/battle.js startPaint / layerAll) -->
       <div class="map-tools" id="map-tools" role="toolbar" aria-label="Terrain and fog" hidden>
+        <button type="button" data-place title="A chest, a body, a note or a marker">+ Place</button>
         <button type="button" data-paint="fog" title="Fog of war: the posse can't see into it, or anyone inside">Paint fog</button>
         <button type="button" data-paint="rough" title="Rough terrain (mud, rubble, deep snow): moving through it costs double Grit (p. 42)">Paint rough</button>
         <button type="button" data-layer-all="fog:1" title="Cover the whole map in fog, then reveal what they can see">Fog all</button>
@@ -121,6 +123,6 @@
     </div>
   </div>
 
-  <script type="module" src="/js/battle.js?v=181"></script>
+  <script type="module" src="/js/battle.js?v=182"></script>
 </body>
 </html>

@@ -517,3 +517,29 @@ body.tv-mode .viewport { height: 100vh; border: 0; cursor: default; }
 .d-light .btn .gl { width: 16px; height: 16px; }
 .d-light .btn small { opacity: .75; }
 .d-light .btn.on { background: #f3c45a; color: #2a1d08; border-color: #2a1d08; box-shadow: 0 0 14px rgba(255,200,90,.6); }
+
+/* things on the map: chests, bodies, notes, markers (js/props-ui.js) */
+.props { position: absolute; left: 0; top: 0; }
+.bprop { position: absolute; transform: translate(-50%, -50%); display: grid; place-items: center; border-radius: 22%; background: rgba(238,232,218,.95); color: var(--ink); border: 2px solid var(--ink); box-shadow: 0 3px 8px var(--shade-4); cursor: pointer; z-index: 1; }
+.bprop .gl { width: 62%; height: 62%; }
+.bprop .lab { position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 2px; white-space: nowrap; padding: 1px 6px; border-radius: var(--r-pill); background: rgba(23,20,19,.85); color: var(--on-dark); font-family: var(--display); letter-spacing: var(--track); pointer-events: none; }
+.bprop.chest { background: #e9c98a; }
+.bprop.body { background: #d9d2c5; border-radius: 50%; }
+.bprop.clue { background: #f4ecd6; }
+.bprop.spent { opacity: .55; filter: grayscale(.6); }
+.bprop.hidden-prop { outline: 2px dashed var(--secret); outline-offset: 3px; opacity: .75; }
+.bprop:focus-visible { outline: 3px solid var(--brass); }
+.place-banner { pointer-events: auto; display: flex; align-items: center; gap: 8px; }
+.place-banner .gl { width: 1.1em; height: 1.1em; }
+.place-banner button { padding: 2px 10px; border-radius: var(--r-pill); border: 1px solid var(--paper); background: transparent; color: var(--paper); font: inherit; cursor: pointer; }
+.pp-modal { width: min(480px, 100%); }
+.pp-modal h2 .gl { width: 1em; height: 1em; vertical-align: -3px; }
+.pp-loot { display: flex; flex-wrap: wrap; gap: 6px; flex: 1 1 auto; }
+.pp-loot select, .pp-loot input { flex: 1 1 140px; min-width: 0; }
+.pp-find { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 6px 0; border-bottom: 1px dotted var(--line); }
+.pp-need { display: inline-flex; align-items: center; gap: 4px; font-size: var(--fs-sm); }
+.pp-need input { width: 4em; }
+.pp-ic .gl { width: 1.2em; height: 1.2em; }
+.pp-secret { margin: 8px 0; padding: 8px 10px; border: 1.5px dashed var(--secret); border-radius: var(--r-sm); color: var(--secret); background: var(--secret-tint); font-size: var(--fs-sm); }
+.pp-secret li { margin: 2px 0 2px 16px; }
+.pp-w { margin-top: 10px; }
