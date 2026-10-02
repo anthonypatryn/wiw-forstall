@@ -88,11 +88,32 @@ export function openCarnival() {
       if (hasShow(body.action) && r.result) await runShow(scene.querySelector('.cv-showbox'), body.action, r.result, r.rolls || []); // the booth plays out
       else { play('chips'); if (/Inventory/.test(r.result?.text || '')) play('success'); }
     } catch (err) { toast(err.message, true); }
-    busy = false; render();
+    busy = false; render(); playFeed(); // anyone else's plays that came in meanwhile
   });
 }
 
 // the corner chip to get back in while the carnival's in town
+// watching: other people's booth plays replay on your screen while you're at the midway (newest few, one at a time)
+const BOOTH = { wheel: 'the Wheel of Fortune', striker: 'the High Striker', horseshoe: 'horseshoes', archery: 'the archery booth', fortune: 'the fortune teller', pie: 'the pie eating contest', pig: 'the Greased Pig Chase' };
+let feedSeen = null, feedQueue = [], feedBusy = false;
+function takeFeed(d) {
+  const feed = d.feed || [];
+  if (!feedSeen) { feedSeen = new Set(feed.map((f) => f.id)); return; } // what happened before you got here isn't replayed
+  feed.slice().reverse().forEach((f) => { if (!feedSeen.has(f.id)) { feedSeen.add(f.id); if (f.pc !== me()) feedQueue.push(f); } });
+  feedQueue = feedQueue.slice(-3);
+  playFeed();
+}
+async function playFeed() {
+  if (feedBusy || busy || !scene || !feedQueue.length) return;
+  const box = scene.querySelector('.cv-showbox');
+  if (!box || !box.hidden) return; // your own booth is mid-show
+  feedBusy = true;
+  const f = feedQueue.shift();
+  try { await runShow(box, f.game, f.result, f.rolls || [], { who: `${f.name} at ${BOOTH[f.game] || 'a booth'}` }); } catch {}
+  feedBusy = false;
+  playFeed();
+}
+
 function showChip() {
   let chip = document.querySelector('.cv-chip:not(.ct-chip)'); // the contests chip shares the look
   if (!view?.open || scene) { chip?.remove(); return; }
@@ -103,7 +124,7 @@ function showChip() {
     chip.addEventListener('click', openCarnival);
     placeChip(chip);
   }
-  chip.innerHTML = `${gl('star')} The carnival`;
+  chip.innerHTML = view.me?.ticket ? `${gl('star')} The carnival` : `${gl('star')} Watch the carnival`;
 }
 
 export function watchCarnival() {
@@ -117,7 +138,7 @@ export function watchCarnival() {
       play('chime');
       if (await ask(`The carnival’s in ${d.where}!\n\nThe Traveling Carnival of Wild Oddities and Western Curiosities: horseshoes, the Wheel of Fortune, archery, the High Striker, a fortune teller and a pie eating contest. Tickets are ${$$(d.ticket)}.`, { ok: 'Go to the carnival', cancel: 'Maybe later', danger: false })) openCarnival();
     }
-    render(); showChip();
+    render(); showChip(); takeFeed(d);
   }, null, EP);
 }
 

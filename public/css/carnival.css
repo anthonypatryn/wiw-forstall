@@ -155,3 +155,6 @@
 .cv-tray .die { width: 44px; }
 .cv-tray .die .rr { font-size: 8px; }
 @media (max-width: 600px) { .cv-tray .die { width: 36px; } .cv-stage { width: min(100%, 52vh); } }
+
+/* watching someone else's booth play */
+.cv-watch-who { justify-self: center; margin-bottom: 10px; padding: 6px 14px 4px; border-radius: var(--r-pill); background: var(--ink); color: var(--paper); font: var(--fs-sm) var(--display); letter-spacing: var(--track); white-space: nowrap; max-width: calc(100% - 24px); overflow: hidden; text-overflow: ellipsis; }

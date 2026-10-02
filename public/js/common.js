@@ -543,7 +543,7 @@ function splitMsg(msg) {
   return ['Are you sure?', s];
 }
 const DANGER = /delete|remove|wipe|clear|dead|can.t be undone|call off|end combat|let the prepared/i;
-function dialog({ msg, input = null, ok = 'Yes', cancel = 'Cancel', danger }) {
+function dialog({ msg, input = null, ok = 'Yes', cancel = 'Cancel', danger, extra = '' }) {
   return new Promise((resolve) => {
     const [title, body] = input ? [String(msg), ''] : splitMsg(msg);
     const back = document.createElement('div');
@@ -551,7 +551,7 @@ function dialog({ msg, input = null, ok = 'Yes', cancel = 'Cancel', danger }) {
     back.innerHTML = `<div class="modal ask" role="alertdialog" aria-modal="true" aria-label="${esc(title)}">
       <h2>${esc(title)}</h2>${body ? `<p class="ask-body">${esc(body)}</p>` : ''}
       <form>${input ? `<input class="ask-input" type="text" value="${esc(input.value ?? '')}" maxlength="80" aria-label="${esc(title)}">` : ''}
-        <div class="ask-btns">${cancel ? `<button type="button" class="btn secondary" data-no>${esc(cancel)}</button>` : ''}<button type="submit" class="btn${(danger ?? DANGER.test(msg)) ? ' danger' : ''}">${esc(ok)}</button></div></form></div>`;
+        <div class="ask-btns">${cancel ? `<button type="button" class="btn secondary" data-no>${esc(cancel)}</button>` : ''}${extra ? `<button type="button" class="btn secondary" data-extra>${esc(extra)}</button>` : ''}<button type="submit" class="btn${(danger ?? DANGER.test(msg)) ? ' danger' : ''}">${esc(ok)}</button></div></form></div>`;
     document.body.appendChild(back);
     const prev = document.activeElement;
     const field = back.querySelector('.ask-input');
@@ -562,6 +562,7 @@ function dialog({ msg, input = null, ok = 'Yes', cancel = 'Cancel', danger }) {
     document.addEventListener('keydown', onKey, true);
     back.addEventListener('click', (e) => { if (e.target === back) close(input ? null : false); });
     back.querySelector('[data-no]')?.addEventListener('click', () => close(input ? null : false));
+    back.querySelector('[data-extra]')?.addEventListener('click', () => close('extra')); // a third choice, e.g. "Just watch"
     back.querySelector('form').addEventListener('submit', (e) => { e.preventDefault(); close(input ? field.value : true); });
   });
 }

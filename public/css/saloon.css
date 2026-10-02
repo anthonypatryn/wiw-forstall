@@ -219,3 +219,9 @@
 /* the palmed card, kept aside from the hand */
 .sl-sleeve { display: inline-grid; justify-items: center; gap: 2px; margin-left: 12px; padding-left: 12px; border-left: 2px dashed var(--felt-ink); opacity: .9; }
 .sl-sleeve small { font: var(--fs-xs) var(--display); letter-spacing: var(--track); color: var(--felt-ink); }
+
+/* watching a game you're not in */
+.sl-watching { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 10px; margin: 0 0 8px; padding: 6px 12px 5px; border-radius: var(--r-pill); background: rgba(0,0,0,.35); color: var(--felt-ink); font: var(--fs-sm) var(--display); letter-spacing: var(--track); }
+.sl-watching .gl { width: 1em; height: 1em; vertical-align: -2px; }
+.sl-watching small { font: var(--fs-xs) var(--body); letter-spacing: 0; opacity: .85; }
+.sl-chip.watch { background: var(--surface); color: var(--ink); border-color: var(--felt-rail); }

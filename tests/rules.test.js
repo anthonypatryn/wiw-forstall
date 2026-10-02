@@ -1688,3 +1688,22 @@ test('Every Ace a character rolls in combat marks their meter, whatever the roll
   expect = Math.min(6, expect + count(f.dice)); // free rolls still count, once
   assert.equal(pc.aces, expect);
 });
+
+test('Watching: carnival booth plays go in a public feed; a saloon watcher never sees hidden cards', async () => {
+  const { freshCarnival, carnivalView, addToFeed } = await import('../lib/carnival.js');
+  const c = freshCarnival();
+  c.open = true;
+  for (let i = 0; i < 10; i++) addToFeed(c, { pc: 'p1', name: 'Tess', game: 'wheel', result: { text: `spin ${i}` }, rolls: [] });
+  const feed = carnivalView(c, { pc: 'p2' }).feed;
+  assert.equal(feed.length, 8);
+  assert.equal(feed[0].result.text, 'spin 9');
+  c.open = false;
+  assert.deepEqual(carnivalView(c, { pc: 'p2' }).feed, []);
+  const { freshSaloon, saloonAction, saloonView } = await import('../lib/saloon.js');
+  const sl = freshSaloon();
+  const posse = [{ id: 'a', name: 'Tess', wallet: '10', skills: {} }, { id: 'b', name: 'Bo', wallet: '10', skills: {} }];
+  saloonAction(sl, { action: 'open', npcs: [{ name: 'Doc' }] }, { warden: true, log: () => {}, posse });
+  const watcher = saloonView(sl, { warden: false, pc: 'b' });
+  assert.equal(watcher.table.hand?.mine ?? null, null);
+  assert.equal(watcher.table.hand?.all, undefined);
+});

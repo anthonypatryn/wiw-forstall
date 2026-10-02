@@ -165,7 +165,13 @@ function controls(t) {
     : h.phase === 'draw' ? `<p class="sl-tip">Tap up to ${h.drawLimit} card${h.drawLimit > 1 ? 's' : ''} to throw away${h.drawLimit === 4 ? ' (4 only if you keep your Ace)' : ''}, then draw.</p>` : '');
   return `${tip}<div class="btn-row sl-moves">${moves.join('')}</div>`;
 }
+// anyone not seated (and not the Warden) is watching: they see only what's on the table, never anyone's hidden cards
+const watching = () => !asWarden && !!view?.table && !view.table.seats.some((s) => s.key === `pc:${me()}`);
 function render() {
+  drawTable();
+  if (scene && watching() && view.table.status !== 'closed') scene.firstElementChild?.insertAdjacentHTML('afterbegin', `<div class="sl-watching">${gl('hat')} WATCHING <small>You’re not in this game: you see what’s on the table, not anyone’s hidden cards.</small></div>`);
+}
+function drawTable() {
   if (!scene || !view) return;
   const t = view.table;
   if (!t) { closeTable(); return; }
@@ -620,18 +626,19 @@ function openTable(warden = false) {
     document.body.classList.add('nav-open');
     render();
     requestAnimationFrame(() => { if (scene && !scene.contains(document.activeElement)) scene.querySelector('button')?.focus({ preventScroll: true }); }); // keyboard users land inside the scene
-    if (!warden) setTimeout(() => scene && runTour(SALOON_TOUR, 'saloon', { scene: true }), 700); // a player's first seat: the tour
+    if (!warden) setTimeout(() => scene && !watching() && runTour(SALOON_TOUR, 'saloon', { scene: true }), 700); // a player's first seat: the tour
     return;
   }
   render();
 }
 function hideTable() { ambience('game', null); scene?.remove(); scene = null; document.body.classList.remove('nav-open'); store.set('wiw.saloonHidden', view?.table?.id || ''); showChip(); }
 function closeTable() { ambience('game', null); scene?.remove(); scene = null; document.body.classList.remove('nav-open'); showChip(); }
-// a small "Back to the table" chip while you're seated but stepped away
+// a corner chip while a table is open: "Back to the card table" when you're seated, "Watch the game" when you're not
+const GAME_NAME = { poker: 'poker game', faro: 'faro game', liars: 'Liar’s Dice', blackjack: 'blackjack', drinking: 'drinking contest' };
 let chip = null;
 function showChip() {
-  const t = view?.table, seated = t && t.status !== 'closed' && t.seats.some((s) => s.key === `pc:${me()}`);
-  if (!seated || scene) { chip?.remove(); chip = null; return; }
+  const t = view?.table, open = t && t.status !== 'closed', seated = open && t.seats.some((s) => s.key === `pc:${me()}`);
+  if (!open || scene) { chip?.remove(); chip = null; return; }
   if (!chip) {
     chip = document.createElement('button');
     chip.type = 'button'; chip.className = 'sl-chip';
@@ -640,7 +647,8 @@ function showChip() {
   }
   const myTurn = turnOf(t) === `pc:${me()}`;
   chip.classList.toggle('turn', !!myTurn);
-  chip.innerHTML = `${gl('die')} ${myTurn ? 'Your move at the card table' : 'Back to the card table'}`;
+  chip.classList.toggle('watch', !seated);
+  chip.innerHTML = seated ? `${gl('die')} ${myTurn ? 'Your move at the card table' : 'Back to the card table'}` : `${gl('hat')} Watch the ${GAME_NAME[t.game] || 'game'}`;
 }
 
 // players: an invite pops up once per table; the table opens itself when it's your move
@@ -668,7 +676,9 @@ export function watchSaloon() {
       store.set('wiw.saloonAsked', askKey);
       play('chime');
       const pitch = t.game === 'drinking' ? `A drinking contest at ${t.where}\n\n${$$(t.stakes.ante)} to get in, last one standing takes the pot. It’s Nerve, Grit and your Health against the whiskey. First to pass out pays the bar tab.` : t.game === 'blackjack' ? `Blackjack at ${t.where}\n\nBets from ${$$(t.stakes.ante)} to ${$$(t.stakes.bet * 5)}, blackjack pays 3 to 2. It’s your real money.` : t.game === 'liars' ? `Liar’s Dice at ${t.where}\n\n${$$(t.stakes.ante)} a head, winner takes the pot. Five dice each, ones are wild. It’s your real money.` : t.game === 'faro' ? `A faro bank at ${t.where}\n\nBet on any card from ${$$(t.stakes.ante)} to ${$$(t.stakes.bet * 5)}. It’s your real money.` : `A card game at ${t.where}\n\nFive-card draw, ${$$(t.stakes.ante)} ante, bets of ${$$(t.stakes.bet)} (${$$(t.stakes.bet * 2)} after the draw). It’s your real money.`;
-      if (await ask(pitch, { ok: 'Take a seat', cancel: 'Not tonight', danger: false })) {
+      const yes = await ask(pitch, { ok: 'Take a seat', cancel: 'Not tonight', extra: 'Just watch', danger: false });
+      if (yes === 'extra') { openTable(false); return; }
+      if (yes) {
         try { await act({ action: 'join' }); openTable(false); } catch (err) { toast(err.message, true); }
       }
       return;

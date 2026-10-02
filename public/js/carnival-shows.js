@@ -187,15 +187,16 @@ async function pig(el, r) {
 const SHOWS = { wheel, striker, horseshoe, archery, fortune, pie, pig };
 export const hasShow = (game) => !!SHOWS[game];
 // play one booth's show in `el`, then show the outcome with a button back to the midway
-export async function runShow(el, game, result, rolls = []) {
+// who: when you're watching someone else's play ("Lila at the High Striker"); then it closes itself after a few seconds
+export async function runShow(el, game, result, rolls = [], { who = '' } = {}) {
   el.hidden = false;
-  el.innerHTML = '';
+  el.innerHTML = who ? `<div class="cv-watch-who">${esc(who)}</div>` : '';
   const stage = document.createElement('div'); stage.className = 'cv-stage';
   panel = document.createElement('div'); panel.className = 'cv-dice'; queue = rolls.slice();
   const cap = document.createElement('div'); cap.className = 'cv-cap';
   el.append(stage, panel, cap);
   try { await SHOWS[game](stage, result); } catch { /* never let an animation block the game */ }
   cap.innerHTML = `<p>${esc(result.text)}</p><button type="button" class="btn" data-cv-back>Back to the midway</button>`;
-  await new Promise((res) => cap.querySelector('[data-cv-back]').addEventListener('click', res, { once: true }));
+  await new Promise((res) => { cap.querySelector('[data-cv-back]').addEventListener('click', res, { once: true }); if (who) setTimeout(res, 5000); });
   el.hidden = true; el.innerHTML = '';
 }
