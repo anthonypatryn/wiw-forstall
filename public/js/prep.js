@@ -1,5 +1,5 @@
 // Scene Prep (Warden): build scenes ahead of game night. Run them from Run the Game → Tonight's Scene.
-import { $, esc, api, toast, mountNav, tryWarden, savedPin, wardenModal, ask } from './common.js';
+import { $, esc, api, toast, mountNav, tryWarden, savedPin, wardenModal, ask, onChange } from './common.js';
 import { mountTableLog } from './tablelog.js';
 import { gl } from './glyphs.js';
 
@@ -137,6 +137,20 @@ async function open() {
   ref = { npcs: npcs.npcs || [], posters: (wanted.posters || []).filter((p) => p.status === 'wanted'), quests: journal.quests || [], clues: journal.clues || [], towns: journal.towns || wanted.towns || [], catalog: combat.catalog || [], npcCatalog: combat.npcCatalog || [] };
   const want = location.hash.slice(1);
   if (want && S.scenes.some((s) => s.id === want)) { ed = JSON.parse(JSON.stringify(S.scenes.find((s) => s.id === want))); ed.journal = ed.journal.map((j) => `${j.kind}:${j.id}`); }
+  renderList(); renderEditor();
+  onChange(['scenes'], refresh);
+}
+// the scenes changed somewhere else (an Undo, another tab): pick up the saved copy, unless there are unsaved edits here
+async function refresh() {
+  const sc = await api('GET', null, '', EP).catch(() => null);
+  if (!sc?.scenes || sc.v === S?.v) return; // our own save, already shown
+  S = sc;
+  if (ed?.id) {
+    const saved = S.scenes.find((s) => s.id === ed.id);
+    if (!saved) { if (!dirty) ed = null; }
+    else if (!dirty) { ed = JSON.parse(JSON.stringify(saved)); ed.journal = ed.journal.map((j) => `${j.kind}:${j.id}`); }
+    else toast('This scene was changed somewhere else. Saving now will replace that change.', true);
+  }
   renderList(); renderEditor();
 }
 $('#unlock').addEventListener('click', async () => { if (await wardenModal(EP)) { mountNav('/prep'); open(); } });

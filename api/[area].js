@@ -49,14 +49,16 @@ const NO_UNDO_AREAS = new Set(['pulse', 'problems', 'backup', 'image', 'undo', '
 const NO_UNDO_ACTIONS = new Set(['ping', 'report', 'auth', 'seen', 'here']);
 const AREA_NAME = { combat: '', battle: 'Battle Map', shop: 'Store', journal: 'Journal', npcs: 'NPCs', wanted: 'Wanted', handouts: 'Handouts', whispers: 'Whisper', lockpick: 'Lock pick', saloon: 'Saloon', scan: 'Scanner', scenes: 'Prep', session: 'Session notes', map: 'Map', papers: 'Newspaper' };
 const words = (s) => String(s || '').replace(/([a-z])([A-Z])/g, '$1 $2').replace(/[._-]+/g, ' ').trim().toLowerCase();
-function undoLabel(area, req, held) {
+export function undoLabel(area, req, held) {
   if (req.method !== 'POST' || held.statusCode >= 400 || NO_UNDO_AREAS.has(area)) return null;
   let b = {};
-  try { b = JSON.parse(req.body || '{}'); } catch {}
+  // Vercel hands the body over already parsed; the local dev server as text
+  if (req.body && typeof req.body === 'object') b = req.body; else try { b = JSON.parse(req.body || '{}'); } catch {}
   if (NO_UNDO_ACTIONS.has(b.action)) return null;
   const ACT = { next: 'next turn', pc: '', sheet: 'sheet', addPc: 'new character', addEnemy: 'add enemy', end: 'end combat', start: 'start combat', decide: 'approve or deny a request', give: 'give an item' };
   const what = [Object.hasOwn(ACT, b.action) ? ACT[b.action] : words(b.action), b.op ? words(b.op) : '', b.path ? words(b.path) : ''].filter(Boolean).join(' · ');
-  const label = `${AREA_NAME[area] ?? words(area)}${AREA_NAME[area] === '' ? '' : ': '}${what || 'change'}`.replace(/^: /, '');
+  const title = typeof b.scene?.title === 'string' && b.scene.title.trim() ? ` “${b.scene.title.trim().slice(0, 40)}”` : ''; // Prep saves name the scene
+  const label = `${AREA_NAME[area] ?? words(area)}${AREA_NAME[area] === '' ? '' : ': '}${what || 'change'}${title}`.replace(/^: /, '');
   return { label: label.charAt(0).toUpperCase() + label.slice(1), who: pinOk(req.headers['x-warden-pin']) ? 'Warden' : 'a player' };
 }
 

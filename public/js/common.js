@@ -412,7 +412,7 @@ function wireNav(el, on) {
       undoList.innerHTML = '<span class="muted">Loading…</span>';
       let list = [];
       try { list = (await api('GET', null, '', '/api/undo')).list; } catch (e) { undoList.innerHTML = `<span class="muted">${esc(e.message)}</span>`; return; }
-      undoList.innerHTML = `<div class="undo-h">RECENT CHANGES <small>newest first · a fight has its own Undo</small></div>${list.length ? list.map((x) => `<div class="needs-row${x.canUndo ? '' : ' stale'}"><span class="undo-t"><b>${esc(x.label)}</b><small>${esc(x.who)} · ${esc(timeAgo(x.at))}${x.canUndo ? '' : ' · changed again since'}</small></span>
+      undoList.innerHTML = `<div class="undo-h">RECENT CHANGES <small>newest first · a fight has its own Undo</small></div>${list.length ? list.map((x) => `<div class="needs-row${x.canUndo ? '' : ' stale'}"><span class="undo-t"><b>${esc(x.label)}</b><small>${esc(x.who)} · ${esc(timeAgo(x.at))}${x.canUndo ? '' : ' · changed again since: undo the newer change first'}</small></span>
         <button type="button" class="btn small" data-undo-id="${esc(x.id)}"${x.canUndo ? '' : ' disabled'}>Undo</button></div>`).join('') : '<span class="muted">Nothing to undo yet.</span>'}`;
       undoList.querySelectorAll('[data-undo-id]').forEach((b) => b.addEventListener('click', async (e) => {
         e.stopPropagation(); b.disabled = true;

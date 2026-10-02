@@ -1511,3 +1511,15 @@ test('Records: the Warden can start them fresh; wallets are untouched', async ()
   assert.equal(state.posse[0].wallet, '9.00');
   assert.ok(pc.id);
 });
+
+// the Warden's Undo list labels: Vercel passes the body already parsed, the dev server as text
+test('undo labels read the body either way', async () => {
+  const { undoLabel } = await import('../api/[area].js');
+  const held = { statusCode: 200 };
+  const body = { action: 'save', id: 'x', scene: { title: 'Saloon No. 7' } };
+  const asObj = undoLabel('scenes', { method: 'POST', body, headers: {} }, held);
+  const asText = undoLabel('scenes', { method: 'POST', body: JSON.stringify(body), headers: {} }, held);
+  assert.equal(asObj.label, 'Prep: save “Saloon No. 7”');
+  assert.equal(asText.label, asObj.label);
+  assert.equal(undoLabel('combat', { method: 'POST', body: { action: 'sheet', path: 'wallet' }, headers: {} }, held).label, 'Sheet · wallet');
+});
