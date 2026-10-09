@@ -618,3 +618,7 @@ body.tv-mode .viewport { height: 100vh; border: 0; cursor: default; }
 .fsm-ctl select option { color: var(--ink); }
 .fsm-ctl .btn.secondary, body.warden-mode .fsm-ctl .btn.secondary { background: transparent; color: var(--paper); border-color: rgba(232,220,196,.55); box-shadow: none; }
 .fsm-ctl .fs-slots > span { color: var(--brass); }
+
+/* Forstall mode: why Scan is off, and the keypad calling for the waiting guess */
+.fsm .fsm-why { color: var(--on-dark-warn); font-weight: 700; }
+.fsm .forstall-top.your-guess .model::after { content: ' · YOUR GUESS'; color: var(--brass); }

@@ -51,7 +51,12 @@ export function openForstallMode(ctx) {
 
   function draw() {
     const list = ctx.targets(), t = list.find((x) => x.name === st.sel), e = entry(st.sel), live = myGuess();
-    const canScan = !!ctx.pc && !!t && !t.why && !(st.pending?.pc === ctx.pc.id) && !st.busy;
+    const waiting = !!ctx.pc && st.pending?.pc === ctx.pc.id; // a guess from the last Scan comes first (one Scan, one guess)
+    const canScan = !!ctx.pc && !!t && !t.why && !waiting && !st.busy;
+    // why the Scan button is off, said right under it
+    const whyNot = st.busy ? '' : !ctx.pc ? 'Scanning is done by the character whose turn it is, from their own Forstall (or one within 1″).'
+      : waiting ? (live ? `${esc(ctx.pc.name)} has a guess waiting from the last Scan. Punch six digits into the keypad below and Transmit, then Scan again.` : `${esc(ctx.pc.name)} has a guess waiting on the ${esc(st.pending.name)}. Pick it on the left and make the guess first.`)
+      : !st.sel ? 'No monster in sight to Scan.' : t?.why ? `Can’t Scan: ${esc(t.why)}.` : '';
     const fresh = st.seen !== null && (e.guesses || []).length > st.seen ? st.seen : (e.guesses || []).length;
     const rows = !st.sel ? '<div class="empty-msg">NO SIGNAL — no monster in sight</div>'
       : `${(e.guesses || []).map((g, i) => `<div class="row${i >= fresh ? ' fresh' : ''}"><span class="n">${i + 1}</span>${diamondsHTML(g.digits, g.result)}</div>`).join('')}
@@ -69,14 +74,14 @@ export function openForstallMode(ctx) {
           <div class="card target${st.sel ? '' : ' idle'}"><div><div class="label">TARGET IN LINE OF SIGHT</div><div class="name">${st.sel ? esc(st.sel) : 'Nothing in sight'}</div>
             <div class="meta">${t ? esc(t.why || `${t.d}″ away`) : ''}${ctx.easy ? ' <span class="badge teal">WARDEN’S AID: POSITIONS SHOWN</span>' : ''}</div></div>${st.sel ? readoutHTML(e.positional) : ''}</div>
           <div class="fsm-scan">
-            <button type="button" class="btn" data-fsm-scan${canScan ? '' : ' disabled'}>${gl('target')} ${st.sel ? `Scan the ${esc(st.sel)}` : 'Scan'}${ctx.fight ? ` · ${ctx.cost} Grit` : ''}</button>
-            <span class="note">Each Hit earns one digit; an Ace counts as two. Then one guess.</span>
+            <button type="button" class="btn" data-fsm-scan${canScan ? '' : ' disabled'}>${gl('target')} ${waiting ? 'Guess first' : st.sel ? `Scan the ${esc(st.sel)}` : 'Scan'}${ctx.fight && !waiting ? ` · ${ctx.cost} Grit` : ''}</button>
+            ${whyNot ? `<span class="note fsm-why">${whyNot}</span>` : '<span class="note">Each Hit earns one digit; an Ace counts as two. Then one guess.</span>'}
           </div>
           <div class="tray fsm-tray"><span class="empty">Your bullet dice land here.</span></div>
           <div class="tally fsm-tally"></div>
           <div class="tip">${e.solved ? `<b>DECODED</b>: the ${esc(st.sel)} is ${esc(e.kz || '')}. Put it in a memory slot to Sweep it at +1 and Burst it.` : `<b>DIGITS RECOVERED (${(e.known || []).length}/6)</b> ${(e.known || []).length ? chipsHTML(e.known) : '<span class="muted">none yet</span>'}`}</div>
           <div class="forstall">
-            <div class="forstall-top"><span class="lamp${live ? ' on' : ''}"></span><span class="model">EDISON FORSTALL · KURTZ DISPLAY</span></div>
+            <div class="forstall-top${live ? ' your-guess' : ''}"><span class="lamp${live ? ' on' : ''}"></span><span class="model">EDISON FORSTALL · KURTZ DISPLAY</span></div>
             <div class="screen${live ? ' live' : ''}">${WAVE_SVG}<div class="rows">${rows}</div></div>
             <div class="keypad">${[1, 2, 3, 4, 5, 6, 7, 8, 9, 0].map((k) => `<button class="key ${ks[k] || ''}${known.has(k) ? ' known' : ''}" type="button" data-k="${k}"${live ? '' : ' disabled'}>${k}</button>`).join('')}
               <button class="key wide" type="button" data-k="back"${live ? '' : ' disabled'} aria-label="Delete">⌫ DEL</button><button class="key wide go" type="button" data-k="enter"${live ? '' : ' disabled'}>TRANSMIT ▶</button><button class="key wide" type="button" data-k="clear"${live ? '' : ' disabled'}>CLEAR</button></div>
