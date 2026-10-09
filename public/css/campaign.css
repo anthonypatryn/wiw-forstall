@@ -47,3 +47,30 @@
 .cp-link button:hover { background: var(--danger-tint); color: var(--danger); }
 .cp-linker input { flex-basis: 100%; }
 .cp-results { margin-bottom: var(--sp-3); }
+
+/* tabs: Notes | Threads | In play */
+.cp-tabs { margin: 0 0 14px; }
+.cp-tabs .gl { width: 1em; height: 1em; vertical-align: -2px; }
+
+/* a note: a big title and a notebook page */
+.cp-edit .cp-note-title { flex: 1 1 200px; min-width: 0; font: var(--fs-xl) var(--display); letter-spacing: var(--track-tight); }
+.cp-edit .cp-note-text { width: 100%; box-sizing: border-box; min-height: 260px; line-height: 1.55; resize: vertical; }
+.cp-saved { margin: 4px 0 0; }
+
+/* "or make one" under the pin search */
+.cp-new-btns { align-items: center; margin: 0 0 var(--sp-3); }
+.cp-new { margin-top: 0; }
+
+/* In play */
+.cp-inplay-hint { margin: 0 0 var(--sp-2); }
+.cp-inplay-top .cp-new-btns { margin-bottom: 0; }
+.cp-inplay-top .prep-new { margin: var(--sp-3) 0 0; }
+.cp-card .section-title .gl { width: 1em; height: 1em; vertical-align: -3px; color: var(--accent); }
+.cp-row { display: flex; gap: 10px; align-items: center; justify-content: space-between; flex-wrap: wrap; padding: 8px 0; border-top: 1px dotted var(--line); }
+.cp-row:first-of-type { border-top: 0; }
+.cp-row-body { display: grid; gap: 2px; min-width: 0; flex: 1 1 180px; }
+.cp-row-body a { color: var(--ink); text-decoration: none; overflow-wrap: anywhere; }
+.cp-row-body a:hover { color: var(--accent); text-decoration: underline; }
+.cp-row-body small { font-size: var(--fs-xs); color: var(--ink-soft); overflow-wrap: anywhere; }
+.cp-hidden-card { border-color: var(--secret-line); }
+.cp-link button .gl { width: 14px; height: 14px; }

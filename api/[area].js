@@ -47,7 +47,7 @@ async function guardPin(req) {
 // What a change was, for the Warden's Undo list ("Sheet: wallet", "Store: decide"…). Only successful POSTs that
 // change something count; noise (pings, error reports, backups, photos, the undo itself) never does.
 const NO_UNDO_AREAS = new Set(['pulse', 'problems', 'backup', 'image', 'undo', 'sound', 'tv', 'gate']);
-const NO_UNDO_ACTIONS = new Set(['ping', 'report', 'auth', 'seen', 'here', 'removeMap']); // a removed map's picture is gone, so Undo couldn't bring it back
+const NO_UNDO_ACTIONS = new Set(['ping', 'report', 'auth', 'seen', 'here', 'removeMap', 'noteText']); // a removed map's picture is gone, so Undo couldn't bring it back
 const AREA_NAME = { combat: '', battle: 'Battle Map', shop: 'Store', journal: 'Journal', npcs: 'NPCs', wanted: 'Wanted', handouts: 'Handouts', whispers: 'Whisper', lockpick: 'Lock pick', saloon: 'Saloon', scan: 'Scanner', scenes: 'Prep', campaign: 'Campaign', session: 'Session notes', map: 'Map', papers: 'Newspaper' };
 const words = (s) => String(s || '').replace(/([a-z])([A-Z])/g, '$1 $2').replace(/[._-]+/g, ' ').trim().toLowerCase();
 export function undoLabel(area, req, held) {

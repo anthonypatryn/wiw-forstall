@@ -1836,3 +1836,25 @@ test('Campaign threads: Warden only, a clock that stays in bounds, tidy links', 
   assert.equal(st.threads.length, 0);
   assert.throws(() => campaignAction(st, { action: 'tick', id: t.id }, { warden: true }), /gone/);
 });
+
+test('Campaign notes and handouts written ahead', async () => {
+  const { freshCampaign, campaignAction } = await import('../lib/campaign.js');
+  const st = freshCampaign(), W = { warden: true };
+  const n = campaignAction(st, { action: 'noteNew' }, W);
+  assert.equal(n.title, 'New note');
+  campaignAction(st, { action: 'noteText', id: n.id, title: 'Session 4 plans ', text: 'The Baron <i>wants</i> the well ' }, W);
+  assert.equal(st.notes[0].title, 'Session 4 plans ', 'spaces kept while typing');
+  assert.equal(st.notes[0].text, 'The Baron iwants/i the well ');
+  const d = campaignAction(st, { action: 'draftSave', draft: { kind: 'note', title: '', text: 'Meet me at the mill' } }, W);
+  assert.throws(() => campaignAction(st, { action: 'draftSave', draft: { kind: 'item' } }, W), /Name the item/);
+  campaignAction(st, { action: 'noteLinks', id: n.id, links: [{ kind: 'item', id: 'rifles-used-rifle' }, { kind: 'draft', id: d.id }, { kind: 'handout', id: 'h1' }] }, W);
+  st.threads.push({ id: 't1', title: 'x', links: [{ kind: 'draft', id: d.id }] });
+  campaignAction(st, { action: 'draftUsed', id: d.id, handout: 'h9' }, W);
+  assert.equal(st.drafts.length, 0, 'handed out, so no longer waiting');
+  assert.deepEqual(st.notes[0].links.map((l) => `${l.kind}:${l.id}`), ['item:rifles-used-rifle', 'handout:h9', 'handout:h1'], 'the pin now points at the real handout');
+  assert.deepEqual(st.threads[0].links, [{ kind: 'handout', id: 'h9' }]);
+  campaignAction(st, { action: 'noteRemove', id: n.id }, W);
+  assert.equal(st.notes.length, 0);
+  assert.throws(() => campaignAction(st, { action: 'noteText', id: n.id, text: 'x' }, W), /gone/);
+  assert.throws(() => campaignAction({ threads: [] }, { action: 'noteNew' }, { warden: false }), /PIN/);
+});
