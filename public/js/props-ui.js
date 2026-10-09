@@ -125,7 +125,7 @@ export function propCard(p, ctx) {
     : p.kind === 'clue' ? `<p class="pp-secret">${esc(p.text || '(no text)')}${p.clueId ? '<br><i>Reveals a Journal clue</i>' : ''}</p>`
     : p.kind === 'trap' ? `<p class="pp-secret">${gl('trap')} ${esc(p.trapText || 'does nothing')}</p>`
     : p.kind === 'door' ? `<p class="pp-secret">${p.locked ? `${gl('lock')} Locked: ${p.difficulty} pin${p.difficulty === 1 ? '' : 's'} to pick${p.unlocked ? ' · <i>picked</i>' : ''}` : 'Not locked'}</p>` : '';
-  const verb = { chest: p.opened ? '' : `${gl('lock')} Pick the lock`, body: `${gl('target')} Search the body <small>Intuition</small>`, clue: `${gl('scroll')} Read it`, marker: '', trap: '', door: p.open ? `${gl('door')} Shut it` : `${gl('door')} Open it` }[p.kind];
+  const verb = { chest: p.opened ? '' : `${gl('lock')} Pick the lock`, body: `${gl('target')} Search the body <small>Intuition${ctx.fight ? ' · 1 Grit' : ''}</small>`, clue: `${gl('scroll')} Read it${ctx.fight && !p.readBy?.includes(ctx.me) ? ' <small>1 Grit</small>' : ''}`, marker: '', trap: '', door: p.open ? `${gl('door')} Shut it` : `${gl('door')} Open it` }[p.kind];
   const can = !ctx.warden && verb && ctx.me && !(p.kind === 'body' && p.searchedBy?.includes(ctx.me));
   back.innerHTML = `<div class="modal ask pp-modal" role="dialog" aria-modal="true" aria-label="${esc(p.name)}">
     <h2>${gl(propIcon(p))} ${esc(p.name)}${p.hidden ? ' <span class="pill secret">hidden</span>' : ''}</h2>

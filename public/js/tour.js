@@ -47,6 +47,16 @@ export function runTour(steps, key, { force = false, scene = false, tries = 0 } 
     requestAnimationFrame(place);
   }
   back.addEventListener('click', (e) => {
+    // a tap on the lit-up thing itself (BUG-7: "Clues" under the Journal's tour did nothing): end the tour and let the tap through
+    if (!tip.contains(e.target)) {
+      const el = find(list[i]), r = el?.getBoundingClientRect(), pad = 6;
+      if (r && e.clientX >= r.left - pad && e.clientX <= r.right + pad && e.clientY >= r.top - pad && e.clientY <= r.bottom + pad) {
+        finish();
+        const under = document.elementFromPoint(e.clientX, e.clientY);
+        (under?.closest('button, a, input, select, textarea, label, [data-tab]') || under)?.click();
+      }
+      return;
+    }
     const b = e.target.closest('button'); if (!b) return;
     if (b.dataset.skip !== undefined) finish();
     else if (b.dataset.prev !== undefined) { i = Math.max(0, i - 1); show(); }

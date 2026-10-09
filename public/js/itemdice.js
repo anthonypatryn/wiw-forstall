@@ -1,14 +1,15 @@
-// Extra dice from an item (a lucky charm, a tool, a trophy): the player adds them by hand before a Skill roll.
+// Extra dice from an item (a lucky charm, a tool, a trophy): the Warden adds them when calling for a roll (BUG-11: players
+// don't add their own); the Warden's own rolls on a sheet can ask too.
 // itemDiceHTML() is a small row of + Black / + Gold steppers with a "from what?" box; readItemDice(root) reads it.
 // askItemDice(title) is the same row in a quick dialog, for rolls that otherwise fire on one tap (the sheet's Skills).
 import { esc } from './common.js';
 
 const MAX = 4;
-export const itemDiceHTML = () => `<div class="item-dice" data-item-dice>
-  <span class="id-h">ITEM DICE <small>from something you carry</small></span>
-  <span class="id-step" data-k="b"><button type="button" data-id-step="-1" aria-label="One less Black die">−</button><b data-id-n>0</b><span>B</span><button type="button" data-id-step="1" aria-label="One more Black die">+</button></span>
-  <span class="id-step gold" data-k="g"><button type="button" data-id-step="-1" aria-label="One less Gold die">−</button><b data-id-n>0</b><span>G</span><button type="button" data-id-step="1" aria-label="One more Gold die">+</button></span>
-  <input data-id-from maxlength="40" placeholder="from what? (e.g. lucky horseshoe)" aria-label="Which item">
+export const itemDiceHTML = (v = {}, hint = 'from something they carry') => `<div class="item-dice" data-item-dice>
+  <span class="id-h">ITEM DICE <small>${esc(hint)}</small></span>
+  <span class="id-step" data-k="b"><button type="button" data-id-step="-1" aria-label="One less Black die">−</button><b data-id-n>${Number(v.itemB) || 0}</b><span>B</span><button type="button" data-id-step="1" aria-label="One more Black die">+</button></span>
+  <span class="id-step gold" data-k="g"><button type="button" data-id-step="-1" aria-label="One less Gold die">−</button><b data-id-n>${Number(v.itemG) || 0}</b><span>G</span><button type="button" data-id-step="1" aria-label="One more Gold die">+</button></span>
+  <input data-id-from maxlength="40" placeholder="from what? (e.g. lucky horseshoe)" aria-label="Which item" value="${esc(v.itemFrom || '')}">
 </div>`;
 
 // steppers work wherever the row is on the page

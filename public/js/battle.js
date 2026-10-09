@@ -137,7 +137,7 @@ function renderProps() {
 function openProp(id) {
   const p = (data?.props || []).find((x) => x.id === id); if (!p) return;
   const mine = data.tokens.find((t) => t.kind === 'pc' && t.ref === myId());
-  propCard(p, { warden, me: myId(), near: !!mine && gap(mine, p) <= 1, act, refresh: (st) => { if (st) poller?.push(st); },
+  propCard(p, { warden, me: myId(), fight: !!combat?.combat?.active, near: !!mine && gap(mine, p) <= 1, act, refresh: (st) => { if (st) poller?.push(st); },
     onMove: (q) => { placing = { id: q.id, kind: q.kind, icon: q.icon }; placeBanner(); } });
 }
 $('#props').addEventListener('click', (e) => { const el = e.target.closest('[data-prop]'); if (el) openProp(el.dataset.prop); });
@@ -956,7 +956,7 @@ function holdsHTML() {
     const h = p.hold, may = warden || myId() === p.id;
     const tgt = h.triggeredBy?.enemy || h.trigger?.enemy || '';
     return `<div class="tp-hold${h.triggeredBy ? ' hot' : ''}"><div>${gl('watch')} <b>${esc(p.name)}</b> holds ${esc(h.label)} — when ${esc(h.when)}${h.triggeredBy ? `<small>${esc(h.triggeredBy.text)} — it can go off!</small>` : ''}</div>
-      ${may ? `<div class="tp-hold-btns">${h.kind === 'attack' ? `<select data-hold-target="${p.id}" aria-label="Target">${foes.map((e) => `<option value="${e.id}"${e.id === tgt ? ' selected' : ''}>→ ${esc(e.name)}</option>`).join('')}</select>` : ''}
+      ${may ? `<div class="tp-hold-btns">${h.kind === 'attack' || (h.kind === 'ability' && meta?.abilityInfo?.[h.ability?.name]?.strike) ? `<select data-hold-target="${p.id}" aria-label="Target">${foes.map((e) => `<option value="${e.id}"${e.id === tgt ? ' selected' : ''}>→ ${esc(e.name)}</option>`).join('')}</select>` : ''}
         <button type="button" class="btn small" data-hold-fire="${p.id}">${gl('flash')} Fire now</button><button type="button" class="btn small secondary" data-hold-drop="${p.id}">Let it go</button></div>` : ''}</div>`;
   }).join('')}</div>`;
 }

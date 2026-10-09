@@ -1,4 +1,5 @@
 // Call for a roll (pp. 12–13): tap who, how hard and the Skill, then Call for the roll sends it out.
+import { itemDiceHTML, readItemDice } from './itemdice.js';
 import { esc, api, toast } from './common.js';
 import { gl } from './glyphs.js';
 
@@ -29,6 +30,7 @@ export function mountRollCaller(el, getCombat, after) {
   const chosen = () => (sel.who ? people().filter((p) => sel.who.has(p.id)) : (fighting() || people()));
   function draw() {
     if (el.contains(document.activeElement) && document.activeElement.tagName === 'INPUT') return;
+    if (el.querySelector('[data-item-dice]')) sel.item = readItemDice(el); // keep the item dice through a redraw
     const c = getCombat(), list = people(), fight = fighting();
     const picked = new Set(chosen().map((p) => p.id));
     const everyone = !sel.who;
@@ -42,6 +44,7 @@ export function mountRollCaller(el, getCombat, after) {
       ${sel.diff === 'challenge' ? `<div class="field-step"><span>AGAINST</span><select data-rc-npc aria-label="Opponent"><option value="">— just the posse picked above —</option>
           ${(c?.enemies || []).filter((e) => !e.defeated).map((e) => `<option value="en:${e.id}"${sel.npc === `en:${e.id}` ? ' selected' : ''}>${esc(e.name)}</option>`).join('')}
           <optgroup label="Book NPCs">${(c?.npcCatalog || []).map((n) => { const v = `np:${n.key}|${n.faction ? n.name : ''}`; return `<option value="${esc(v)}"${sel.npc === v ? ' selected' : ''}>${esc(n.name.replace('Human - ', 'Human: '))}</option>`; }).join('')}</optgroup></select></div>` : ''}
+      ${sel.diff === 'challenge' ? '' : itemDiceHTML(sel.item || {}, 'from something they carry: added to the roll')}
       <div class="field-step"><span>FOR</span><input data-rc-note maxlength="80" placeholder="what’s it for? (optional) e.g. climb the cliff" value="${esc(sel.note)}"></div>
       <div class="rc-skills">${SKILLS.map(([s, d]) => `<button type="button" class="rc-skill${sel.skill === s ? ' on' : ''}" data-rc-skill="${s}" aria-pressed="${sel.skill === s}">${gl('die')}<b>${s}</b><small>${d}</small></button>`).join('')}</div>
       ${sel.skill === 'Charm' ? `<div class="field-step rc-faction"><span>WITH A FACTION? <small>Reputation adds or takes Black dice (p. 118)</small></span>
@@ -67,9 +70,9 @@ export function mountRollCaller(el, getCombat, after) {
       if (!who.length) return toast('Nobody to roll.', true);
       b.disabled = true;
       try {
-        const res = await api('POST', { action: 'checkStart', who, skill: sel.skill, diff: sel.diff, npc: sel.diff === 'challenge' ? sel.npc : '', note: sel.note, faction: sel.skill === 'Charm' ? sel.faction : '' }, '', '/api/combat');
+        const res = await api('POST', { action: 'checkStart', who, skill: sel.skill, diff: sel.diff, npc: sel.diff === 'challenge' ? sel.npc : '', note: sel.note, faction: sel.skill === 'Charm' ? sel.faction : '', ...(sel.diff === 'challenge' ? {} : readItemDice(el)) }, '', '/api/combat');
         toast(`${sel.skill} roll called${who.length === 1 ? ` for ${chosen()[0].name}` : ` for ${who.length}`}.`);
-        sel.note = ''; sel.skill = null;
+        sel.note = ''; sel.skill = null; sel.item = null;
         after?.(res);
       } catch (err) { toast(err.message, true); }
       b.disabled = false;

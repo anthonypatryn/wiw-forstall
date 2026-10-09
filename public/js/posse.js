@@ -449,8 +449,8 @@ function wireSheet(p) {
     }
     if (!isPool(pool)) return toast('Set how many Black and Gold dice first.', true);
     const spur = !!talent && pc.talents.includes(talent);
-    // a Skill roll: first ask whether an item adds dice (weapons and gear roll straight away)
-    const extra = String(b.dataset.rollPath || '').startsWith('skills.') ? await askItemDice(`${pc.name} · ${label} (${pool})`) : {};
+    // a Skill roll the Warden makes on a sheet: first ask whether an item adds dice (players don't add their own: BUG-11)
+    const extra = warden && String(b.dataset.rollPath || '').startsWith('skills.') ? await askItemDice(`${pc.name} · ${label} (${pool})`) : {};
     if (!extra) return;
     const r = await act({ action: 'roll', who: pc.id, pool, label, spur, ...extra });
     if (r?.dice) rollPopup(r, `${pc.name} · ${label} · ${r.pool}`);
@@ -512,9 +512,7 @@ function wireSheet(p) {
       if (await act({ action: 'pc', id: p.id, op: 'removeThing', target: t, index: i })) toast(`${label} removed.`);
     } else if (e.target.closest('[data-ck-roll]')) {
       const b = e.target.closest('[data-ck-roll]'); b.blur();
-      const extra = await askItemDice(`${pcById(p.id).name}: the Warden’s roll`);
-      if (!extra) return;
-      const r = await act({ action: 'pc', id: p.id, op: 'checkRoll', check: b.dataset.ckRoll, ...extra });
+      const r = await act({ action: 'pc', id: p.id, op: 'checkRoll', check: b.dataset.ckRoll }); // item dice come with the Warden's call
       if (r?.dice) {
         await rollPopup(r, `${pcById(p.id).name} · ${r.label}`);
         if (r.helping) toast(`You added ${r.hits} Hit${r.hits === 1 ? '' : 's'} of help.`);

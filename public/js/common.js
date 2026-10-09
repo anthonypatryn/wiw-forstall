@@ -637,10 +637,13 @@ export function abilityOptions(pc, meta) {
     return { name: a.name, info, out, label: `${a.name} · ${bits.join(' · ')}${out ? ' (used up)' : ''}` };
   });
 }
+// abilities that land on one enemy (lib/combat.js STRIKES): they need a target picked
+const STRIKE_ABILITIES = ['Mechanized Haymaker (Melee)', 'Rapid Fire (Pistols)', 'Electrified Prod (Melee)', 'Beastmaster’s Roar (Charm)'];
 export function abilityTargetsHTML(name, pc, posse, foes, sel) {
   const allies = posse.filter((x) => x.id !== pc.id && !x.dead);
   const opt = (list, v) => list.map((x) => `<option value="${x.id}"${x.id === v ? ' selected' : ''}>${esc(x.name)}</option>`).join('');
   if (name === 'Crippling Precision') return `<select data-ab="target" aria-label="Target">${opt(foes, sel.target)}</select>`;
+  if (STRIKE_ABILITIES.includes(name)) return `<select data-ab="target" aria-label="Who it hits">${opt(foes, sel.target)}</select>`; // attacks and Statuses on one enemy
   if (name === 'Biological Amplification') return `<select data-ab="target" aria-label="Ally">${opt(allies, sel.target)}</select><select data-ab="option" aria-label="Gift"><option value="aim"${sel.option !== 'dodge' ? ' selected' : ''}>free Aim</option><option value="dodge"${sel.option === 'dodge' ? ' selected' : ''}>free Dodge [1B]</option></select>`;
   if (name === 'Fired Up 2') return `<select data-ab="t1" aria-label="Ally 1"><option value="">— ally —</option>${opt(allies, sel.t1)}</select><select data-ab="t2" aria-label="Ally 2"><option value="">— ally —</option>${opt(allies, sel.t2)}</select>`;
   return '';

@@ -1662,17 +1662,24 @@ test('Players light their own lantern or flashlight, if it’s in their Inventor
   assert.equal(s.tokens[0].light, '');
 });
 
-test('Item dice: added by hand to a called roll or a free Skill roll, and noted in the log', async () => {
+test('Item dice (BUG-11): the Warden adds them when calling the roll; players can’t add their own', async () => {
   const state = freshCombat();
   const a = publicAction(state, { action: 'addPc', trade: 'Hunter', name: 'Tess' }, { warden: true });
-  state.posse[0].skills.nerve = '2B';
-  const ck = publicAction(state, { action: 'checkStart', who: [a.id], skill: 'Nerve', diff: 'Medium' }, { warden: true });
-  const r = publicAction(state, { action: 'pc', id: a.id, op: 'checkRoll', check: ck.id, itemB: 1, itemG: 1, itemFrom: 'lucky horseshoe' }, { warden: false });
-  assert.equal(r.dice.length, 4);
+  publicAction(state, { action: 'addPc', trade: 'Hunter', name: 'Bo' }, { warden: true });
+  state.posse.forEach((p) => { p.skills.nerve = '2B'; });
+  const ck = publicAction(state, { action: 'checkStart', who: [a.id], skill: 'Nerve', diff: 'Medium', itemB: 1, itemG: 1, itemFrom: 'lucky horseshoe' }, { warden: true });
+  const r = publicAction(state, { action: 'pc', id: a.id, op: 'checkRoll', check: ck.id, itemB: 4 }, { warden: false }); // a player's own extra is ignored
+  assert.equal(r.dice.length, 4, '2B + the Warden’s 1B1G');
   assert.match(r.label, /item \+1B1G \(lucky horseshoe\)/);
-  const f = publicAction(state, { action: 'roll', who: a.id, pool: '2B', label: 'Nerve', itemB: 9 }, { warden: false });
-  assert.equal(f.dice.length, 6); // capped at +4
-  assert.match(f.label, /Nerve · item \+4B/);
+  const h = publicAction(state, { action: 'pc', id: state.posse[1].id, op: 'checkRoll', check: ck.id }, { warden: false });
+  assert.equal(h.dice.length, 1, 'a helper rolls half their dice, no item dice');
+  const ck2 = publicAction(state, { action: 'checkStart', who: [a.id], skill: 'Nerve', diff: 'Medium' }, { warden: true });
+  assert.equal(publicAction(state, { action: 'pc', id: a.id, op: 'checkRoll', check: ck2.id, itemB: 2 }, { warden: false }).dice.length, 2, 'players can’t add their own');
+  const f = publicAction(state, { action: 'roll', who: a.id, pool: '2B', label: 'Nerve', itemB: 3 }, { warden: false });
+  assert.equal(f.dice.length, 2);
+  const w = publicAction(state, { action: 'roll', who: a.id, pool: '2B', label: 'Nerve', itemB: 9 }, { warden: true });
+  assert.equal(w.dice.length, 6, 'the Warden’s own roll on a sheet: capped at +4');
+  assert.match(w.label, /Nerve · item \+4B/);
 });
 
 test('Every Ace a character rolls in combat marks their meter, whatever the roll', () => {
@@ -1945,4 +1952,45 @@ test('Helping (p. 13): only the best helper counts, the first to roll it on a ti
   assert.equal(bestHelp({ helps: { a: { name: 'A', hits: 2 }, b: { name: 'B', hits: 2 } } }).name, 'A');
   assert.equal(bestHelp({ helps: { a: { name: 'A', hits: 0 } } }), null, 'no Hits, no help');
   assert.equal(bestHelp({}), null);
+});
+
+test('BUG-10: attack abilities hit their target, prepared or not', async () => {
+  const { freshCombat, publicAction } = await import('../lib/combat.js');
+  const s = freshCombat();
+  const W = (a) => publicAction(s, a, { warden: true });
+  W({ action: 'addPc', trade: 'Mechanic', name: 'Felix' });
+  W({ action: 'addEnemy', name: 'Worm', health: 30, defense: '—' });
+  const p = s.posse[0], e = s.enemies[0];
+  p.aces = 6; p.grit = 6;
+  assert.throws(() => W({ action: 'pc', id: p.id, op: 'useAbility', name: 'Mechanized Haymaker (Melee)' }), /Pick who/);
+  const r = W({ action: 'pc', id: p.id, op: 'useAbility', name: 'Mechanized Haymaker (Melee)', target: e.id });
+  assert.equal(r.target, 'Worm');
+  assert.equal(e.health, 30 - r.dmg, 'the Hits came off its Health');
+  assert.equal(r.dmg, r.hits, 'no Defense dice, so every Hit lands');
+  // prepared: it goes off at the enemy that set it off
+  p.aces = 6;
+  p.hold = { kind: 'ability', ability: { name: 'Mechanized Haymaker (Melee)', target: '', option: '', targets: [] }, label: 'Mechanized Haymaker (Melee)', when: 'an ally is attacked', trigger: { type: 'allyAttacked' }, triggeredBy: { enemy: e.id, text: 'Worm attacked Brass' } };
+  const before = e.health;
+  const f = W({ action: 'pc', id: p.id, op: 'fireHold' });
+  assert.equal(f.target, 'Worm');
+  assert.equal(e.health, Math.max(0, before - f.dmg));
+});
+
+test('BUG-9: in a fight, searching costs 1 Grit on your own turn; out of a fight it’s free', async () => {
+  const { freshCombat, publicAction, payAction, SEARCH_GRIT } = await import('../lib/combat.js');
+  const s = freshCombat();
+  const W = (a) => publicAction(s, a, { warden: true });
+  W({ action: 'addPc', trade: 'Hunter', name: 'Ann' }); W({ action: 'addPc', trade: 'Hunter', name: 'Bo' });
+  const [ann, bo] = s.posse;
+  payAction(s, ann, SEARCH_GRIT, 'Searching the body'); // no fight: nothing happens
+  W({ action: 'addEnemy', name: 'Worm', health: 5 }); W({ action: 'start' });
+  s.combat.current = ann.id; // whoever rolled first, it's Ann's turn here
+  const cur = ann, other = bo;
+  const g = cur.grit;
+  payAction(s, cur, SEARCH_GRIT, 'Searching the body');
+  assert.equal(cur.grit, g - 1);
+  assert.ok(cur.turnLog.some((x) => /searching/.test(x.text)));
+  assert.throws(() => payAction(s, other, SEARCH_GRIT, 'Searching the body'), /own turn/);
+  cur.grit = 0;
+  assert.throws(() => payAction(s, cur, SEARCH_GRIT, 'Searching the body'), /costs 1 Grit/);
 });

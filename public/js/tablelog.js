@@ -4,7 +4,6 @@ import { gl } from './glyphs.js';
 import { duelHud } from './duel-hud.js';
 import { tradeHud, openTrade } from './trade.js';
 import { searchHud, openSearch } from './search.js';
-import { itemDiceHTML, readItemDice } from './itemdice.js';
 import { attention } from './attention.js';
 
 function logHTML(log) {
@@ -201,13 +200,12 @@ export function renderHud(h) {
     ck.innerHTML = `<div><small>WANT TO HELP?</small>
       <b>${esc(names.length > 2 ? `${names.slice(0, -1).join(', ')} & ${names.at(-1)}` : names.join(' & '))} ${names.length > 1 ? 'are' : 'is'} rolling ${esc(assist.skill)}</b> · ${esc(assist.diff)} — ${assist.target} Hit${assist.target === 1 ? '' : 's'}${assist.note ? ` · <i>${esc(assist.note)}</i>` : ''}
       <span class="hud-ck-sub">Roll half your ${esc(assist.skill)} dice (rounded up). Only the best helper’s Hits are added to theirs.</span></div>
-      ${itemDiceHTML()}
       <div class="hud-ck-btns"><button type="button" class="btn" data-help-go>Help</button><button type="button" class="btn small secondary" data-help-no>Not this time</button></div>`;
     ck.querySelector('[data-help-no]').addEventListener('click', () => { setSeen(`wiw.help.${assist.id}`, 'no'); ck.hidden = true; });
     ck.querySelector('[data-help-go]').addEventListener('click', async (e) => {
       e.target.disabled = true;
       try {
-        const res = await api('POST', { action: 'pc', id: mine, op: 'checkRoll', check: assist.id, ...readItemDice(ck) }, '', '/api/combat');
+        const res = await api('POST', { action: 'pc', id: mine, op: 'checkRoll', check: assist.id }, '', '/api/combat');
         ck.hidden = true; setSeen(`wiw.help.${assist.id}`, 'no');
         const r = res.result;
         if (r?.dice) { await rollPopup(r, `Helping · ${r.label || assist.skill}`); toast(r.helpSaid ? `Your help: ${r.helpSaid}.` : `You helped with ${r.hits} Hit${r.hits === 1 ? '' : 's'}.`); }
@@ -223,14 +221,13 @@ export function renderHud(h) {
   play('chime');
   try { navigator.vibrate?.(150); } catch {}
   ck.innerHTML = `<div><small>${open.kind === 'challenge' ? `CHALLENGE${open.round > 1 ? ` · ROUND ${open.round} (TIE)` : ''} — MOST HITS WINS` : open.nudge ? 'THE WARDEN IS STILL WAITING ON YOUR ROLL' : 'THE WARDEN ASKS YOU TO ROLL'}</small>
-    <b>${esc(who.name)}: ${esc(open.skill)}</b> ${open.kind === 'challenge' ? `vs ${esc(others.join(' & '))}` : `· ${esc(open.diff)} — ${open.target} Hit${open.target === 1 ? '' : 's'}`}${open.faction ? ` · with ${esc(open.faction)}` : ''}${open.note ? ` · <i>${esc(open.note)}</i>` : ''}</div>
-    ${itemDiceHTML()}
+    <b>${esc(who.name)}: ${esc(open.skill)}</b> ${open.kind === 'challenge' ? `vs ${esc(others.join(' & '))}` : `· ${esc(open.diff)} — ${open.target} Hit${open.target === 1 ? '' : 's'}`}${open.faction ? ` · with ${esc(open.faction)}` : ''}${open.note ? ` · <i>${esc(open.note)}</i>` : ''}${open.item ? `<span class="hud-ck-sub">The Warden adds item dice: ${esc(open.item)}</span>` : ''}</div>
     <div class="hud-ck-btns"><button type="button" class="btn" data-ck-go>Roll ${esc(open.skill)}</button><button type="button" class="btn small secondary" data-ck-later>Later</button></div>`;
   ck.querySelector('[data-ck-later]').addEventListener('click', () => { setSeen(`wiw.ck.${open.id}.${open.round}`, `later.${open.nudge}`); ck.hidden = true; });
   ck.querySelector('[data-ck-go]').addEventListener('click', async (e) => {
     e.target.disabled = true;
     try {
-      const res = await api('POST', { action: 'pc', id: mine, op: 'checkRoll', check: open.id, ...readItemDice(ck) }, '', '/api/combat');
+      const res = await api('POST', { action: 'pc', id: mine, op: 'checkRoll', check: open.id }, '', '/api/combat');
       const r = res.result;
       ck.hidden = true;
       if (r?.dice) {
