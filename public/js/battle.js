@@ -392,7 +392,9 @@ function renderPanel() {
   }));
   list.querySelectorAll('[data-hide]').forEach((b) => b.addEventListener('click', () => {
     const t = data.tokens.find((x) => x.id === b.dataset.hide);
-    act({ action: 'tokenEdit', id: t.id, hidden: !t.hidden });
+    act({ action: 'tokenEdit', id: t.id, hidden: !t.hidden }).then((r) => { // a revealed enemy that sat the fight out joins it
+      if (r?.joined) { toast(`${r.joined} joins the fight, at the bottom of the turn order.`); combatPoller?.now?.(); }
+    });
   }));
   list.querySelectorAll('[data-recenter]').forEach((b) => b.addEventListener('click', async () => {
     const r = await act({ action: 'recenter', id: b.dataset.recenter });

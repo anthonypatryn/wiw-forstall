@@ -1858,3 +1858,31 @@ test('Campaign notes and handouts written ahead', async () => {
   assert.throws(() => campaignAction(st, { action: 'noteText', id: n.id, text: 'x' }, W), /gone/);
   assert.throws(() => campaignAction({ threads: [] }, { action: 'noteNew' }, { warden: false }), /PIN/);
 });
+
+test('Enemies who join a fight already going act last, in the order they came', async () => {
+  const { freshCombat, publicAction, joinLate } = await import('../lib/combat.js');
+  const s = freshCombat();
+  const W = (a) => publicAction(s, a, { warden: true });
+  W({ action: 'addPc', trade: 'Hunter', name: 'Ann' });
+  W({ action: 'addEnemy', profile: 'Chupacabra' });
+  W({ action: 'addEnemy', profile: 'Chupacabra', name: 'Lurker' });
+  const [a, lurker] = s.enemies;
+  W({ action: 'start', enemies: [a.id] }); // the lurker sits it out (hidden on the map)
+  assert.ok(lurker.out);
+  const tl = () => s.combat.slots;
+  assert.ok(!tl().includes(lurker.id));
+  joinLate(s, lurker);
+  assert.equal(tl().at(-1), lurker.id, 'revealed: its own turn, last');
+  W({ action: 'addEnemy', profile: 'Chupacabra', name: 'Late Two' });
+  const two = s.enemies.at(-1);
+  assert.deepEqual(tl().slice(-2), [lurker.id, two.id], 'added mid-fight: below the one before');
+  W({ action: 'initiative', id: s.posse[0].id }); // a re-roll re-sorts the rest, not the late joiners
+  assert.deepEqual(tl().slice(-2), [lurker.id, two.id]);
+  assert.throws(() => W({ action: 'join', id: two.id }), /already in the fight/);
+  W({ action: 'leave', id: lurker.id });
+  assert.ok(!tl().includes(lurker.id));
+  W({ action: 'join', id: lurker.id });
+  assert.equal(tl().at(-1), lurker.id, 'back in: last again');
+  W({ action: 'end' });
+  assert.ok(!s.enemies.some((e) => e.late), 'a new fight starts everyone in the shared slot');
+});
