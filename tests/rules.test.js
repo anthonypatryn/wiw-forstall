@@ -1905,3 +1905,35 @@ test('An upgrade you own (from the stash) fits onto your Forstall for free', asy
   p.forstall.upgrades = ['', '', '', '']; p.forstall.upgradeIds = ['', '', '', ''];
   assert.throws(() => W({ action: 'pc', id: p.id, op: 'installUpgrade', target: 'forstall', item: 'for-purchase-crystal-burst-fuse', pay: 'owned' }), /Take one from the stash/);
 });
+
+test('Big monsters fill more hexes; distances are edge to edge and nobody walks into them', async () => {
+  const { cellsOf, gapBetween, inRange, hexDist } = await import('../lib/forstall.js');
+  const { freshBattle, battleAction, autoSync } = await import('../lib/battle.js');
+  assert.deepEqual([0, 1, 2, 3].map((foot) => cellsOf({ col: 10, row: 10, foot }).length), [1, 3, 7, 19], 'Medium 1, Large 3, Huge 7, Titan 19');
+  for (const foot of [1, 2, 3]) { // every hex of a footprint touches another one of it
+    const cs = cellsOf({ col: 10, row: 11, foot });
+    assert.ok(cs.every((c) => cs.some((o) => o !== c && hexDist(o, c) === 1)));
+  }
+  const huge = { col: 10, row: 10, foot: 2 }, man = { col: 14, row: 10 };
+  assert.equal(hexDist(huge, man), 4);
+  assert.equal(gapBetween(huge, man), 3, 'measured from the edge of the Huge one');
+  assert.ok(inRange({ pos: { col: 17, row: 10 }, rangeIn: 6 }, huge), 'in Range when its edge is');
+  // a fight with a Huge monster: it gets its footprint, and a player can't walk into it
+  const combat = { combat: { active: true, party: null }, posse: [{ id: 'p1', name: 'Ann' }], enemies: [{ id: 'e1', name: 'Turtle', size: 'Huge', defeated: false }] };
+  const b = freshBattle();
+  autoSync(b, combat);
+  const tt = b.tokens.find((t) => t.ref === 'e1'), pt = b.tokens.find((t) => t.ref === 'p1');
+  assert.equal(tt.foot, 2);
+  const theirs = cellsOf(tt), mine = cellsOf(pt);
+  assert.ok(!mine.some((c) => theirs.some((o) => o.col === c.col && o.row === c.row)), 'placed clear of each other');
+  const inside = theirs.find((c) => c.col !== tt.col || c.row !== tt.row);
+  assert.throws(() => battleAction(b, { action: 'move', id: pt.id, pc: 'p1', col: inside.col, row: inside.row }, { warden: false, combat }), /takes up that space/);
+  const next = { col: tt.col + 2, row: tt.row }; // just outside its ring
+  battleAction(b, { action: 'move', id: pt.id, pc: 'p1', ...next }, { warden: false, combat });
+  assert.equal(gapBetween(tt, pt), 1, 'right next to it: Arm’s Reach');
+  combat.enemies[0].defeated = true; // the fallen don't block
+  battleAction(b, { action: 'move', id: pt.id, pc: 'p1', col: inside.col, row: inside.row }, { warden: false, combat });
+  // into a mech: Large; out again: one hex
+  combat.posse[0].mounted = 'mech'; autoSync(b, combat); assert.equal(pt.foot, 1);
+  delete combat.posse[0].mounted; autoSync(b, combat); assert.equal(pt.foot, undefined);
+});

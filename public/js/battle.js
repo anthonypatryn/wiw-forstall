@@ -58,7 +58,7 @@ function attackHTML(sel) {
     const pc = combat.posse.find((p) => p.id === sel.ref);
     if (!pc || pc.dead) return '';
     const foes = data.tokens.filter((t) => t.kind === 'enemy' && !t.down && combat.enemies.some((e) => e.id === t.ref && !e.defeated))
-      .map((t) => ({ t, d: dist(sel, t) })).sort((a, b) => a.d - b.d);
+      .map((t) => ({ t, d: gap(sel, t) })).sort((a, b) => a.d - b.d);
     if (!foes.length) return '<p class="muted">No enemies standing on the board.</p>';
     const armed = pc.weapons.map((w, i) => [w, i]).filter(([w]) => w.model || w.manufacturer);
     const reach = (d) => armed.some(([w]) => isPool(w[WEAPON_KEY[band(d)]]));
@@ -87,7 +87,7 @@ function attackHTML(sel) {
     const prof = e?.profile ? combat.profiles?.[e.profile] : null;
     if (!e || e.defeated || !prof?.attacks?.length) return '<p class="muted">No attacks on its profile. Use Improvise, or roll from the Roll dice button.</p>';
     const posse = data.tokens.filter((t) => t.kind === 'pc' && combat.posse.some((p) => p.id === t.ref && !p.dead))
-      .map((t) => ({ t, d: dist(sel, t) })).sort((a, b) => a.d - b.d);
+      .map((t) => ({ t, d: gap(sel, t) })).sort((a, b) => a.d - b.d);
     if (!posse.length) return '<p class="muted">Nobody from the posse is on the board.</p>';
     if (!prof.attacks.some((_, i) => i === s.a)) s.a = 0;
     if (s.t && !posse.some((f) => f.t.id === s.t)) s.t = null;
@@ -137,7 +137,7 @@ function renderProps() {
 function openProp(id) {
   const p = (data?.props || []).find((x) => x.id === id); if (!p) return;
   const mine = data.tokens.find((t) => t.kind === 'pc' && t.ref === myId());
-  propCard(p, { warden, me: myId(), near: !!mine && dist(mine, p) <= 1, act, refresh: (st) => { if (st) poller?.push(st); },
+  propCard(p, { warden, me: myId(), near: !!mine && gap(mine, p) <= 1, act, refresh: (st) => { if (st) poller?.push(st); },
     onMove: (q) => { placing = { id: q.id, kind: q.kind, icon: q.icon }; placeBanner(); } });
 }
 $('#props').addEventListener('click', (e) => { const el = e.target.closest('[data-prop]'); if (el) openProp(el.dataset.prop); });
@@ -205,6 +205,29 @@ function dist(a, b) {
   const A = cube(a.col, a.row), B = cube(b.col, b.row);
   return (Math.abs(A.q - B.q) + Math.abs(A.r - B.r) + Math.abs(A.s - B.s)) / 2;
 }
+// Big tokens fill more than one hex (`t.foot`, the same shapes as lib/forstall.js cellsOf): 1 = Large, a 3-hex triangle;
+// 2 = Huge, 7 hexes; 3 = Titan, 19. Distances between things are edge to edge (`gap`); moves still count from the token's own hex.
+const ringsOf = (n) => { const out = []; for (let q = -n; q <= n; q++) for (let r = Math.max(-n, -q - n); r <= Math.min(n, -q + n); r++) out.push([q, r]); return out; };
+const SHAPES = { 1: [[0, 0], [1, 0], [0, 1]], 2: ringsOf(1), 3: ringsOf(2) };
+function cellsOf(t) {
+  const f = Math.max(0, Math.min(3, t?.foot || 0));
+  if (!f) return [{ col: t.col, row: t.row }];
+  const q0 = t.col - (t.row - (t.row & 1)) / 2, r0 = t.row;
+  return SHAPES[f].map(([dq, dr]) => { const q = q0 + dq, r = r0 + dr; return { col: q + (r - (r & 1)) / 2, row: r }; });
+}
+function gap(a, b) {
+  if (!a?.foot && !b?.foot) return dist(a, b);
+  let m = Infinity;
+  for (const x of cellsOf(a)) for (const y of cellsOf(b)) m = Math.min(m, dist(x, y));
+  return m;
+}
+// where a token is drawn: the middle of its footprint
+function tokCenter(t) {
+  const cs = cellsOf(t).map((c) => center(c.col, c.row));
+  return { x: cs.reduce((n, c) => n + c.x, 0) / cs.length, y: cs.reduce((n, c) => n + c.y, 0) / cs.length };
+}
+// how wide a token is drawn, in token widths: by footprint, and Tiny / Small a little smaller in their one hex
+const tokScale = (t) => (t.foot ? { 1: 2.1, 2: 3.3, 3: 5.4 }[t.foot] : t.mounted === 'mech' ? 1.45 : { Tiny: 0.7, Small: 0.85 }[t.size] || 1);
 function hexPath(col, row) {
   const c = center(col, row), r = R();
   let d = '';
@@ -245,7 +268,7 @@ function renderRanges() {
   const paths = { arm: '', short: '', long: '' };
   for (let row = Math.max(0, t.row - 19); row <= Math.min(data.size.rows - 1, t.row + 19); row++) {
     for (let col = Math.max(0, t.col - 20); col <= Math.min(data.size.cols - 1, t.col + 20); col++) {
-      const d = dist(t, { col, row });
+      const d = gap(t, { col, row });
       if (d === 0 || d > 18) continue;
       paths[band(d)] += hexPath(col, row);
     }
@@ -260,15 +283,15 @@ function renderTokens() {
   const sel = selected && data.tokens.find((x) => x.id === selected);
   const att = targeting(), picked = att && atkSel[att.id]?.t;
   layer.innerHTML = data.tokens.map((t) => {
-    const c = center(t.col, t.row);
-    const d = sel && sel.id !== t.id ? dist(sel, t) : null;
-    const tg = att && t.id !== att.id ? (targetable(att, t) ? ` tgt tgt-${band(dist(att, t))}${picked === t.id ? ' tgt-picked' : ''}` : ' tgt-dim') : '';
+    const c = tokCenter(t);
+    const d = sel && sel.id !== t.id ? gap(sel, t) : null;
+    const tg = att && t.id !== att.id ? (targetable(att, t) ? ` tgt tgt-${band(gap(att, t))}${picked === t.id ? ' tgt-picked' : ''}` : ' tgt-dim') : '';
     const hasHp = t.maxHealth != null;
     const pct = hasHp ? Math.max(0, Math.min(100, (t.health / Math.max(1, t.maxHealth)) * 100)) : 0;
     const art = t.photo || (t.img ? `/img/tokens/${t.img}.webp` : '');
     const bg = art ? `background:url('${esc(art)}') center / cover, ${SIL[t.beast ? 'beast' : 'person']} center 70% / 80% no-repeat, ${color(t)}` : `background:${SIL[t.beast ? 'beast' : 'person']} center 70% / 82% no-repeat, ${color(t)}`;
     const nStatus = Object.keys(t.statuses || {}).length;
-    const big = t.mounted === 'mech' ? 1.45 : 1, ts = size * big; // in the mech: a Large token
+    const ts = size * tokScale(t); // big monsters and mechs fill their footprint; Tiny and Small sit small in their hex
     const mh = t.mechHp, mPct = mh ? Math.max(0, Math.min(100, (mh.health / Math.max(1, mh.maxHealth)) * 100)) : 0;
     return `<div class="btoken ${t.kind}${tg}${art ? ' art' : ' stand-in'}${canMove(t) ? ' movable' : ''}${t.id === selected ? ' sel' : ''}${t.ref && t.ref === data.current ? ' turn' : ''}${t.hidden ? ' hidden-tok' : ''}${t.light ? ' lit' : ''}${t.down ? ' down' : ''}${t.frenzied ? ' frenzied' : ''}"
       data-id="${t.id}" data-size="${esc(t.size || '')}" style="left:${c.x}px;top:${c.y}px;width:${ts}px;height:${ts}px;${bg};font-size:${font}px;border-width:${data.grid.ppi * 0.05}px"
@@ -309,7 +332,7 @@ function renderPanel() {
     wireTurnBar(box, actor.cur, actor.tok);
     head.querySelector('[data-tp-back]').addEventListener('click', () => { tp.open = ''; renderTurnBar(); });
   } else {
-    const others = data.tokens.filter((t) => t.id !== sel.id).map((t) => ({ t, d: dist(sel, t) })).sort((a, b) => a.d - b.d);
+    const others = data.tokens.filter((t) => t.id !== sel.id).map((t) => ({ t, d: gap(sel, t) })).sort((a, b) => a.d - b.d);
     const st = Object.entries(sel.statuses || {});
     const hpPct = sel.maxHealth != null ? Math.max(0, Math.min(100, (sel.health / Math.max(1, sel.maxHealth)) * 100)) : 0;
     // the Warden gets the full fighter card: Health ±, Grit, Statuses, and for enemies the stat block with public dice and loot
@@ -873,7 +896,7 @@ function quickHTML(cur, tok) {
   const a = cur.a, out = [];
   if (cur.kind === 'pc') {
     const foes = data.tokens.filter((t) => t.kind === 'enemy' && !t.down && !t.hidden && combat.enemies.some((e) => e.id === t.ref && !e.defeated))
-      .map((t) => ({ t, d: dist(tok, t) })).sort((x, y) => x.d - y.d).slice(0, QUICK_MAX);
+      .map((t) => ({ t, d: gap(tok, t) })).sort((x, y) => x.d - y.d).slice(0, QUICK_MAX);
     for (const { t, d } of foes) {
       const key = WEAPON_KEY[band(d)];
       // the weapon with the most dice at this range
@@ -888,7 +911,7 @@ function quickHTML(cur, tok) {
     const e = combat.enemies.find((x) => x.id === a.id), prof = e?.profile ? combat.profiles?.[e.profile] : null;
     if (!prof?.attacks?.length) return '';
     const posse = data.tokens.filter((t) => t.kind === 'pc' && combat.posse.some((p) => p.id === t.ref && !p.dead))
-      .map((t) => ({ t, d: dist(tok, t) })).sort((x, y) => x.d - y.d).slice(0, QUICK_MAX);
+      .map((t) => ({ t, d: gap(tok, t) })).sort((x, y) => x.d - y.d).slice(0, QUICK_MAX);
     for (const { t, d } of posse) {
       const b = band(d);
       const fit = prof.attacks.map((x, i) => [x, i]).find(([x]) => (ATK_BAND[x.range] || 'arm') === b || (b === 'arm' && x.range === 'Short'));
@@ -943,7 +966,7 @@ function wireHolds(box) {
     const target = box.querySelector(`[data-hold-target="${pid}"]`)?.value;
     // range from the map when both tokens are on it; otherwise the range that was held
     const me = data?.tokens.find((t) => t.ref === pid), foe = target && data?.tokens.find((t) => t.ref === target);
-    const range = me && foe ? { arm: 'arms', short: 'short', long: 'long', distant: 'distant' }[band(dist(me, foe))] : undefined;
+    const range = me && foe ? { arm: 'arms', short: 'short', long: 'long', distant: 'distant' }[band(gap(me, foe))] : undefined;
     const r = await tpAct({ action: 'pc', id: pid, op: 'fireHold', target, range: p?.hold?.kind === 'attack' ? range : undefined });
     if (r?.dice) rollPopup(r, `${p.name} · prepared ${r.fired} · ${r.pool}`);
     if (r) toast(r.dmg != null ? (r.dmg ? `${r.dmg} damage to ${r.target}` : `${r.target} shrugs it off`) : `${r.fired} — done!`);
@@ -1044,7 +1067,7 @@ function wireAttack(box, sel) {
   }));
   box.querySelector('[data-map-attack]')?.addEventListener('click', async () => {
     const tgt = data.tokens.find((t) => t.id === s.t);
-    const bandKey = WEAPON_KEY[band(dist(sel, tgt))];
+    const bandKey = WEAPON_KEY[band(gap(sel, tgt))];
     const r = await combatAct({ action: 'pc', id: sel.ref, op: 'attack', weapon: s.w, range: bandKey, target: tgt.ref, ammo: s.ammo, aim: s.aim });
     if (r?.dice) {
       play(weaponSound(combat?.posse.find((p) => p.id === sel.ref)?.weapons[s.w]));
@@ -1148,7 +1171,7 @@ function targeting() {
 function targetable(att, t) {
   if (att.kind === 'pc') {
     if (t.kind !== 'enemy' || t.down || !combat.enemies.some((e) => e.id === t.ref && !e.defeated)) return false;
-    const pc = combat.posse.find((p) => p.id === att.ref), k = WEAPON_KEY[band(dist(att, t))];
+    const pc = combat.posse.find((p) => p.id === att.ref), k = WEAPON_KEY[band(gap(att, t))];
     return !!pc?.weapons.some((w) => (w.model || w.manufacturer) && isPool(w[k]));
   }
   return att.kind === 'enemy' && warden && t.kind === 'pc' && combat.posse.some((p) => p.id === t.ref && !p.dead);
@@ -1161,15 +1184,15 @@ function wireToken(el) {
     if (att && t.id !== att.id && targetable(att, t)) { (atkSel[att.id] ||= {}).t = t.id; play('lockClick'); renderTokens(); renderPanel(); return; }
     if (!canMove(t)) { select(t.id); return; }
     try { el.setPointerCapture(e.pointerId); } catch {}
-    const start = center(t.col, t.row);
-    dragging = { id: t.id, cx: e.clientX, cy: e.clientY, x: start.x, y: start.y, moved: false, hex: { col: t.col, row: t.row } };
+    const start = center(t.col, t.row), mid = tokCenter(t); // a Large token is drawn between its hexes: keep that offset while dragging
+    dragging = { id: t.id, cx: e.clientX, cy: e.clientY, x: start.x, y: start.y, ox: mid.x - start.x, oy: mid.y - start.y, moved: false, hex: { col: t.col, row: t.row } };
   });
   el.addEventListener('pointermove', (e) => {
     if (!dragging || dragging.id !== t.id) return;
     const dx = (e.clientX - dragging.cx) / pz.view.s, dy = (e.clientY - dragging.cy) / pz.view.s;
     if (Math.abs(e.clientX - dragging.cx) + Math.abs(e.clientY - dragging.cy) > 4) { dragging.moved = true; el.classList.add('dragging'); }
     if (!dragging.moved) return;
-    el.style.left = `${dragging.x + dx}px`; el.style.top = `${dragging.y + dy}px`;
+    el.style.left = `${dragging.x + dx + dragging.ox}px`; el.style.top = `${dragging.y + dy + dragging.oy}px`;
     dragging.hex = toHex(dragging.x + dx, dragging.y + dy);
     const d = dist(t, dragging.hex);
     const ro = $('#readout');
@@ -1294,7 +1317,7 @@ function intuitionOf(pc) {
 function canWork(f, pcId) {
   if (f.owner) return f.owner === pcId;
   const t = data?.tokens?.find((x) => x.kind === 'pc' && x.ref === pcId);
-  return !!(t && f.pos && dist(f.pos, t) <= 1);
+  return !!(t && f.pos && gap(f.pos, t) <= 1);
 }
 const workable = (pcId) => (data?.forstalls || []).filter((f) => canWork(f, pcId));
 // the Forstall's operator this turn: the character whose turn it is, if they may work it
@@ -1314,7 +1337,7 @@ function scanTargets(f, pc) {
   for (const e of (combat?.enemies || []).filter((x) => !x.defeated && x.profile)) {
     const t = data?.tokens.find((x) => x.kind === 'enemy' && x.ref === e.id && !x.hidden);
     if (!t || !f.pos) continue;
-    kinds[e.profile] = Math.min(kinds[e.profile] ?? 999, dist(f.pos, t));
+    kinds[e.profile] = Math.min(kinds[e.profile] ?? 999, gap(f.pos, t));
   }
   return Object.entries(kinds).sort((a, b) => a[1] - b[1]).map(([name, d]) => {
     const decoded = kzPosse.some((k) => k.name === name);
@@ -1359,7 +1382,8 @@ async function loadKz() {
 function renderFields() {
   const svg = $('#fields');
   const fs = data.forstalls || [], clash = clashKeys();
-  const key = JSON.stringify([fs.map((f) => [f.key, f.pos, f.rangeIn, !!f.sweep]), [...clash], data.map.w, data.map.h, data.grid]);
+  const big = data.tokens.filter((t) => t.foot);
+  const key = JSON.stringify([fs.map((f) => [f.key, f.pos, f.rangeIn, !!f.sweep]), [...clash], data.map.w, data.map.h, data.grid, big.map((t) => [t.id, t.col, t.row, t.foot, t.kind, !!t.hidden])]);
   if (key === fieldsKey) return;
   fieldsKey = key;
   svg.setAttribute('width', data.map.w); svg.setAttribute('height', data.map.h);
@@ -1374,7 +1398,7 @@ function renderFields() {
       }
     }
     return `<path class="${cls}" d="${d}"/>`;
-  }).join('');
+  }).join('') + big.map((t) => `<path class="foot ${t.kind}${t.hidden ? ' hidden' : ''}" d="${cellsOf(t).map((c) => hexPath(c.col, c.row)).join('')}"/>`).join('');
 }
 // the Warden's free-standing Forstalls, drawn with the tokens
 function fsMarkers() {

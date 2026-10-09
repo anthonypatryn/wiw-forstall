@@ -622,3 +622,8 @@ body.tv-mode .viewport { height: 100vh; border: 0; cursor: default; }
 /* Forstall mode: why Scan is off, and the keypad calling for the waiting guess */
 .fsm .fsm-why { color: var(--on-dark-warn); font-weight: 700; }
 .fsm .forstall-top.your-guess .model::after { content: ' · YOUR GUESS'; color: var(--brass); }
+
+/* big monsters' (and mechs') footprints: the hexes they fill, outlined under the token */
+.fields .foot { fill: rgba(20,14,10,.16); stroke: rgba(20,14,10,.5); stroke-width: 2; }
+.fields .foot.enemy { fill: rgba(164,64,31,.14); stroke: rgba(164,64,31,.7); }
+.fields .foot.hidden { stroke-dasharray: 6 5; }
