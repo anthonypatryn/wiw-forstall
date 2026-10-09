@@ -66,7 +66,10 @@ export async function openStash() {
     if (d.pm) { st.putMoney = Math.max(0, (st.putMoney || 0) + Number(d.pm)); draw(); return; }
     if (d.put) { const x = mine.sell.find((y) => y.key === d.put); st.put[d.put] = (st.put[d.put] || 0) + 1; if (st.put[d.put] > x.qty) delete st.put[d.put]; draw(); return; }
     try {
-      if (d.take) { const i = stash.items.find((x) => x.id === d.take); await post({ op: 'take', id: d.take, qty: st.take[d.take] || 1 }); await refresh(`You took ${i.name}.`); }
+      if (d.take) {
+        const i = stash.items.find((x) => x.id === d.take), r = (await post({ op: 'take', id: d.take, qty: st.take[d.take] || 1 })).result || {};
+        await refresh(`You took ${i.name}.${r.placed ? ` It’s on your sheet now (${r.placed}).` : r.warning ? ` ${r.warning}` : ''}`);
+      }
       else if (d.takecash !== undefined) { if (!st.takeMoney) return; await post({ op: 'take', money: st.takeMoney }); await refresh(`You took ${$$(st.takeMoney)}.`); }
       else if (d.putgo !== undefined) { await post({ op: 'put', money: st.putMoney, things: Object.entries(st.put).map(([key, qty]) => ({ key, qty })) }); await refresh('In the stash.'); }
       else if (d.loot !== undefined) {

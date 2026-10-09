@@ -1886,3 +1886,22 @@ test('Enemies who join a fight already going act last, in the order they came', 
   W({ action: 'end' });
   assert.ok(!s.enemies.some((e) => e.late), 'a new fight starts everyone in the shared slot');
 });
+
+test('An upgrade you own (from the stash) fits onto your Forstall for free', async () => {
+  const { freshCombat, publicAction } = await import('../lib/combat.js');
+  const s = freshCombat();
+  const W = (a) => publicAction(s, a, { warden: true });
+  W({ action: 'addPc', trade: 'Hunter', name: 'Fuse Test' });
+  const p = s.posse[0];
+  Object.assign(p.forstall, { model: 'Backpack Forstall', slots: '2', itemId: 'models-backpack-forstall' });
+  p.items = [...(p.items || []), { uid: 'f1', itemId: 'for-purchase-crystal-burst-fuse', name: 'Crystal Burst Fuse', cat: 'Upgrades', sub: 'For Purchase', qty: 2 }];
+  const wallet = p.wallet;
+  W({ action: 'pc', id: p.id, op: 'installUpgrade', target: 'forstall', item: 'for-purchase-crystal-burst-fuse', pay: 'owned' });
+  assert.ok(p.forstall.upgrades.some((u) => /Burst/.test(u)), 'on the Forstall');
+  assert.equal(p.wallet, wallet, 'nothing paid');
+  assert.equal(p.items.find((x) => x.uid === 'f1').qty, 2, 'the inventory still lists both: one fitted, one spare');
+  assert.throws(() => W({ action: 'pc', id: p.id, op: 'installUpgrade', target: 'forstall', item: 'for-purchase-crystal-burst-fuse', pay: 'owned' }), /only one of each type|No free upgrade slot/);
+  p.items = p.items.filter((x) => x.uid !== 'f1');
+  p.forstall.upgrades = ['', '', '', '']; p.forstall.upgradeIds = ['', '', '', ''];
+  assert.throws(() => W({ action: 'pc', id: p.id, op: 'installUpgrade', target: 'forstall', item: 'for-purchase-crystal-burst-fuse', pay: 'owned' }), /Take one from the stash/);
+});

@@ -693,10 +693,13 @@ function renderUpgrades(view, p) {
     const have = new Set((tgt.upgradeIds || []).map((id) => itemById(id)).filter(Boolean).map(upgType));
     if (!slots) { box.innerHTML = target === 'weapon' && !tgt.model ? '' : '<span class="muted upg-none">No upgrade slots.</span>'; return; }
     const opts = catalog.filter((it) => upgFits(it, target, wSub));
+    const spare = (id) => (p.items || []).filter((x) => x.itemId === id).reduce((n, x) => n + (Number(x.qty) || 1), 0) - [...(p.weapons || []), p.forstall, p.mech].reduce((n, x) => n + (x?.upgradeIds || []).filter((u) => u === id).length, 0);
+    const mine = opts.filter((it) => spare(it.id) > 0).map((it) => ({ it })); // ones they own but haven't fitted (bought, looted, from the stash)
     const opt = (it, pay) => { const blocked = upgType(it) !== 'Utility' && have.has(upgType(it));
-      return `<option value="${it.id}|${pay}"${blocked ? ' disabled' : ''}>${esc(it.name.replace(/^(Ranged Weapon|Melee Weapon|Forstall|Mech) /, ''))}${it.upgrade && it.upgrade !== 'None' ? ` (${esc(it.upgrade)})` : ''} — ${pay === 'scrap' ? `${it.scrapCost} Scrap` : `$${it.cost}`}${blocked ? ' · already has one' : ''}</option>`; };
+      return `<option value="${it.id}|${pay}"${blocked ? ' disabled' : ''}>${esc(it.name.replace(/^(Ranged Weapon|Melee Weapon|Forstall|Mech) /, ''))}${it.upgrade && it.upgrade !== 'None' ? ` (${esc(it.upgrade)})` : ''} — ${pay === 'scrap' ? `${it.scrapCost} Scrap` : pay === 'owned' ? 'yours, free' : `$${it.cost}`}${blocked ? ' · already has one' : ''}</option>`; };
     box.innerHTML = `<div class="upg-row"><span class="upg-lbl">UPGRADES ${used}/${slots}</span>
       ${used < slots ? `<select data-upg-pick aria-label="Add an upgrade"><option value="">+ add an upgrade…</option>
+        ${mine.length ? `<optgroup label="From your inventory">${mine.map((x) => opt(x.it, 'owned')).join('')}</optgroup>` : ''}
         <optgroup label="Build with Scrap">${opts.filter((it) => it.scrapCost).map((it) => opt(it, 'scrap')).join('')}</optgroup>
         <optgroup label="Buy with $">${opts.map((it) => opt(it, 'cash')).join('')}</optgroup></select>
         <button type="button" class="btn small" data-upg-go>Install</button>` : '<span class="muted">All slots full.</span>'}</div>
