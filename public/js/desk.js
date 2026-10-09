@@ -94,7 +94,8 @@ export function renderChecks() {
   if (!combat) return;
   const nm = (pid) => combat.posse.find((p) => p.id === pid)?.name || '—';
   const rows = (combat.checks || []).map((ck) => {
-    const help = Math.max(0, ...Object.values(ck.helps || {}).map((h) => h.hits));
+    // only the best helper's Hits count (p. 13); the first to roll it if two tie
+    const best = Object.values(ck.helps || {}).reduce((b, h) => (h.hits > (b?.hits ?? 0) ? h : b), null), help = best?.hits || 0;
     // still waiting: "Call off" cancels it. Everyone's in: it's highlighted with a clear "Close it" (Help still works until then)
     const finished = ck.kind === 'challenge' ? !!ck.winner : ck.who.every((pid) => ck.rolls[pid]);
     const done = finished ? `<button type="button" class="btn small" data-ck-close="${ck.id}">${gl('pin')} Close it</button>` : `<span class="ck-btns"><button type="button" class="btn small" data-ck-nudge="${ck.id}" title="Pop it up again for whoever hasn’t rolled">${gl('sound')} Nudge</button><button type="button" class="btn small secondary" data-ck-close="${ck.id}" title="Cancel this roll">Call off</button></span>`;
@@ -107,8 +108,8 @@ export function renderChecks() {
     const waiting = ck.who.some((pid) => !ck.rolls[pid]);
     return `<div class="notice${waiting ? ' urgent' : ' ck-finished'}"><div class="ck-body"><b>${gl('die')} ${esc(ck.skill)}</b> · ${esc(ck.diff)} (${ck.target})${ck.faction ? ` · with ${esc(ck.faction)}` : ''}${ck.note ? ` · <i>${esc(ck.note)}</i>` : ''}
       <div class="ck-who">${ck.who.map((pid) => { const r = ck.rolls[pid]; const tot = r ? r.hits + help : null;
-        return `<span class="pill${r ? (tot >= ck.target ? ' ok' : ' no') : ' wait'}">${esc(nm(pid))} ${r ? `${tot >= ck.target ? '✓' : '✗'} ${tot}/${ck.target}` : '…'}</span>`; }).join('')}
-      ${Object.values(ck.helps || {}).map((h) => `<span class="pill">${esc(h.name)} helped +${h.hits}</span>`).join('')}</div>${helpNote}</div>${done}</div>`;
+        return `<span class="pill${r ? (tot >= ck.target ? ' ok' : ' no') : ' wait'}">${esc(nm(pid))} ${r ? `${tot >= ck.target ? '✓' : '✗'} ${tot}/${ck.target}${help ? ` <small>(${r.hits} + ${help} help)</small>` : ''}` : '…'}</span>`; }).join('')}
+      ${Object.values(ck.helps || {}).map((h) => `<span class="pill${h === best ? ' info' : ' wait'}" title="${h === best ? 'The best help: this one counts' : 'Only the best help counts'}">${esc(h.name)} helped +${h.hits}${h === best ? ' · counts' : ''}</span>`).join('')}</div>${helpNote}</div>${done}</div>`;
   }).join('');
   $('#check-list').innerHTML = rows || '<p class="muted">No rolls open. Call one from <a href="#grp-start">Start Something</a>.</p>';
   $('#check-list').querySelectorAll('[data-ck-close]').forEach((b) => b.addEventListener('click', () => combatAct({ action: 'checkClose', id: b.dataset.ckClose })));

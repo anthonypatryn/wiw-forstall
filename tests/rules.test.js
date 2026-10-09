@@ -1937,3 +1937,12 @@ test('Big monsters fill more hexes; distances are edge to edge and nobody walks 
   combat.posse[0].mounted = 'mech'; autoSync(b, combat); assert.equal(pt.foot, 1);
   delete combat.posse[0].mounted; autoSync(b, combat); assert.equal(pt.foot, undefined);
 });
+
+test('Helping (p. 13): only the best helper counts, the first to roll it on a tie', async () => {
+  const { bestHelp } = await import('../lib/combat.js');
+  const ck = { helps: { s: { name: 'Sally', hits: 1 }, f: { name: 'Felix', hits: 3 }, b: { name: 'Brass', hits: 2 } } };
+  assert.deepEqual(bestHelp(ck), { name: 'Felix', hits: 3 }, 'Jensen’s 2 + Felix’s 3 = 5');
+  assert.equal(bestHelp({ helps: { a: { name: 'A', hits: 2 }, b: { name: 'B', hits: 2 } } }).name, 'A');
+  assert.equal(bestHelp({ helps: { a: { name: 'A', hits: 0 } } }), null, 'no Hits, no help');
+  assert.equal(bestHelp({}), null);
+});

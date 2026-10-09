@@ -34,7 +34,7 @@ export const RULES = [
   { term: 'Challenge roll', aliases: 'contest versus vs opposed', page: '13',
     text: 'Two sides roll the same Skill; most Hits wins. A tie means it isn’t over — roll again.' },
   { term: 'Helping', aliases: 'help assist', page: '13',
-    text: 'A helper rolls half their Skill dice (round up) and adds their Hits to yours. With several helpers, only the best helper roll counts. In a fight, helping is the Prepare Action.' },
+    text: 'A helper rolls half their Skill dice (round up) and adds their Hits to yours. With several helpers, only the best helper roll counts (the first to roll it, if two tie). In a fight, helping is the Prepare Action.' },
   { term: 'Ace-in-the-Hole', aliases: 'abilities ability ace counter', page: '14',
     text: 'Count every Ace you roll in combat. At 6 Aces you can use your Trade’s Ace-in-the-Hole Ability, which resets the count to zero. Resting also resets it.' },
   // ---- combat basics ----

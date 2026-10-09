@@ -200,7 +200,7 @@ export function renderHud(h) {
     const names = assist.who.map((w) => w.name);
     ck.innerHTML = `<div><small>WANT TO HELP?</small>
       <b>${esc(names.length > 2 ? `${names.slice(0, -1).join(', ')} & ${names.at(-1)}` : names.join(' & '))} ${names.length > 1 ? 'are' : 'is'} rolling ${esc(assist.skill)}</b> · ${esc(assist.diff)} — ${assist.target} Hit${assist.target === 1 ? '' : 's'}${assist.note ? ` · <i>${esc(assist.note)}</i>` : ''}
-      <span class="hud-ck-sub">Roll half your ${esc(assist.skill)} dice — the best helper’s Hits are added to theirs.</span></div>
+      <span class="hud-ck-sub">Roll half your ${esc(assist.skill)} dice (rounded up). Only the best helper’s Hits are added to theirs.</span></div>
       ${itemDiceHTML()}
       <div class="hud-ck-btns"><button type="button" class="btn" data-help-go>Help</button><button type="button" class="btn small secondary" data-help-no>Not this time</button></div>`;
     ck.querySelector('[data-help-no]').addEventListener('click', () => { setSeen(`wiw.help.${assist.id}`, 'no'); ck.hidden = true; });
@@ -210,7 +210,7 @@ export function renderHud(h) {
         const res = await api('POST', { action: 'pc', id: mine, op: 'checkRoll', check: assist.id, ...readItemDice(ck) }, '', '/api/combat');
         ck.hidden = true; setSeen(`wiw.help.${assist.id}`, 'no');
         const r = res.result;
-        if (r?.dice) { await rollPopup(r, `Helping · ${r.label || assist.skill}`); toast(`You helped with ${r.hits} Hit${r.hits === 1 ? '' : 's'}.`); }
+        if (r?.dice) { await rollPopup(r, `Helping · ${r.label || assist.skill}`); toast(r.helpSaid ? `Your help: ${r.helpSaid}.` : `You helped with ${r.hits} Hit${r.hits === 1 ? '' : 's'}.`); }
       } catch (err) { toast(err.message, true); e.target.disabled = false; }
     });
     return;
