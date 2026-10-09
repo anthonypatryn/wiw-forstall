@@ -141,7 +141,7 @@ async function main() {
     go.click(); await new Promise(r=>setTimeout(r,1500)); return true;`, 3500);
   await check('Battle Map: Map setup gear', '/battle', `document.querySelector('#setup-btn').click(); return !document.querySelector('#setup').hidden;`, 3000);
   for (const [n, p, sel] of [['Posse sheets', '/posse', '.pc-list, #sheet-view'], ['A character sheet', `/posse#${s.pcId}`, '.sheet-head'], ['Store', '/store', '.card'], ['Journal', '/journal', '.card'],
-    ['Map', '/map', '#places .place, #stage'], ['NPCs', '/names', '.card'], ['Wanted', '/wanted', '.card'], ['Prep', '/prep', '.card'], ['Forstall Scanner (Warden)', '/warden', '.card'], ['How to Play', '/howto', '.card'], ['Backpack', '/backpack', '.card'], ['Posse Stash', '/stash', '.card']]) {
+    ['Map', '/map', '#places .place, #stage'], ['NPCs', '/names', '.card'], ['Wanted', '/wanted', '.card'], ['Prep', '/prep', '.card'], ['Campaign', '/campaign', '.card'], ['Forstall Scanner (Warden)', '/warden', '.card'], ['How to Play', '/howto', '.card'], ['Backpack', '/backpack', '.card'], ['Posse Stash', '/stash', '.card']]) {
     await check(n, p, `return ${has(sel)};`, 2500);
   }
 

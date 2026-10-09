@@ -1805,3 +1805,34 @@ test('A flashlight is a cone the way it points; a lantern lights all around', as
   assert.equal(inLight(l, { col: 10, row: 13 }), true);
   assert.equal(inLight(l, { col: 14, row: 10 }), false);
 });
+
+test('Campaign threads: Warden only, a clock that stays in bounds, tidy links', async () => {
+  const { freshCampaign, campaignAction } = await import('../lib/campaign.js');
+  const st = freshCampaign();
+  assert.throws(() => campaignAction(st, { action: 'save', thread: { title: 'x' } }, { warden: false }), /PIN/);
+  assert.throws(() => campaignAction(st, { action: 'save', thread: { title: '  ' } }, { warden: true }), /name/);
+  const t = campaignAction(st, { action: 'save', thread: {
+    title: 'The Baron’s land grab', status: 'nonsense', truth: '<b>secret</b>', clock: { size: 6, filled: 9, doom: 'The ranch burns' },
+    links: [{ kind: 'npc', id: 'a1' }, { kind: 'npc', id: 'a1' }, { kind: 'faction', id: 'The Iron Horse' }, { kind: 'bogus', id: 'x' }, { kind: 'quest', id: '' }],
+  } }, { warden: true });
+  assert.equal(t.status, 'brewing', 'unknown status falls back');
+  assert.equal(t.truth, 'bsecret/b', 'no HTML');
+  assert.deepEqual(t.clock, { size: 6, filled: 6, doom: 'The ranch burns' }, 'filled is capped at the size');
+  assert.deepEqual(t.links, [{ kind: 'npc', id: 'a1' }, { kind: 'faction', id: 'The Iron Horse' }], 'duplicates and junk links dropped');
+  campaignAction(st, { action: 'tick', id: t.id, to: 2 }, { warden: true });
+  campaignAction(st, { action: 'tick', id: t.id, by: 1 }, { warden: true });
+  assert.equal(st.threads[0].clock.filled, 3);
+  campaignAction(st, { action: 'tick', id: t.id, by: -1 }, { warden: true });
+  campaignAction(st, { action: 'tick', id: t.id, to: -5 }, { warden: true });
+  assert.equal(st.threads[0].clock.filled, 0, 'never below empty');
+  campaignAction(st, { action: 'save', id: t.id, thread: { ...st.threads[0], clock: { size: 4, filled: 3 } } }, { warden: true });
+  assert.equal(st.threads[0].clock.filled, 3, 'a smaller clock keeps what fits');
+  campaignAction(st, { action: 'save', id: t.id, thread: { ...st.threads[0], clock: { size: 0, filled: 3 } } }, { warden: true });
+  assert.equal(st.threads[0].clock.filled, 0, 'no clock, nothing filled');
+  assert.throws(() => campaignAction(st, { action: 'tick', id: t.id, by: 1 }, { warden: true }), /no clock/);
+  campaignAction(st, { action: 'status', id: t.id, status: 'active' }, { warden: true });
+  assert.equal(st.threads[0].status, 'active');
+  campaignAction(st, { action: 'remove', id: t.id }, { warden: true });
+  assert.equal(st.threads.length, 0);
+  assert.throws(() => campaignAction(st, { action: 'tick', id: t.id }, { warden: true }), /gone/);
+});

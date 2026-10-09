@@ -2,6 +2,7 @@
 // Static imports so Vercel bundles every route; add new areas here.
 import backup from '../lib/routes/backup.js';
 import battle from '../lib/routes/battle.js';
+import campaign from '../lib/routes/campaign.js';
 import carnival from '../lib/routes/carnival.js';
 import combat from '../lib/routes/combat.js';
 import contest from '../lib/routes/contest.js';
@@ -26,7 +27,7 @@ import undo from '../lib/routes/undo.js';
 import tv from '../lib/routes/tv.js';
 import gate from '../lib/routes/gate.js';
 
-const ROUTES = { gate, backup, battle, carnival, combat, contest, handouts, image, journal, lockpick, map, npcs, papers, problems, pulse, saloon, scan, scenes, session, shop, sound, tv, undo, wanted, whispers };
+const ROUTES = { gate, backup, battle, campaign, carnival, combat, contest, handouts, image, journal, lockpick, map, npcs, papers, problems, pulse, saloon, scan, scenes, session, shop, sound, tv, undo, wanted, whispers };
 
 import { transaction, counter, bump } from '../lib/store.js';
 import { pinOk } from '../lib/http.js';
@@ -47,7 +48,7 @@ async function guardPin(req) {
 // change something count; noise (pings, error reports, backups, photos, the undo itself) never does.
 const NO_UNDO_AREAS = new Set(['pulse', 'problems', 'backup', 'image', 'undo', 'sound', 'tv', 'gate']);
 const NO_UNDO_ACTIONS = new Set(['ping', 'report', 'auth', 'seen', 'here', 'removeMap']); // a removed map's picture is gone, so Undo couldn't bring it back
-const AREA_NAME = { combat: '', battle: 'Battle Map', shop: 'Store', journal: 'Journal', npcs: 'NPCs', wanted: 'Wanted', handouts: 'Handouts', whispers: 'Whisper', lockpick: 'Lock pick', saloon: 'Saloon', scan: 'Scanner', scenes: 'Prep', session: 'Session notes', map: 'Map', papers: 'Newspaper' };
+const AREA_NAME = { combat: '', battle: 'Battle Map', shop: 'Store', journal: 'Journal', npcs: 'NPCs', wanted: 'Wanted', handouts: 'Handouts', whispers: 'Whisper', lockpick: 'Lock pick', saloon: 'Saloon', scan: 'Scanner', scenes: 'Prep', campaign: 'Campaign', session: 'Session notes', map: 'Map', papers: 'Newspaper' };
 const words = (s) => String(s || '').replace(/([a-z])([A-Z])/g, '$1 $2').replace(/[._-]+/g, ' ').trim().toLowerCase();
 export function undoLabel(area, req, held) {
   if (req.method !== 'POST' || held.statusCode >= 400 || NO_UNDO_AREAS.has(area)) return null;
@@ -57,7 +58,8 @@ export function undoLabel(area, req, held) {
   if (NO_UNDO_ACTIONS.has(b.action)) return null;
   const ACT = { next: 'next turn', pc: '', sheet: 'sheet', addPc: 'new character', addEnemy: 'add enemy', end: 'end combat', start: 'start combat', decide: 'approve or deny a request', give: 'give an item' };
   const what = [Object.hasOwn(ACT, b.action) ? ACT[b.action] : words(b.action), b.op ? words(b.op) : '', b.path ? words(b.path) : ''].filter(Boolean).join(' · ');
-  const title = typeof b.scene?.title === 'string' && b.scene.title.trim() ? ` “${b.scene.title.trim().slice(0, 40)}”` : ''; // Prep saves name the scene
+  const named = b.scene?.title ?? b.thread?.title; // Prep and Campaign saves name the scene or thread
+  const title = typeof named === 'string' && named.trim() ? ` “${named.trim().slice(0, 40)}”` : '';
   const label = `${AREA_NAME[area] ?? words(area)}${AREA_NAME[area] === '' ? '' : ': '}${what || 'change'}${title}`.replace(/^: /, '');
   return { label: label.charAt(0).toUpperCase() + label.slice(1), who: pinOk(req.headers['x-warden-pin']) ? 'Warden' : 'a player' };
 }

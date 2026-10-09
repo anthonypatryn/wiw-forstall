@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Wanted · Wild Imaginary West</title>
+  <title>Campaign · Wild Imaginary West</title>
   <meta name="robots" content="noindex, nofollow">
-  <meta name="description" content="Wanted posters, town by town.">
+  <meta name="description" content="The Warden’s campaign: storylines, clocks and what ties them together.">
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='22' fill='%23151d22'/><path fill='%23f0c46a' d='M50 14L81 68H19ZM50 86L19 32H81Z'/><g fill='%23f0c46a'><circle cx='50' cy='14' r='6'/><circle cx='81' cy='68' r='6'/><circle cx='19' cy='68' r='6'/><circle cx='50' cy='86' r='6'/><circle cx='19' cy='32' r='6'/><circle cx='81' cy='32' r='6'/></g><circle cx='50' cy='50' r='11' fill='%23151d22'/><circle cx='50' cy='50' r='7.5' fill='%23f0c46a'/></svg>">
   <link rel="manifest" href="/manifest.webmanifest">
   <link rel="apple-touch-icon" href="/img/icon-180.png">
@@ -14,30 +14,37 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Alegreya:ital,wght@0,400;0,700;1,400&family=Bebas+Neue&family=Rye&family=Special+Elite&family=Reenie+Beanie&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css?v=175">
-  <link rel="stylesheet" href="/css/wanted.css?v=93">
+  <link rel="stylesheet" href="/css/prep.css?v=91">
+  <link rel="stylesheet" href="/css/campaign.css?v=2">
 </head>
 <body>
   <header class="masthead">
     <div class="masthead-inner">
       <img class="brand-logo" src="/img/logo-light.svg" alt="Wild Imaginary West">
       <div class="brand-title">
-        <div class="kicker">NAILED UP ON EVERY POST</div>
-        <h1>Wanted</h1>
-        <div class="sub">Bounties and outlaws, town by town</div>
+        <div class="kicker">WARDEN ONLY</div>
+        <h1>Campaign</h1>
+        <div class="sub">The story behind the story: threads, clocks and who’s tied to what</div>
       </div>
     </div>
   </header>
   <nav class="sitenav" data-nav aria-label="Site"></nav>
 
   <main class="wrap">
-    <section class="card corner">
-      <div class="head-row"><h2 class="section-title">The Posting Board</h2><span id="wt-tools"></span></div>
-      <nav class="wt-towns" id="wt-towns" aria-label="Towns"></nav>
-      <p class="muted small-text" id="wt-here"></p>
-      <div class="wt-board" id="wt-board"><p class="loading" role="status">Loading…</p></div>
+    <section class="card corner" id="gate" hidden>
+      <h2 class="section-title">Warden only</h2>
+      <p class="muted">The campaign is just for the Warden.</p>
+      <button class="btn" id="unlock" type="button"><span data-gl="star"></span> Enter the Warden PIN</button>
     </section>
+    <div class="prep-grid cp-grid" id="camp" hidden>
+      <section class="card corner prep-list cp-list">
+        <div class="head-row"><h2 class="section-title">Threads</h2><button type="button" class="btn small" data-new>+ New thread</button></div>
+        <div id="thread-list"><p class="loading" role="status">Loading…</p></div>
+      </section>
+      <section class="card corner prep-edit cp-edit" id="editor"></section>
+    </div>
   </main>
 
-  <script type="module" src="/js/wanted.js?v=129"></script>
+  <script type="module" src="/js/campaign.js?v=2"></script>
 </body>
 </html>

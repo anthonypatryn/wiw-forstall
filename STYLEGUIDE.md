@@ -99,7 +99,7 @@ Small helpers: `.btn-row` (a row of buttons), `.fine` (12px note), `.small-text`
 ## Navigation
 - One site nav (`mountNav` in `common.js`), grouped by how often a page is used.
   - **Player:** Posse · Battle Map · World ▾ (Map, Journal, Wanted, NPCs, Boot Hill) · Gear ▾ (Store, Backpack, Posse Stash, Forstall Scanner)
-  - **Warden:** ★ Run the Game · Battle Map · Posse · Prep ▾ (Scene Prep, Session Notes, Forstall Station) · World ▾ · Gear ▾ (no Forstall: it's Forstall Station under Prep)
+  - **Warden:** ★ Run the Game · Battle Map · Posse · Prep ▾ (Campaign, Scene Prep, Session Notes, Forstall Station) · World ▾ · Gear ▾ (no Forstall: it's Forstall Station under Prep)
   - Right side, small icons: sound, settings, ? (rules), bug report, then Undo / Needs you / Warden ▾ (TV screen, Backup & homebrew, Bug reports, Report a bug, Switch to player view) for the Warden.
 - Dropdowns open on **tap** (never hover-only); the group label is highlighted when you're on one of its pages.
 - Phones show the most-used links plus **Menu** (a full-screen grouped list).

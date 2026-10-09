@@ -45,7 +45,7 @@ const DEPS = {
   '/api/scan': ['state', 'battle', 'combat'], '/api/combat': ['combat', 'battle', 'shop', 'whispers'], '/api/battle': ['battle', 'combat'],
   '/api/handouts': ['handouts', 'combat'], '/api/journal': ['journal', 'map', 'npcs', 'wanted'], '/api/lockpick': ['locks', 'combat', 'shop'],
   '/api/map': ['map', 'combat'], '/api/npcs': ['npcs'], '/api/papers': ['papers', 'combat', 'map', 'session', 'wanted'],
-  '/api/saloon': ['saloon', 'combat'], '/api/carnival': ['carnival', 'combat'], '/api/contest': ['contest', 'combat'], '/api/sound': ['sound'], '/api/tv': ['tv'], '/api/scenes': ['scenes'], '/api/session': ['session', 'combat'], '/api/shop': ['shop', 'combat'],
+  '/api/saloon': ['saloon', 'combat'], '/api/carnival': ['carnival', 'combat'], '/api/contest': ['contest', 'combat'], '/api/sound': ['sound'], '/api/tv': ['tv'], '/api/scenes': ['scenes'], '/api/campaign': ['campaign'], '/api/session': ['session', 'combat'], '/api/shop': ['shop', 'combat'],
   '/api/wanted': ['wanted', 'combat', 'journal', 'map', 'npcs'], '/api/whispers': ['whispers', 'combat'],
 };
 const PULSE_MS = 2500, PULSE_HIDDEN_MS = 15000, PULSE_RETRY_MS = 5000;
@@ -306,7 +306,7 @@ export function timeAgo(t) {
 // in a fight the Battle Map has its own); Prep = the Warden's before-the-game pages.
 const WORLD = { label: 'World', items: [['/map', 'Map'], ['/journal', 'Journal'], ['/wanted', 'Wanted'], ['/names', 'NPCs'], ['/boothill', 'Boot Hill']] };
 const GEAR = { label: 'Gear', items: [['/store', 'Store'], ['/backpack', 'Backpack'], ['/stash', 'Posse Stash'], ['/', 'Forstall Scanner']] };
-const PREP = { label: 'Prep', items: [['/prep', 'Scene Prep'], ['/run#grp-notes', 'Session Notes'], ['/warden', 'Forstall Station']] };
+const PREP = { label: 'Prep', items: [['/campaign', 'Campaign'], ['/prep', 'Scene Prep'], ['/run#grp-notes', 'Session Notes'], ['/warden', 'Forstall Station']] };
 const NAV_PLAYER = [
   { href: '/posse', label: 'Posse', phone: true },
   { href: '/battle', label: 'Battle Map', phone: true },
