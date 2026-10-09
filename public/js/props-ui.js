@@ -60,8 +60,8 @@ export async function propDialog(p = null) {
           <label class="field-step"><span>EXTRA TRIES <small>each costs one lockpick</small></span><input name="retries" type="number" min="0" max="5" value="${st.retries}"></label>
           <div class="field-step"><span>INSIDE</span>${lootHTML(st.loot, 'chest')}</div>
           <label class="field-step"><span>TRAP <small>Health lost when it opens, 0 = none</small></span><input name="trap" type="number" min="0" max="30" value="${st.trap?.damage || 0}"></label>` : ''}
-        ${st.kind === 'body' ? `<div class="field-step"><span>ON THE BODY <small>each find needs that many Intuition Hits</small></span>
-          ${(st.finds || []).map((f, i) => `<div class="pp-find" data-find="${i}">${lootHTML(f, i)}<label class="pp-need">Hits <input data-need type="number" min="1" max="6" value="${f.need || 1}"></label><button type="button" class="rm-btn" data-rmfind="${i}" aria-label="Remove">×</button></div>`).join('')}
+        ${st.kind === 'body' ? `<div class="field-step"><span>ON THE BODY <small>a search is an Intuition roll: it turns up every find that needs that many Hits or fewer</small></span>
+          ${(st.finds || []).map((f, i) => `<div class="pp-find" data-find="${i}">${lootHTML(f, i)}<label class="pp-need">Needs <input data-need type="number" min="1" max="6" value="${f.need || 1}"> <span data-hits-word>Hit${(f.need || 1) === 1 ? '' : 's'}</span> to find</label><button type="button" class="rm-btn" data-rmfind="${i}" aria-label="Remove">×</button></div>`).join('')}
           <button type="button" class="btn small secondary" data-addfind>+ Add a find</button></div>` : ''}
         ${st.kind === 'clue' ? `<label class="field-step"><span>WHAT IT SAYS</span><textarea name="text" rows="4" maxlength="1000" placeholder="What they read when they find it">${esc(st.text)}</textarea></label>
           <label class="field-step"><span>REVEAL A JOURNAL CLUE <small>optional</small></span><select name="clueId"><option value="">None</option>${(clues || []).map((c) => `<option value="${esc(c.id)}"${st.clueId === c.id ? ' selected' : ''}>${esc(c.title || c.text.slice(0, 40))}${c.revealed ? ' (already shown)' : ''}</option>`).join('')}</select></label>` : ''}
@@ -89,6 +89,10 @@ export async function propDialog(p = null) {
       else if (b.dataset.rmfind !== undefined) { sync(); st.finds.splice(Number(b.dataset.rmfind), 1); draw(); }
     });
     back.addEventListener('change', (e) => { if (e.target.matches('[data-l="kind"], [data-locked]')) { sync(); draw(); } }); // different fields to fill in
+    back.addEventListener('input', (e) => { // "Needs 1 Hit" / "Needs 2 Hits" as the number changes
+      if (!e.target.matches('[data-need]')) return;
+      const w = e.target.closest('.pp-need')?.querySelector('[data-hits-word]'); if (w) w.textContent = Number(e.target.value) === 1 ? 'Hit' : 'Hits';
+    });
     back.addEventListener('submit', (e) => {
       e.preventDefault(); sync();
       const out = { kind: st.kind, name: st.name, hidden: st.hidden };
@@ -117,7 +121,7 @@ export function propCard(p, ctx) {
     trap: p.sprung ? `Sprung by ${p.sprung}.` : 'Hidden: the posse can’t see it until someone sets it off.',
     door: p.open ? 'It’s open.' : p.picking ? `Shut. ${p.picking} is working the lock.` : 'It’s shut.' }[p.kind];
   const wardenInfo = !ctx.warden ? '' : p.kind === 'chest' ? `<p class="pp-secret">${gl('lock')} Inside: <b>${esc(p.lootText || 'nothing')}</b>${p.trap?.damage ? ` · trap −${p.trap.damage} Health` : ''}</p>`
-    : p.kind === 'body' ? `<ul class="pp-secret">${(p.finds || []).map((f) => `<li>${esc(f.text)} · ${f.need} Hit${f.need === 1 ? '' : 's'}${f.byName ? ` · <i>found by ${esc(f.byName)}</i>` : ''}</li>`).join('') || '<li>Nothing on them.</li>'}</ul>`
+    : p.kind === 'body' ? `<ul class="pp-secret">${(p.finds || []).map((f) => `<li>${esc(f.text)} · needs ${f.need} Hit${f.need === 1 ? '' : 's'} to find${f.byName ? ` · <i>found by ${esc(f.byName)}</i>` : ''}</li>`).join('') || '<li>Nothing on them.</li>'}</ul>`
     : p.kind === 'clue' ? `<p class="pp-secret">${esc(p.text || '(no text)')}${p.clueId ? '<br><i>Reveals a Journal clue</i>' : ''}</p>`
     : p.kind === 'trap' ? `<p class="pp-secret">${gl('trap')} ${esc(p.trapText || 'does nothing')}</p>`
     : p.kind === 'door' ? `<p class="pp-secret">${p.locked ? `${gl('lock')} Locked: ${p.difficulty} pin${p.difficulty === 1 ? '' : 's'} to pick${p.unlocked ? ' · <i>picked</i>' : ''}` : 'Not locked'}</p>` : '';
